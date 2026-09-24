@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "frameworkVersion": "2026.9.2",
+  "frameworkVersion": "2026.9.3",
   "requirements": {
     "nodeMajor": 22,
     "nodeMinimumVersion": "22.12.0",
@@ -22,7 +22,8 @@
     { "name": "Report-only maintenance iteration", "stage": "experimental", "since": "2026.9.1" },
     { "name": "Local browser search across Markdown posts", "stage": "experimental", "since": "2026.9.2" },
     { "name": "Markdown syntax verification and responsive post screenshots", "stage": "experimental", "since": "2026.9.2" },
-    { "name": "Compact localized language selector", "stage": "experimental", "since": "2026.9.2" }
+    { "name": "Compact localized language selector", "stage": "experimental", "since": "2026.9.2" },
+    { "name": "npm theme installation and blank theme scaffolds", "stage": "experimental", "since": "2026.9.3" }
   ],
   "releaseHistory": [
     {
@@ -36,6 +37,12 @@
       "date": "2026-09-25",
       "request": 2,
       "notes": "Improved mobile layouts, added local article search and a compact language menu, verified the bilingual Markdown guide, and made the report cover posts with accessible PDF reading structure."
+    },
+    {
+      "version": "2026.9.3",
+      "date": "2026-09-25",
+      "request": 3,
+      "notes": "Published EdgePress for npm installation, added npm theme installation and blank theme packages, documented GitHub and Cloudflare Workers Builds deployment, and added a Cloudflare one-click deployment button."
     }
   ]
 }

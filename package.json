@@ -1,6 +1,6 @@
 {
   "name": "edgepress",
-  "version": "2026.9.2",
+  "version": "2026.9.3",
   "description": "A static website builder for Cloudflare Workers with editable pages, Markdown posts, local search, themes, and consent-gated integrations.",
   "type": "module",
   "bin": {
@@ -38,6 +38,7 @@
   "scripts": {
     "new": "node src/cli.js new",
     "build": "node src/cli.js build",
+    "generate": "node src/cli.js generate",
     "dev": "node src/cli.js server",
     "preview": "node src/cli.js server",
     "deploy": "node src/cli.js deploy",

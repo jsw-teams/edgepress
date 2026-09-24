@@ -24,6 +24,8 @@ blocks:
               code: |
                 themes/your-theme/
                   theme.json
+                  package.json
+                  README.md
                   layouts/
                     layout.html
                     partials/
@@ -46,6 +48,8 @@ blocks:
               paragraphs:
                 - Keep colors, font choices, and component styling in the selected theme stylesheet. Do not put color values in config.yml. The site content stays the same when a theme changes.
                 - List the available themes with edgepress theme list. Select one with edgepress theme use default, edgepress theme use atelier, or edgepress theme use signal.
+                - Install a published theme with edgepress theme install <npm-package>[@version]. The package must include theme.json and layouts/layout.html. EdgePress copies it into themes/ and does not run npm install scripts.
+                - Start a custom theme with edgepress theme create my-theme. This creates an npm-ready package manifest, a blank stylesheet, and accessible layout, head, header, navigation, and footer files. Edit the files, then select it with edgepress theme use my-theme. Publish from that directory with npm publish --access public.
             - type: notice
               title: Shared error layouts
               text: EdgePress generates localized 403 and 404 pages through the selected theme layout. The Worker serves the matching 403 page when static asset access is denied.
@@ -92,7 +96,7 @@ blocks:
             - type: steps
               items:
                 - title: Select a theme
-                  text: Use the EdgePress theme command to change paths.theme in edgepress.config.mjs.
+                  text: Install or create a theme, then use the EdgePress theme command to change paths.theme in edgepress.config.mjs.
                   command: edgepress theme use your-theme
                 - title: Edit layout and CSS
                   text: Change the selected theme layout, partials, and stylesheet. Each CSS and JavaScript asset receives a content fingerprint during build.

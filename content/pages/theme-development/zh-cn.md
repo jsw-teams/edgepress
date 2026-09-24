@@ -24,6 +24,8 @@ blocks:
               code: |
                 themes/your-theme/
                   theme.json
+                  package.json
+                  README.md
                   layouts/
                     layout.html
                     partials/
@@ -46,6 +48,8 @@ blocks:
               paragraphs:
                 - 颜色、字体选择和组件样式保存在当前主题的样式表中。不要在 config.yml 中填写颜色。切换主题不会改变页面内容。
                 - 使用 edgepress theme list 查看可用主题。使用 edgepress theme use default、edgepress theme use atelier 或 edgepress theme use signal 进行切换。
+                - 使用 edgepress theme install <npm-package>[@version] 安装 npm 上发布的主题包。包内必须包含 theme.json 和 layouts/layout.html。EdgePress 会将主题复制到 themes/，且不会运行 npm 安装脚本。
+                - 使用 edgepress theme create my-theme 创建可发布到 npm 的主题包骨架，其中包含 npm package.json、空白样式表、无障碍布局以及 head、header、导航和 footer 文件。编辑后使用 edgepress theme use my-theme 切换；也可以进入该目录运行 npm publish --access public 发布。
             - type: notice
               title: 共享错误页
               text: EdgePress 使用所选主题布局生成本地化的 403 和 404 页面。静态资源被拒绝访问时，Worker 会返回对应的 403 页面。
@@ -92,7 +96,7 @@ blocks:
             - type: steps
               items:
                 - title: 选择主题
-                  text: EdgePress theme 命令会修改 edgepress.config.mjs 中的 paths.theme。
+                  text: 安装或创建主题后，使用 EdgePress theme 命令修改 edgepress.config.mjs 中的 paths.theme。
                   command: edgepress theme use your-theme
                 - title: 编辑布局和 CSS
                   text: 修改所选主题的布局、局部模板和样式表。构建时会为每个 CSS 和 JavaScript 资源生成内容指纹。

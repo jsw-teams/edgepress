@@ -1,6 +1,7 @@
 #!/usr/bin/env node
-import { access, cp, lstat, mkdir, open, readFile, readdir, rm, writeFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { access, cp, lstat, mkdir, mkdtemp, open, readFile, readdir, realpath, rm, writeFile } from 'node:fs/promises';
+import { dirname, join, relative, resolve, sep } from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { acquireBuildLock, buildSite } from './build.js';
@@ -23,18 +24,28 @@ async function initializeProject() {
   if (existing.length) throw new Error('EdgePress init found existing project paths and made no changes: ' + existing.join(', '));
 
   const packageData = JSON.parse(await readFile(resolve(packageRoot, 'package.json'), 'utf8'));
-  const repositoryUrl = packageData.repository?.url;
-  if (typeof repositoryUrl !== 'string') throw new Error('EdgePress init needs the project package to declare its GitHub repository.');
-  const repository = new URL(repositoryUrl.replace(/\.git$/, ''));
-  if (repository.hostname !== 'github.com') throw new Error('EdgePress init needs the project package to declare its GitHub repository.');
-  const repositoryPath = repository.pathname.replace(/^\/+|\/+$/g, '');
+  let existingManifest = {};
+  let packageManifestExists = false;
+  try {
+    const manifestPath = resolve(root, 'package.json');
+    const manifestInfo = await lstat(manifestPath);
+    if (manifestInfo.isSymbolicLink() || !manifestInfo.isFile()) throw new Error('Refusing to edit an unsafe package.json path');
+    packageManifestExists = true;
+    existingManifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+    if (!existingManifest || Array.isArray(existingManifest) || typeof existingManifest !== 'object') throw new Error('package.json must contain a JSON object');
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
   const projectManifest = {
-    name: 'my-edgepress-site',
-    version: '1.0.0',
-    private: true,
+    ...existingManifest,
+    name: existingManifest.name || 'my-edgepress-site',
+    version: existingManifest.version || '1.0.0',
+    private: existingManifest.private ?? true,
     type: 'module',
     scripts: {
+      ...(existingManifest.scripts || {}),
       new: 'edgepress new',
+      generate: 'edgepress generate',
       build: 'edgepress build',
       dev: 'edgepress server',
       preview: 'edgepress server',
@@ -43,18 +54,22 @@ async function initializeProject() {
       deploy: 'edgepress deploy'
     },
     dependencies: {
-      edgepress: 'github:' + repositoryPath + '#v' + packageData.version,
-      wrangler: packageData.devDependencies?.wrangler ?? '^4.129.1'
+      ...(existingManifest.dependencies || {}),
+      edgepress: packageData.version,
+      wrangler: existingManifest.dependencies?.wrangler ?? packageData.devDependencies?.wrangler ?? '^4.129.1'
     }
   };
   for (const directory of directories) await cp(resolve(packageRoot, directory), resolve(root, directory), { recursive: true, errorOnExist: true });
   for (const file of files) {
-    const source = file === '.gitignore' ? resolve(packageRoot, 'templates/gitignore') : resolve(packageRoot, file);
-    await cp(source, resolve(root, file), { errorOnExist: true });
+    const source = file === '.gitignore' ? resolve(packageRoot, 'templates/gitignore') :
+      file === 'README.md' ? resolve(packageRoot, 'templates/site-readme.md') : resolve(packageRoot, file);
+    const destination = resolve(root, file);
+    await mkdir(dirname(destination), { recursive: true });
+    await cp(source, destination, { errorOnExist: true });
   }
   await mkdir(resolve(root, 'src'), { recursive: true });
   await cp(resolve(packageRoot, 'src/worker.js'), resolve(root, 'src/worker.js'), { errorOnExist: true });
-  await writeFile(resolve(root, 'package.json'), JSON.stringify(projectManifest, null, 2) + '\n', { flag: 'wx' });
+  await writeFile(resolve(root, 'package.json'), JSON.stringify(projectManifest, null, 2) + '\n', { flag: packageManifestExists ? 'w' : 'wx' });
   console.log('Created an EdgePress site. Next run npm install, then edgepress server.');
 }
 
@@ -102,7 +117,93 @@ async function manageTheme(args, config) {
     for (const theme of installed) console.log((config.resolvedPaths.theme === resolve(config.root, theme.path) ? '* ' : '  ') + theme.id + ' (' + theme.name + ')');
     return;
   }
-  if (action !== 'use' || !requested) throw new Error('Usage: edgepress theme list | edgepress theme use <theme-name>');
+  if (action === 'create') {
+    if (!requested) throw new Error('Usage: edgepress theme create <theme-name>');
+    const id = slugify(requested);
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)) throw new Error('Theme name must contain letters or numbers and may use spaces or hyphens.');
+    const destination = resolve(themesDirectory, id);
+    try { await lstat(destination); throw new Error('Theme already exists: ' + id); }
+    catch (error) { if (error.code !== 'ENOENT') throw error; }
+    const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+    await cp(resolve(packageRoot, 'themes/default'), destination, { recursive: true, errorOnExist: true });
+    const metadataPath = resolve(destination, 'theme.json');
+    const metadata = JSON.parse(await readFile(metadataPath, 'utf8'));
+    metadata.id = id;
+    metadata.name = requested.trim();
+    await writeFile(metadataPath, JSON.stringify(metadata, null, 2) + '\n', 'utf8');
+    const packageManifestPath = resolve(destination, 'package.json');
+    const packageManifest = {
+      name: 'edgepress-theme-' + id,
+      version: '1.0.0',
+      description: 'A custom theme for EdgePress.',
+      files: ['theme.json', 'layouts', 'assets', 'README.md'],
+      edgepress: { theme: id }
+    };
+    await writeFile(packageManifestPath, JSON.stringify(packageManifest, null, 2) + '\n', 'utf8');
+    const readmePath = resolve(destination, 'README.md');
+    const readme = '# ' + id + '\n\nAn EdgePress theme package. Edit the shared layout and partials under `layouts/` and add theme styles and assets under `assets/`.\n\n' +
+      'To install this theme in another EdgePress site, publish the package to npm and run:\n\n' +
+      '    edgepress theme install edgepress-theme-' + id + '\n\n' +
+      'Keep the skip link, one main landmark, labeled navigation, visible keyboard focus, and a page-level `h1` in the layout.\n';
+    await writeFile(readmePath, readme, 'utf8');
+    await writeFile(resolve(destination, 'assets/style.css'), '/* Add the colors, typography, spacing, and responsive rules for this theme here. */\n', 'utf8');
+    console.log('Created an empty theme at themes/' + id + '. Edit its HTML partials and assets, then run edgepress theme use ' + id + '.');
+    return;
+  }
+  if (action === 'install') {
+    if (!requested) throw new Error('Usage: edgepress theme install <npm-package>[@version]');
+    const packageSpecPattern = /^(?:@[a-z0-9][a-z0-9._-]*\/)?[a-z0-9][a-z0-9._-]*(?:@[0-9][a-z0-9.+_-]*)?$/i;
+    if (!packageSpecPattern.test(requested)) throw new Error('Theme must be an npm package name with an optional version.');
+    const packageNameEnd = requested.lastIndexOf('@');
+    const packageName = packageNameEnd > requested.indexOf('/') ? requested.slice(0, packageNameEnd) : requested;
+    const tempDirectory = await mkdtemp(join(tmpdir(), 'edgepress-theme-'));
+    try {
+      await new Promise((resolveExit, reject) => {
+        const child = spawn('npm', ['install', '--prefix', tempDirectory, '--ignore-scripts', '--no-audit', '--no-fund', requested], {
+          cwd: config.root, env: process.env, stdio: 'inherit', shell: process.platform === 'win32', windowsHide: true
+        });
+        child.once('error', reject);
+        child.once('exit', (code) => code === 0 ? resolveExit() : reject(new Error('npm could not install theme package ' + requested)));
+      });
+      const packageDirectory = resolve(tempDirectory, 'node_modules', ...packageName.split('/'));
+      const packageInfo = await lstat(packageDirectory);
+      if (!packageInfo.isDirectory() || packageInfo.isSymbolicLink()) throw new Error('Installed theme package is not a regular directory.');
+      const themeRoot = await realpath(packageDirectory);
+      const readPackageFile = async (name) => {
+        const filePath = resolve(themeRoot, name);
+        const info = await lstat(filePath);
+        if (!info.isFile() || info.isSymbolicLink()) throw new Error('Theme package ' + name + ' must be a regular file.');
+        const realPath = await realpath(filePath);
+        const relativePath = relative(themeRoot, realPath);
+        if (relativePath === '..' || relativePath.startsWith('..' + sep) || relativePath.startsWith(sep)) {
+          throw new Error('Theme package ' + name + ' resolves outside the package directory.');
+        }
+        return readFile(realPath, 'utf8');
+      };
+      const metadata = JSON.parse(await readPackageFile('theme.json'));
+      const packageManifest = JSON.parse(await readPackageFile('package.json'));
+      const declaredId = metadata.id || packageManifest.edgepress?.theme || packageName.split('/').at(-1).replace(/^edgepress-theme-/, '');
+      const id = slugify(declaredId);
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id)) throw new Error('Theme package must declare a safe id in theme.json or package.json#edgepress.theme.');
+      const layoutFile = resolve(themeRoot, 'layouts/layout.html');
+      const layoutInfo = await lstat(layoutFile);
+      if (!layoutInfo.isFile() || layoutInfo.isSymbolicLink()) throw new Error('Theme package layouts/layout.html must be a regular file.');
+      const layoutPath = await realpath(layoutFile);
+      const relLayout = relative(themeRoot, layoutPath);
+      if (relLayout === '..' || relLayout.startsWith('..' + sep) || relLayout.startsWith(sep)) {
+        throw new Error('Theme package layouts/layout.html must be a regular file inside the package.');
+      }
+      const destination = resolve(themesDirectory, id);
+      try { await lstat(destination); throw new Error('Theme already exists: ' + id); }
+      catch (error) { if (error.code !== 'ENOENT') throw error; }
+      await cp(themeRoot, destination, { recursive: true, errorOnExist: true, dereference: false });
+      console.log('Installed ' + (metadata.name || packageName) + ' to themes/' + id + '. Select it with edgepress theme use ' + id + '.');
+    } finally {
+      await rm(tempDirectory, { recursive: true, force: true });
+    }
+    return;
+  }
+  if (action !== 'use' || !requested) throw new Error('Usage: edgepress theme list | edgepress theme create <name> | edgepress theme install <npm-package>[@version] | edgepress theme use <theme-name>');
   const selected = installed.find((theme) => theme.id === requested);
   if (!selected) throw new Error('Theme not found. Run edgepress theme list to see installed themes.');
   const configFile = resolve(config.root, 'edgepress.config.mjs');
@@ -202,12 +303,15 @@ try {
     ? await loadConfig()
     : null;
   if (command === '--help' || command === '-h' || command === 'help') {
-    console.log('EdgePress commands: init, new, build, server, check, doctor, iterate, theme, secret, security, deploy, clean');
+    console.log('EdgePress commands: init, new, build, generate, server, check, doctor, iterate, theme, secret, security, deploy, clean');
   }
-  else if (command === 'build') await buildSite();
+  else if (command === 'build' || command === 'generate') await buildSite();
   else if (command === 'init') await initializeProject();
   else if (command === 'preview' || command === 'dev' || command === 'server') await import('./preview.js');
-  else if (command === 'deploy') { await buildSite(); await runWrangler('deploy', args); }
+  else if (command === 'deploy') {
+    if (process.env.WORKERS_CI !== '1') await buildSite();
+    await runWrangler('deploy', args);
+  }
   else if (command === 'secret') {
     if (!['put', 'delete', 'list'].includes(args[0])) throw new Error('Usage: edgepress secret put|delete|list [name]');
     await runWrangler('secret', args);
@@ -233,7 +337,7 @@ try {
     const compatibilityReport = await checkCompatibility(config);
     const plan = await writeIterationPlan(config, pageReport, compatibilityReport);
     await showReport('Safe iteration plan', plan, resolve(config.resolvedPaths.cache, 'reports/iteration-plan.md'));
-  } else throw new Error('Commands: init, build, server, deploy, new, clean, check, doctor, iterate, theme, security');
+  } else throw new Error('Commands: init, build|generate, server, deploy, new, clean, check, doctor, iterate, theme list|create|install|use, security');
 } catch (error) {
   console.error(error?.stack || error);
   process.exitCode = 1;

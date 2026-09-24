@@ -75,6 +75,7 @@ blocks:
               paragraphs:
                 - Edit site title, description, canonical URL, agent SEO, site navigation, footer text, and privacy controller details in config.yml. Theme colors live in theme CSS.
                 - Change the selected theme with edgepress theme list and edgepress theme use <theme-name>. Theme paths are stored in edgepress.config.mjs.
+                - Install a theme package with edgepress theme install <npm-package> or start with a blank theme using edgepress theme create <name>.
                 - edgepress server starts a local Wrangler server, watches source files, rebuilds changed pages, reloads the browser, and rewrites tools/page-check.md and tools/page-check.json.
             - type: code
               title: Build, inspect, and deploy
@@ -85,4 +86,62 @@ blocks:
                 edgepress deploy
             - type: text
               text: Compatibility checks read the Node.js baseline, Worker entry, and compatibility date from project-compatibility.json and wrangler.jsonc. Check the generated report before deploying.
+            - type: section
+              title: Publish the source on GitHub
+              blocks:
+                - type: text
+                  paragraphs:
+                    - Create an empty repository on GitHub, then push the EdgePress source. In the Cloudflare dashboard, create a Worker and connect that repository with Workers Builds. Choose main as the production branch. Set a unique Worker name in wrangler.jsonc before deployment.
+                    - The build and deploy scripts in package.json are detected by Workers Builds. It runs npm run build to generate dist/, then npm run deploy to publish the Worker. dist/ stays out of Git. Cloudflare manages the build authorization for this connection.
+                - type: code
+                  title: Upload the source repository
+                  language: sh
+                  code: |
+                    git init
+                    git add .
+                    git commit -m "Initial EdgePress site"
+                    git branch -M main
+                    git remote add origin https://github.com/<owner>/<repository>.git
+                    git push -u origin main
+                - type: text
+                  text: For a local deployment, authenticate with npx wrangler login, then run edgepress deploy. The command generates dist/ and deploys the Worker using wrangler.jsonc.
+                - type: link-list
+                  title: Deployment references
+                  items:
+                    - label: Connect GitHub to Cloudflare Workers Builds
+                      url: https://developers.cloudflare.com/workers/ci-cd/builds/git-integration/github-integration/
+                    - label: Configure Workers Builds commands
+                      url: https://developers.cloudflare.com/workers/ci-cd/builds/configuration/
+            - type: section
+              title: Generate files for OpenResty or Nginx
+              blocks:
+                - type: text
+                  paragraphs:
+                    - edgepress build and edgepress generate use the same generator and write the static site to dist/. Run edgepress generate, then upload the contents of dist/ to the server's document root. Do not upload the dist/ directory as a nested folder unless that is the URL path you want.
+                    - OpenResty uses Nginx configuration syntax for static files. Set root to the uploaded directory; try_files checks the exact path, directory index, and .html route. The generated 403.html and 404.html files can be used for error responses.
+                - type: code
+                  title: Minimal Nginx or OpenResty site
+                  language: nginx
+                  code: |
+                    server {
+                      listen 80;
+                      server_name example.org;
+                      root /var/www/edgepress;
+                      index index.html;
+
+                      location / {
+                        try_files $uri $uri/ $uri.html =404;
+                      }
+
+                      error_page 403 /403.html;
+                      error_page 404 /404.html;
+                    }
+                - type: code
+                  title: Generate the upload directory
+                  language: sh
+                  code: edgepress generate
+                - type: notice
+                  title: Worker-only integrations
+                  text: Static hosting does not run src/worker.js. The built-in /api/ proxy and Cloudflare service bindings require an EdgePress Worker deployment; otherwise configure an equivalent server-side route on your host. Keep backend tokens out of browser settings.
+                  tone: warning
 ---

@@ -75,6 +75,7 @@ blocks:
               paragraphs:
                 - 在 config.yml 中编辑站点标题、简介、规范 URL、agent SEO、导航、页脚文字和隐私运营者信息。主题配色保存在各自主题的 CSS 中。
                 - 使用 edgepress theme list 查看主题，使用 edgepress theme use <主题名称> 切换主题。主题路径保存在 edgepress.config.mjs 中。
+                - 使用 edgepress theme install <npm-package> 安装主题包，或使用 edgepress theme create <名称> 创建空白主题。
                 - edgepress server 会启动本地 Wrangler 服务、监视源文件、重新构建变更页面、刷新浏览器，并更新 tools/page-check.md 和 tools/page-check.json。
             - type: code
               title: 构建、检查和部署
@@ -85,4 +86,62 @@ blocks:
                 edgepress deploy
             - type: text
               text: 兼容性检查会读取 project-compatibility.json 和 wrangler.jsonc 中的 Node.js 基线、Worker 入口和兼容日期。部署前请查看生成的报告。
+            - type: section
+              title: 将源代码上传到 GitHub
+              blocks:
+                - type: text
+                  paragraphs:
+                    - 在 GitHub 创建空仓库并推送 EdgePress 源代码。然后在 Cloudflare 控制台创建 Worker，并通过 Workers Builds 连接该仓库，选择 main 作为生产分支。部署前请在 wrangler.jsonc 中设置唯一的 Worker 名称。
+                    - Workers Builds 会读取 package.json 中的 build 和 deploy 脚本，先运行 npm run build 生成 dist/，再运行 npm run deploy 发布 Worker。dist/ 不会提交到 Git；Cloudflare 会管理此连接的构建授权。
+                - type: code
+                  title: 推送源代码仓库
+                  language: sh
+                  code: |
+                    git init
+                    git add .
+                    git commit -m "Initial EdgePress site"
+                    git branch -M main
+                    git remote add origin https://github.com/<owner>/<repository>.git
+                    git push -u origin main
+                - type: text
+                  text: 本地部署时，先运行 npx wrangler login 完成 Cloudflare 身份验证，再运行 edgepress deploy。该命令会生成 dist/，并依据 wrangler.jsonc 部署 Worker。
+                - type: link-list
+                  title: 部署参考
+                  items:
+                    - label: 将 GitHub 连接到 Cloudflare Workers Builds
+                      url: https://developers.cloudflare.com/workers/ci-cd/builds/git-integration/github-integration/
+                    - label: 配置 Workers Builds 命令
+                      url: https://developers.cloudflare.com/workers/ci-cd/builds/configuration/
+            - type: section
+              title: 为 OpenResty 或 Nginx 生成静态文件
+              blocks:
+                - type: text
+                  paragraphs:
+                    - edgepress build 和 edgepress generate 使用同一个生成流程，将静态网站写入 dist/。运行 edgepress generate 后，把 dist/ 目录内的文件上传到服务器网站根目录。如果不希望网址多出一层目录，不要把 dist/ 本身作为嵌套目录上传。
+                    - OpenResty 使用 Nginx 配置语法托管静态文件。将 root 指向已上传的目录；try_files 会依次检查原始路径、目录首页和 .html 路由。生成的 403.html 与 404.html 可用于错误响应。
+                - type: code
+                  title: Nginx 或 OpenResty 基础站点配置
+                  language: nginx
+                  code: |
+                    server {
+                      listen 80;
+                      server_name example.org;
+                      root /var/www/edgepress;
+                      index index.html;
+
+                      location / {
+                        try_files $uri $uri/ $uri.html =404;
+                      }
+
+                      error_page 403 /403.html;
+                      error_page 404 /404.html;
+                    }
+                - type: code
+                  title: 生成上传目录
+                  language: sh
+                  code: edgepress generate
+                - type: notice
+                  title: 仅 Worker 支持的集成
+                  text: 静态托管不会运行 src/worker.js。内置 /api/ 代理和 Cloudflare Service Binding 需要部署 EdgePress Worker；否则需在当前服务器配置等效的服务端路由。不要把后端 Token 写入浏览器设置。
+                  tone: warning
 ---

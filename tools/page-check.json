@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-09-24T16:17:48.775Z",
+  "generatedAt": "2026-09-24T16:48:22.641Z",
   "status": "warning",
-  "pages": 40,
+  "pages": 46,
   "contentSummary": {
-    "posts": 6,
+    "posts": 8,
     "pages": 12,
-    "system": 22
+    "system": 26
   },
   "documents": [
     {
@@ -18,6 +18,12 @@
       "path": "2026/09/edgepress-release-2026-9-2/index.html",
       "type": "post",
       "title": "EdgePress September 2026 update: request 2",
+      "status": "pass"
+    },
+    {
+      "path": "2026/09/edgepress-release-2026-9-3/index.html",
+      "type": "post",
+      "title": "EdgePress September 2026 update: request 3",
       "status": "pass"
     },
     {
@@ -99,6 +105,12 @@
       "status": "pass"
     },
     {
+      "path": "tags/npm/index.html",
+      "type": "system",
+      "title": "Tag: npm",
+      "status": "pass"
+    },
+    {
       "path": "tags/page-builder/index.html",
       "type": "system",
       "title": "Tag: page builder",
@@ -114,6 +126,12 @@
       "path": "tags/responsive-design/index.html",
       "type": "system",
       "title": "Tag: responsive design",
+      "status": "pass"
+    },
+    {
+      "path": "tags/themes/index.html",
+      "type": "system",
+      "title": "Tag: themes",
       "status": "pass"
     },
     {
@@ -138,6 +156,12 @@
       "path": "zh-CN/2026/09/edgepress-release-2026-9-2/index.html",
       "type": "post",
       "title": "EdgePress 2026 年 9 月更新：第 2 次需求",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/2026/09/edgepress-release-2026-9-3/index.html",
+      "type": "post",
+      "title": "EdgePress 2026 年 9 月更新：第 3 次需求",
       "status": "pass"
     },
     {
@@ -210,6 +234,18 @@
       "path": "zh-CN/tags/markdown/index.html",
       "type": "system",
       "title": "标签: Markdown",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/tags/npm/index.html",
+      "type": "system",
+      "title": "标签: npm",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/tags/tag-4e3b-9898/index.html",
+      "type": "system",
+      "title": "标签: 主题",
       "status": "pass"
     },
     {
@@ -441,22 +477,22 @@
   "accessibility": {
     "status": "pass",
     "score": 100,
-    "checks": 745,
+    "checks": 861,
     "errors": 0,
     "warnings": 0
   },
   "agentFriendliness": {
     "status": "pass",
     "score": 100,
-    "checks": 602,
+    "checks": 694,
     "errors": 0,
     "warnings": 0
   },
   "metrics": {
-    "htmlBytes": 252696,
-    "stylesheets": 40,
-    "blockingStylesheets": 40,
-    "scripts": 122,
+    "htmlBytes": 289972,
+    "stylesheets": 46,
+    "blockingStylesheets": 46,
+    "scripts": 94,
     "blockingScripts": 0
   },
   "hashedAssets": [
@@ -545,6 +581,30 @@
         "documentWidth": 390,
         "path": "tools/page-check-screenshots/page-51425ff648.png",
         "label": "2026/09/edgepress-release-2026-9-2/index.html · mobile (390×844)"
+      },
+      {
+        "page": "2026/09/edgepress-release-2026-9-3/index.html",
+        "type": "post",
+        "title": "EdgePress September 2026 update: request 3",
+        "viewport": "desktop",
+        "width": 1440,
+        "height": 1100,
+        "viewportWidth": 1440,
+        "documentWidth": 1425,
+        "path": "tools/page-check-screenshots/page-7566a23d4b.png",
+        "label": "2026/09/edgepress-release-2026-9-3/index.html · desktop (1440×1100)"
+      },
+      {
+        "page": "2026/09/edgepress-release-2026-9-3/index.html",
+        "type": "post",
+        "title": "EdgePress September 2026 update: request 3",
+        "viewport": "mobile",
+        "width": 390,
+        "height": 844,
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "path": "tools/page-check-screenshots/page-e8a21bcd68.png",
+        "label": "2026/09/edgepress-release-2026-9-3/index.html · mobile (390×844)"
       },
       {
         "page": "2026/09/markdown-syntax-guide/index.html",
@@ -713,6 +773,30 @@
         "documentWidth": 390,
         "path": "tools/page-check-screenshots/page-48034736da.png",
         "label": "zh-CN/2026/09/edgepress-release-2026-9-2/index.html · mobile (390×844)"
+      },
+      {
+        "page": "zh-CN/2026/09/edgepress-release-2026-9-3/index.html",
+        "type": "post",
+        "title": "EdgePress 2026 年 9 月更新：第 3 次需求",
+        "viewport": "desktop",
+        "width": 1440,
+        "height": 1100,
+        "viewportWidth": 1440,
+        "documentWidth": 1425,
+        "path": "tools/page-check-screenshots/page-66d3fbb19b.png",
+        "label": "zh-CN/2026/09/edgepress-release-2026-9-3/index.html · desktop (1440×1100)"
+      },
+      {
+        "page": "zh-CN/2026/09/edgepress-release-2026-9-3/index.html",
+        "type": "post",
+        "title": "EdgePress 2026 年 9 月更新：第 3 次需求",
+        "viewport": "mobile",
+        "width": 390,
+        "height": 844,
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "path": "tools/page-check-screenshots/page-8d538da2c8.png",
+        "label": "zh-CN/2026/09/edgepress-release-2026-9-3/index.html · mobile (390×844)"
       },
       {
         "page": "zh-CN/2026/09/markdown-syntax-guide/index.html",
