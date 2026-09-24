@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-24T17:03:45.155Z",
+  "generatedAt": "2026-09-24T17:08:25.776Z",
   "status": "warning",
   "pages": 46,
   "contentSummary": {
@@ -489,10 +489,10 @@
     "warnings": 0
   },
   "metrics": {
-    "htmlBytes": 289972,
+    "htmlBytes": 292410,
     "stylesheets": 46,
     "blockingStylesheets": 46,
-    "scripts": 94,
+    "scripts": 140,
     "blockingScripts": 0
   },
   "hashedAssets": [
