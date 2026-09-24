@@ -2,7 +2,7 @@
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/jsw-teams/edgepress)
 
-The button deploys this repository's demo site to your Cloudflare account. To create a new site, follow the npm quick start below.
+The button creates a copy of this repository in your GitHub account and a new Worker in your Cloudflare account. It is for creating a separate site, not updating an existing one. Choose unused destination repository and Worker names during setup. If `edgepress` already exists, choose a different name such as `my-edgepress-site`; to update an existing deployment, use that repository's connected Workers Builds integration instead of clicking the button again.
 
 EdgePress builds static websites for Cloudflare Workers. Write posts in Markdown, compose pages from editable rows and elements, choose a shared theme, and build the site into dist/.
 
@@ -67,4 +67,4 @@ The header search page filters Markdown posts from the generated local search in
 
 Project guides are published from content/pages/: project introduction, quick start, theme development, plugin development, and privacy policy. The privacy policy intentionally reports that the starter site still needs a real site URL, operator name, and privacy contact before publication.
 
-Version 2026.9.4 records the fourth requested release update for September 2026. It is available as the `edgepress` npm package. See the [request 1 notes](content/posts/2026-09-24-edgepress-release-2026-9-1/), [request 2 notes](content/posts/2026-09-25-edgepress-release-2026-9-2/), [request 3 notes](content/posts/2026-09-25-edgepress-release-2026-9-3/), and [request 4 notes](content/posts/2026-09-25-edgepress-release-2026-9-4/).
+Version 2026.9.5 records the fifth requested release update for September 2026. It is available as the `edgepress` npm package. See the [request 1 notes](content/posts/2026-09-24-edgepress-release-2026-9-1/), [request 2 notes](content/posts/2026-09-25-edgepress-release-2026-9-2/), [request 3 notes](content/posts/2026-09-25-edgepress-release-2026-9-3/), [request 4 notes](content/posts/2026-09-25-edgepress-release-2026-9-4/), and [request 5 notes](content/posts/2026-09-25-edgepress-release-2026-9-5/).

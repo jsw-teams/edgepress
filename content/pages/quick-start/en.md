@@ -93,6 +93,7 @@ blocks:
                   paragraphs:
                     - Create an empty repository on GitHub, then push the EdgePress source. In the Cloudflare dashboard, create a Worker and connect that repository with Workers Builds. Choose main as the production branch. Set a unique Worker name in wrangler.jsonc before deployment.
                     - For this repository, set Workers Builds root directory to /, build command to npm run build, and deploy command to npx wrangler deploy. No build variables are required. The build command generates dist/ before Wrangler publishes the Worker; dist/ stays out of Git.
+                    - The Deploy to Cloudflare button in the GitHub README creates a new GitHub repository copy and a new Worker. During setup, choose unused names for both. If a repository or Worker named edgepress already exists, choose a different name. To update an existing Worker, use its existing repository and Workers Builds connection; the button does not attach to or update an existing project.
                     - If the log remains at Initializing build environment before cloning the repository or running commands, verify that the Cloudflare Workers and Pages GitHub App still has access to this repository. Reconnect the repository or reinstall and reauthorize the app, then retry. Check that the selected Cloudflare API token is still valid; Workers Builds can create a token automatically, and stale tokens must be replaced in Build settings. This stage runs before the project build command.
                 - type: code
                   title: Upload the source repository
@@ -115,6 +116,8 @@ blocks:
                       url: https://developers.cloudflare.com/workers/ci-cd/builds/configuration/
                     - label: Troubleshoot Workers Builds
                       url: https://developers.cloudflare.com/workers/ci-cd/builds/troubleshoot/
+                    - label: Deploy button behavior and setup
+                      url: https://developers.cloudflare.com/workers/platform/deploy-buttons/
             - type: section
               title: Generate files for OpenResty or Nginx
               blocks:

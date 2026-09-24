@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "frameworkVersion": "2026.9.4",
+  "frameworkVersion": "2026.9.5",
   "requirements": {
     "nodeMajor": 22,
     "nodeMinimumVersion": "22.12.0",
@@ -24,7 +24,8 @@
     { "name": "Markdown syntax verification and responsive post screenshots", "stage": "experimental", "since": "2026.9.2" },
     { "name": "Compact localized language selector", "stage": "experimental", "since": "2026.9.2" },
     { "name": "npm theme installation and blank theme scaffolds", "stage": "experimental", "since": "2026.9.3" },
-    { "name": "PDF-only audit output and temporary screenshot capture", "stage": "experimental", "since": "2026.9.4" }
+    { "name": "PDF-only audit output and temporary screenshot capture", "stage": "experimental", "since": "2026.9.4" },
+    { "name": "Cloudflare one-click deployment guidance for existing and new projects", "stage": "stable", "since": "2026.9.5" }
   ],
   "releaseHistory": [
     {
@@ -50,6 +51,12 @@
       "date": "2026-09-25",
       "request": 4,
       "notes": "Keep audit output as a single accessible PDF with embedded screenshots, remove the templates directory and package archive, document Workers Builds initialization troubleshooting, and pin the Wrangler compatibility date to the first of the month."
+    },
+    {
+      "version": "2026.9.5",
+      "date": "2026-09-25",
+      "request": 5,
+      "notes": "Clarify that the Cloudflare one-click deployment button creates a new repository copy and Worker, explain unique naming and the path for updating existing Workers, and publish the guidance in README and bilingual quick-start pages."
     }
   ]
 }

@@ -93,6 +93,7 @@ blocks:
                   paragraphs:
                     - 在 GitHub 创建空仓库并推送 EdgePress 源代码。然后在 Cloudflare 控制台创建 Worker，并通过 Workers Builds 连接该仓库，选择 main 作为生产分支。部署前请在 wrangler.jsonc 中设置唯一的 Worker 名称。
                     - 此仓库的 Workers Builds 设置为：根目录 /、构建命令 npm run build、部署命令 npx wrangler deploy。无需添加构建变量。构建命令会先生成 dist/，再由 Wrangler 发布 Worker；dist/ 不会提交到 Git。
+                    - GitHub README 中的一键部署按钮会在你的 GitHub 账户创建一份新仓库副本，并在 Cloudflare 创建一个新 Worker。设置时请为目标仓库和 Worker 选择未占用的名称。如果 `edgepress` 已存在，请改用其他名称。要更新已有 Worker，请继续使用它已连接的仓库和 Workers Builds；按钮不会连接或更新已有项目。
                     - 如果日志在克隆仓库或运行命令前一直停留在 Initializing build environment，请检查 Cloudflare Workers and Pages GitHub App 是否仍有此仓库的访问权限。重新连接仓库，或重新安装并授权该 App 后再试。还需确认所选 Cloudflare API Token 仍有效；Workers Builds 可以自动创建 Token，如果已选 Token 失效，需要在 Build 设置中替换。此阶段尚未运行项目构建命令。
                 - type: code
                   title: 推送源代码仓库
@@ -115,6 +116,8 @@ blocks:
                       url: https://developers.cloudflare.com/workers/ci-cd/builds/configuration/
                     - label: 排查 Workers Builds
                       url: https://developers.cloudflare.com/workers/ci-cd/builds/troubleshoot/
+                    - label: 一键部署按钮的工作方式
+                      url: https://developers.cloudflare.com/workers/platform/deploy-buttons/
             - type: section
               title: 为 OpenResty 或 Nginx 生成静态文件
               blocks:
