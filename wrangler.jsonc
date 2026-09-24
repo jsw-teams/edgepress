@@ -1,0 +1,13 @@
+// For the optional URL/token backend, add vars.BACKEND_URL (for example, https://api.example.org) and run `edgepress secret put BACKEND_TOKEN`.
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "edgepress",
+  "main": "./src/worker.js",
+  "compatibility_date": "2026-09-24",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "run_worker_first": ["/api/*"]
+  }
+}

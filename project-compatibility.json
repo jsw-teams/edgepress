@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "frameworkVersion": "2026.9.2",
+  "requirements": {
+    "nodeMajor": 22,
+    "nodeMinimumVersion": "22.12.0",
+    "minimumWorkersDate": "2024-09-23",
+    "workerRuntime": "ES modules and Web APIs",
+    "nodeCompatibilityRequired": false,
+    "pluginApiMajor": 1
+  },
+  "features": [
+    { "name": "Static generation and content-hash cache", "stage": "stable", "since": "2026.9.1" },
+    { "name": "Cloudflare Static Assets deployment", "stage": "stable", "since": "2026.9.1" },
+    { "name": "Row-based editable pages and reusable layout components", "stage": "experimental", "since": "2026.9.1" },
+    { "name": "Image/video with text and display typography elements", "stage": "experimental", "since": "2026.9.1" },
+    { "name": "i18n locale routes", "stage": "experimental", "since": "2026.9.1" },
+    { "name": "Accessibility and agent-friendliness report with screenshots and PDF", "stage": "experimental", "since": "2026.9.1" },
+    { "name": "Consent-gated browser plugins", "stage": "experimental", "since": "2026.9.1" },
+    { "name": "Service binding and URL/token backend proxy", "stage": "experimental", "since": "2026.9.1" },
+    { "name": "Live local preview and theme switching", "stage": "experimental", "since": "2026.9.1" },
+    { "name": "Report-only maintenance iteration", "stage": "experimental", "since": "2026.9.1" },
+    { "name": "Local browser search across Markdown posts", "stage": "experimental", "since": "2026.9.2" },
+    { "name": "Markdown syntax verification and responsive post screenshots", "stage": "experimental", "since": "2026.9.2" },
+    { "name": "Compact localized language selector", "stage": "experimental", "since": "2026.9.2" }
+  ],
+  "releaseHistory": [
+    {
+      "version": "2026.9.1",
+      "date": "2026-09-24",
+      "request": 1,
+      "notes": "Introduced row-first editable pages, shared theme components, plugin and backend guidance, live preview, and visual audit reports."
+    },
+    {
+      "version": "2026.9.2",
+      "date": "2026-09-25",
+      "request": 2,
+      "notes": "Improved mobile layouts, added local article search and a compact language menu, verified the bilingual Markdown guide, and made the report cover posts with accessible PDF reading structure."
+    }
+  ]
+}

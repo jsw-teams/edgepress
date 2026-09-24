@@ -1,0 +1,6 @@
+{
+  "name": "signal",
+  "version": "1.0.0",
+  "renderer": "layouts/layout.html",
+  "templateEngine": "edgepress-partials-v1"
+}

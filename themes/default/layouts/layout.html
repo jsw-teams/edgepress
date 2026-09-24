@@ -1,0 +1,12 @@
+<html lang="{{site.language}}">
+<head>
+  {{> head}}
+</head>
+<body>
+  <a class="skip-link" href="#main">{{site.skipToContent}}</a>
+  {{> header}}
+  <main id="main">{{{page.content}}}</main>
+  {{> footer}}
+  <script defer src="/edgepress/language-select.js"></script>
+</body>
+</html>

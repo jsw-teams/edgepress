@@ -1,0 +1,58 @@
+{
+  "name": "edgepress",
+  "version": "2026.9.2",
+  "description": "A static website builder for Cloudflare Workers with editable pages, Markdown posts, local search, themes, and consent-gated integrations.",
+  "type": "module",
+  "bin": {
+    "edgepress": "src/cli.js"
+  },
+  "files": [
+    "content",
+    "languages",
+    "plugins",
+    "src",
+    "static",
+    "templates",
+    "themes",
+    "config.yml",
+    "edgepress.config.mjs",
+    "project-compatibility.json",
+    "wrangler.jsonc",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jsw-teams/edgepress.git"
+  },
+  "homepage": "https://github.com/jsw-teams/edgepress#readme",
+  "keywords": [
+    "static-site-generator",
+    "cloudflare-workers",
+    "markdown",
+    "website-builder",
+    "accessibility"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "new": "node src/cli.js new",
+    "build": "node src/cli.js build",
+    "dev": "node src/cli.js server",
+    "preview": "node src/cli.js server",
+    "deploy": "node src/cli.js deploy",
+    "clean": "node src/cli.js clean",
+    "check": "node src/cli.js check",
+    "doctor": "node src/cli.js doctor",
+    "iterate": "node src/cli.js iterate",
+    "security:check": "node src/cli.js security"
+  },
+  "dependencies": {
+    "marked": "^18.0.13",
+    "sanitize-html": "^2.17.7",
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "wrangler": "^4.129.1"
+  }
+}

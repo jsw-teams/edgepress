@@ -1,0 +1,890 @@
+{
+  "generatedAt": "2026-09-24T16:10:20.776Z",
+  "status": "warning",
+  "pages": 40,
+  "contentSummary": {
+    "posts": 6,
+    "pages": 12,
+    "system": 22
+  },
+  "documents": [
+    {
+      "path": "2026/09/edgepress-release-2026-9-1/index.html",
+      "type": "post",
+      "title": "EdgePress September 2026 update",
+      "status": "pass"
+    },
+    {
+      "path": "2026/09/edgepress-release-2026-9-2/index.html",
+      "type": "post",
+      "title": "EdgePress September 2026 update: request 2",
+      "status": "pass"
+    },
+    {
+      "path": "2026/09/markdown-syntax-guide/index.html",
+      "type": "post",
+      "title": "EdgePress and Markdown: a complete writing guide",
+      "status": "pass"
+    },
+    {
+      "path": "403.html",
+      "type": "system",
+      "title": "Access denied",
+      "status": "pass"
+    },
+    {
+      "path": "404.html",
+      "type": "system",
+      "title": "Page not found",
+      "status": "pass"
+    },
+    {
+      "path": "archives/index.html",
+      "type": "system",
+      "title": "Archives",
+      "status": "pass"
+    },
+    {
+      "path": "index.html",
+      "type": "homepage",
+      "title": "Build a fast website from clear, editable source files.",
+      "status": "pass"
+    },
+    {
+      "path": "plugin-development/index.html",
+      "type": "page",
+      "title": "Plugin development",
+      "status": "pass"
+    },
+    {
+      "path": "privacy-policy/index.html",
+      "type": "page",
+      "title": "Privacy policy",
+      "status": "pass"
+    },
+    {
+      "path": "project-introduction/index.html",
+      "type": "page",
+      "title": "Project introduction",
+      "status": "pass"
+    },
+    {
+      "path": "quick-start/index.html",
+      "type": "page",
+      "title": "Quick start",
+      "status": "pass"
+    },
+    {
+      "path": "search/index.html",
+      "type": "system",
+      "title": "Search articles",
+      "status": "pass"
+    },
+    {
+      "path": "tags/accessibility/index.html",
+      "type": "system",
+      "title": "Tag: accessibility",
+      "status": "pass"
+    },
+    {
+      "path": "tags/edgepress/index.html",
+      "type": "system",
+      "title": "Tag: EdgePress",
+      "status": "pass"
+    },
+    {
+      "path": "tags/markdown/index.html",
+      "type": "system",
+      "title": "Tag: Markdown",
+      "status": "pass"
+    },
+    {
+      "path": "tags/page-builder/index.html",
+      "type": "system",
+      "title": "Tag: page builder",
+      "status": "pass"
+    },
+    {
+      "path": "tags/release/index.html",
+      "type": "system",
+      "title": "Tag: release",
+      "status": "pass"
+    },
+    {
+      "path": "tags/responsive-design/index.html",
+      "type": "system",
+      "title": "Tag: responsive design",
+      "status": "pass"
+    },
+    {
+      "path": "tags/writing-guide/index.html",
+      "type": "system",
+      "title": "Tag: writing guide",
+      "status": "pass"
+    },
+    {
+      "path": "theme-development/index.html",
+      "type": "page",
+      "title": "Theme development",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/2026/09/edgepress-release-2026-9-1/index.html",
+      "type": "post",
+      "title": "EdgePress 2026 年 9 月更新",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/2026/09/edgepress-release-2026-9-2/index.html",
+      "type": "post",
+      "title": "EdgePress 2026 年 9 月更新：第 2 次需求",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/2026/09/markdown-syntax-guide/index.html",
+      "type": "post",
+      "title": "EdgePress 与 Markdown：完整写作指南",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/403.html",
+      "type": "system",
+      "title": "无权访问",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/404.html",
+      "type": "system",
+      "title": "页面不存在",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/archives/index.html",
+      "type": "system",
+      "title": "归档",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/index.html",
+      "type": "homepage",
+      "title": "用清晰、可编辑的源文件构建快速网站。",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/plugin-development/index.html",
+      "type": "page",
+      "title": "插件开发",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/privacy-policy/index.html",
+      "type": "page",
+      "title": "隐私政策",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/project-introduction/index.html",
+      "type": "page",
+      "title": "项目介绍",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/quick-start/index.html",
+      "type": "page",
+      "title": "快速入门",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/search/index.html",
+      "type": "system",
+      "title": "搜索文章",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/tags/edgepress/index.html",
+      "type": "system",
+      "title": "标签: EdgePress",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/tags/markdown/index.html",
+      "type": "system",
+      "title": "标签: Markdown",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/tags/tag-5199-4f5c-6307-5357/index.html",
+      "type": "system",
+      "title": "标签: 写作指南",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/tags/tag-53d1-5e03/index.html",
+      "type": "system",
+      "title": "标签: 发布",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/tags/tag-65e0-969c-788d/index.html",
+      "type": "system",
+      "title": "标签: 无障碍",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/tags/tag-79fb-52a8-7aef-9002-914d/index.html",
+      "type": "system",
+      "title": "标签: 移动端适配",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/tags/tag-9875-9762-6784-5efa-5668/index.html",
+      "type": "system",
+      "title": "标签: 页面构建器",
+      "status": "pass"
+    },
+    {
+      "path": "zh-CN/theme-development/index.html",
+      "type": "page",
+      "title": "主题开发",
+      "status": "pass"
+    }
+  ],
+  "markdownRendering": {
+    "status": "pass",
+    "checks": 42,
+    "passed": 42,
+    "documents": [
+      {
+        "path": "2026/09/markdown-syntax-guide/index.html",
+        "checks": [
+          {
+            "feature": "headings 2 through 6",
+            "passed": true
+          },
+          {
+            "feature": "Setext heading syntax",
+            "passed": true
+          },
+          {
+            "feature": "paragraphs and hard line breaks",
+            "passed": true
+          },
+          {
+            "feature": "hyphen, asterisk, and underscore thematic breaks",
+            "passed": true
+          },
+          {
+            "feature": "emphasis and strong emphasis",
+            "passed": true
+          },
+          {
+            "feature": "strikethrough",
+            "passed": true
+          },
+          {
+            "feature": "inline and fenced code",
+            "passed": true
+          },
+          {
+            "feature": "tilde-fenced and four-space-indented code",
+            "passed": true
+          },
+          {
+            "feature": "code spans containing a literal backtick",
+            "passed": true
+          },
+          {
+            "feature": "escaped Markdown punctuation and character references",
+            "passed": true
+          },
+          {
+            "feature": "inline and reference links",
+            "passed": true
+          },
+          {
+            "feature": "GFM automatic links",
+            "passed": true
+          },
+          {
+            "feature": "angle-bracket, www, and email automatic links",
+            "passed": true
+          },
+          {
+            "feature": "images with alternative text",
+            "passed": true
+          },
+          {
+            "feature": "nested lists with inline formatting",
+            "passed": true
+          },
+          {
+            "feature": "task lists with accessible status names",
+            "passed": true
+          },
+          {
+            "feature": "lists nested inside block quotes",
+            "passed": true
+          },
+          {
+            "feature": "nested block quotes",
+            "passed": true
+          },
+          {
+            "feature": "tables and inline table syntax",
+            "passed": true
+          },
+          {
+            "feature": "safe semantic inline HTML",
+            "passed": true
+          },
+          {
+            "feature": "sanitization of active script markup",
+            "passed": true
+          }
+        ],
+        "passed": 21
+      },
+      {
+        "path": "zh-CN/2026/09/markdown-syntax-guide/index.html",
+        "checks": [
+          {
+            "feature": "headings 2 through 6",
+            "passed": true
+          },
+          {
+            "feature": "Setext heading syntax",
+            "passed": true
+          },
+          {
+            "feature": "paragraphs and hard line breaks",
+            "passed": true
+          },
+          {
+            "feature": "hyphen, asterisk, and underscore thematic breaks",
+            "passed": true
+          },
+          {
+            "feature": "emphasis and strong emphasis",
+            "passed": true
+          },
+          {
+            "feature": "strikethrough",
+            "passed": true
+          },
+          {
+            "feature": "inline and fenced code",
+            "passed": true
+          },
+          {
+            "feature": "tilde-fenced and four-space-indented code",
+            "passed": true
+          },
+          {
+            "feature": "code spans containing a literal backtick",
+            "passed": true
+          },
+          {
+            "feature": "escaped Markdown punctuation and character references",
+            "passed": true
+          },
+          {
+            "feature": "inline and reference links",
+            "passed": true
+          },
+          {
+            "feature": "GFM automatic links",
+            "passed": true
+          },
+          {
+            "feature": "angle-bracket, www, and email automatic links",
+            "passed": true
+          },
+          {
+            "feature": "images with alternative text",
+            "passed": true
+          },
+          {
+            "feature": "nested lists with inline formatting",
+            "passed": true
+          },
+          {
+            "feature": "task lists with accessible status names",
+            "passed": true
+          },
+          {
+            "feature": "lists nested inside block quotes",
+            "passed": true
+          },
+          {
+            "feature": "nested block quotes",
+            "passed": true
+          },
+          {
+            "feature": "tables and inline table syntax",
+            "passed": true
+          },
+          {
+            "feature": "safe semantic inline HTML",
+            "passed": true
+          },
+          {
+            "feature": "sanitization of active script markup",
+            "passed": true
+          }
+        ],
+        "passed": 21
+      }
+    ]
+  },
+  "errors": 0,
+  "warnings": 2,
+  "accessibility": {
+    "status": "pass",
+    "score": 100,
+    "checks": 745,
+    "errors": 0,
+    "warnings": 0
+  },
+  "agentFriendliness": {
+    "status": "pass",
+    "score": 100,
+    "checks": 602,
+    "errors": 0,
+    "warnings": 0
+  },
+  "metrics": {
+    "htmlBytes": 250576,
+    "stylesheets": 40,
+    "blockingStylesheets": 40,
+    "scripts": 82,
+    "blockingScripts": 0
+  },
+  "hashedAssets": [
+    "edgepress/language-select.14a322c1194ce0fc.js",
+    "edgepress/plugins/advertising/google-adsense.0995593bca3c96ff.js",
+    "edgepress/plugins/captcha/cloudflare-turnstile.55d163f844cae318.js",
+    "edgepress/plugins/captcha/google-recaptcha.cf155fd8038ecd35.js",
+    "edgepress/plugins/captcha/hcaptcha.611db0459aa1b616.js",
+    "edgepress/plugins/consent/manager.4b3631756846c8d0.js",
+    "edgepress/plugins/statistics/baidu-tongji.f6c6968947073cf9.js",
+    "edgepress/plugins/statistics/cloudflare-web-analytics.bf4305efb7954f55.js",
+    "edgepress/plugins/statistics/google-analytics.633c894d4a1b305f.js",
+    "edgepress/plugins/tracking/google-tag-manager.1196b66874a6f951.js",
+    "edgepress/plugins/tracking/meta-pixel.c586d7cef657a51d.js",
+    "edgepress/search.a73d8f19232801e3.js",
+    "style.6d137ac354781b17.css"
+  ],
+  "issues": [
+    {
+      "severity": "warning",
+      "category": "publication-readiness",
+      "page": "config.yml",
+      "message": "Replace the example site URL with the published site URL."
+    },
+    {
+      "severity": "warning",
+      "category": "publication-readiness",
+      "page": "config.yml",
+      "message": "Add the real site operator name and privacy contact before publishing the privacy policy."
+    }
+  ],
+  "scope": [
+    "Accessibility checks inspect generated HTML and CSS. They do not measure color contrast, screen-reader behavior, keyboard interactions in a browser, or dynamic vendor widgets.",
+    "Agent-friendliness checks inspect metadata, structured data, internal links, robots.txt, sitemap.xml, and llms.txt. They do not guarantee crawler indexing or answer quality.",
+    "This automated report is not a legal-compliance assessment or a substitute for manual review.",
+    "Screenshots capture generated local pages at desktop and mobile viewports. They do not replace manual keyboard, zoom, contrast, or assistive-technology review."
+  ],
+  "visualEvidence": {
+    "status": "complete",
+    "pdf": "tools/page-check.pdf",
+    "screenshots": [
+      {
+        "page": "2026/09/edgepress-release-2026-9-1/index.html",
+        "type": "post",
+        "title": "EdgePress September 2026 update",
+        "viewport": "desktop",
+        "width": 1440,
+        "height": 1100,
+        "viewportWidth": 1440,
+        "documentWidth": 1425,
+        "path": "tools/page-check-screenshots/page-1a69f3c70e.png",
+        "label": "2026/09/edgepress-release-2026-9-1/index.html · desktop (1440×1100)"
+      },
+      {
+        "page": "2026/09/edgepress-release-2026-9-1/index.html",
+        "type": "post",
+        "title": "EdgePress September 2026 update",
+        "viewport": "mobile",
+        "width": 390,
+        "height": 844,
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "path": "tools/page-check-screenshots/page-a0675bae17.png",
+        "label": "2026/09/edgepress-release-2026-9-1/index.html · mobile (390×844)"
+      },
+      {
+        "page": "2026/09/edgepress-release-2026-9-2/index.html",
+        "type": "post",
+        "title": "EdgePress September 2026 update: request 2",
+        "viewport": "desktop",
+        "width": 1440,
+        "height": 1100,
+        "viewportWidth": 1440,
+        "documentWidth": 1425,
+        "path": "tools/page-check-screenshots/page-28e8a21a17.png",
+        "label": "2026/09/edgepress-release-2026-9-2/index.html · desktop (1440×1100)"
+      },
+      {
+        "page": "2026/09/edgepress-release-2026-9-2/index.html",
+        "type": "post",
+        "title": "EdgePress September 2026 update: request 2",
+        "viewport": "mobile",
+        "width": 390,
+        "height": 844,
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "path": "tools/page-check-screenshots/page-51425ff648.png",
+        "label": "2026/09/edgepress-release-2026-9-2/index.html · mobile (390×844)"
+      },
+      {
+        "page": "2026/09/markdown-syntax-guide/index.html",
+        "type": "post",
+        "title": "EdgePress and Markdown: a complete writing guide",
+        "viewport": "desktop",
+        "width": 1440,
+        "height": 1100,
+        "viewportWidth": 1440,
+        "documentWidth": 1425,
+        "path": "tools/page-check-screenshots/page-72dd2c8ef0.png",
+        "label": "2026/09/markdown-syntax-guide/index.html · desktop (1440×1100)"
+      },
+      {
+        "page": "2026/09/markdown-syntax-guide/index.html",
+        "type": "post",
+        "title": "EdgePress and Markdown: a complete writing guide",
+        "viewport": "mobile",
+        "width": 390,
+        "height": 844,
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "path": "tools/page-check-screenshots/page-0fe8fc61c4.png",
+        "label": "2026/09/markdown-syntax-guide/index.html · mobile (390×844)"
+      },
+      {
+        "page": "index.html",
+        "type": "homepage",
+        "title": "Build a fast website from clear, editable source files.",
+        "viewport": "desktop",
+        "width": 1440,
+        "height": 1100,
+        "viewportWidth": 1440,
+        "documentWidth": 1425,
+        "path": "tools/page-check-screenshots/page-ee1c3d6e11.png",
+        "label": "index.html · desktop (1440×1100)"
+      },
+      {
+        "page": "index.html",
+        "type": "homepage",
+        "title": "Build a fast website from clear, editable source files.",
+        "viewport": "mobile",
+        "width": 390,
+        "height": 844,
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "path": "tools/page-check-screenshots/page-89b8917b56.png",
+        "label": "index.html · mobile (390×844)"
+      },
+      {
+        "page": "plugin-development/index.html",
+        "type": "page",
+        "title": "Plugin development",
+        "viewport": "mobile",
+        "width": 390,
+        "height": 844,
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "path": "tools/page-check-screenshots/page-ffdeb6b3c5.png",
+        "label": "plugin-development/index.html · mobile (390×844)"
+      },
+      {
+        "page": "privacy-policy/index.html",
+        "type": "page",
+        "title": "Privacy policy",
+        "viewport": "desktop",
+        "width": 1440,
+        "height": 1100,
+        "viewportWidth": 1440,
+        "documentWidth": 1425,
+        "path": "tools/page-check-screenshots/page-0d1f478833.png",
+        "label": "privacy-policy/index.html · desktop (1440×1100)"
+      },
+      {
+        "page": "privacy-policy/index.html",
+        "type": "page",
+        "title": "Privacy policy",
+        "viewport": "mobile",
+        "width": 390,
+        "height": 844,
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "path": "tools/page-check-screenshots/page-c895171d97.png",
+        "label": "privacy-policy/index.html · mobile (390×844)"
+      },
+      {
+        "page": "project-introduction/index.html",
+        "type": "page",
+        "title": "Project introduction",
+        "viewport": "mobile",
+        "width": 390,
+        "height": 844,
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "path": "tools/page-check-screenshots/page-7bb6eb8bf9.png",
+        "label": "project-introduction/index.html · mobile (390×844)"
+      },
+      {
+        "page": "quick-start/index.html",
+        "type": "page",
+        "title": "Quick start",
+        "viewport": "mobile",
+        "width": 390,
+        "height": 844,
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "path": "tools/page-check-screenshots/page-10a7740137.png",
+        "label": "quick-start/index.html · mobile (390×844)"
+      },
+      {
+        "page": "theme-development/index.html",
+        "type": "page",
+        "title": "Theme development",
+        "viewport": "mobile",
+        "width": 390,
+        "height": 844,
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "path": "tools/page-check-screenshots/page-b567f4d70b.png",
+        "label": "theme-development/index.html · mobile (390×844)"
+      },
+      {
+        "page": "zh-CN/2026/09/edgepress-release-2026-9-1/index.html",
+        "type": "post",
+        "title": "EdgePress 2026 年 9 月更新",
+        "viewport": "desktop",
+        "width": 1440,
+        "height": 1100,
+        "viewportWidth": 1440,
+        "documentWidth": 1425,
+        "path": "tools/page-check-screenshots/page-af6970487b.png",
+        "label": "zh-CN/2026/09/edgepress-release-2026-9-1/index.html · desktop (1440×1100)"
+      },
+      {
+        "page": "zh-CN/2026/09/edgepress-release-2026-9-1/index.html",
+        "type": "post",
+        "title": "EdgePress 2026 年 9 月更新",
+        "viewport": "mobile",
+        "width": 390,
+        "height": 844,
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "path": "tools/page-check-screenshots/page-b99b22b763.png",
+        "label": "zh-CN/2026/09/edgepress-release-2026-9-1/index.html · mobile (390×844)"
+      },
+      {
+        "page": "zh-CN/2026/09/edgepress-release-2026-9-2/index.html",
+        "type": "post",
+        "title": "EdgePress 2026 年 9 月更新：第 2 次需求",
+        "viewport": "desktop",
+        "width": 1440,
+        "height": 1100,
+        "viewportWidth": 1440,
+        "documentWidth": 1440,
+        "path": "tools/page-check-screenshots/page-5c8a9c41e4.png",
+        "label": "zh-CN/2026/09/edgepress-release-2026-9-2/index.html · desktop (1440×1100)"
+      },
+      {
+        "page": "zh-CN/2026/09/edgepress-release-2026-9-2/index.html",
+        "type": "post",
+        "title": "EdgePress 2026 年 9 月更新：第 2 次需求",
+        "viewport": "mobile",
+        "width": 390,
+        "height": 844,
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "path": "tools/page-check-screenshots/page-48034736da.png",
+        "label": "zh-CN/2026/09/edgepress-release-2026-9-2/index.html · mobile (390×844)"
+      },
+      {
+        "page": "zh-CN/2026/09/markdown-syntax-guide/index.html",
+        "type": "post",
+        "title": "EdgePress 与 Markdown：完整写作指南",
+        "viewport": "desktop",
+        "width": 1440,
+        "height": 1100,
+        "viewportWidth": 1440,
+        "documentWidth": 1425,
+        "path": "tools/page-check-screenshots/page-dd77a99fb7.png",
+        "label": "zh-CN/2026/09/markdown-syntax-guide/index.html · desktop (1440×1100)"
+      },
+      {
+        "page": "zh-CN/2026/09/markdown-syntax-guide/index.html",
+        "type": "post",
+        "title": "EdgePress 与 Markdown：完整写作指南",
+        "viewport": "mobile",
+        "width": 390,
+        "height": 844,
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "path": "tools/page-check-screenshots/page-494e50836d.png",
+        "label": "zh-CN/2026/09/markdown-syntax-guide/index.html · mobile (390×844)"
+      },
+      {
+        "page": "zh-CN/index.html",
+        "type": "homepage",
+        "title": "用清晰、可编辑的源文件构建快速网站。",
+        "viewport": "desktop",
+        "width": 1440,
+        "height": 1100,
+        "viewportWidth": 1440,
+        "documentWidth": 1425,
+        "path": "tools/page-check-screenshots/page-71c57c89f6.png",
+        "label": "zh-CN/index.html · desktop (1440×1100)"
+      },
+      {
+        "page": "zh-CN/index.html",
+        "type": "homepage",
+        "title": "用清晰、可编辑的源文件构建快速网站。",
+        "viewport": "mobile",
+        "width": 390,
+        "height": 844,
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "path": "tools/page-check-screenshots/page-476de61daa.png",
+        "label": "zh-CN/index.html · mobile (390×844)"
+      },
+      {
+        "page": "zh-CN/plugin-development/index.html",
+        "type": "page",
+        "title": "插件开发",
+        "viewport": "mobile",
+        "width": 390,
+        "height": 844,
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "path": "tools/page-check-screenshots/page-4d890181ff.png",
+        "label": "zh-CN/plugin-development/index.html · mobile (390×844)"
+      },
+      {
+        "page": "zh-CN/privacy-policy/index.html",
+        "type": "page",
+        "title": "隐私政策",
+        "viewport": "desktop",
+        "width": 1440,
+        "height": 1100,
+        "viewportWidth": 1440,
+        "documentWidth": 1425,
+        "path": "tools/page-check-screenshots/page-5031c5be65.png",
+        "label": "zh-CN/privacy-policy/index.html · desktop (1440×1100)"
+      },
+      {
+        "page": "zh-CN/privacy-policy/index.html",
+        "type": "page",
+        "title": "隐私政策",
+        "viewport": "mobile",
+        "width": 390,
+        "height": 844,
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "path": "tools/page-check-screenshots/page-0b33a6ba50.png",
+        "label": "zh-CN/privacy-policy/index.html · mobile (390×844)"
+      },
+      {
+        "page": "zh-CN/project-introduction/index.html",
+        "type": "page",
+        "title": "项目介绍",
+        "viewport": "mobile",
+        "width": 390,
+        "height": 844,
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "path": "tools/page-check-screenshots/page-063b595d95.png",
+        "label": "zh-CN/project-introduction/index.html · mobile (390×844)"
+      },
+      {
+        "page": "zh-CN/quick-start/index.html",
+        "type": "page",
+        "title": "快速入门",
+        "viewport": "mobile",
+        "width": 390,
+        "height": 844,
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "path": "tools/page-check-screenshots/page-449eb122ac.png",
+        "label": "zh-CN/quick-start/index.html · mobile (390×844)"
+      },
+      {
+        "page": "zh-CN/theme-development/index.html",
+        "type": "page",
+        "title": "主题开发",
+        "viewport": "mobile",
+        "width": 390,
+        "height": 844,
+        "viewportWidth": 390,
+        "documentWidth": 390,
+        "path": "tools/page-check-screenshots/page-eaac5e04b2.png",
+        "label": "zh-CN/theme-development/index.html · mobile (390×844)"
+      }
+    ],
+    "reportAccessibility": {
+      "status": "pass",
+      "checks": 11,
+      "passed": 11,
+      "results": [
+        {
+          "name": "document language",
+          "passed": true
+        },
+        {
+          "name": "document title",
+          "passed": true
+        },
+        {
+          "name": "skip link and main landmark",
+          "passed": true
+        },
+        {
+          "name": "one report title",
+          "passed": true
+        },
+        {
+          "name": "labeled report navigation",
+          "passed": true
+        },
+        {
+          "name": "sequential heading levels",
+          "passed": true
+        },
+        {
+          "name": "described screenshot images",
+          "passed": true
+        },
+        {
+          "name": "named report links",
+          "passed": true
+        },
+        {
+          "name": "captioned tables with scoped headers",
+          "passed": true
+        },
+        {
+          "name": "unique in-page section targets",
+          "passed": true
+        },
+        {
+          "name": "visible keyboard focus",
+          "passed": true
+        }
+      ]
+    }
+  }
+}
