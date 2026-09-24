@@ -1,4 +1,14 @@
-import { localizedUrl, translate } from '../../src/i18n.js';
+function translate(config, locale, key) {
+  const base = config.i18n.translationsByLocale?.[config.i18n.defaultLocale];
+  const selected = config.i18n.translationsByLocale?.[locale];
+  return selected?.[key] ?? base?.[key] ?? key;
+}
+
+function localizedUrl(config, locale, path) {
+  const prefix = locale === config.i18n.defaultLocale ? '' : '/' + locale;
+  const suffix = String(path ?? '').replace(/^\/+/, '');
+  return prefix + '/' + suffix;
+}
 
 function safeJson(value) {
   return JSON.stringify(value).replace(/</g, '\\u003c').replace(/&/g, '\\u0026').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
