@@ -10,6 +10,31 @@ import { slugify } from './content.js';
 import { checkPages } from './page-check.js';
 import { checkCompatibility, writeIterationPlan } from './maintenance.js';
 
+const siteGitignore = ['node_modules/', 'dist/', '.edgepress/', '.wrangler/', '.dev.vars', '*.tgz', ''].join('\n');
+const siteReadme = [
+  '# My EdgePress site',
+  '',
+  'Static site source built with EdgePress. Use Node.js 22.12 or newer.',
+  '',
+  '## Start locally',
+  '',
+  '    npm install',
+  '    edgepress server',
+  '',
+  'Edit localized pages in `content/pages/` and Markdown posts in `content/posts/`. Choose a shared layout with `edgepress theme list` and `edgepress theme use <name>`.',
+  '',
+  '## Deploy to Cloudflare Workers',
+  '',
+  'Push this source repository to GitHub, then connect the repository to Cloudflare Workers Builds. The `build` and `deploy` scripts in `package.json` generate the static files and deploy the Worker. Set a unique Worker name in `wrangler.jsonc` first.',
+  '',
+  'For a local deployment, run `npx wrangler login`, then `edgepress deploy`.',
+  '',
+  '## Use another static web server',
+  '',
+  'Run `edgepress generate` and upload the contents of `dist/` to the server document root. OpenResty and Nginx can serve the generated directories as static files. Worker API routes and service bindings need a Worker or an equivalent server-side route.',
+  ''
+].join('\n');
+
 async function initializeProject() {
   const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
   const root = process.cwd();
@@ -61,11 +86,11 @@ async function initializeProject() {
   };
   for (const directory of directories) await cp(resolve(packageRoot, directory), resolve(root, directory), { recursive: true, errorOnExist: true });
   for (const file of files) {
-    const source = file === '.gitignore' ? resolve(packageRoot, 'templates/gitignore') :
-      file === 'README.md' ? resolve(packageRoot, 'templates/site-readme.md') : resolve(packageRoot, file);
     const destination = resolve(root, file);
     await mkdir(dirname(destination), { recursive: true });
-    await cp(source, destination, { errorOnExist: true });
+    if (file === '.gitignore') await writeFile(destination, siteGitignore, { flag: 'wx' });
+    else if (file === 'README.md') await writeFile(destination, siteReadme, { flag: 'wx' });
+    else await cp(resolve(packageRoot, file), destination, { errorOnExist: true });
   }
   await mkdir(resolve(root, 'src'), { recursive: true });
   await cp(resolve(packageRoot, 'src/worker.js'), resolve(root, 'src/worker.js'), { errorOnExist: true });
@@ -324,7 +349,7 @@ try {
     await buildSite(config.root);
     const pageReport = await checkPages(config);
     const compatibilityReport = await checkCompatibility(config);
-    await showReport('Page check', pageReport, resolve(config.root, 'tools/page-check.md'));
+    await showReport('Page check', pageReport, resolve(config.root, 'tools/page-check.pdf'));
     await showReport('Compatibility check', compatibilityReport, resolve(config.resolvedPaths.cache, 'reports/compatibility.md'));
     if (pageReport.errors || compatibilityReport.issues.some((issue) => issue.severity === 'error')) process.exitCode = 1;
   } else if (command === 'doctor') {

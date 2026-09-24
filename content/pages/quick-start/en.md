@@ -10,7 +10,7 @@ blocks:
         - type: hero
           eyebrow: Start here
           title: Set up the project and open the live preview.
-          text: Use the edgepress command after installing project dependencies. Local preview rebuilds changed source files and refreshes the accessibility and agent-friendliness report.
+          text: Use the edgepress command after installing project dependencies. Local preview rebuilds changed source files and refreshes the PDF accessibility and agent-friendliness report.
   - columns: 1
     cells:
       -
@@ -76,7 +76,7 @@ blocks:
                 - Edit site title, description, canonical URL, agent SEO, site navigation, footer text, and privacy controller details in config.yml. Theme colors live in theme CSS.
                 - Change the selected theme with edgepress theme list and edgepress theme use <theme-name>. Theme paths are stored in edgepress.config.mjs.
                 - Install a theme package with edgepress theme install <npm-package> or start with a blank theme using edgepress theme create <name>.
-                - edgepress server starts a local Wrangler server, watches source files, rebuilds changed pages, reloads the browser, and rewrites tools/page-check.md and tools/page-check.json.
+                - edgepress server starts a local Wrangler server, watches source files, rebuilds changed pages, reloads the browser, and refreshes tools/page-check.pdf. Screenshots are embedded in the PDF and temporary files are removed after generation.
             - type: code
               title: Build, inspect, and deploy
               language: sh
@@ -85,14 +85,15 @@ blocks:
                 edgepress doctor
                 edgepress deploy
             - type: text
-              text: Compatibility checks read the Node.js baseline, Worker entry, and compatibility date from project-compatibility.json and wrangler.jsonc. Check the generated report before deploying.
+              text: Compatibility checks read the Node.js baseline, Worker entry, and compatibility date from project-compatibility.json and wrangler.jsonc. Review the PDF report before deploying.
             - type: section
               title: Publish the source on GitHub
               blocks:
                 - type: text
                   paragraphs:
                     - Create an empty repository on GitHub, then push the EdgePress source. In the Cloudflare dashboard, create a Worker and connect that repository with Workers Builds. Choose main as the production branch. Set a unique Worker name in wrangler.jsonc before deployment.
-                    - The build and deploy scripts in package.json are detected by Workers Builds. It runs npm run build to generate dist/, then npm run deploy to publish the Worker. dist/ stays out of Git. Cloudflare manages the build authorization for this connection.
+                    - For this repository, set Workers Builds root directory to /, build command to npm run build, and deploy command to npx wrangler deploy. No build variables are required. The build command generates dist/ before Wrangler publishes the Worker; dist/ stays out of Git.
+                    - If the log remains at Initializing build environment before cloning the repository or running commands, verify that the Cloudflare Workers and Pages GitHub App still has access to this repository. Reconnect the repository or reinstall and reauthorize the app, then retry. Check that the selected Cloudflare API token is still valid; Workers Builds can create a token automatically, and stale tokens must be replaced in Build settings. This stage runs before the project build command.
                 - type: code
                   title: Upload the source repository
                   language: sh
@@ -108,10 +109,12 @@ blocks:
                 - type: link-list
                   title: Deployment references
                   items:
-                    - label: Connect GitHub to Cloudflare Workers Builds
+                    - label: Connect or reauthorize the GitHub integration
                       url: https://developers.cloudflare.com/workers/ci-cd/builds/git-integration/github-integration/
                     - label: Configure Workers Builds commands
                       url: https://developers.cloudflare.com/workers/ci-cd/builds/configuration/
+                    - label: Troubleshoot Workers Builds
+                      url: https://developers.cloudflare.com/workers/ci-cd/builds/troubleshoot/
             - type: section
               title: Generate files for OpenResty or Nginx
               blocks:

@@ -247,7 +247,7 @@ function reportHtml(report, screenshots) {
     escapeHtml(String(report.markdownRendering?.checks || 0)) + ' syntax checks passed across the tutorial post locales.</p>' + markdownDetails + '</section>' +
     '<section id="evidence" class="appendix"><h2>Responsive page screenshots</h2><p>Mobile screenshots use a 390 by 844 CSS pixel viewport. Each caption includes the measured document width so horizontal overflow is visible in the report.</p>' +
     screenshotGroups + '</section><section id="scope"><h2>Scope and limits</h2><ul>' + report.scope.map((item) => '<li>' + escapeHtml(item) + '</li>').join('') +
-    '</ul></section></main><footer><p>EdgePress local build report. Use the HTML source for reflowable reading; screenshots are evidence and may contain text too small to read when printed.</p></footer></body></html>';
+    '</ul></section></main><footer><p>EdgePress local PDF report. Screenshot details are included as evidence and may be small when printed.</p></footer></body></html>';
 }
 
 function checkReportReadingStructure(html) {
@@ -351,73 +351,67 @@ function siteAddress(relativeFile) {
 
 export async function addVisualEvidence(config, report) {
   const root = resolve(config.root, 'tools');
-  const evidenceDirectory = resolve(root, 'page-check-screenshots');
   const directoryInfo = await lstat(root);
   if (directoryInfo.isSymbolicLink() || !directoryInfo.isDirectory()) throw new Error('Report directory must be a real directory');
-  await mkdir(evidenceDirectory, { recursive: true });
-  const evidenceInfo = await lstat(evidenceDirectory);
-  if (evidenceInfo.isSymbolicLink() || !evidenceInfo.isDirectory()) throw new Error('Screenshot directory must be a real directory');
   const browser = await browserPath();
   if (!browser) {
     return { status: 'unavailable', reason: 'Install Microsoft Edge, Chrome, or Chromium to capture page screenshots and PDF evidence.' };
   }
 
-  const documents = new Map((report.documents || []).map((item) => [item.path, item]));
-  const candidates = new Set((report.documents || [])
-    .filter((item) => ['post', 'page', 'homepage'].includes(item.type))
-    .map((item) => item.path));
-  for (const locale of config.i18n.locales) {
-    const prefix = locale === config.i18n.defaultLocale ? '' : locale + '/';
-    candidates.add(prefix + 'index.html');
-    candidates.add(prefix + 'privacy-policy/index.html');
-  }
-  for (const issue of report.issues) {
-    if (issue.page && issue.page.toLowerCase().endsWith('.html')) candidates.add(issue.page);
-  }
-
-  const available = [];
-  for (const relativeFile of candidates) {
-    const target = resolve(config.resolvedPaths.output, relativeFile);
-    try {
-      const info = await lstat(target);
-      if (info.isFile() && !info.isSymbolicLink()) available.push(relativeFile);
-    } catch (error) {
-      if (error.code !== 'ENOENT') throw error;
-    }
-  }
-
   const stamp = createHash('sha256').update(report.generatedAt).digest('hex').slice(0, 8);
-  const screenshots = [];
-  const desktop = { name: 'desktop', width: 1440, height: 1100 };
-  const mobile = { name: 'mobile', width: 390, height: 844 };
-  const homePaths = new Set(config.i18n.locales.map((locale) => locale === config.i18n.defaultLocale ? 'index.html' : locale + '/index.html'));
-  const privacyPaths = new Set(config.i18n.locales.map((locale) =>
-    (locale === config.i18n.defaultLocale ? '' : locale + '/') + 'privacy-policy/index.html'));
-  for (const relativeFile of available) {
-    const document = documents.get(relativeFile) || { type: 'system', title: relativeFile };
-    const viewports = homePaths.has(relativeFile) || privacyPaths.has(relativeFile) || document.type === 'post'
-      ? [desktop, mobile] : [mobile];
-    for (const viewport of viewports) {
-      const digest = createHash('sha256').update(relativeFile + ':' + viewport.name).digest('hex').slice(0, 10);
-      const file = 'page-' + digest + '.png';
-      const target = resolve(evidenceDirectory, file);
-      try {
-        const existing = await lstat(target);
-        if (existing.isSymbolicLink() || !existing.isFile()) throw new Error('Refusing an unsafe screenshot path: ' + target);
-      } catch (error) {
-        if (error.code !== 'ENOENT') throw error;
-      }
-      screenshots.push({ page: relativeFile, type: document.type, title: document.title, viewport: viewport.name, width: viewport.width,
-        height: viewport.height, file, target,
-        label: relativeFile + ' · ' + viewport.name + ' (' + viewport.width + '×' + viewport.height + ')' });
-    }
-  }
-  const htmlPath = resolve(root, 'page-check-visual.html');
-  const pdfPath = resolve(root, 'page-check.pdf');
   const profile = await mkdtemp(resolve(tmpdir(), 'edgepress-report-' + process.pid + '-' + stamp + '-'));
+  const evidenceDirectory = resolve(profile, 'page-check-screenshots');
+  const htmlPath = resolve(profile, 'report.html');
+  const pdfPath = resolve(root, 'page-check.pdf');
   let reportServer;
   let browserSession;
   try {
+    await mkdir(evidenceDirectory, { recursive: true });
+    const evidenceInfo = await lstat(evidenceDirectory);
+    if (evidenceInfo.isSymbolicLink() || !evidenceInfo.isDirectory()) throw new Error('Temporary screenshot directory must be a real directory');
+    const documents = new Map((report.documents || []).map((item) => [item.path, item]));
+    const candidates = new Set((report.documents || [])
+      .filter((item) => ['post', 'page', 'homepage'].includes(item.type))
+      .map((item) => item.path));
+    for (const locale of config.i18n.locales) {
+      const prefix = locale === config.i18n.defaultLocale ? '' : locale + '/';
+      candidates.add(prefix + 'index.html');
+      candidates.add(prefix + 'privacy-policy/index.html');
+    }
+    for (const issue of report.issues) {
+      if (issue.page && issue.page.toLowerCase().endsWith('.html')) candidates.add(issue.page);
+    }
+
+    const available = [];
+    for (const relativeFile of candidates) {
+      const target = resolve(config.resolvedPaths.output, relativeFile);
+      try {
+        const info = await lstat(target);
+        if (info.isFile() && !info.isSymbolicLink()) available.push(relativeFile);
+      } catch (error) {
+        if (error.code !== 'ENOENT') throw error;
+      }
+    }
+
+    const screenshots = [];
+    const desktop = { name: 'desktop', width: 1440, height: 1100 };
+    const mobile = { name: 'mobile', width: 390, height: 844 };
+    const homePaths = new Set(config.i18n.locales.map((locale) => locale === config.i18n.defaultLocale ? 'index.html' : locale + '/index.html'));
+    const privacyPaths = new Set(config.i18n.locales.map((locale) =>
+      (locale === config.i18n.defaultLocale ? '' : locale + '/') + 'privacy-policy/index.html'));
+    for (const relativeFile of available) {
+      const document = documents.get(relativeFile) || { type: 'system', title: relativeFile };
+      const viewports = homePaths.has(relativeFile) || privacyPaths.has(relativeFile) || document.type === 'post'
+        ? [desktop, mobile] : [mobile];
+      for (const viewport of viewports) {
+        const digest = createHash('sha256').update(relativeFile + ':' + viewport.name).digest('hex').slice(0, 10);
+        const file = 'page-' + digest + '.png';
+        const target = resolve(evidenceDirectory, file);
+        screenshots.push({ page: relativeFile, type: document.type, title: document.title, viewport: viewport.name, width: viewport.width,
+          height: viewport.height, file, target,
+          label: relativeFile + ' · ' + viewport.name + ' (' + viewport.width + '×' + viewport.height + ')' });
+      }
+    }
     reportServer = await startReportServer(config.resolvedPaths.output, evidenceDirectory, htmlPath);
     browserSession = await startHeadlessBrowser(browser, profile);
     for (const screenshot of screenshots) {
@@ -449,13 +443,13 @@ export async function addVisualEvidence(config, report) {
     report.visualEvidence = { status: 'complete', pdf: 'tools/page-check.pdf', screenshots: screenshots.map((item) => ({
       page: item.page, type: item.type, title: item.title, viewport: item.viewport, width: item.width, height: item.height,
       viewportWidth: item.viewportWidth, documentWidth: item.documentWidth,
-      path: 'tools/page-check-screenshots/' + item.file, label: item.label
+      label: item.label
     })) };
     const initialHtml = reportHtml(report, screenshots);
     const reportAccessibility = checkReportReadingStructure(initialHtml);
     report.visualEvidence.reportAccessibility = reportAccessibility;
     for (const check of reportAccessibility.results.filter((item) => !item.passed)) {
-      report.issues.push({ severity: 'error', category: 'report-accessibility', page: 'tools/page-check-visual.html',
+      report.issues.push({ severity: 'error', category: 'report-accessibility', page: 'tools/page-check.pdf',
         message: 'Report reading requirement failed: ' + check.name + '.' });
     }
     report.errors = report.issues.filter((item) => item.severity === 'error').length;

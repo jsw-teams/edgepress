@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "frameworkVersion": "2026.9.3",
+  "frameworkVersion": "2026.9.4",
   "requirements": {
     "nodeMajor": 22,
     "nodeMinimumVersion": "22.12.0",
@@ -15,7 +15,7 @@
     { "name": "Row-based editable pages and reusable layout components", "stage": "experimental", "since": "2026.9.1" },
     { "name": "Image/video with text and display typography elements", "stage": "experimental", "since": "2026.9.1" },
     { "name": "i18n locale routes", "stage": "experimental", "since": "2026.9.1" },
-    { "name": "Accessibility and agent-friendliness report with screenshots and PDF", "stage": "experimental", "since": "2026.9.1" },
+    { "name": "Accessibility and agent-friendliness PDF report with embedded screenshots", "stage": "experimental", "since": "2026.9.1" },
     { "name": "Consent-gated browser plugins", "stage": "experimental", "since": "2026.9.1" },
     { "name": "Service binding and URL/token backend proxy", "stage": "experimental", "since": "2026.9.1" },
     { "name": "Live local preview and theme switching", "stage": "experimental", "since": "2026.9.1" },
@@ -23,7 +23,8 @@
     { "name": "Local browser search across Markdown posts", "stage": "experimental", "since": "2026.9.2" },
     { "name": "Markdown syntax verification and responsive post screenshots", "stage": "experimental", "since": "2026.9.2" },
     { "name": "Compact localized language selector", "stage": "experimental", "since": "2026.9.2" },
-    { "name": "npm theme installation and blank theme scaffolds", "stage": "experimental", "since": "2026.9.3" }
+    { "name": "npm theme installation and blank theme scaffolds", "stage": "experimental", "since": "2026.9.3" },
+    { "name": "PDF-only audit output and temporary screenshot capture", "stage": "experimental", "since": "2026.9.4" }
   ],
   "releaseHistory": [
     {
@@ -43,6 +44,12 @@
       "date": "2026-09-25",
       "request": 3,
       "notes": "Published EdgePress for npm installation, added npm theme installation and blank theme packages, documented GitHub and Cloudflare Workers Builds deployment, and added a Cloudflare one-click deployment button."
+    },
+    {
+      "version": "2026.9.4",
+      "date": "2026-09-25",
+      "request": 4,
+      "notes": "Keep audit output as a single accessible PDF with embedded screenshots, remove the templates directory and package archive, document Workers Builds initialization troubleshooting, and pin the Wrangler compatibility date to the first of the month."
     }
   ]
 }

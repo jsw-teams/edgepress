@@ -1,4 +1,4 @@
-import { access, lstat, mkdir, readFile, readdir, realpath, writeFile } from 'node:fs/promises';
+import { access, lstat, mkdir, readFile, readdir, realpath, rm } from 'node:fs/promises';
 import { extname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { addVisualEvidence } from './report-visuals.js';
 
@@ -134,49 +134,6 @@ function auditSummary(checks, findings) {
     errors,
     warnings
   };
-}
-
-function markdownReport(report) {
-  const lines = [
-    '# EdgePress accessibility and agent-friendliness audit',
-    '',
-    'Overall status: **' + report.status + '**',
-    '',
-    '| Audit | Status | Score | Checks | Errors | Warnings |',
-    '| --- | --- | ---: | ---: | ---: | ---: |',
-    '| Accessibility | ' + report.accessibility.status + ' | ' + report.accessibility.score + '% | ' + report.accessibility.checks + ' | ' + report.accessibility.errors + ' | ' + report.accessibility.warnings + ' |',
-    '| Agent friendliness | ' + report.agentFriendliness.status + ' | ' + report.agentFriendliness.score + '% | ' + report.agentFriendliness.checks + ' | ' + report.agentFriendliness.errors + ' | ' + report.agentFriendliness.warnings + ' |',
-    '| Markdown rendering | ' + report.markdownRendering.status + ' | ' + Math.floor(report.markdownRendering.passed / Math.max(1, report.markdownRendering.checks) * 100) + '% | ' + report.markdownRendering.checks + ' | ' + (report.markdownRendering.checks - report.markdownRendering.passed) + ' | 0 |',
-    '| Report reading structure | ' + (report.visualEvidence?.reportAccessibility?.status || 'pending') + ' | ' +
-      Math.floor((report.visualEvidence?.reportAccessibility?.passed || 0) / Math.max(1, report.visualEvidence?.reportAccessibility?.checks || 0) * 100) + '% | ' +
-      (report.visualEvidence?.reportAccessibility?.checks || 0) + ' | ' +
-      ((report.visualEvidence?.reportAccessibility?.checks || 0) - (report.visualEvidence?.reportAccessibility?.passed || 0)) + ' | 0 |',
-    '',
-    'Generated documents: ' + report.pages + ' | Posts: ' + report.contentSummary.posts + ' | Pages: ' + report.contentSummary.pages +
-      ' | System routes: ' + report.contentSummary.system + ' | Errors: ' + report.errors + ' | Warnings: ' + report.warnings,
-    'HTML bytes: ' + report.metrics.htmlBytes + ' | Stylesheet references: ' + report.metrics.stylesheets +
-      ' | Potentially render-blocking stylesheets: ' + report.metrics.blockingStylesheets +
-    ' | Script references: ' + report.metrics.scripts + ' | Blocking scripts: ' + report.metrics.blockingScripts,
-    '',
-    report.visualEvidence?.status === 'complete'
-      ? 'Accessible PDF evidence: [page-check.pdf](page-check.pdf) | HTML report: [page-check-visual.html](page-check-visual.html) | Screenshots: ' +
-        report.visualEvidence.screenshots.map((item) => '[' + item.title + ' · ' + item.viewport + ' (' + item.viewportWidth + '/' + item.documentWidth + ' px)](' + item.path.replace(/^tools\//, '') + ')').join(' · ')
-      : 'Visual evidence: ' + (report.visualEvidence?.reason || 'not generated'),
-    '',
-    '## Findings',
-    ''
-  ];
-  if (!report.issues.length) lines.push('No findings.');
-  for (const issue of report.issues) lines.push('- **' + issue.severity.toUpperCase() + ' · ' + issue.category + '** ' + issue.page + ' — ' + issue.message);
-  lines.push('', '## Markdown rendering', '', 'Verified ' + report.markdownRendering.passed + ' of ' + report.markdownRendering.checks +
-    ' syntax combinations in the generated tutorial post.');
-  for (const document of report.markdownRendering.documents) {
-    lines.push('', '### ' + document.path, '', ...document.checks.map((item) => '- [' + (item.passed ? 'x' : ' ') + '] ' + item.feature));
-  }
-  lines.push('', '## Documents reviewed', '', '| Type | Count |', '| --- | ---: |', '| Posts | ' + report.contentSummary.posts + ' |',
-    '| Customizable pages and homepages | ' + report.contentSummary.pages + ' |', '| System routes | ' + report.contentSummary.system + ' |');
-  lines.push('', '## Scope', '', ...report.scope.map((item) => '- ' + item), '', 'This report is written outside the public output directory.');
-  return lines.join('\n');
 }
 
 export async function checkPages(config) {
@@ -380,28 +337,35 @@ export async function checkPages(config) {
   const root = await realpath(config.root);
   const directory = await realpath(requestedDirectory);
   if (!isInside(root, directory)) throw new Error('Page-check report directory must stay inside the project root');
-  const jsonPath = resolve(directory, 'page-check.json');
-  const markdownPath = resolve(directory, 'page-check.md');
-  for (const file of [jsonPath, markdownPath]) {
+  for (const name of ['page-check.json', 'page-check.md', 'page-check-visual.html']) {
+    const file = resolve(directory, name);
     try {
       const info = await lstat(file);
-      if (info.isSymbolicLink() || !info.isFile()) throw new Error('Refusing an unsafe page-check report path: ' + file);
+      if (info.isSymbolicLink() || !info.isFile()) throw new Error('Refusing an unsafe legacy report path: ' + file);
+      await rm(file);
     } catch (error) {
       if (error.code !== 'ENOENT') throw error;
     }
   }
-  for (const file of [resolve(directory, 'page-check.pdf'), resolve(directory, 'page-check-visual.html')]) {
-    try {
-      const info = await lstat(file);
-      if (info.isSymbolicLink() || !info.isFile()) throw new Error('Refusing an unsafe visual report path: ' + file);
-    } catch (error) {
-      if (error.code !== 'ENOENT') throw error;
-    }
+  const screenshotsDirectory = resolve(directory, 'page-check-screenshots');
+  try {
+    const info = await lstat(screenshotsDirectory);
+    if (info.isSymbolicLink() || !info.isDirectory()) throw new Error('Refusing an unsafe legacy screenshots path: ' + screenshotsDirectory);
+    await rm(screenshotsDirectory, { recursive: true });
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+  const pdfPath = resolve(directory, 'page-check.pdf');
+  try {
+    const info = await lstat(pdfPath);
+    if (info.isSymbolicLink() || !info.isFile()) throw new Error('Refusing an unsafe PDF report path: ' + pdfPath);
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
   }
   try {
     report.visualEvidence = await addVisualEvidence(config, report);
     if (report.visualEvidence.status !== 'complete') {
-      issues.push({ severity: 'warning', category: 'visual-evidence', page: 'report', message: report.visualEvidence.reason || 'Visual evidence was not generated.' });
+      issues.push({ severity: 'warning', category: 'visual-evidence', page: 'report', message: report.visualEvidence.reason || 'PDF generation failed.' });
     }
   } catch (error) {
     report.visualEvidence = { status: 'failed', reason: error.message };
@@ -410,7 +374,5 @@ export async function checkPages(config) {
   report.errors = issues.filter((issue) => issue.severity === 'error').length;
   report.warnings = issues.filter((issue) => issue.severity === 'warning').length;
   report.status = report.errors ? 'fail' : report.warnings ? 'warning' : 'pass';
-  await writeFile(jsonPath, JSON.stringify(report, null, 2), 'utf8');
-  await writeFile(markdownPath, markdownReport(report), 'utf8');
   return report;
 }

@@ -1,6 +1,0 @@
-node_modules/
-dist/
-.edgepress/
-.wrangler/
-.dev.vars
-*.tgz

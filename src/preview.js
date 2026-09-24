@@ -57,7 +57,7 @@ async function main() {
     await buildSite(root, { preview: true });
     const currentConfig = await loadConfig(root);
     const report = await checkPages(currentConfig);
-    console.log('Accessibility and agent-friendliness report: ' + report.status +
+    console.log('Accessibility and agent-friendliness PDF report: ' + report.status +
       ' (' + report.accessibility.status + ', ' + report.agentFriendliness.status + ')');
   }
 

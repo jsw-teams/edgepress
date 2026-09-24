@@ -10,7 +10,7 @@ blocks:
         - type: hero
           eyebrow: 从这里开始
           title: 配置项目并打开实时预览。
-          text: 安装项目依赖后使用 edgepress 命令。本地预览会在源文件变更后自动构建，并刷新无障碍化和 agent 友好度报告。
+          text: 安装项目依赖后使用 edgepress 命令。本地预览会在源文件变更后自动构建，并刷新无障碍化和 agent 友好度 PDF 报告。
   - columns: 1
     cells:
       -
@@ -76,7 +76,7 @@ blocks:
                 - 在 config.yml 中编辑站点标题、简介、规范 URL、agent SEO、导航、页脚文字和隐私运营者信息。主题配色保存在各自主题的 CSS 中。
                 - 使用 edgepress theme list 查看主题，使用 edgepress theme use <主题名称> 切换主题。主题路径保存在 edgepress.config.mjs 中。
                 - 使用 edgepress theme install <npm-package> 安装主题包，或使用 edgepress theme create <名称> 创建空白主题。
-                - edgepress server 会启动本地 Wrangler 服务、监视源文件、重新构建变更页面、刷新浏览器，并更新 tools/page-check.md 和 tools/page-check.json。
+                - edgepress server 会启动本地 Wrangler 服务、监视源文件、重新构建变更页面、刷新浏览器，并更新 tools/page-check.pdf。截图会嵌入 PDF，生成后会清理临时文件。
             - type: code
               title: 构建、检查和部署
               language: sh
@@ -85,14 +85,15 @@ blocks:
                 edgepress doctor
                 edgepress deploy
             - type: text
-              text: 兼容性检查会读取 project-compatibility.json 和 wrangler.jsonc 中的 Node.js 基线、Worker 入口和兼容日期。部署前请查看生成的报告。
+              text: 兼容性检查会读取 project-compatibility.json 和 wrangler.jsonc 中的 Node.js 基线、Worker 入口和兼容日期。部署前请查看 PDF 报告。
             - type: section
               title: 将源代码上传到 GitHub
               blocks:
                 - type: text
                   paragraphs:
                     - 在 GitHub 创建空仓库并推送 EdgePress 源代码。然后在 Cloudflare 控制台创建 Worker，并通过 Workers Builds 连接该仓库，选择 main 作为生产分支。部署前请在 wrangler.jsonc 中设置唯一的 Worker 名称。
-                    - Workers Builds 会读取 package.json 中的 build 和 deploy 脚本，先运行 npm run build 生成 dist/，再运行 npm run deploy 发布 Worker。dist/ 不会提交到 Git；Cloudflare 会管理此连接的构建授权。
+                    - 此仓库的 Workers Builds 设置为：根目录 /、构建命令 npm run build、部署命令 npx wrangler deploy。无需添加构建变量。构建命令会先生成 dist/，再由 Wrangler 发布 Worker；dist/ 不会提交到 Git。
+                    - 如果日志在克隆仓库或运行命令前一直停留在 Initializing build environment，请检查 Cloudflare Workers and Pages GitHub App 是否仍有此仓库的访问权限。重新连接仓库，或重新安装并授权该 App 后再试。还需确认所选 Cloudflare API Token 仍有效；Workers Builds 可以自动创建 Token，如果已选 Token 失效，需要在 Build 设置中替换。此阶段尚未运行项目构建命令。
                 - type: code
                   title: 推送源代码仓库
                   language: sh
@@ -108,10 +109,12 @@ blocks:
                 - type: link-list
                   title: 部署参考
                   items:
-                    - label: 将 GitHub 连接到 Cloudflare Workers Builds
+                    - label: 连接或重新授权 GitHub 集成
                       url: https://developers.cloudflare.com/workers/ci-cd/builds/git-integration/github-integration/
                     - label: 配置 Workers Builds 命令
                       url: https://developers.cloudflare.com/workers/ci-cd/builds/configuration/
+                    - label: 排查 Workers Builds
+                      url: https://developers.cloudflare.com/workers/ci-cd/builds/troubleshoot/
             - type: section
               title: 为 OpenResty 或 Nginx 生成静态文件
               blocks:

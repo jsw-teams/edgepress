@@ -1,6 +1,6 @@
 {
   "name": "edgepress",
-  "version": "2026.9.3",
+  "version": "2026.9.4",
   "description": "A static website builder for Cloudflare Workers with editable pages, Markdown posts, local search, themes, and consent-gated integrations.",
   "type": "module",
   "bin": {
@@ -12,7 +12,6 @@
     "plugins",
     "src",
     "static",
-    "templates",
     "themes",
     "config.yml",
     "edgepress.config.mjs",

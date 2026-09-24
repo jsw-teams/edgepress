@@ -48,23 +48,23 @@ Posts under content/posts/ use the Markdown renderer. Themes own shared head, na
 - edgepress init: scaffold a new site in a project directory.
 - edgepress new "Article title": create a Markdown post.
 - edgepress build and edgepress generate: run the same generator and write static files to dist/ for Cloudflare Workers or static hosting.
-- edgepress server: start live local preview, rebuild on source changes, and refresh the audit report.
-- edgepress check: build, generate accessibility, agent-friendliness, and Markdown rendering findings, capture post/page desktop and mobile screenshots, and write the PDF report under tools/.
+- edgepress server: start live local preview, rebuild on source changes, and refresh the PDF audit report.
+- edgepress check: build, audit accessibility, agent-friendliness, and Markdown rendering, capture post/page desktop and mobile screenshots temporarily, and write only the PDF report under tools/.
 - edgepress doctor: inspect runtime and Worker compatibility.
 - edgepress theme list and edgepress theme use <name>: inspect or select an installed theme.
 - edgepress theme install <npm-package>[@version]: install a theme package from npm without running its install scripts.
 - edgepress theme create <name>: make an empty, accessible HTML theme skeleton with editable partials and a blank stylesheet.
 - edgepress secret put BACKEND_TOKEN: store the backend token in Wrangler.
 - edgepress deploy: build and deploy to Cloudflare Workers.
-- Connect a GitHub repository to Cloudflare Workers Builds to deploy on pushes to main. The build and deploy scripts are detected from package.json.
+- Connect a GitHub repository to Cloudflare Workers Builds to deploy on pushes to main. Set root directory `/`, build command `npm run build`, deploy command `npx wrangler deploy`, and leave build variables empty. See the [Cloudflare build troubleshooting guide](content/pages/quick-start/) if initialization stalls before commands run.
 - edgepress clean: remove generated site and report files.
 - edgepress iterate: create a report-only maintenance plan.
 - edgepress security: check dependency advisories.
 
-The generated report is written to tools/page-check.md and tools/page-check.json. The accessible HTML source is tools/page-check-visual.html; the tagged PDF report is tools/page-check.pdf, with desktop and mobile post/page screenshots in tools/page-check-screenshots/. The mobile entries include their measured viewport and document widths. These automated checks do not replace manual accessibility or legal review.
+The only persisted page-audit report is the accessible PDF at tools/page-check.pdf. Desktop and mobile screenshots are embedded in the PDF and removed from temporary storage afterward. Automated checks do not replace manual accessibility or legal review.
 
 The header search page filters Markdown posts from the generated local search index; it does not send search queries to an external service. The first post, “EdgePress and Markdown: a complete writing guide,” documents and verifies the supported Markdown syntax in English and Chinese.
 
 Project guides are published from content/pages/: project introduction, quick start, theme development, plugin development, and privacy policy. The privacy policy intentionally reports that the starter site still needs a real site URL, operator name, and privacy contact before publication.
 
-Version 2026.9.3 records the third requested release update for September 2026. It is available as the `edgepress` npm package. See the [request 1 notes](content/posts/2026-09-24-edgepress-release-2026-9-1/), [request 2 notes](content/posts/2026-09-25-edgepress-release-2026-9-2/), and [request 3 notes](content/posts/2026-09-25-edgepress-release-2026-9-3/).
+Version 2026.9.4 records the fourth requested release update for September 2026. It is available as the `edgepress` npm package. See the [request 1 notes](content/posts/2026-09-24-edgepress-release-2026-9-1/), [request 2 notes](content/posts/2026-09-25-edgepress-release-2026-9-2/), [request 3 notes](content/posts/2026-09-25-edgepress-release-2026-9-3/), and [request 4 notes](content/posts/2026-09-25-edgepress-release-2026-9-4/).
