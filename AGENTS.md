@@ -44,3 +44,9 @@ EdgePress builds static websites from Markdown and YAML source. Follow these rul
 - `edgepress doctor`: run Worker compatibility checks.
 
 Read the guides in `content/pages/` before extending themes, page blocks, or plugins.
+
+## 命令被策略拦截时
+
+- 带 `-Force` 的检查命令（如 `Get-ChildItem -Force`）应与删除、修改、服务启停等操作分成独立工具调用；仅换行或用分号分隔无效。
+- 遇到 `blocked by policy`，先检查完整脚本是否混用了上述命令和参数，不要直接归因于权限不足。
+- 每步执行后核验实际结果；仍被拦截时如实记录命令和错误。
