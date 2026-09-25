@@ -1,11 +1,13 @@
 ---
 title: EdgePress September 2026 update
+author: toewpq
 date: 2026-09-24
 lang: en
 tags:
   - release
   - page builder
   - accessibility
+
 ---
 This is the first requested release update for September 2026.
 

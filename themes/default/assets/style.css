@@ -155,3 +155,51 @@ main,.page-builder,.page-builder-row,.page-builder-cell,.post,.post-content,.pos
 .locale-nav select{max-width:min(100%,13rem);padding:7px 30px 7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font:inherit;cursor:pointer}
 .locale-nav select:focus-visible{outline:3px solid #cb774d;outline-offset:3px}
 @media(max-width:620px){.locale-nav select{min-height:42px;max-width:100%}}
+
+/* Article contents and code tools use theme styling and wrap on narrow screens. */
+.post-toc{max-width:760px;margin:24px auto;padding:18px 22px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+.post-toc h2{margin:0 0 8px;font-size:1.05rem;letter-spacing:0}
+.post-toc ol{margin:0;padding-inline-start:1.35rem}
+.post-toc li{padding:2px 0}
+.post-toc .post-toc-level-3{padding-inline-start:1rem}
+.post-toc .post-toc-level-4,.post-toc .post-toc-level-5,.post-toc .post-toc-level-6{padding-inline-start:2rem}
+.post-content h2[id],.post-content h3[id],.post-content h4[id],.post-content h5[id],.post-content h6[id]{scroll-margin-top:1rem}
+.code-copy-block{max-width:100%;margin:1.25em 0;border-radius:10px;overflow:hidden;background:#edf0ea}
+.code-copy-block pre{margin:0;border-radius:0}
+.code-copy-toolbar{display:flex;justify-content:flex-end;padding:7px 10px;background:var(--ink)}
+.code-copy-button{min-height:36px;padding:5px 12px;border:1px solid currentColor;border-radius:7px;background:transparent;color:var(--paper);font:600 .88rem/1.3 ui-sans-serif,system-ui,sans-serif;cursor:pointer}
+.code-copy-button:hover{background:var(--accent)}
+.code-copy-button:focus-visible{outline:3px solid #cb774d;outline-offset:2px}
+.code-copy-status{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.post-content pre,.code-widget pre,.steps-widget pre{max-width:100%;overflow-x:hidden;overflow-y:visible;white-space:pre-wrap;overflow-wrap:anywhere;word-break:normal;overscroll-behavior-inline:auto}
+.post-content pre code,.code-widget pre code,.steps-widget pre code{white-space:inherit;overflow-wrap:inherit;word-break:inherit}
+.pagination{flex-wrap:wrap;gap:12px}
+@media(max-width:620px){.post-toc{padding:14px}.code-copy-button{min-height:44px}.post-content pre,.code-widget pre,.steps-widget pre{padding:12px}}
+
+/* A sharper editorial palette: cobalt ink, lilac surfaces, and citrus highlights. */
+:root{--paper:#f7f8ff;--panel:#fff;--ink:#171a35;--muted:#5e6480;--line:#dce0f2;--accent:#3945c6;--warm:#d94d3f}
+body{background:radial-gradient(ellipse at 92% 0%,#e9e9ff 0,transparent 33%),var(--paper)}
+.hero-block,.cta-block{background:linear-gradient(118deg,#e5e7ff 0%,#fff0dc 100%)}
+.page-section--soft,.error-page{background:#f0f1ff}
+.page-section--accent{background:#ffefd7}
+.page-section--dark{background:#211d49}
+.hero-highlights li{background:#ffffffd9;border-color:#ffffff}
+.steps-widget pre,.code-widget pre,.code-copy-block{background:#211d49}
+.table-widget th{background:#ededff}
+.notice-widget{background:#f0f1ff}
+.notice-widget--warning{background:#fff0dc}
+.notice-widget--success{background:#e7f7ef}
+.code-copy-block pre{background:#211d49;color:#f7f8ff}
+.code-copy-button:focus-visible,.local-search-form :focus-visible{outline-color:var(--warm)}
+
+/* Shared EdgePress marks and SVG icons keep common navigation recognizable across themes. */
+.brand{display:inline-flex;align-items:center;gap:10px}
+.brand-mark{display:block;width:36px;height:36px;flex:0 0 auto;object-fit:contain}
+.primary-navigation a,.site-header nav a,.footer-navigation a{display:inline-flex;align-items:center;gap:.42em}
+.navigation-icon{display:block;width:1.05em;height:1.05em;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.hero-aside{display:grid;align-content:center;justify-items:center;gap:16px;min-width:0}
+.hero-mascot{display:block;width:min(100%,230px);height:auto;max-height:220px;object-fit:contain;filter:drop-shadow(0 9px 13px #315e4922)}
+.hero-aside .hero-highlights{width:100%;align-self:stretch}
+.feature-icon{display:block;width:34px;height:34px;margin:0 0 10px;color:var(--accent);fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.latest-posts-pagination{justify-content:flex-start;gap:16px;margin-top:18px}
+.latest-posts-pagination a:last-child{margin-left:auto}

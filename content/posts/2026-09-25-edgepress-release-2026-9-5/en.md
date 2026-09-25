@@ -1,11 +1,13 @@
 ---
 title: "EdgePress September 2026 update: request 5"
+author: toewpq
 date: 2026-09-25
 lang: en
 slug: edgepress-release-2026-9-5
 tags:
   - release
   - cloudflare
+
 ---
 
 This is the fifth requested EdgePress update for September 2026.

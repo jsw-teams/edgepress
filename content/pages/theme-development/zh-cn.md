@@ -39,6 +39,7 @@ blocks:
                 - 共享布局会渲染所有页面和文章。head、header 和 footer 局部模板提供常见网站组件。在 config.yml 中配置页面标题后缀与分隔符、站点标题、全站导航、语言链接、页脚内容和组件显示状态。
                 - 使用双花括号占位符输出经过转义的值。唯一允许的原样占位符是生成的页面内容、JSON-LD 和 EdgePress 生成的导航标记。保留跳转链接、唯一 main 主区域、带标签的导航、可见焦点和一个页面级 h1。
                 - 将 body 保持为全高纵向布局，并让 main 延伸，这样短页面的页脚也会留在视口底部。
+                - 在主题中统一设计代码块、复制按钮和文章目录。窄屏代码行会自动折行，复制控件具有清晰的键盘焦点，生成的文章目录会链接到标题锚点。
       -
         - type: section
           title: 选择主题配色
@@ -103,4 +104,26 @@ blocks:
                 - title: 预览网站
                   text: server 会监视源文件、重新构建输出、刷新浏览器，并更新无障碍化和 agent 友好度报告。
                   command: edgepress server
+  - columns: 1
+    cells:
+      -
+        - type: section
+          title: 使用共享图标库
+          tone: soft
+          text: EdgePress 随站点提供 22 个本地 SVG 图标 /edgepress/icons.svg。主题导航会自动使用图标；feature-grid 也可为功能卡片指定图标，不增加运行时依赖，也不会请求第三方服务器。
+          blocks:
+            - type: code
+              title: 在主题局部模板中添加装饰图标
+              language: html
+              code: |
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <use href="/edgepress/icons.svg#layers"></use>
+                </svg>
+            - type: code
+              title: 为功能卡片指定图标
+              language: yaml
+              code: |
+                - title: 文章使用 Markdown
+                  icon: file-text
+                  text: 撰写并发布文章。
 ---

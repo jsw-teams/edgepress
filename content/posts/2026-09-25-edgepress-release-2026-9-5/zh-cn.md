@@ -1,11 +1,13 @@
 ---
 title: EdgePress 2026 年 9 月更新：第 5 次需求
+author: toewpq
 date: 2026-09-25
 lang: zh-CN
 slug: edgepress-release-2026-9-5
 tags:
   - 发布
   - Cloudflare
+
 ---
 
 这是 EdgePress 在 2026 年 9 月针对第 5 次需求的更新。

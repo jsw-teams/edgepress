@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fbfaf5"/><stop offset="1" stop-color="#eee9dd"/></linearGradient>
+    <linearGradient id="field" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#dfeae0"/><stop offset="1" stop-color="#c9ddcf"/></linearGradient>
+    <filter id="card-shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#183729" flood-opacity=".12"/></filter>
+    <pattern id="dots" width="25" height="25" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.4" fill="#8da891" opacity=".42"/></pattern>
+  </defs>
+  <rect width="1200" height="630" rx="28" fill="url(#paper)"/>
+  <circle cx="1100" cy="62" r="245" fill="#f1e5d3" opacity=".75"/>
+  <circle cx="964" cy="333" r="242" fill="url(#field)"/>
+  <circle cx="964" cy="333" r="217" fill="url(#dots)" opacity=".7"/>
+  <path d="M680 463c104-93 172-139 274-139s184 47 255 121" fill="none" stroke="#74937b" stroke-width="2" stroke-dasharray="4 10" opacity=".55"/>
+  <circle cx="703" cy="442" r="7" fill="#e98263"/>
+  <circle cx="1182" cy="442" r="7" fill="#315e49"/>
+  <g transform="translate(68 67)">
+    <rect width="52" height="52" rx="16" fill="#315e49"/>
+    <path d="M13 12a2 2 0 0 1 2-2h15l9 9v21a2 2 0 0 1-2 2H15a2 2 0 0 1-2-2z" fill="#fbf8ef"/>
+    <path d="M30 10v9h9" fill="#e98263"/>
+    <path d="M19 25h13m-13 6h13m-13 6h9" stroke="#315e49" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="70" y="36" fill="#26382d" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="28" font-weight="700" letter-spacing="-.7">EdgePress</text>
+  </g>
+  <g fill="#26382d" font-family="Inter,Segoe UI,Arial,sans-serif">
+    <text x="72" y="235" font-size="60" font-weight="750" letter-spacing="-2.7">Build for the edge.</text>
+    <text x="72" y="306" font-size="60" font-weight="750" letter-spacing="-2.7">Publish with clarity.</text>
+    <text x="75" y="365" fill="#64756a" font-size="23" font-weight="450">A thoughtful way to build a fast, flexible website.</text>
+    <text x="75" y="400" fill="#64756a" font-size="23" font-weight="450">Markdown, editable pages, themes, and Workers.</text>
+  </g>
+  <g filter="url(#card-shadow)">
+    <rect x="72" y="460" width="516" height="91" rx="18" fill="#fffdf8" stroke="#e1ddd3"/>
+    <path d="M102 487h24l9 9v28h-33z" fill="#dce9dd" stroke="#315e49" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M126 487v9h9m-24 8h16m-16 7h16" fill="none" stroke="#315e49" stroke-width="1.7" stroke-linecap="round"/>
+    <text x="151" y="510" fill="#26382d" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="17" font-weight="650">Open source. Built for publishing.</text>
+    <text x="151" y="532" fill="#748176" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="14">Clear source in. A lightweight site out.</text>
+  </g>
+  <g transform="translate(950 55)">
+    <rect x="12" y="10" width="167" height="41" rx="20.5" fill="#fffdf8" stroke="#c7d7c9"/>
+    <circle cx="37" cy="30.5" r="5" fill="#e98263"/>
+    <text x="54" y="36" fill="#45634e" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13" font-weight="700" letter-spacing="1.4">PAGE BY PAGE</text>
+  </g>
+  <image href="mascot.png" x="755" y="72" width="430" height="478" preserveAspectRatio="xMidYMid meet"/>
+  <g transform="translate(936 557)">
+    <rect width="208" height="36" rx="18" fill="#315e49"/>
+    <text x="104" y="24" text-anchor="middle" fill="#fbf8ef" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12" font-weight="700" letter-spacing="1.5">PUBLISH WITH PURPOSE</text>
+  </g>
+  <path d="M1107 125c10-19 14-21 21-23-4 11-4 18-1 27-8-4-13-4-20-4Z" fill="#e98263"/>
+</svg>

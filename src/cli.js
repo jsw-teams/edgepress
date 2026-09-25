@@ -322,6 +322,11 @@ async function showReport(title, report, reportPath) {
   console.log('Report: ' + reportPath);
 }
 
+function showStatus(title, report) {
+  console.log(title + ': ' + report.status);
+  for (const issue of report.issues) console.log('- ' + issue.severity + ': ' + issue.message);
+}
+
 const [command, ...args] = process.argv.slice(2);
 try {
   const config = command === 'new' || command === 'clean' || command === 'check' || command === 'doctor' || command === 'iterate'
@@ -350,11 +355,11 @@ try {
     const pageReport = await checkPages(config);
     const compatibilityReport = await checkCompatibility(config);
     await showReport('Page check', pageReport, resolve(config.root, 'tools/page-check.pdf'));
-    await showReport('Compatibility check', compatibilityReport, resolve(config.resolvedPaths.cache, 'reports/compatibility.md'));
+    showStatus('Compatibility check', compatibilityReport);
     if (pageReport.errors || compatibilityReport.issues.some((issue) => issue.severity === 'error')) process.exitCode = 1;
   } else if (command === 'doctor') {
     const report = await checkCompatibility(config);
-    await showReport('Compatibility check', report, resolve(config.resolvedPaths.cache, 'reports/compatibility.md'));
+    showStatus('Compatibility check', report);
     if (report.issues.some((issue) => issue.severity === 'error')) process.exitCode = 1;
   } else if (command === 'iterate') {
     await buildSite(config.root);

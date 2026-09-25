@@ -1,5 +1,6 @@
 ---
 title: "EdgePress 与 Markdown：完整写作指南"
+author: toewpq
 date: 2026-09-23
 lang: zh-CN
 slug: markdown-syntax-guide
@@ -8,6 +9,7 @@ tags:
   - Markdown
   - 写作指南
 description: "通过可直接查看的示例，了解 EdgePress 支持的 Markdown、GitHub Flavored Markdown、安全 HTML、嵌套语法和功能边界。"
+
 ---
 
 EdgePress 对 **pages（页面）** 和 **posts（文章）** 采用不同的编辑方式。页面在 Markdown 前置资料中配置有序、可编辑的元素块；文章则使用 Markdown 渲染器。本文本身就是一篇实际渲染的文章，可作为语法参考。
@@ -164,6 +166,6 @@ GFM 也会把 `www.example.com` 与 `https://example.com` 转换成链接，并�
 
 ## 在 EdgePress 中写文章
 
-在 `content/posts/` 下为每篇文章建立目录，并放入 `en.md` 或 `zh-cn.md` 这样的语言文件。前置资料中的 `lang` 值必须与文件名匹配。添加标题、日期、网址别名、标签和可选摘要，再在前置资料之后编写 Markdown 正文。运行 `edgepress build` 生成文章；运行 `edgepress check` 则会构建网站，并输出无障碍、Agent 友好度、移动端截图与 Markdown 渲染报告。
+在 `content/posts/` 下为每篇文章建立目录，并放入 `en.md` 或 `zh-cn.md` 这样的语言文件。前置资料中的 `lang` 值必须与文件名匹配。添加标题、作者、日期、网址别名、标签和可选摘要，再在前置资料之后编写 Markdown 正文。作者会显示在文章卡片和文章页中，也会写入订阅源、搜索索引及 BlogPosting 结构化数据。运行 `edgepress build` 生成文章；运行 `edgepress check` 则会构建网站，并输出无障碍、Agent 友好度、移动端截图与 Markdown 渲染报告。
 
 本地文章搜索在浏览器中读取网站生成的 `search.json`，搜索文章标题和正文，不会把搜索词发送给第三方服务。

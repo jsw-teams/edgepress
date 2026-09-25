@@ -1,11 +1,13 @@
 ---
 title: EdgePress 2026 年 9 月更新
+author: toewpq
 date: 2026-09-24
 lang: zh-CN
 tags:
   - 发布
   - 页面构建器
   - 无障碍
+
 ---
 这是 2026 年 9 月针对本次需求的第一次更新。
 

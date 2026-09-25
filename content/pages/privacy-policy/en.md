@@ -15,7 +15,7 @@ blocks:
               nameLabel: Controller
               contactLabel: Privacy contact
               missingTitle: Publication setup required
-              missingText: The current config.yml has no real operator name or privacy contact, and site.url still uses example.com. Replace these values before publishing this policy.
+              missingText: config.yml still needs the site's real operator name and a working privacy contact. Add both before publishing this policy.
   - columns: 2
     cells:
       -

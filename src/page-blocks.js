@@ -1,5 +1,6 @@
 import { plainText } from './markdown.js';
 import { translate } from './i18n.js';
+import { isIconName, renderIcon } from './icons.js';
 
 const captchaProviders = new Set(['cloudflare-turnstile', 'google-recaptcha', 'hcaptcha']);
 
@@ -65,14 +66,24 @@ function renderPrivacyServices(context) {
 function renderLatestPosts(block, context) {
   const count = block.count ?? 3;
   if (!Number.isInteger(count) || count < 1 || count > 12) throw new Error('latest-posts.count must be an integer from 1 to 12');
+  const paginate = block.paginate ?? false;
+  if (typeof paginate !== 'boolean') throw new Error('latest-posts.paginate must be a boolean');
   const posts = context.site.posts.filter((post) => post.locale === context.locale ||
-    (!context.site.posts.some((item) => item.locale === context.locale) && post.locale === context.config.i18n.defaultLocale)).slice(0, count);
+    (!context.site.posts.some((item) => item.locale === context.locale) && post.locale === context.config.i18n.defaultLocale))
+    .sort((a, b) => b.date - a.date);
   const title = escapeHtml(text(block.title, 'latest-posts.title', 200));
-  const cards = posts.map((post) => '<article class="post-card"><h3><a href="' + escapeHtml('/' + post.path.split('/').filter(Boolean).join('/') + (post.path.endsWith('/') ? '/' : '')) + '">' +
+  const authorLabel = (post) => post.author ? '<span class="post-author">' + escapeHtml(translate(context.config, context.locale, 'postAuthor')
+    .replace('{author}', post.author)) + '</span>' : '';
+  const cards = posts.slice(0, count).map((post) => '<article class="post-card"><h3><a href="' + escapeHtml('/' + post.path.split('/').filter(Boolean).join('/') + (post.path.endsWith('/') ? '/' : '')) + '">' +
     escapeHtml(post.title) + '</a></h3><p class="meta"><time datetime="' + post.date.toISOString() + '">' + escapeHtml(dateLabel(post.date, context.locale)) +
-    '</time></p><p>' + escapeHtml(post.description || plainText(post.markdown).slice(0, 220)) + '</p></article>').join('');
+    '</time>' + (post.author ? ' · ' + authorLabel(post) : '') + '</p><p>' + escapeHtml(post.description || plainText(post.markdown).slice(0, 220)) + '</p></article>').join('');
+  const pagination = paginate && context.latestPostsPagination?.totalPages > 1
+    ? '<nav class="pagination latest-posts-pagination" aria-label="' + escapeHtml(translate(context.config, context.locale, 'pagination')) + '">' +
+      '<a rel="next" href="' + escapeHtml(context.latestPostsPagination.olderUrl) + '">' + escapeHtml(translate(context.config, context.locale, 'older')) + '</a>' +
+      '<a href="' + escapeHtml(context.latestPostsPagination.archiveUrl) + '">' + escapeHtml(translate(context.config, context.locale, 'allPosts')) + '</a></nav>'
+    : '';
   return '<section class="latest-posts"><h2>' + title + '</h2>' +
-    (cards ? '<div class="post-list">' + cards + '</div>' : '<p>' + escapeHtml(translate(context.config, context.locale, 'noPosts')) + '</p>') + '</section>';
+    (cards ? '<div class="post-list">' + cards + '</div>' : '<p>' + escapeHtml(translate(context.config, context.locale, 'noPosts')) + '</p>') + pagination + '</section>';
 }
 
 function renderMediaText(block) {
@@ -88,12 +99,13 @@ function renderMediaText(block) {
     media = '<img src="' + src + '" alt="' + alt + '" loading="lazy" decoding="async">';
   } else {
     if (!alt.trim()) throw new Error('media-text.alt must describe the video');
+    const videoSrc = escapeHtml(safeUrl(block.src, 'media-text.src'));
     const captions = escapeHtml(safeUrl(block.captions, 'media-text.captions'));
     const language = escapeHtml(text(block.captionLanguage, 'media-text.captionLanguage', 24));
     if (!/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(language)) throw new Error('media-text.captionLanguage must be a language tag');
     const trackLabel = escapeHtml(text(block.captionLabel, 'media-text.captionLabel', 120));
     const poster = block.poster ? ' poster="' + escapeHtml(safeUrl(block.poster, 'media-text.poster')) + '"' : '';
-    media = '<video controls preload="none" aria-label="' + alt + '"' + poster + '><source src="' + src + '"><track kind="captions" src="' + captions + '" srclang="' + language + '" label="' + trackLabel + '" default></video>';
+    media = '<video controls playsinline preload="metadata" aria-label="' + alt + '"' + poster + '><source src="' + videoSrc + '" type="video/mp4"><track kind="captions" src="' + captions + '" srclang="' + language + '" label="' + trackLabel + '" default></video>';
   }
   const title = text(block.title, 'media-text.title', 240, true);
   const content = text(block.text, 'media-text.text', 2000);
@@ -117,6 +129,9 @@ async function renderBlock(block, context, depth, index) {
       const level = context.isHomepage && index === 0 ? 'h1' : 'h2';
       const eyebrow = text(block.eyebrow, 'hero.eyebrow', 120, true);
       const description = text(block.text, 'hero.text', 1000, true);
+      const mascotSrc = block.mascotSrc === undefined ? '' : safeUrl(block.mascotSrc, 'hero.mascotSrc');
+      const mascotAlt = block.mascotAlt === undefined ? '' : text(block.mascotAlt, 'hero.mascotAlt', 500);
+      if (Boolean(mascotSrc) !== Boolean(mascotAlt)) throw new Error('hero.mascotSrc and hero.mascotAlt must be provided together');
       let action = '';
       if (block.cta) {
         const label = escapeHtml(text(block.cta.label, 'hero.cta.label', 120));
@@ -126,9 +141,12 @@ async function renderBlock(block, context, depth, index) {
       const highlights = block.highlights === undefined ? [] : list(block.highlights, 'hero.highlights', 1, 4);
       const highlightPanel = highlights.length ? '<ul class="hero-highlights">' + highlights.map((item) => '<li>' +
         escapeHtml(text(item, 'hero highlight', 180)) + '</li>').join('') + '</ul>' : '';
-      return '<section class="hero-block' + (highlightPanel ? ' hero-block--split' : '') + '"><div class="hero-main">' +
+      const mascot = mascotSrc ? '<img class="hero-mascot" src="' + escapeHtml(mascotSrc) + '" alt="' +
+        escapeHtml(mascotAlt) + '" width="1222" height="1287" decoding="async">' : '';
+      const aside = mascot || highlightPanel ? '<div class="hero-aside">' + mascot + highlightPanel + '</div>' : '';
+      return '<section class="hero-block' + (aside ? ' hero-block--split' : '') + '"><div class="hero-main">' +
         (eyebrow ? '<p class="eyebrow">' + escapeHtml(eyebrow) + '</p>' : '') + '<' + level + '>' + escapeHtml(heading) + '</' + level + '>' +
-        (description ? '<p class="hero-copy">' + escapeHtml(description) + '</p>' : '') + action + '</div>' + highlightPanel + '</section>';
+        (description ? '<p class="hero-copy">' + escapeHtml(description) + '</p>' : '') + action + '</div>' + aside + '</section>';
     }
     case 'section': {
       const heading = text(block.title, 'section.title', 200, true);
@@ -269,7 +287,10 @@ async function renderBlock(block, context, depth, index) {
         const title = escapeHtml(text(item?.title, 'feature title', 200));
         const description = escapeHtml(text(item?.text, 'feature text', 1000, true));
         const href = item?.url ? safeUrl(item.url, 'feature.url') : '';
-        return '<article class="feature-card"><h3>' + (href ? '<a href="' + escapeHtml(href) + '">' + title + '</a>' : title) + '</h3>' +
+        const iconName = item?.icon === undefined ? '' : text(item.icon, 'feature icon', 40);
+        if (iconName && !isIconName(iconName)) throw new Error('Unsupported feature icon: ' + iconName);
+        const icon = iconName ? renderIcon(iconName, 'feature-icon') : '';
+        return '<article class="feature-card">' + icon + '<h3>' + (href ? '<a href="' + escapeHtml(href) + '">' + title + '</a>' : title) + '</h3>' +
           (description ? '<p>' + description + '</p>' : '') + '</article>';
       }).join('');
       return '<section class="feature-section"><h2>' + escapeHtml(heading) + '</h2><div class="feature-grid">' + cells + '</div></section>';

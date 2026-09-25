@@ -15,7 +15,7 @@ blocks:
               nameLabel: 个人信息处理者
               contactLabel: 隐私联系
               missingTitle: 发布前需要补充信息
-              missingText: 当前 config.yml 尚未填写真实运营者名称和隐私联系方式，site.url 仍为 example.com。正式发布前请替换这些值。
+              missingText: config.yml 尚未填写真实运营者名称和有效的隐私联系方式。正式发布前请补充这两项信息。
   - columns: 2
     cells:
       -

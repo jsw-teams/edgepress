@@ -47,6 +47,36 @@ function normalizeTags(value) {
   return (Array.isArray(value) ? value : [value]).map(String).map((tag) => tag.trim()).filter(Boolean);
 }
 
+function normalizeAuthor(value, file) {
+  if (value === undefined || value === null || value === '') return '';
+  if (typeof value !== 'string' || !value.trim() || value.length > 160) {
+    throw new Error('author must be a non-empty string of at most 160 characters in ' + file);
+  }
+  return value.trim();
+}
+
+function normalizeVideo(value, file) {
+  if (value === undefined) return null;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('video must be an object in ' + file);
+  for (const key of Object.keys(value)) {
+    if (!['src', 'captions', 'captionLanguage', 'captionLabel', 'poster', 'alt', 'title', 'description'].includes(key)) {
+      throw new Error('Unsupported video field in ' + file + ': ' + key);
+    }
+  }
+  const localAsset = /^\/edgepress\/media\/[a-z0-9-]+\.(?:mp4|vtt|jpe?g)$/i;
+  for (const field of ['src', 'captions', 'poster']) {
+    if (typeof value[field] !== 'string' || !localAsset.test(value[field])) {
+      throw new Error('video.' + field + ' must reference a local /edgepress/media asset in ' + file);
+    }
+  }
+  if (typeof value.captionLanguage !== 'string' || !/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(value.captionLanguage) ||
+      typeof value.captionLabel !== 'string' || !value.captionLabel.trim() || typeof value.alt !== 'string' || !value.alt.trim() ||
+      typeof value.title !== 'string' || !value.title.trim() || typeof value.description !== 'string' || !value.description.trim()) {
+    throw new Error('video needs a language, labels, accessible description, title, and summary in ' + file);
+  }
+  return value;
+}
+
 function normalizeDate(value, filename, kind, file) {
   if (value instanceof Date) {
     if (!Number.isNaN(value.valueOf())) return value;
@@ -145,6 +175,9 @@ export async function readDocuments(config) {
     if (locale !== config.i18n.defaultLocale && metadata.homepage !== true) path = locale + '/' + path;
     return {
       kind, file, relativePath, title, slug, date, locale,
+      author: kind === 'posts' ? normalizeAuthor(metadata.author, file) : '',
+      videoId: (kind === 'posts' ? 'post-' : 'page-') + slugify(bundlePath + '-' + locale.toLowerCase()),
+      video: kind === 'posts' ? normalizeVideo(metadata.video, file) : null,
       tags: normalizeTags(metadata.tags),
       description: String(metadata.description ?? ''),
       keywords: normalizeTags(metadata.keywords),

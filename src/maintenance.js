@@ -17,29 +17,6 @@ function versionAtLeast(current, minimum) {
   return true;
 }
 
-function markdown(report) {
-  const lines = [
-    '# EdgePress compatibility report',
-    '',
-    'Status: **' + report.status + '**',
-    '',
-    'Node.js: ' + report.runtime.node,
-    'Minimum required Node.js: ' + report.requirements.nodeMinimumVersion,
-    'Workers compatibility date: ' + report.runtime.workersDate,
-    'Minimum required date: ' + report.requirements.minimumWorkersDate,
-    '',
-    '## Findings',
-    ''
-  ];
-  if (!report.issues.length) lines.push('No compatibility findings.');
-  for (const issue of report.issues) lines.push('- **' + issue.severity.toUpperCase() + '** ' + issue.message);
-  lines.push('', '## Feature lifecycle', '');
-  for (const feature of report.features) {
-    lines.push('- ' + feature.name + ': ' + feature.stage + ' (since ' + feature.since + ')');
-  }
-  return lines.join('\n');
-}
-
 export async function checkCompatibility(config) {
   const root = config.root;
   const manifest = await readJson(resolve(root, 'project-compatibility.json'));
@@ -77,10 +54,6 @@ export async function checkCompatibility(config) {
     features: manifest.features,
     issues
   };
-  const directory = resolve(config.resolvedPaths.cache, 'reports');
-  await mkdir(directory, { recursive: true });
-  await writeFile(resolve(directory, 'compatibility.json'), JSON.stringify(report, null, 2), 'utf8');
-  await writeFile(resolve(directory, 'compatibility.md'), markdown(report), 'utf8');
   return report;
 }
 

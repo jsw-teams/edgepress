@@ -1,6 +1,11 @@
 import { readFile, realpath } from 'node:fs/promises';
 import { relative, resolve, sep } from 'node:path';
 import { localePrefix, localizedUrl, translate } from './i18n.js';
+import { isIconName, renderIcon } from './icons.js';
+const defaultNavigationIcons = {
+  home: 'home', guides: 'book-open', 'quick-start': 'rocket', posts: 'newspaper',
+  search: 'search', privacy: 'shield-check', feed: 'rss'
+};
 
 function isInside(root, target) {
   const rel = relative(root, target);
@@ -27,7 +32,9 @@ function navigationItems(config, locale, items) {
           item.url === '@search' ? localizedUrl(config, locale, 'search/') :
           item.url.startsWith('/') ? localizedUrl(config, locale, item.url) : item.url;
     const label = item.labels?.[locale] ?? item.labels?.[config.i18n.defaultLocale] ?? translate(config, locale, item.key);
-    return '<a href="' + escapeHtml(path) + '">' + escapeHtml(label) + '</a>';
+    const iconName = item.icon || defaultNavigationIcons[item.key];
+    const icon = isIconName(iconName) ? renderIcon(iconName, 'navigation-icon') : '';
+    return '<a href="' + escapeHtml(path) + '">' + icon + escapeHtml(label) + '</a>';
   }).join('');
 }
 
@@ -157,5 +164,9 @@ export async function renderLayout(config, extensions, page, body) {
   const html = '<!doctype html>' + rendered;
   const filtered = await extensions.filter('html:afterLayout', html, context);
   if (typeof filtered !== 'string') throw new Error('html:afterLayout filters must return a string');
-  return filtered;
+  if (/src=["']\/edgepress\/code-copy\.js["']/i.test(filtered)) return filtered;
+  const codeCopyScript = '<script defer src="/edgepress/code-copy.js"></script>';
+  return /<\/body\s*>/i.test(filtered)
+    ? filtered.replace(/<\/body\s*>/i, codeCopyScript + '</body>')
+    : filtered + codeCopyScript;
 }

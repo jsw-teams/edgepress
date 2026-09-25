@@ -1,5 +1,6 @@
 ---
 title: "EdgePress September 2026 update: request 3"
+author: toewpq
 date: 2026-09-25
 lang: en
 slug: edgepress-release-2026-9-3
@@ -7,6 +8,7 @@ tags:
   - release
   - npm
   - themes
+
 ---
 
 This is the third requested EdgePress update for September 2026.

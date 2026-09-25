@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "frameworkVersion": "2026.9.5",
+  "frameworkVersion": "2026.9.6",
   "requirements": {
     "nodeMajor": 22,
     "nodeMinimumVersion": "22.12.0",
@@ -25,7 +25,9 @@
     { "name": "Compact localized language selector", "stage": "experimental", "since": "2026.9.2" },
     { "name": "npm theme installation and blank theme scaffolds", "stage": "experimental", "since": "2026.9.3" },
     { "name": "PDF-only audit output and temporary screenshot capture", "stage": "experimental", "since": "2026.9.4" },
-    { "name": "Cloudflare one-click deployment guidance for existing and new projects", "stage": "stable", "since": "2026.9.5" }
+    { "name": "Cloudflare one-click deployment guidance for existing and new projects", "stage": "stable", "since": "2026.9.5" },
+    { "name": "Localized Posts navigation and responsive code copy controls", "stage": "experimental", "since": "2026.9.6" },
+    { "name": "Linked tables of contents on Markdown post pages", "stage": "experimental", "since": "2026.9.6" }
   ],
   "releaseHistory": [
     {
@@ -57,6 +59,12 @@
       "date": "2026-09-25",
       "request": 5,
       "notes": "Clarify that the Cloudflare one-click deployment button creates a new repository copy and Worker, explain unique naming and the path for updating existing Workers, and publish the guidance in README and bilingual quick-start pages."
+    },
+    {
+      "version": "2026.9.6",
+      "date": "2026-09-25",
+      "request": 6,
+      "notes": "Add a localized Posts link, accessible code-copy controls, responsive command wrapping, and linked post contents; refresh the bundled theme palettes and set the canonical site URL and author metadata."
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "name": "edgepress",
-  "version": "2026.9.5",
+  "version": "2026.9.6",
   "description": "A static website builder for Cloudflare Workers with editable pages, Markdown posts, local search, themes, and consent-gated integrations.",
   "type": "module",
   "bin": {
@@ -17,7 +17,8 @@
     "edgepress.config.mjs",
     "project-compatibility.json",
     "wrangler.jsonc",
-    "README.md"
+    "README.md",
+    "CHANGELOG.txt"
   ],
   "repository": {
     "type": "git",
@@ -53,6 +54,7 @@
     "yaml": "^2.9.1"
   },
   "devDependencies": {
+    "playwright": "^1.63.0",
     "wrangler": "^4.129.1"
   }
 }

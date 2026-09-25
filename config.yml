@@ -1,8 +1,8 @@
-# Site owner settings. Replace the example URL before publishing.
+# Site owner metadata and shared website components.
 site:
   title: EdgePress
   description: A static website builder for Cloudflare Workers with editable pages, Markdown posts, themes, and plugins.
-  url: https://example.com
+  url: https://edgepress.js.gripe
   language: en
   head:
     titleSuffix: ""
@@ -32,6 +32,11 @@ site:
       labels:
         en: Quick start
         zh-CN: 快速入门
+    - key: posts
+      url: "@archives"
+      labels:
+        en: Posts
+        zh-CN: 文章
     - key: search
       url: "@search"
       labels:
@@ -50,12 +55,12 @@ site:
         zh-CN: Atom 订阅
   footer: ""
   seo:
-    author: EdgePress contributors
+    author: toewpq
     keywords:
       - Markdown website builder
       - Cloudflare Workers
       - static site generator
-    image: ""
+    image: https://edgepress.js.gripe/edgepress/brand/og-image.png
     robots: index,follow
   # GEO here means agent SEO: make authoritative project information easy to discover and interpret.
   agentSeo:
@@ -73,8 +78,8 @@ site:
       - PerplexityBot
 privacy:
   controller:
-    name: ""
-    contact: ""
+    name: toewpq
+    contact: toewpq@gmail.com
   policyUrl: /privacy-policy/
 plugins:
   consent:

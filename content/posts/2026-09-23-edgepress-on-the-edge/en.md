@@ -1,5 +1,6 @@
 ---
 title: "EdgePress and Markdown: a complete writing guide"
+author: toewpq
 date: 2026-09-23
 lang: en
 slug: markdown-syntax-guide
@@ -8,6 +9,7 @@ tags:
   - Markdown
   - writing guide
 description: "A hands-on guide to the Markdown syntax EdgePress renders, including GitHub Flavored Markdown, safe HTML, nested formatting, and its supported limits."
+
 ---
 
 EdgePress keeps **pages** and **posts** deliberately different. Pages use ordered, editable element blocks from their Markdown front matter. Posts use the Markdown renderer, so this article is also a working reference: every example below is rendered from a real post.
@@ -164,6 +166,6 @@ This is the complete enabled post dialect: CommonMark block and inline syntax pl
 
 ## Writing posts in EdgePress
 
-Create a post directory under `content/posts/` with one lowercase locale file such as `en.md` or `zh-cn.md`. Keep the `lang` front matter value matched to the locale filename. Add title, date, slug, tags, and an optional description above the Markdown body. Then run `edgepress build` to render the post, or `edgepress check` to build the site and generate the accessibility, agent-friendliness, responsive screenshot, and Markdown-rendering report.
+Create a post directory under `content/posts/` with one lowercase locale file such as `en.md` or `zh-cn.md`. Keep the `lang` front matter value matched to the locale filename. Add title, author, date, slug, tags, and an optional description above the Markdown body. The author appears in article cards, article bylines, feeds, search data, and BlogPosting metadata. Then run `edgepress build` to render the post, or `edgepress check` to build the site and generate the accessibility, agent-friendliness, responsive screenshot, and Markdown-rendering report.
 
 The local article search reads the generated `search.json` file from this site and searches post titles and text in the browser. It does not send a query to a third-party service.

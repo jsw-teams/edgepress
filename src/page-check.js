@@ -119,7 +119,12 @@ async function resolveLocalLink(output, pageFile, href) {
   else candidates.push(resolve(output, clean + '.html'), resolve(output, clean, 'index.html'));
   for (const candidate of candidates) {
     if (!candidate.startsWith(output + sep)) continue;
-    if (await exists(candidate)) return { file: candidate, fragment: url.hash.slice(1) };
+    if (await exists(candidate)) {
+      let fragment = url.hash.slice(1);
+      try { fragment = decodeURIComponent(fragment); }
+      catch { return { broken: true, target: href }; }
+      return { file: candidate, fragment };
+    }
   }
   return { broken: true, target: href };
 }

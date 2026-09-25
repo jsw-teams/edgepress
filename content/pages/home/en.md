@@ -17,6 +17,8 @@ blocks:
           eyebrow: A project built for the edge
           title: Build a fast website from clear, editable source files.
           text: EdgePress turns Markdown posts, page layouts, themes, and consent-aware integrations into a static site served by Cloudflare Workers.
+          mascotSrc: /edgepress/brand/mascot.png
+          mascotAlt: A curious sparrow folded from layered paper pages, EdgePress's project mascot.
           cta:
             label: Start with the quick guide
             url: /quick-start/
@@ -31,15 +33,19 @@ blocks:
           title: A clear place for each part of a site
           items:
             - title: Pages use editable elements
+              icon: layout-grid
               text: Set the number of columns first, then choose elements and edit their content in each page file.
               url: /theme-development/
             - title: Posts use Markdown
+              icon: file-text
               text: Write long-form articles in Markdown and let the built-in renderer sanitize and format them.
               url: /project-introduction/
             - title: Themes own the design
+              icon: palette
               text: Build layouts with HTML partials and keep each theme's color palette in its stylesheet.
               url: /theme-development/
             - title: Integrations wait for consent
+              icon: shield-check
               text: Add tracking, statistics, advertising, or CAPTCHA services with provider details in configuration.
               url: /plugin-development/
   - columns: 2
@@ -81,4 +87,5 @@ blocks:
         - type: latest-posts
           title: Latest project updates
           count: 3
+          paginate: true
 ---

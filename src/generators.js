@@ -42,6 +42,51 @@ function urlPathForRoute(path) {
   return '/' + value;
 }
 
+function decodeHeadingEntities(value) {
+  return value.replace(/&(#x[\da-f]+|#\d+|amp|lt|gt|quot|apos|nbsp);/gi, (match, entity) => {
+    const named = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' };
+    if (entity[0] === '#') {
+      const hex = entity[1]?.toLowerCase() === 'x';
+      const point = Number.parseInt(entity.slice(hex ? 2 : 1), hex ? 16 : 10);
+      return Number.isFinite(point) && point > 0 && point <= 0x10ffff ? String.fromCodePoint(point) : match;
+    }
+    return named[entity.toLowerCase()] ?? match;
+  });
+}
+
+function addPostContents(html, locale, config) {
+  const headings = [];
+  const counts = new Map();
+  const content = html.replace(/<h([2-6])\b([^>]*)>([\s\S]*?)<\/h\1>/gi, (whole, levelText, attributes, inner) => {
+    const label = decodeHeadingEntities(inner.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim());
+    if (!label) return whole;
+    const base = slugify(label);
+    const count = (counts.get(base) || 0) + 1;
+    counts.set(base, count);
+    const id = count === 1 ? base : base + '-' + count;
+    headings.push({ id, label, level: Number(levelText) });
+    const safeAttributes = attributes.replace(/\s+id\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');
+    return '<h' + levelText + safeAttributes + ' id="' + escapeHtml(id) + '">' + inner + '</h' + levelText + '>';
+  });
+  if (!headings.length) return { html: content, toc: '' };
+  const items = headings.map((heading) => '<li class="post-toc-level-' + heading.level + '"><a href="#' +
+    escapeHtml(heading.id) + '">' + escapeHtml(heading.label) + '</a></li>').join('');
+  const contentsLabel = translate(config, locale, 'postContents');
+  const toc = '<nav class="post-toc" aria-label="' + escapeHtml(contentsLabel) + '"><h2 id="post-toc-title">' +
+    escapeHtml(contentsLabel) + '</h2><ol>' + items + '</ol></nav>';
+  return { html: content, toc };
+}
+
+function renderPostVideo(video, locale) {
+  if (!video) return '';
+  const videoTitle = escapeHtml(video.title);
+  return '<figure class="post-video"><video controls playsinline preload="metadata" poster="' + escapeHtml(video.poster) + '" aria-label="' +
+    escapeHtml(video.alt) + '"><source src="' + escapeHtml(video.src) + '" type="video/mp4"><track kind="captions" src="' +
+    escapeHtml(video.captions) + '" srclang="' + escapeHtml(video.captionLanguage) + '" label="' + escapeHtml(video.captionLabel) + '" default>' +
+    '<a href="' + escapeHtml(video.src) + '">' + (locale.toLowerCase().startsWith('zh') ? '下载 MP4 视频' : 'Download the MP4 video') +
+    '</a></video><figcaption><strong>' + videoTitle + '</strong><br>' + escapeHtml(video.description) + '</figcaption></figure>';
+}
+
 async function pageRoute(path, title, description, body, locale, config, extensions, metadata = {}) {
   const urlPath = metadata.urlPath || urlPathForRoute(path);
   const structuredData = metadata.structuredData ?? {
@@ -53,6 +98,7 @@ async function pageRoute(path, title, description, body, locale, config, extensi
     inLanguage: locale,
     isPartOf: config.site.url ? { '@type': 'WebSite', name: config.site.title, url: config.site.url } : undefined
   };
+  body = body.replace(/<pre\b/gi, '<pre data-copyable-code');
   let html = await renderLayout(config, extensions, {
     title,
     description,
@@ -69,19 +115,41 @@ async function pageRoute(path, title, description, body, locale, config, extensi
   return fileRoute(path, html);
 }
 
-function renderPostCard(post, locale) {
+function renderPostAuthor(post, locale, config) {
+  if (!post.author) return '';
+  return '<span class="post-author">' + escapeHtml(translate(config, locale, 'postAuthor').replace('{author}', post.author)) + '</span>';
+}
+
+function renderPostCard(post, locale, config) {
   const summary = post.description || plainText(post.markdown).slice(0, 220);
   return '<article class="post-card"><h2><a href="' + escapeHtml(urlFor(post.path)) + '">' + escapeHtml(post.title) + '</a></h2>' +
-    '<p class="meta"><time datetime="' + post.date.toISOString() + '">' + escapeHtml(dateLabel(post.date, locale)) + '</time></p><p>' +
+    '<p class="meta"><time datetime="' + post.date.toISOString() + '">' + escapeHtml(dateLabel(post.date, locale)) + '</time>' +
+    (post.author ? ' · ' + renderPostAuthor(post, locale, config) : '') + '</p><p>' +
     escapeHtml(summary) + '</p></article>';
 }
 
-async function pageBodyForDocument(page, site, config, locale, isHomepage = false) {
-  const content = await renderBlocks(page.blocks, { config, locale, site, isHomepage });
+async function pageBodyForDocument(page, site, config, locale, isHomepage = false, renderContext = {}) {
+  const content = await renderBlocks(page.blocks, { config, locale, site, isHomepage, ...renderContext });
   const firstElement = page.blocks[0]?.cells?.[0]?.[0];
   const needsTitle = !isHomepage || firstElement?.type !== 'hero';
   const title = needsTitle ? '<header class="page-title"><h1>' + escapeHtml(page.title) + '</h1></header>' : '';
   return '<article class="page-builder">' + title + content + '</article>';
+}
+
+function paginatedLatestPostsSize(page) {
+  function find(value) {
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const result = find(item);
+        if (result !== null) return result;
+      }
+      return null;
+    }
+    if (!value || typeof value !== 'object') return null;
+    if (value.type === 'latest-posts' && value.paginate === true) return value.count ?? 3;
+    return find(value.cells) ?? find(value.blocks);
+  }
+  return find(page?.blocks);
 }
 
 function homepageDocument(pages, locale, defaultLocale) {
@@ -104,13 +172,24 @@ export async function generateBuiltinRoutes(site, config, extensions) {
     const posts = site.posts.filter((post) => post.locale === locale).sort((a, b) => b.date - a.date);
     const pages = site.pages.filter((page) => page.locale === locale && !page.homepage);
     const homePage = homepageDocument(site.pages, locale, defaultLocale);
+    const latestPostsPageSize = paginatedLatestPostsSize(homePage);
+    if (latestPostsPageSize !== null && (!Number.isInteger(latestPostsPageSize) || latestPostsPageSize < 1 || latestPostsPageSize > 12)) {
+      throw new Error('A paginated latest-posts block must use a count from 1 to 12');
+    }
+    const homepagePosts = posts.length ? posts : site.posts.filter((post) => post.locale === defaultLocale).sort((a, b) => b.date - a.date);
+    const homepageArchivePages = latestPostsPageSize ? Math.ceil(homepagePosts.length / latestPostsPageSize) : 0;
     const prefix = locale === defaultLocale ? '' : locale + '/';
     const label = (key) => translate(config, locale, key);
     const localeHomeUrl = localizedUrl(config, locale, '');
     allPagePaths.add(localeHomeUrl);
 
     if (homePage) {
-      const body = await pageBodyForDocument(homePage, site, config, locale, true);
+      const latestPostsPagination = latestPostsPageSize ? {
+        totalPages: homepageArchivePages,
+        archiveUrl: localizedUrl(config, locale, 'archives/'),
+        olderUrl: localizedUrl(config, locale, 'archives/page/2/')
+      } : null;
+      const body = await pageBodyForDocument(homePage, site, config, locale, true, { latestPostsPagination });
       routes.push(await pageRoute(prefix + 'index.html', homePage.title, homePage.description || config.site.description,
         body, locale, config, extensions, {
           urlPath: localeHomeUrl,
@@ -131,7 +210,7 @@ export async function generateBuiltinRoutes(site, config, extensions) {
         const subset = posts.slice((pageNumber - 1) * config.pagination.perPage, pageNumber * config.pagination.perPage);
         const body = '<section class="intro"><h1>' + escapeHtml(config.site.title) + '</h1><p>' + escapeHtml(config.site.description) +
           '</p></section><section class="post-list" aria-label="' + escapeHtml(label('latestPosts')) + '">' +
-          (subset.length ? subset.map((post) => renderPostCard(post, locale)).join('') : '<p>' + escapeHtml(label('noPosts')) + '</p>') +
+          (subset.length ? subset.map((post) => renderPostCard(post, locale, config)).join('') : '<p>' + escapeHtml(label('noPosts')) + '</p>') +
           '</section>' + (pageNumber === 1 && pages.length ? '<section class="page-links"><h2>' + escapeHtml(label('pages')) + '</h2><ul>' +
             pages.map((page) => '<li><a href="' + escapeHtml(urlFor(page.path)) + '">' + escapeHtml(page.title) + '</a></li>').join('') + '</ul></section>' : '') +
           (totalPages > 1 ? '<nav class="pagination" aria-label="' + escapeHtml(label('pagination')) + '">' +
@@ -145,8 +224,10 @@ export async function generateBuiltinRoutes(site, config, extensions) {
 
     for (const post of posts) allPagePaths.add(urlFor(post.path));
     const postRoutes = await mapLimit(posts, config.concurrency, async (post) => {
+      const renderedMarkdown = addPostContents(post.html, locale, config);
       const body = '<article class="post"><header><h1>' + escapeHtml(post.title) + '</h1><p class="meta"><time datetime="' + post.date.toISOString() + '">' +
-        escapeHtml(dateLabel(post.date, locale)) + '</time></p></header><div class="post-content">' + post.html + '</div>' +
+        escapeHtml(dateLabel(post.date, locale)) + '</time>' + (post.author ? ' · ' + renderPostAuthor(post, locale, config) : '') +
+        '</p></header>' + renderPostVideo(post.video, locale) + renderedMarkdown.toc + '<div class="post-content">' + renderedMarkdown.html + '</div>' +
         (post.tags.length ? '<p class="tags">' + escapeHtml(label('tags')) + ': ' + post.tags.map((tag) => '<a href="' +
           escapeHtml(localizedUrl(config, locale, 'tags/' + tagSlug(tag) + '/')) + '">' + escapeHtml(tag) + '</a>').join(' ') + '</p>' : '') + '</article>';
       const canonicalPath = urlFor(post.path);
@@ -157,7 +238,7 @@ export async function generateBuiltinRoutes(site, config, extensions) {
             '@context': 'https://schema.org', '@type': 'BlogPosting', headline: post.title,
             description: post.description || plainText(post.markdown).slice(0, 160),
             datePublished: post.date.toISOString(), dateModified: post.date.toISOString(),
-            author: { '@type': 'Person', name: config.site.seo.author || config.site.title },
+            author: { '@type': 'Person', name: post.author || config.site.seo.author || config.site.title },
             mainEntityOfPage: config.site.url ? config.site.url + canonicalPath : undefined,
             inLanguage: locale
           }
@@ -176,9 +257,24 @@ export async function generateBuiltinRoutes(site, config, extensions) {
     routes.push(...pageRoutes);
 
     if (!homePage) allPagePaths.add(localizedUrl(config, locale, ''));
-    const archiveBody = '<section><h1>' + escapeHtml(label('archives')) + '</h1>' +
-      (posts.length ? posts.map((post) => renderPostCard(post, locale)).join('') : '<p>' + escapeHtml(label('noPosts')) + '</p>') + '</section>';
-    routes.push(await pageRoute(prefix + 'archives/index.html', label('archives'), label('allPosts'), archiveBody, locale, config, extensions));
+    const archivePageSize = latestPostsPageSize || config.pagination.perPage;
+    const archivePageCount = Math.max(1, Math.ceil(posts.length / archivePageSize));
+    for (let pageNumber = 1; pageNumber <= archivePageCount; pageNumber += 1) {
+      const subset = posts.slice((pageNumber - 1) * archivePageSize, pageNumber * archivePageSize);
+      const archiveUrl = pageNumber === 1 ? 'archives/' : 'archives/page/' + pageNumber + '/';
+      const pagination = archivePageCount > 1
+        ? '<nav class="pagination" aria-label="' + escapeHtml(label('pagination')) + '">' +
+          (pageNumber > 1 ? '<a rel="prev" href="' + escapeHtml(pageNumber === 2 ? localizedUrl(config, locale, 'archives/') :
+            localizedUrl(config, locale, 'archives/page/' + (pageNumber - 1) + '/')) + '">' + escapeHtml(label('newer')) + '</a>' : '') +
+          (pageNumber < archivePageCount ? '<a rel="next" href="' + escapeHtml(localizedUrl(config, locale, 'archives/page/' + (pageNumber + 1) + '/')) + '">' +
+            escapeHtml(label('older')) + '</a>' : '') + '</nav>' : '';
+      const archiveBody = '<section><h1>' + escapeHtml(label('archives')) + '</h1>' +
+        (subset.length ? subset.map((post) => renderPostCard(post, locale, config)).join('') : '<p>' + escapeHtml(label('noPosts')) + '</p>') + pagination + '</section>';
+      routes.push(await pageRoute(prefix + (pageNumber === 1 ? 'archives/index.html' : 'archives/page/' + pageNumber + '/index.html'),
+        pageNumber === 1 ? label('archives') : label('archives') + ' · ' + pageNumber, label('allPosts'), archiveBody, locale, config, extensions,
+        { urlPath: localizedUrl(config, locale, archiveUrl) }));
+      allPagePaths.add(localizedUrl(config, locale, archiveUrl));
+    }
 
     const tags = new Map();
     for (const post of posts) for (const tag of post.tags) {
@@ -188,14 +284,14 @@ export async function generateBuiltinRoutes(site, config, extensions) {
     }
     const tagRoutes = await mapLimit([...tags.entries()], config.concurrency, async ([slug, value]) => {
       const body = '<section><h1>' + escapeHtml(label('tag')) + ': ' + escapeHtml(value.label) + '</h1>' +
-        value.posts.map((post) => renderPostCard(post, locale)).join('') + '</section>';
+        value.posts.map((post) => renderPostCard(post, locale, config)).join('') + '</section>';
       return pageRoute(prefix + 'tags/' + slug + '/index.html', label('tag') + ': ' + value.label,
         label('tag') + ' ' + value.label, body, locale, config, extensions);
     });
     routes.push(...tagRoutes);
 
     const searchable = [
-      ...posts.map((post) => ({ title: post.title, date: post.date.toISOString(), url: urlFor(post.path), summary: post.description || plainText(post.markdown).slice(0, 220), content: plainText(post.markdown), type: 'post' })),
+      ...posts.map((post) => ({ title: post.title, author: post.author, date: post.date.toISOString(), url: urlFor(post.path), summary: post.description || plainText(post.markdown).slice(0, 220), content: plainText(post.markdown), type: 'post' })),
       ...pages.map((page) => ({ title: page.title, url: urlFor(page.path), summary: page.description || plainText(page.markdown).slice(0, 220), type: 'page' }))
     ];
     routes.push(fileRoute(prefix + 'search.json', JSON.stringify(searchable), 'application/json; charset=utf-8'));
@@ -213,7 +309,8 @@ export async function generateBuiltinRoutes(site, config, extensions) {
       locale, config, extensions));
 
     const base = config.site.url;
-    const entries = posts.slice(0, 20).map((post) => '<entry><title>' + escapeXml(post.title) + '</title><link href="' +
+    const entries = posts.slice(0, 20).map((post) => '<entry><title>' + escapeXml(post.title) + '</title>' +
+      (post.author ? '<author><name>' + escapeXml(post.author) + '</name></author>' : '') + '<link href="' +
       escapeXml(base + urlFor(post.path)) + '"/><id>' + escapeXml(base + urlFor(post.path)) + '</id><updated>' + post.date.toISOString() +
       '</updated><summary>' + escapeXml(post.description || plainText(post.markdown).slice(0, 220)) + '</summary></entry>').join('');
     routes.push(fileRoute(prefix + 'feed.xml', '<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom"><title>' +

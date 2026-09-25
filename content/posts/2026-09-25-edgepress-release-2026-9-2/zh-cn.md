@@ -1,5 +1,6 @@
 ---
 title: EdgePress 2026 年 9 月更新：第 2 次需求
+author: toewpq
 date: 2026-09-25
 lang: zh-CN
 slug: edgepress-release-2026-9-2
@@ -7,6 +8,7 @@ tags:
   - 发布
   - 移动端适配
   - Markdown
+
 ---
 
 这是 EdgePress 在 2026 年 9 月针对第 2 次需求的更新。

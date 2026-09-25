@@ -1,5 +1,6 @@
 ---
 title: "EdgePress September 2026 update: request 2"
+author: toewpq
 date: 2026-09-25
 lang: en
 slug: edgepress-release-2026-9-2
@@ -7,6 +8,7 @@ tags:
   - release
   - responsive design
   - Markdown
+
 ---
 
 This is the second requested EdgePress update for September 2026.

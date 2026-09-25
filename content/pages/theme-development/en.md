@@ -39,6 +39,7 @@ blocks:
                 - The shared layout renders every page and post. The head, header, and footer partials provide common site components. Configure the page-title suffix and separator, site title, shared navigation, language links, footer text, and component visibility in config.yml.
                 - Use double-brace placeholders for escaped values. The approved raw placeholders are generated page content, JSON-LD, and EdgePress-generated navigation markup. Keep the skip link, one main landmark, labeled navigation, visible focus, and one page-level h1.
                 - Keep the body as a full-height vertical layout and let main grow so the footer stays at the bottom on short pages.
+                - Style shared code blocks, copy buttons, and article contents in the theme. Code lines wrap on small viewports, copy controls have visible keyboard focus, and the generated post contents list links to heading anchors.
       -
         - type: section
           title: Choose a theme palette
@@ -103,4 +104,26 @@ blocks:
                 - title: Preview the site
                   text: The server watches source files, rebuilds the output, refreshes the browser, and updates the accessibility and agent-friendliness report.
                   command: edgepress server
+  - columns: 1
+    cells:
+      -
+        - type: section
+          title: Use the shared icon library
+          tone: soft
+          text: EdgePress ships 22 local SVG icons at /edgepress/icons.svg. Theme navigation uses them automatically; feature-grid items can also name an icon, with no runtime package or third-party request.
+          blocks:
+            - type: code
+              title: Add a decorative icon to a theme partial
+              language: html
+              code: |
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <use href="/edgepress/icons.svg#layers"></use>
+                </svg>
+            - type: code
+              title: Choose an icon for a feature card
+              language: yaml
+              code: |
+                - title: Posts use Markdown
+                  icon: file-text
+                  text: Write and publish an article.
 ---
