@@ -1,4 +1,4 @@
-import { access, lstat, mkdir, readFile, readdir, realpath, rm } from 'node:fs/promises';
+import { access, lstat, mkdir, readFile, readdir, realpath } from 'node:fs/promises';
 import { extname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { addVisualEvidence } from './report-visuals.js';
 
@@ -342,24 +342,6 @@ export async function checkPages(config) {
   const root = await realpath(config.root);
   const directory = await realpath(requestedDirectory);
   if (!isInside(root, directory)) throw new Error('Page-check report directory must stay inside the project root');
-  for (const name of ['page-check.json', 'page-check.md', 'page-check-visual.html']) {
-    const file = resolve(directory, name);
-    try {
-      const info = await lstat(file);
-      if (info.isSymbolicLink() || !info.isFile()) throw new Error('Refusing an unsafe legacy report path: ' + file);
-      await rm(file);
-    } catch (error) {
-      if (error.code !== 'ENOENT') throw error;
-    }
-  }
-  const screenshotsDirectory = resolve(directory, 'page-check-screenshots');
-  try {
-    const info = await lstat(screenshotsDirectory);
-    if (info.isSymbolicLink() || !info.isDirectory()) throw new Error('Refusing an unsafe legacy screenshots path: ' + screenshotsDirectory);
-    await rm(screenshotsDirectory, { recursive: true });
-  } catch (error) {
-    if (error.code !== 'ENOENT') throw error;
-  }
   const pdfPath = resolve(directory, 'page-check.pdf');
   try {
     const info = await lstat(pdfPath);

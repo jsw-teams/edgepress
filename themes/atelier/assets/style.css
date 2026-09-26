@@ -19,24 +19,27 @@ body{display:flex;flex-direction:column;min-height:100vh}
 @media(max-width:760px){.site-footer{width:calc(100% - 38px)}}
 
 
-.privacy-manager{position:fixed;right:16px;bottom:16px;z-index:1000;color:var(--ink);font:14px/1.5 ui-sans-serif,system-ui,sans-serif}
-.privacy-settings-button,.privacy-panel button{font:inherit;font-weight:700;border:1px solid var(--line);border-radius:8px;padding:9px 13px;background:var(--panel,#fff);color:var(--ink);cursor:pointer}
-.privacy-settings-button{box-shadow:0 4px 18px #0002}
-.privacy-panel{width:min(28rem,calc(100vw - 32px));max-height:min(80vh,42rem);overflow:auto;padding:20px;margin-bottom:10px;border:1px solid var(--line);border-radius:12px;background:var(--paper,#fff);box-shadow:0 12px 40px #0003}
+.privacy-manager{position:fixed;right:16px;bottom:16px;z-index:1000;display:grid;justify-items:stretch;gap:10px;width:min(28rem,calc(100vw - 32px));color:var(--ink);font:14px/1.5 ui-sans-serif,system-ui,sans-serif;pointer-events:none}
+.privacy-manager>*{pointer-events:auto}
+.privacy-settings-button,.privacy-panel button{min-height:44px;padding:10px 13px;border:1px solid var(--line);border-radius:8px;background:var(--panel,#fff);color:var(--ink);font:inherit;font-weight:700;line-height:1.25;cursor:pointer}
+.privacy-settings-button{order:1;justify-self:end;box-shadow:0 4px 18px #0002}
+.privacy-panel{position:relative;order:0;display:grid;gap:12px;box-sizing:border-box;width:100%;max-height:min(80vh,42rem);max-height:min(80dvh,42rem);overflow:auto;overscroll-behavior:contain;padding:20px;border:1px solid var(--line);border-radius:12px;background:var(--paper,#fff);box-shadow:0 12px 40px #0003}
 .privacy-panel[hidden]{display:none}
-.privacy-panel h2{margin:8px 0;font-size:1.2rem}
-.privacy-panel p{margin:10px 0}
-.privacy-close{float:right}
-.privacy-details{display:grid;gap:8px;margin:16px 0}
-.privacy-service{display:flex;align-items:flex-start;gap:10px;padding:10px;border:1px solid var(--line);border-radius:8px}
-.privacy-service input{margin-top:4px;accent-color:var(--accent)}
-.privacy-service span span{display:inline}
-.privacy-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
-.privacy-actions button{flex:1 1 auto}
+.privacy-panel h2{margin:0;padding-right:52px;font-size:1.2rem;line-height:1.3}
+.privacy-panel p{margin:0}
+.privacy-close{position:absolute;top:10px;right:10px;min-width:44px}
+.privacy-details{display:grid;gap:8px;margin:0}
+.privacy-service{display:grid;grid-template-columns:20px minmax(0,1fr);align-items:start;gap:10px;padding:12px;border:1px solid var(--line);border-radius:8px}
+.privacy-service input{width:18px;height:18px;margin:2px 0 0;accent-color:var(--accent)}
+.privacy-service-info{display:grid;min-width:0;gap:4px}
+.privacy-service-title{font-size:.98rem}
+.privacy-service-purpose,.privacy-service-retention{color:var(--muted);overflow-wrap:anywhere}
+.privacy-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.privacy-actions button{min-width:0;padding-inline:8px}
 .privacy-accept,.privacy-reject{font-weight:800!important}
 .privacy-controller,.privacy-policy-link{font-size:.9rem}
 .privacy-settings-button:focus-visible,.privacy-panel button:focus-visible,.privacy-panel a:focus-visible,.privacy-service input:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
-@media(max-width:500px){.privacy-manager{left:12px;right:12px;bottom:12px}.privacy-settings-button{float:right}.privacy-panel{width:100%}.privacy-actions button{flex:1 1 100%}}
+@media(max-width:560px){.privacy-manager{left:12px;right:12px;right:max(12px,env(safe-area-inset-right));bottom:12px;bottom:max(12px,env(safe-area-inset-bottom));width:auto}.privacy-panel{max-height:min(76vh,42rem);max-height:min(76dvh,42rem);padding:16px}.privacy-actions{grid-template-columns:1fr}.privacy-actions button{width:100%}}
 
 .page-builder{display:grid;gap:24px}
 .page-title h1{font-size:clamp(2rem,5vw,3.3rem);line-height:1.1;letter-spacing:-.04em}
@@ -165,3 +168,4 @@ body{background:radial-gradient(ellipse at 88% 2%,#ffe5df 0,transparent 32%),var
 .feature-icon{display:block;width:34px;height:34px;margin:0 0 10px;color:var(--accent);fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .latest-posts-pagination{justify-content:flex-start;gap:16px;margin-top:18px}
 .latest-posts-pagination a:last-child{margin-left:auto}
+.hero-mascot-picture{display:block;width:min(100%,230px)}

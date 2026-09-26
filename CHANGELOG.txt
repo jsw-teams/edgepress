@@ -1,6 +1,16 @@
 EdgePress Changelog
 ===================
 
+2026.9.7 — 2026-09-26
+---------------------
+
+- Added consent-gated Cloudflare Web Analytics and nested tracking, statistics, advertising, and CAPTCHA settings under `plugins.consent`.
+- Generated configured browser-service disclosures in the privacy policy on each build.
+- Added responsive WebP mascot sizes for smaller homepage image downloads.
+- Sorted post archives across all locales by publication date while keeping homepage latest-post lists language-specific; Markdown syntax is removed from excerpts.
+- Improved the consent panel's mobile layout and touch targets.
+- Removed the unused integrations directory and cleanup code for retired audit-report files.
+
 2026.9.6 — 2026-09-25
 ---------------------
 

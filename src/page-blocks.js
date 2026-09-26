@@ -1,6 +1,7 @@
 import { plainText } from './markdown.js';
 import { translate } from './i18n.js';
 import { isIconName, renderIcon } from './icons.js';
+import { sortPostsNewest } from './content.js';
 
 const captchaProviders = new Set(['cloudflare-turnstile', 'google-recaptcha', 'hcaptcha']);
 
@@ -31,6 +32,20 @@ function safeUrl(value, label) {
 function list(value, label, min = 1, max = 50) {
   if (!Array.isArray(value) || value.length < min || value.length > max) throw new Error(label + ' must contain ' + min + ' to ' + max + ' items');
   return value;
+}
+
+function imageCandidates(value, label) {
+  let previousWidth = 0;
+  return list(value, label, 1, 4).map((candidate, index) => {
+    if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) throw new Error(label + '[' + index + '] must be an object');
+    const src = escapeHtml(safeUrl(candidate.src, label + '[' + index + '].src'));
+    const width = candidate.width;
+    if (!Number.isInteger(width) || width < 1 || width > 10000 || width <= previousWidth) {
+      throw new Error(label + ' widths must be increasing integers from 1 to 10000');
+    }
+    previousWidth = width;
+    return src + ' ' + width + 'w';
+  }).join(', ');
 }
 
 function enabledIntegration(config, id, category) {
@@ -68,15 +83,14 @@ function renderLatestPosts(block, context) {
   if (!Number.isInteger(count) || count < 1 || count > 12) throw new Error('latest-posts.count must be an integer from 1 to 12');
   const paginate = block.paginate ?? false;
   if (typeof paginate !== 'boolean') throw new Error('latest-posts.paginate must be a boolean');
-  const posts = context.site.posts.filter((post) => post.locale === context.locale ||
-    (!context.site.posts.some((item) => item.locale === context.locale) && post.locale === context.config.i18n.defaultLocale))
-    .sort((a, b) => b.date - a.date);
+  const hasLocalePosts = context.site.posts.some((post) => post.locale === context.locale);
+  const posts = sortPostsNewest(context.site.posts.filter((post) => post.locale === (hasLocalePosts ? context.locale : context.config.i18n.defaultLocale)));
   const title = escapeHtml(text(block.title, 'latest-posts.title', 200));
   const authorLabel = (post) => post.author ? '<span class="post-author">' + escapeHtml(translate(context.config, context.locale, 'postAuthor')
     .replace('{author}', post.author)) + '</span>' : '';
   const cards = posts.slice(0, count).map((post) => '<article class="post-card"><h3><a href="' + escapeHtml('/' + post.path.split('/').filter(Boolean).join('/') + (post.path.endsWith('/') ? '/' : '')) + '">' +
     escapeHtml(post.title) + '</a></h3><p class="meta"><time datetime="' + post.date.toISOString() + '">' + escapeHtml(dateLabel(post.date, context.locale)) +
-    '</time>' + (post.author ? ' · ' + authorLabel(post) : '') + '</p><p>' + escapeHtml(post.description || plainText(post.markdown).slice(0, 220)) + '</p></article>').join('');
+    '</time>' + (post.author ? ' · ' + authorLabel(post) : '') + '</p><p>' + escapeHtml(plainText(post.description || post.markdown).slice(0, 220)) + '</p></article>').join('');
   const pagination = paginate && context.latestPostsPagination?.totalPages > 1
     ? '<nav class="pagination latest-posts-pagination" aria-label="' + escapeHtml(translate(context.config, context.locale, 'pagination')) + '">' +
       '<a rel="next" href="' + escapeHtml(context.latestPostsPagination.olderUrl) + '">' + escapeHtml(translate(context.config, context.locale, 'older')) + '</a>' +
@@ -132,6 +146,19 @@ async function renderBlock(block, context, depth, index) {
       const mascotSrc = block.mascotSrc === undefined ? '' : safeUrl(block.mascotSrc, 'hero.mascotSrc');
       const mascotAlt = block.mascotAlt === undefined ? '' : text(block.mascotAlt, 'hero.mascotAlt', 500);
       if (Boolean(mascotSrc) !== Boolean(mascotAlt)) throw new Error('hero.mascotSrc and hero.mascotAlt must be provided together');
+      const mascotWebpSrcset = block.mascotWebpSrcset === undefined ? '' : imageCandidates(block.mascotWebpSrcset, 'hero.mascotWebpSrcset');
+      if (mascotWebpSrcset && !mascotSrc) throw new Error('hero.mascotWebpSrcset requires hero.mascotSrc');
+      if (block.mascotSizes !== undefined && !mascotWebpSrcset) throw new Error('hero.mascotSizes requires hero.mascotWebpSrcset');
+      const hasMascotWidth = block.mascotWidth !== undefined;
+      const hasMascotHeight = block.mascotHeight !== undefined;
+      if (hasMascotWidth !== hasMascotHeight) throw new Error('hero.mascotWidth and hero.mascotHeight must be provided together');
+      const mascotWidth = hasMascotWidth ? block.mascotWidth : 1222;
+      const mascotHeight = hasMascotHeight ? block.mascotHeight : 1287;
+      if (!Number.isInteger(mascotWidth) || mascotWidth < 1 || mascotWidth > 10000 ||
+          !Number.isInteger(mascotHeight) || mascotHeight < 1 || mascotHeight > 10000) {
+        throw new Error('hero.mascotWidth and hero.mascotHeight must be integers from 1 to 10000');
+      }
+      const mascotSizes = mascotWebpSrcset ? escapeHtml(text(block.mascotSizes ?? '230px', 'hero.mascotSizes', 200)) : '';
       let action = '';
       if (block.cta) {
         const label = escapeHtml(text(block.cta.label, 'hero.cta.label', 120));
@@ -141,8 +168,11 @@ async function renderBlock(block, context, depth, index) {
       const highlights = block.highlights === undefined ? [] : list(block.highlights, 'hero.highlights', 1, 4);
       const highlightPanel = highlights.length ? '<ul class="hero-highlights">' + highlights.map((item) => '<li>' +
         escapeHtml(text(item, 'hero highlight', 180)) + '</li>').join('') + '</ul>' : '';
-      const mascot = mascotSrc ? '<img class="hero-mascot" src="' + escapeHtml(mascotSrc) + '" alt="' +
-        escapeHtml(mascotAlt) + '" width="1222" height="1287" decoding="async">' : '';
+      const mascotImage = mascotSrc ? '<img class="hero-mascot" src="' + escapeHtml(mascotSrc) + '" alt="' +
+        escapeHtml(mascotAlt) + '" width="' + mascotWidth + '" height="' + mascotHeight + '" decoding="async">' : '';
+      const mascot = mascotWebpSrcset
+        ? '<picture class="hero-mascot-picture"><source type="image/webp" srcset="' + mascotWebpSrcset + '" sizes="' + mascotSizes + '">' + mascotImage + '</picture>'
+        : mascotImage;
       const aside = mascot || highlightPanel ? '<div class="hero-aside">' + mascot + highlightPanel + '</div>' : '';
       return '<section class="hero-block' + (aside ? ' hero-block--split' : '') + '"><div class="hero-main">' +
         (eyebrow ? '<p class="eyebrow">' + escapeHtml(eyebrow) + '</p>' : '') + '<' + level + '>' + escapeHtml(heading) + '</' + level + '>' +

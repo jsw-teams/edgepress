@@ -169,6 +169,29 @@ function validatePrivacyConfig(config) {
   if (!validPolicyUrl || /[\x00-\x20]/.test(policyUrl)) throw new Error('privacy.policyUrl must be a safe site path or HTTP URL');
 }
 
+function normalizeBrowserPlugins(value) {
+  if (value === undefined) return {};
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('config.yml plugins must be an object');
+  for (const key of Object.keys(value)) {
+    if (key !== 'consent') {
+      throw new Error('Unsupported plugin configuration group: ' + key + '; place browser services under plugins.consent.' + key);
+    }
+  }
+  if (value.consent === undefined) return {};
+  const input = value.consent;
+  if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('plugins.consent must be an object');
+  const consent = {};
+  const normalized = {};
+  const groups = ['tracking', 'statistics', 'advertising', 'captcha'];
+  for (const [key, section] of Object.entries(input)) {
+    if (groups.includes(key)) normalized[key] = section;
+    else if (['enabled', 'version', 'expiresDays'].includes(key)) consent[key] = section;
+    else throw new Error('Unsupported plugins.consent option: ' + key);
+  }
+  normalized.consent = consent;
+  return normalized;
+}
+
 function validateBrowserPlugins(config) {
   const plugins = config.browserPlugins;
   const allowedGroups = ['consent', 'tracking', 'statistics', 'advertising', 'captcha'];
@@ -186,20 +209,21 @@ function validateBrowserPlugins(config) {
   const ids = new Set();
   let servicesCount = 0;
   for (const group of ['tracking', 'statistics', 'advertising', 'captcha']) {
+    const groupPath = 'plugins.consent.' + group;
     const section = plugins[group];
     if (!section || typeof section !== 'object' || Array.isArray(section) || typeof section.enabled !== 'boolean' || !Array.isArray(section.services)) {
-      throw new Error('plugins.' + group + ' needs enabled and a services array');
+      throw new Error(groupPath + ' needs enabled and a services array');
     }
-    for (const key of Object.keys(section)) if (!['enabled', 'services'].includes(key)) throw new Error('Unsupported plugins.' + group + ' option: ' + key);
-    if (!section.enabled && section.services.length) throw new Error('Clear plugins.' + group + '.services or enable the plugin group');
+    for (const key of Object.keys(section)) if (!['enabled', 'services'].includes(key)) throw new Error('Unsupported ' + groupPath + ' option: ' + key);
+    if (!section.enabled && section.services.length) throw new Error('Clear ' + groupPath + '.services or enable the plugin group');
     servicesCount += section.services.length;
     for (const service of section.services) {
-      if (!service || typeof service !== 'object' || Array.isArray(service)) throw new Error('Each plugins.' + group + '.services item must be an object');
+      if (!service || typeof service !== 'object' || Array.isArray(service)) throw new Error('Each ' + groupPath + '.services item must be an object');
       const { id, provider, purpose } = service;
       if (typeof id !== 'string' || !/^[a-z][a-z0-9-]{1,63}$/.test(id) || ids.has(id)) throw new Error('Each configured service needs a unique lowercase id');
       ids.add(id);
       const definition = integrationProviders[provider];
-      if (!definition || definition.group !== group) throw new Error('Unsupported provider for plugins.' + group + ': ' + provider);
+      if (!definition || definition.group !== group) throw new Error('Unsupported provider for ' + groupPath + ': ' + provider);
       if (typeof purpose !== 'string' || !purpose.trim() || purpose.length > 500) throw new Error('Service ' + id + ' needs a short purpose description');
       if (typeof service.retention !== 'string' || !service.retention.trim() || service.retention.length > 300) throw new Error('Service ' + id + ' needs a retention description');
       const allowedKeys = new Set(['id', 'provider', 'purpose', 'retention', definition.credential]);
@@ -287,7 +311,7 @@ export async function loadConfig(root = process.cwd()) {
   }
   config.site = merge(config.site, siteYaml.site);
   config.privacy = merge(config.privacy, siteYaml.privacy);
-  config.browserPlugins = merge(config.browserPlugins, siteYaml.plugins);
+  config.browserPlugins = merge(config.browserPlugins, normalizeBrowserPlugins(siteYaml.plugins));
   assertString(config.site.title, 'site.title');
   assertString(config.site.language, 'site.language');
   if (!isCanonicalLocale(config.site.language)) throw new Error('site.language must be a valid canonical language tag');

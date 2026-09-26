@@ -56,10 +56,29 @@ export async function renderMarkdown(source, options = {}) {
 }
 
 export function plainText(source) {
-  return String(source)
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
-    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
-    .replace(/[#>*_~|-]/g, ' ')
+  const html = marked.parse(String(source ?? ''), { gfm: true });
+  const namedEntities = {
+    amp: '&', apos: "'", copy: '©', gt: '>', hellip: '…', ldquo: '“', lsquo: '‘',
+    lt: '<', mdash: '—', nbsp: ' ', ndash: '–', quot: '"', rdquo: '”', rsquo: '’'
+  };
+  return String(html)
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<(script|style|textarea|option|xmp)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ')
+    .replace(/<img\b([^>]*)>/gi, (_match, attributes) => {
+      const alt = attributes.match(/\balt\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i);
+      return alt ? ' ' + (alt[1] ?? alt[2] ?? alt[3]) + ' ' : ' ';
+    })
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&(#x[\da-f]+|#\d+|[a-z][a-z\d]+);/gi, (match, entity) => {
+      if (entity[0] === '#') {
+        const hex = entity[1]?.toLowerCase() === 'x';
+        const point = Number.parseInt(entity.slice(hex ? 2 : 1), hex ? 16 : 10);
+        return Number.isInteger(point) && point > 0 && point <= 0x10ffff && !(point >= 0xd800 && point <= 0xdfff)
+          ? String.fromCodePoint(point)
+          : match;
+      }
+      return namedEntities[entity.toLowerCase()] ?? match;
+    })
     .replace(/\s+/g, ' ')
     .trim();
 }

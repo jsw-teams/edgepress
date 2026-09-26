@@ -22,9 +22,9 @@ Generated code blocks now have an accessible copy button. Theme styles wrap long
 
 The project compatibility history is updated to version `2026.9.6`.
 
-## Site identity and themes
+## Theme palettes
 
-The starter canonical URL is `https://edgepress.js.gripe` and the configured author is `toewpq`. The bundled themes have refreshed, higher-contrast palettes. The privacy policy continues to call for a real operator name and working privacy contact before publication.
+The bundled themes have refreshed, higher-contrast palettes.
 
 ## A clearer visual identity and reading path
 

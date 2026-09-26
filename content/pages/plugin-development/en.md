@@ -43,7 +43,7 @@ blocks:
           blocks:
             - type: text
               paragraphs:
-                - Add browser providers in config.yml under plugins.tracking, plugins.statistics, plugins.advertising, or plugins.captcha. Each entry needs a unique ID, purpose, retention description, and a public provider identifier.
+                - Add browser providers in config.yml under plugins.consent.tracking, plugins.consent.statistics, plugins.consent.advertising, or plugins.consent.captcha. Each entry needs a unique ID, purpose, retention description, and a public provider identifier.
                 - Available providers include Google Tag Manager and Meta Pixel; Cloudflare Web Analytics, Google Analytics, and Baidu Tongji; Google AdSense; and Cloudflare Turnstile, Google reCAPTCHA, and hCaptcha.
                 - Provider code is imported only after the visitor accepts that integration. Keep CAPTCHA secret keys out of config.yml and client code. The server must submit each CAPTCHA response to the provider verification API before accepting a form.
             - type: notice

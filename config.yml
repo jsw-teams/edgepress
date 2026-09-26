@@ -86,66 +86,71 @@ plugins:
     enabled: true
     version: "1"
     expiresDays: 180
-  tracking:
-    enabled: true
-    services: []
-    # Example:
-    # - id: tag-manager
-    #   provider: google-tag-manager
-    #   purpose: Load consented campaign tags.
-    #   retention: Set and disclose the applicable retention period.
-    #   containerId: GTM-ABCD123
-    # - id: social-pixel
-    #   provider: meta-pixel
-    #   purpose: Measure consented campaign traffic.
-    #   retention: Set and disclose the provider's retention period.
-    #   pixelId: "123456789012345"
-  statistics:
-    enabled: true
-    services: []
-    # Examples use public provider IDs only.
-    # - id: primary-analytics
-    #   provider: google-analytics
-    #   purpose: Measure consented site visits.
-    #   retention: Set and disclose the provider's retention period.
-    #   measurementId: G-ABC12345
-    # - id: edge-analytics
-    #   provider: cloudflare-web-analytics
-    #   purpose: Measure consented site visits.
-    #   retention: Set and disclose the applicable retention period.
-    #   token: 01234567-89ab-cdef-0123-456789abcdef
-    # - id: baidu-analytics
-    #   provider: baidu-tongji
-    #   purpose: Measure consented site visits.
-    #   retention: Set and disclose the provider's retention period.
-    #   siteId: abcdef0123456789abcdef01
-  advertising:
-    enabled: true
-    services: []
-    # Example:
-    # - id: display-ads
-    #   provider: google-adsense
-    #   purpose: Display consented advertising.
-    #   retention: Set and disclose the provider's retention period.
-    #   clientId: ca-pub-1234567890123456
-  captcha:
-    enabled: true
-    services: []
-    # Choose a provider for each CAPTCHA block. Never add its secret key here.
-    # - id: contact-form-check
-    #   provider: cloudflare-turnstile
-    #   purpose: Reduce automated contact form submissions.
-    #   retention: Configure and disclose the provider's retention period.
-    #   siteKey: 0x4AAAAAAABBBBBBBBCCCCCCDDDD
-    # - id: signup-form-check
-    #   provider: google-recaptcha
-    #   purpose: Reduce automated signup submissions.
-    #   retention: Configure and disclose the provider's retention period.
-    #   siteKey: 6LcAbCdEfGhIjKlMnOpQrStUvWxYz0123456789a
-    # - id: support-form-check
-    #   provider: hcaptcha
-    #   purpose: Reduce automated support requests.
-    #   retention: Configure and disclose the provider's retention period.
-    #   siteKey: 0123456789abcdefghijklmnopqrstuvwx
-# Add browser services under these groups after filling the real site operator details above.
+    tracking:
+      enabled: true
+      services: []
+      # Example:
+      # - id: tag-manager
+      #   provider: google-tag-manager
+      #   purpose: Load consented campaign tags.
+      #   retention: Set and disclose the applicable retention period.
+      #   containerId: GTM-ABCD123
+      # - id: social-pixel
+      #   provider: meta-pixel
+      #   purpose: Measure consented campaign traffic.
+      #   retention: Set and disclose the provider's retention period.
+      #   pixelId: "123456789012345"
+    statistics:
+      enabled: true
+      services:
+        - id: cloudflare-web-analytics
+          provider: cloudflare-web-analytics
+          purpose: Measure site visits and page-load performance after consent.
+          retention: Unsampled beacon data is kept for 7 days, then aggregated to about 10% for long-term storage. Dashboard history is available for 6 months.
+          token: "8347d72ba9f84e6783bf441e7832a80e"
+      # Examples use public provider IDs only.
+      # - id: primary-analytics
+      #   provider: google-analytics
+      #   purpose: Measure consented site visits.
+      #   retention: Set and disclose the provider's retention period.
+      #   measurementId: G-ABC12345
+      # - id: edge-analytics
+      #   provider: cloudflare-web-analytics
+      #   purpose: Measure consented site visits.
+      #   retention: Set and disclose the applicable retention period.
+      #   token: 01234567-89ab-cdef-0123-456789abcdef
+      # - id: baidu-analytics
+      #   provider: baidu-tongji
+      #   purpose: Measure consented site visits.
+      #   retention: Set and disclose the provider's retention period.
+      #   siteId: abcdef0123456789abcdef01
+    advertising:
+      enabled: true
+      services: []
+      # Example:
+      # - id: display-ads
+      #   provider: google-adsense
+      #   purpose: Display consented advertising.
+      #   retention: Set and disclose the provider's retention period.
+      #   clientId: ca-pub-1234567890123456
+    captcha:
+      enabled: true
+      services: []
+      # Choose a provider for each CAPTCHA block. Never add its secret key here.
+      # - id: contact-form-check
+      #   provider: cloudflare-turnstile
+      #   purpose: Reduce automated contact form submissions.
+      #   retention: Configure and disclose the provider's retention period.
+      #   siteKey: 0x4AAAAAAABBBBBBBBCCCCCCDDDD
+      # - id: signup-form-check
+      #   provider: google-recaptcha
+      #   purpose: Reduce automated signup submissions.
+      #   retention: Configure and disclose the provider's retention period.
+      #   siteKey: 6LcAbCdEfGhIjKlMnOpQrStUvWxYz0123456789a
+      # - id: support-form-check
+      #   provider: hcaptcha
+      #   purpose: Reduce automated support requests.
+      #   retention: Configure and disclose the provider's retention period.
+      #   siteKey: 0123456789abcdefghijklmnopqrstuvwx
+# Add browser services under plugins.consent after filling the real site operator details above.
 # Every configured service waits for the visitor's explicit consent before its vendor code loads.

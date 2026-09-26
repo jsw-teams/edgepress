@@ -43,7 +43,7 @@ blocks:
           blocks:
             - type: text
               paragraphs:
-                - 在 config.yml 的 plugins.tracking、plugins.statistics、plugins.advertising 或 plugins.captcha 下添加浏览器供应商。每项需要唯一 ID、用途、保留期限说明和公开供应商标识。
+                - 在 config.yml 的 plugins.consent.tracking、plugins.consent.statistics、plugins.consent.advertising 或 plugins.consent.captcha 下添加浏览器供应商。每项需要唯一 ID、用途、保留期限说明和公开供应商标识。
                 - 可用供应商包括 Google Tag Manager 和 Meta Pixel；Cloudflare Web Analytics、Google Analytics 和百度统计；Google AdSense；以及 Cloudflare Turnstile、Google reCAPTCHA 和 hCaptcha。
                 - 只有访客接受对应集成后才会导入供应商代码。不要把 CAPTCHA 密钥放入 config.yml 或客户端代码。服务器必须在接受表单前将每个 CAPTCHA 响应提交给供应商验证 API。
             - type: notice

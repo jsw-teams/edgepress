@@ -66,6 +66,7 @@ blocks:
                 - Each page and locale is a Markdown file, but the page body after front matter must stay empty. The editor data lives in its blocks YAML.
                 - "Order the data from the outside inward: set each row's columns count first, provide one cells entry per column, select an element type inside a cell, then edit that element's fields. The validator rejects mismatched column counts and empty cells."
                 - Pages do not use the post Markdown renderer. Posts remain Markdown articles and use the built-in sanitizing renderer.
+                - Hero blocks can use mascotWebpSrcset with ascending path-and-width candidates, mascotSizes matching the rendered width, and mascotWidth/mascotHeight matching the fallback image. mascotSrc remains the fallback for browsers without WebP support.
             - type: data-table
               title: Available element families
               headers:

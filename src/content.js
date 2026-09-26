@@ -3,6 +3,16 @@ import { basename, dirname, extname, relative, resolve, sep } from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { mapLimit } from './concurrency.js';
 
+export function sortPostsNewest(posts) {
+  return [...posts].sort((left, right) => {
+    const dateOrder = right.date - left.date;
+    if (dateOrder) return dateOrder;
+    const leftPath = String(left.path);
+    const rightPath = String(right.path);
+    return leftPath < rightPath ? -1 : leftPath > rightPath ? 1 : 0;
+  });
+}
+
 async function walkMarkdown(directory) {
   let entries;
   try {

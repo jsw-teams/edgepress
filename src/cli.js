@@ -292,17 +292,7 @@ async function clean(config) {
     try {
       const info = await lstat(toolsDirectory);
       if (info.isSymbolicLink() || !info.isDirectory()) throw new Error('Refusing to clean reports through an unsafe tools path: ' + toolsDirectory);
-      for (const name of ['page-check.json', 'page-check.md', 'page-check.pdf', 'page-check-visual.html']) {
-        await rm(resolve(toolsDirectory, name), { force: true });
-      }
-      const screenshots = resolve(toolsDirectory, 'page-check-screenshots');
-      try {
-        const screenshotsInfo = await lstat(screenshots);
-        if (screenshotsInfo.isSymbolicLink() || !screenshotsInfo.isDirectory()) throw new Error('Refusing to clean an unsafe screenshot path: ' + screenshots);
-        await rm(screenshots, { recursive: true, force: true });
-      } catch (error) {
-        if (error.code !== 'ENOENT') throw error;
-      }
+      await rm(resolve(toolsDirectory, 'page-check.pdf'), { force: true });
     } catch (error) {
       if (error.code !== 'ENOENT') throw error;
     }

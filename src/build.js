@@ -4,7 +4,8 @@ import { dirname, relative, resolve, sep } from 'node:path';
 import { hostname } from 'node:os';
 import { mapLimit } from './concurrency.js';
 import { loadConfig } from './config.js';
-import { readDocuments } from './content.js';
+import { readDocuments, sortPostsNewest } from './content.js';
+import { plainText } from './markdown.js';
 import { createExtensions } from './plugin-api.js';
 import { collectAssets, rewriteAssetLinks, writeAssets } from './assets.js';
 import { loadLanguagePacks } from './i18n.js';
@@ -222,7 +223,7 @@ export async function buildSite(root = process.cwd(), options = {}) {
       if (typeof html !== 'string') throw new Error('Markdown renderers must return HTML strings for ' + document.file);
       if (renderer.cacheable) nextCache[signature] = html;
       const rendered = { ...document, html };
-      rendered.description = rendered.description || rendered.markdown.replace(/\s+/g, ' ').slice(0, 180);
+      rendered.description = rendered.description || plainText(rendered.markdown).slice(0, 180);
       return rendered;
     });
 
@@ -230,7 +231,7 @@ export async function buildSite(root = process.cwd(), options = {}) {
     const visible = documents.filter((document) => !document.draft && publishedByLocalDate(document, now));
     let site = {
       config,
-      posts: visible.filter((document) => document.kind === 'posts').sort((a, b) => b.date - a.date),
+      posts: sortPostsNewest(visible.filter((document) => document.kind === 'posts')),
       pages: visible.filter((document) => document.kind === 'pages')
     };
     site = await extensions.filter('content:rendered', site, { config });

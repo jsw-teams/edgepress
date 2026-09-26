@@ -32,7 +32,7 @@ blocks:
           title: Optional browser services
           blocks:
             - type: text
-              text: The current configuration has no tracking, statistics, advertising, or human-verification providers in its service lists. If the operator adds a service, the list below is generated from its configured provider, purpose, and retention description.
+              text: This list is regenerated on each build from enabled browser services in config.yml under plugins.consent. It shows each provider, category, purpose, and retention period.
             - type: privacy-services
               emptyText: No optional third-party browser services are configured in this source build.
   - columns: 1
@@ -61,6 +61,7 @@ blocks:
               paragraphs:
                 - Before enabling a provider, the operator must document the information it receives, purposes, recipients, applicable retention, and any cross-border transfers. Public site identifiers may be configured in the browser; CAPTCHA secret keys must stay on a trusted server, which must verify each response token.
                 - This starter configuration cannot determine the operator's jurisdiction, legal bases, retention obligations, or the rights that apply to a particular deployment. Complete this policy for the actual site and seek qualified advice where needed.
+                - Review the current privacy information and terms for every provider listed above. Confirm that its actual data collection, recipients, retention, and transfer practices match this policy before publication and whenever the configuration changes.
             - type: link-list
               title: Primary legal references
               items:

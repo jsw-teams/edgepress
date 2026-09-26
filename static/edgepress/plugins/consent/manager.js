@@ -42,9 +42,11 @@ function initialize(config) {
   heading.tabIndex = -1;
   heading.textContent = ui.privacyNotice || 'Optional services';
   const intro = document.createElement('p');
+  intro.className = 'privacy-intro';
   intro.textContent = ui.privacyIntro || 'Choose which optional services may load.';
   const details = document.createElement('div');
   details.className = 'privacy-details';
+  details.setAttribute('role', 'group');
   details.setAttribute('aria-label', ui.optionalServices || 'Optional services');
   const actions = document.createElement('div');
   actions.className = 'privacy-actions';
@@ -82,14 +84,18 @@ function initialize(config) {
     checkbox.value = integration.id;
     checkbox.checked = saved?.allowed.includes(integration.id) || false;
     const info = document.createElement('span');
+    info.className = 'privacy-service-info';
     const title = document.createElement('strong');
+    title.className = 'privacy-service-title';
     title.textContent = integration.provider;
     const purpose = document.createElement('span');
+    purpose.className = 'privacy-service-purpose';
     purpose.textContent = (ui.servicePurpose || 'Purpose') + ': ' + integration.purpose;
-    info.append(title, document.createElement('br'), purpose);
+    info.append(title, purpose);
     if (integration.retention) {
       const retention = document.createElement('span');
-      retention.textContent = ' · ' + (ui.serviceRetention || 'Retention') + ': ' + integration.retention;
+      retention.className = 'privacy-service-retention';
+      retention.textContent = (ui.serviceRetention || 'Retention') + ': ' + integration.retention;
       info.append(retention);
     }
     label.append(checkbox, info);

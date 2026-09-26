@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "frameworkVersion": "2026.9.6",
+  "frameworkVersion": "2026.9.7",
   "requirements": {
     "nodeMajor": 22,
     "nodeMinimumVersion": "22.12.0",
@@ -27,7 +27,9 @@
     { "name": "PDF-only audit output and temporary screenshot capture", "stage": "experimental", "since": "2026.9.4" },
     { "name": "Cloudflare one-click deployment guidance for existing and new projects", "stage": "stable", "since": "2026.9.5" },
     { "name": "Localized Posts navigation and responsive code copy controls", "stage": "experimental", "since": "2026.9.6" },
-    { "name": "Linked tables of contents on Markdown post pages", "stage": "experimental", "since": "2026.9.6" }
+    { "name": "Linked tables of contents on Markdown post pages", "stage": "experimental", "since": "2026.9.6" },
+    { "name": "Consent-nested browser services and generated privacy disclosures", "stage": "experimental", "since": "2026.9.7" },
+    { "name": "Responsive homepage imagery and chronological all-post archives", "stage": "experimental", "since": "2026.9.7" }
   ],
   "releaseHistory": [
     {
@@ -64,7 +66,13 @@
       "version": "2026.9.6",
       "date": "2026-09-25",
       "request": 6,
-      "notes": "Add a localized Posts link, accessible code-copy controls, responsive command wrapping, and linked post contents; refresh the bundled theme palettes and set the canonical site URL and author metadata."
+      "notes": "Add a localized Posts link, accessible code-copy controls, responsive command wrapping, linked post contents, and refreshed bundled theme palettes."
+    },
+    {
+      "version": "2026.9.7",
+      "date": "2026-09-26",
+      "request": 7,
+      "notes": "Add consent-gated Cloudflare Web Analytics and configuration-generated privacy disclosures; optimize responsive homepage imagery and all-post archive ordering; improve Markdown excerpts and mobile consent controls; remove obsolete report cleanup code."
     }
   ]
 }

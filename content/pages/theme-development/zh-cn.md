@@ -66,6 +66,7 @@ blocks:
                 - 每个页面和语言版本都是一个 Markdown 文件，但 front matter 之后必须保持空白。页面编辑数据放在 YAML blocks 中。
                 - 数据从外向内排列：先设每行的 columns 栏数，再为每栏设置一个 cells 项，然后在栏内选择元素类型，最后编辑该元素字段。验证器会拒绝栏数不匹配或空白的栏。
                 - 页面不使用文章 Markdown 渲染器。文章仍使用 Markdown 撰写，并由内置安全渲染器输出。
+                - hero 元素可用 mascotWebpSrcset 提供按宽度递增的路径候选项，并设置与显示宽度一致的 mascotSizes，以及匹配备用图片尺寸的 mascotWidth 和 mascotHeight。mascotSrc 会留作不支持 WebP 的浏览器备用图。
             - type: data-table
               title: 可用元素类别
               headers:

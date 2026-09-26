@@ -31,7 +31,7 @@ EdgePress builds static websites from Markdown and YAML source. Follow these rul
 
 - Store built-in UI text in `languages/base/<locale>.json`; each optional locale has its own `languages/packs/<locale>.json` file and is enabled in `edgepress.config.mjs`.
 - Missing language-pack IDs fall back to the base dictionary. Do not inline translations in config.
-- Build modules under `plugins/` run in Node during the build and are trusted code. Browser plugin settings live in root `config.yml` under `plugins`, grouped as `consent`, `tracking`, `statistics`, `advertising`, and `captcha`. Browser integrations must remain behind the explicit consent manager before any vendor request.
+- Build modules under `plugins/` run in Node during the build and are trusted code. Browser plugin settings live in root `config.yml` under `plugins.consent`, with `tracking`, `statistics`, `advertising`, and `captcha` nested inside it. Browser integrations must remain behind the explicit consent manager before any vendor request.
 - Never place CAPTCHA secret keys in generated client configuration. CAPTCHA responses must be verified by a trusted backend.
 
 ## Commands
