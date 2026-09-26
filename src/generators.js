@@ -4,6 +4,7 @@ import { renderLayout } from './theme.js';
 import { localizedUrl, translate } from './i18n.js';
 import { postsForLocale, slugify, sortPostsNewest } from './content.js';
 import { mapLimit } from './concurrency.js';
+import { renderIcon } from './icons.js';
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -72,8 +73,14 @@ function addPostContents(html, locale, config) {
   const items = headings.map((heading) => '<li class="post-toc-level-' + heading.level + '"><a href="#' +
     escapeHtml(heading.id) + '">' + escapeHtml(heading.label) + '</a></li>').join('');
   const contentsLabel = translate(config, locale, 'postContents');
-  const toc = '<nav class="post-toc" aria-label="' + escapeHtml(contentsLabel) + '"><h2 id="post-toc-title">' +
-    escapeHtml(contentsLabel) + '</h2><ol>' + items + '</ol></nav>';
+  const closeContents = translate(config, locale, 'closeContents');
+  const toc = '<aside class="post-toc-widget" data-post-toc hidden>' +
+    '<button class="post-toc-toggle" type="button" aria-expanded="false" aria-controls="post-toc-panel" aria-label="' +
+    escapeHtml(contentsLabel) + '">' + renderIcon('book-open', 'post-toc-icon') + '<span>' + escapeHtml(contentsLabel) + '</span></button>' +
+    '<nav class="post-toc-panel" id="post-toc-panel" aria-labelledby="post-toc-title" aria-label="' +
+    escapeHtml(contentsLabel) + '" hidden><div class="post-toc-heading"><h2 id="post-toc-title">' + escapeHtml(contentsLabel) +
+    '</h2><button class="post-toc-close" type="button" aria-label="' + escapeHtml(closeContents) + '"><span aria-hidden="true">×</span></button></div>' +
+    '<ol>' + items + '</ol></nav></aside>';
   return { html: content, toc };
 }
 

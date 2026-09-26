@@ -20,9 +20,9 @@ export default function consentManager(api) {
     const locale = page?.locale || config.i18n.defaultLocale;
     const ui = Object.fromEntries([
       'privacySettings', 'privacyNotice', 'privacyIntro', 'acceptOptional', 'rejectOptional',
-      'savePreferences', 'optionalServices', 'noIntegrations', 'privacyPolicy', 'privacyController',
-      'servicePurpose', 'serviceDataCategories', 'serviceRecipient', 'serviceRetention', 'consentReload',
-      'closePrivacy', 'reviewDetails', 'managePrivacy', 'essentialStorage', 'pluginTracking',
+      'savePreferences', 'optionalServices', 'noIntegrations', 'privacyPolicy', 'privacyController', 'privacyContact',
+      'serviceDataCategories', 'serviceRecipient', 'serviceRetention', 'servicePrivacyDetails', 'servicePrivacyLink', 'consentReload',
+      'closePrivacy', 'reviewDetails', 'essentialStorage', 'pluginTracking',
       'pluginStatistics', 'pluginAdvertising', 'pluginCaptcha'
     ].map((key) => [key, translate(config, locale, key)]));
     const services = ['tracking', 'statistics', 'advertising', 'captcha'].flatMap((group) =>

@@ -304,14 +304,16 @@ export async function checkPages(config) {
     });
     consentCheck('privacy controls are injected on every generated page', files.length > 0 && htmlWithConsent.length === files.length);
     consentCheck('consent manager script was generated', Boolean(managerScript));
-    consentCheck('service disclosure supports data categories, recipient, and retention',
-      managerScript.includes('serviceDataCategories') && managerScript.includes('serviceRecipient') && managerScript.includes('serviceRetention'));
+    consentCheck('service disclosure supports data, recipient, retention, and supplier privacy links',
+      managerScript.includes('serviceDataCategories') && managerScript.includes('serviceRecipient') &&
+      managerScript.includes('serviceRetention') && managerScript.includes('servicePrivacyDetails') &&
+      managerScript.includes('integration.privacyUrl'));
     consentCheck('stored choices are tied to proposed and effective dates',
       managerScript.includes('proposedDate: consent.proposedDate') && managerScript.includes('effectiveDate: consent.effectiveDate'));
     consentCheck('new visitors start with every optional service off', managerScript.includes('checkbox.checked = false'));
     consentCheck('accept and reject controls share the same component styling',
-      /\.privacy-panel \.privacy-accept,\.privacy-manager \.privacy-panel \.privacy-reject\s*\{[^}]*background:[^}]*\}/.test(styles));
-    const componentClass = /(?:^|[\s>+~])\.privacy-(?:manager|panel|settings-button|close|intro|essential|details|service-preview|preview-item|category|service-settings|service-setting|service-toggle|service-toggle-text|service-disclosures|actions|accept|reject|manage|save|empty|policy-link|controller)(?=$|[^\w-])/;
+      /\.privacy-manager \.privacy-panel \.privacy-accept\s*,\s*\.privacy-manager \.privacy-panel \.privacy-reject\s*\{[^}]*background:[^}]*\}/.test(styles));
+    const componentClass = /(?:^|[\s>+~])\.privacy-(?:manager|panel|settings-button|close|intro|essential|details|category|service-settings|service-setting|service-toggle|service-toggle-text|service-purpose|service-disclosures|actions|accept|reject|save|empty|policy-link|footer|controller)(?=$|[^\w-])/;
     let scoped = true;
     for (const match of styles.matchAll(/([^{}]+)\{[^{}]*\}/g)) {
       const selector = match[1].trim();

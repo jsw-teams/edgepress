@@ -40,7 +40,7 @@ function initialize(config) {
   panel.lang = locale;
   panel.hidden = true;
 
-  const close = makeButton(ui.closePrivacy || 'Close settings', 'privacy-close', 'close');
+  const close = makeButton('', 'privacy-close', 'close');
   close.setAttribute('aria-label', ui.closePrivacy || 'Close settings');
   const heading = document.createElement('h2');
   heading.id = 'privacy-panel-title';
@@ -50,15 +50,9 @@ function initialize(config) {
   intro.className = 'privacy-intro';
   intro.textContent = ui.privacyIntro || 'Optional services stay off until you choose.';
 
-  const preview = document.createElement('div');
-  preview.className = 'privacy-service-preview';
-  preview.setAttribute('aria-label', ui.optionalServices || 'Optional services');
-  const details = document.createElement('details');
-  details.className = 'privacy-details';
-  const summary = document.createElement('summary');
-  summary.textContent = ui.reviewDetails || 'Review data and service settings';
   const serviceSettings = document.createElement('div');
   serviceSettings.className = 'privacy-service-settings';
+  serviceSettings.setAttribute('aria-label', ui.optionalServices || 'Optional services');
   const checkboxes = new Map();
 
   for (const integration of integrations) {
@@ -68,18 +62,6 @@ function initialize(config) {
     const dataCategories = localized(integration.dataCategories, locale, defaultLocale);
     const recipient = localized(integration.recipient, locale, defaultLocale);
     const retention = localized(integration.retention, locale, defaultLocale);
-
-    const previewItem = document.createElement('article');
-    previewItem.className = 'privacy-preview-item';
-    const previewHeading = document.createElement('h3');
-    previewHeading.textContent = name;
-    const categoryText = document.createElement('span');
-    categoryText.className = 'privacy-category';
-    categoryText.textContent = category;
-    const previewPurpose = document.createElement('p');
-    previewPurpose.textContent = purpose;
-    previewItem.append(previewHeading, categoryText, previewPurpose);
-    preview.append(previewItem);
 
     const item = document.createElement('article');
     item.className = 'privacy-service-setting';
@@ -97,14 +79,22 @@ function initialize(config) {
     const categoryLabel = document.createElement('span');
     categoryLabel.className = 'privacy-category';
     categoryLabel.textContent = category;
-    toggleText.append(title, categoryLabel);
+    const purposeText = document.createElement('span');
+    purposeText.className = 'privacy-service-purpose';
+    purposeText.textContent = purpose;
+    toggleText.append(title, categoryLabel, purposeText);
     toggle.append(checkbox, toggleText);
-    item.append(toggle, disclosureList(ui, [
-      ['servicePurpose', purpose],
+    const detail = document.createElement('details');
+    detail.className = 'privacy-details';
+    const detailSummary = document.createElement('summary');
+    detailSummary.textContent = ui.reviewDetails || 'Details';
+    detail.append(detailSummary, disclosureList(ui, [
       ['serviceDataCategories', dataCategories],
       ['serviceRecipient', recipient],
-      ['serviceRetention', retention]
+      ['serviceRetention', retention],
+      ['servicePrivacyDetails', '', integration.privacyUrl, 'servicePrivacyLink']
     ]));
+    item.append(toggle, detail);
     serviceSettings.append(item);
     checkboxes.set(integration.id, checkbox);
   }
@@ -113,11 +103,9 @@ function initialize(config) {
     const empty = document.createElement('p');
     empty.className = 'privacy-empty';
     empty.textContent = ui.noIntegrations || 'No optional services are configured.';
-    preview.append(empty);
-    serviceSettings.append(empty.cloneNode(true));
+    serviceSettings.append(empty);
   }
 
-  details.append(summary, serviceSettings);
   const essential = document.createElement('p');
   essential.className = 'privacy-essential';
   essential.textContent = (ui.essentialStorage || 'Your choice is saved in this browser for up to {days} days.')
@@ -126,8 +114,15 @@ function initialize(config) {
   const operator = privacy.controller || {};
   const controller = document.createElement('p');
   controller.className = 'privacy-controller';
-  const operatorDetails = [operator.name, operator.contact].filter(Boolean).join(' · ');
-  controller.textContent = operatorDetails ? (ui.privacyController || 'Site operator') + ': ' + operatorDetails : '';
+  if (operator.name || operator.contact) {
+    controller.append(document.createTextNode((ui.privacyController || 'Site operator') + ': '));
+    if (operator.name) controller.append(document.createTextNode(operator.name));
+    if (operator.name && operator.contact) controller.append(document.createTextNode(' · '));
+    if (operator.contact) {
+      controller.append(document.createTextNode((ui.privacyContact || 'Privacy contact') + ': '));
+      appendContact(controller, operator.contact);
+    }
+  }
   const policy = document.createElement('a');
   policy.href = privacy.policyUrl || '#';
   policy.textContent = ui.privacyPolicy || 'Privacy policy';
@@ -137,26 +132,22 @@ function initialize(config) {
   const actions = document.createElement('div');
   actions.className = 'privacy-actions';
   const reject = makeButton(ui.rejectOptional || 'Reject optional', 'privacy-reject', 'reject');
-  const manage = makeButton(ui.managePrivacy || 'Manage', 'privacy-manage', 'manage');
   const accept = makeButton(ui.acceptOptional || 'Accept all', 'privacy-accept', 'accept');
-  actions.append(reject, manage, accept);
   const save = makeButton(ui.savePreferences || 'Save choices', 'privacy-save', 'save');
-  save.disabled = !integrations.length;
-  serviceSettings.append(save);
+  actions.append(reject, accept, save);
+  for (const action of [reject, accept, save]) action.disabled = !integrations.length;
 
-  panel.append(close, heading, intro, preview, details, essential);
-  if (controller.textContent) panel.append(controller);
-  panel.append(policy, actions);
+  const footer = document.createElement('div');
+  footer.className = 'privacy-footer';
+  footer.append(essential);
+  if (controller.childNodes.length) footer.append(controller);
+  footer.append(policy);
+  panel.append(close, heading, intro, serviceSettings, actions, footer);
   root.append(settingsButton, panel);
   document.body.append(root);
 
   const saved = readChoice(privacy);
   for (const [id, checkbox] of checkboxes) checkbox.checked = Boolean(saved?.allowed.includes(id));
-  if (!integrations.length) {
-    reject.disabled = true;
-    accept.disabled = true;
-    manage.disabled = true;
-  }
 
   settingsButton.addEventListener('click', () => {
     panel.hidden = !panel.hidden;
@@ -164,10 +155,6 @@ function initialize(config) {
     if (!panel.hidden) heading.focus();
   });
   close.addEventListener('click', () => closePanel());
-  manage.addEventListener('click', () => {
-    details.open = true;
-    details.querySelector('summary')?.focus();
-  });
   reject.addEventListener('click', () => saveChoice([]));
   accept.addEventListener('click', () => saveChoice(integrations.map((item) => item.id)));
   save.addEventListener('click', () => saveChoice([...checkboxes].filter(([, checkbox]) => checkbox.checked).map(([id]) => id)));
@@ -204,17 +191,44 @@ function initialize(config) {
 function disclosureList(ui, entries) {
   const list = document.createElement('dl');
   list.className = 'privacy-service-disclosures';
-  for (const [key, value] of entries) {
-    if (!value) continue;
+  for (const [key, value, href, linkKey] of entries) {
+    if (!value && !href) continue;
     const row = document.createElement('div');
     const term = document.createElement('dt');
     term.textContent = translate(ui, key);
     const description = document.createElement('dd');
-    description.textContent = value;
+    if (href && safeSupplierUrl(href)) {
+      const link = document.createElement('a');
+      link.href = href;
+      link.rel = 'noopener noreferrer';
+      link.textContent = translate(ui, linkKey || key);
+      description.append(link);
+    } else {
+      description.textContent = value;
+    }
     row.append(term, description);
     list.append(row);
   }
   return list;
+}
+
+function appendContact(parent, contact) {
+  const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact);
+  if (!email) {
+    parent.append(document.createTextNode(contact));
+    return;
+  }
+  const link = document.createElement('a');
+  link.href = 'mailto:' + contact;
+  link.textContent = contact;
+  parent.append(link);
+}
+
+function safeSupplierUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && !url.username && !url.password;
+  } catch { return false; }
 }
 
 function translate(ui, key) {
@@ -247,13 +261,12 @@ function makeIcon(name) {
   const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
   const paths = {
     settings: 'M4 6h16M4 12h16M4 18h16M8 4v4m8 2v4m-5 2v4',
-    manage: 'M4 6h16M4 12h16M4 18h16M8 4v4m8 2v4m-5 2v4',
     accept: 'm5 12 4 4L19 6',
     reject: 'm6 6 12 12M18 6 6 18',
     close: 'm6 6 12 12M18 6 6 18',
     save: 'M5 12h14m-6-6 6 6-6 6'
   };
-  path.setAttribute('d', paths[name] || paths.manage);
+  path.setAttribute('d', paths[name] || paths.settings);
   path.setAttribute('fill', 'none');
   path.setAttribute('stroke', 'currentColor');
   path.setAttribute('stroke-width', '2');

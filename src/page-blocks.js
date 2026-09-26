@@ -86,7 +86,9 @@ function renderPrivacyServices(context) {
     escapeHtml(translate(context.config, context.locale, 'serviceRecipient')) + ':</strong> ' +
     escapeHtml(translateValue(context.config, context.locale, service.recipient)) + '</p><p><strong>' +
     escapeHtml(translate(context.config, context.locale, 'serviceRetention')) + ':</strong> ' +
-    escapeHtml(translateValue(context.config, context.locale, service.retention)) + '</p></li>').join('') + '</ul>';
+    escapeHtml(translateValue(context.config, context.locale, service.retention)) + '</p><p><a class="privacy-vendor-link" href="' +
+    escapeHtml(service.privacyUrl) + '" rel="noopener noreferrer">' +
+    escapeHtml(translate(context.config, context.locale, 'servicePrivacyDetails')) + '</a></p></li>').join('') + '</ul>';
 }
 
 async function renderLatestPosts(block, context) {
@@ -322,8 +324,11 @@ async function renderBlock(block, context, depth, index) {
       if (!name || !contact) {
         return '<aside class="notice-widget notice-widget--warning"><h3>' + missingTitle + '</h3><p>' + missingText + '</p></aside>';
       }
-      return '<dl class="privacy-controller-details"><div><dt>' + nameLabel + '</dt><dd>' + escapeHtml(name) +
-        '</dd></div><div><dt>' + contactLabel + '</dt><dd>' + escapeHtml(contact) + '</dd></div></dl>';
+      const email = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact);
+      const contactValue = email ? '<a href="mailto:' + escapeHtml(contact) + '">' + escapeHtml(contact) + '</a>' : escapeHtml(contact);
+      return '<p class="privacy-controller-inline"><span><strong>' + nameLabel + ':</strong> ' + escapeHtml(name) +
+        '</span><span class="privacy-controller-separator" aria-hidden="true">·</span><span><strong>' + contactLabel +
+        ':</strong> ' + contactValue + '</span></p>';
     }
     case 'feature-grid': {
       const items = list(block.items, 'feature-grid.items', 1, 12);

@@ -260,7 +260,16 @@ function validateBrowserPlugins(config) {
       validateLocalizedServiceText(service.dataCategories, 'Service ' + id + '.dataCategories', 600, locales);
       validateLocalizedServiceText(service.recipient, 'Service ' + id + '.recipient', 200, locales);
       validateLocalizedServiceText(service.retention, 'Service ' + id + '.retention', 300, locales);
-      const allowedKeys = new Set(['id', 'provider', 'name', 'purpose', 'dataCategories', 'recipient', 'retention', definition.credential]);
+      if (typeof service.privacyUrl !== 'string' || service.privacyUrl.length > 2048 || /[\x00-\x20]/.test(service.privacyUrl)) {
+        throw new Error('Service ' + id + '.privacyUrl must be a safe HTTPS URL');
+      }
+      let safePrivacyUrl = false;
+      try {
+        const parsed = new URL(service.privacyUrl);
+        safePrivacyUrl = parsed.protocol === 'https:' && !parsed.username && !parsed.password;
+      } catch { safePrivacyUrl = false; }
+      if (!safePrivacyUrl) throw new Error('Service ' + id + '.privacyUrl must be a safe HTTPS URL');
+      const allowedKeys = new Set(['id', 'provider', 'name', 'purpose', 'dataCategories', 'recipient', 'retention', 'privacyUrl', definition.credential]);
       for (const key of Object.keys(service)) if (!allowedKeys.has(key)) throw new Error('Unsupported option for service ' + id + ': ' + key);
       const credential = service[definition.credential];
       if (typeof credential !== 'string' || !definition.pattern.test(credential)) throw new Error('Service ' + id + ' needs a valid public ' + definition.credential);

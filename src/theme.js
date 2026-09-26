@@ -164,9 +164,14 @@ export async function renderLayout(config, extensions, page, body) {
   const html = '<!doctype html>' + rendered;
   const filtered = await extensions.filter('html:afterLayout', html, context);
   if (typeof filtered !== 'string') throw new Error('html:afterLayout filters must return a string');
-  if (/src=["']\/edgepress\/code-copy\.js["']/i.test(filtered)) return filtered;
-  const codeCopyScript = '<script defer src="/edgepress/code-copy.js"></script>';
+  const scripts = [];
+  if (!/src=["']\/edgepress\/code-copy\.js["']/i.test(filtered)) scripts.push('<script defer src="/edgepress/code-copy.js"></script>');
+  if (/data-post-toc(?:\s|>)/i.test(filtered) && !/src=["']\/edgepress\/post-toc\.js["']/i.test(filtered)) {
+    scripts.push('<script defer src="/edgepress/post-toc.js"></script>');
+  }
+  if (!scripts.length) return filtered;
+  const integration = scripts.join('');
   return /<\/body\s*>/i.test(filtered)
-    ? filtered.replace(/<\/body\s*>/i, codeCopyScript + '</body>')
-    : filtered + codeCopyScript;
+    ? filtered.replace(/<\/body\s*>/i, integration + '</body>')
+    : filtered + integration;
 }
