@@ -32,7 +32,7 @@ blocks:
           title: Optional browser services
           blocks:
             - type: text
-              text: This list is regenerated on each build from enabled browser services in config.yml under plugins.consent. It shows each provider, category, purpose, and retention period.
+              text: This list is regenerated on each build from enabled browser services in config.yml under plugins.consent. It shows each service name, provider category, purpose, data categories, recipient, and configured retention period.
             - type: privacy-services
               emptyText: No optional third-party browser services are configured in this source build.
   - columns: 1
@@ -44,12 +44,14 @@ blocks:
           blocks:
             - type: text
               paragraphs:
-                - Browser integrations are loaded only after the visitor accepts a configured service. The consent interface stores a first-party preference in local browser storage when a choice can be saved. It is not a server-side audit log.
-                - Visitors can reopen Privacy settings to change a choice. If they withdraw a previously active service, the page reloads so that the integration can stop running.
+                - Optional browser integrations stay off until a visitor actively accepts them. No service is selected on a first visit. Accept and reject are both available at the same level; visitors can also open the service details and save a granular choice.
+                - The interface stores the selected service IDs in first-party browser storage for the configured period. This preference record is stored on the visitor's device; it is not a server-side audit log.
+                - Visitors can reopen Privacy settings to change or withdraw a choice. If they withdraw a previously active service, the page reloads so the integration can stop running.
             - type: privacy-consent
               storageLabel: Browser storage key
               expiryLabel: Preference expiry
-              versionLabel: Consent configuration version
+              proposedDateLabel: Notice proposed
+              effectiveDateLabel: Notice effective
               expiryText: "{days} days after saving"
   - columns: 1
     cells:

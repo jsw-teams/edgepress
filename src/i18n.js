@@ -53,6 +53,12 @@ export function translate(config, locale, key) {
   return selected?.[key] ?? base?.[key] ?? key;
 }
 
+export function translateValue(config, locale, value) {
+  if (typeof value === 'string') return value;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return '';
+  return value[locale] ?? value[config.i18n.defaultLocale] ?? Object.values(value).find((text) => typeof text === 'string') ?? '';
+}
+
 export function localePrefix(config, locale) {
   return locale === config.i18n.defaultLocale ? '' : '/' + locale;
 }

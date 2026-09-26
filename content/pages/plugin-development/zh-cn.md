@@ -43,9 +43,10 @@ blocks:
           blocks:
             - type: text
               paragraphs:
-                - 在 config.yml 的 plugins.consent.tracking、plugins.consent.statistics、plugins.consent.advertising 或 plugins.consent.captcha 下添加浏览器供应商。每项需要唯一 ID、用途、保留期限说明和公开供应商标识。
+                - 在 config.yml 的 plugins.consent.tracking、plugins.consent.statistics、plugins.consent.advertising 或 plugins.consent.captcha 下添加浏览器供应商。每项需要唯一 ID、provider、purpose、dataCategories、recipient、retention 和公开站点标识。多语言字段需使用语言映射，覆盖已启用的每种语言，例如 en 与 zh-CN。
                 - 可用供应商包括 Google Tag Manager 和 Meta Pixel；Cloudflare Web Analytics、Google Analytics 和百度统计；Google AdSense；以及 Cloudflare Turnstile、Google reCAPTCHA 和 hCaptcha。
-                - 只有访客接受对应集成后才会导入供应商代码。不要把 CAPTCHA 密钥放入 config.yml 或客户端代码。服务器必须在接受表单前将每个 CAPTCHA 响应提交给供应商验证 API。
+                - plugins.consent.proposedDate 必须设置为 YYYY-MM-DD 格式的告知拟定日期。告知生效后再设置 effectiveDate；尚未生效时可以省略。修改任一日期都会使旧的同意记录失效，并重新询问访客。
+                - 只有访客接受对应集成后才会导入供应商代码。首层同时提供接受和拒绝，数据详情与逐项开关位于展开内容中。不要把 CAPTCHA 密钥放入 config.yml 或客户端代码。服务器必须在接受表单前将每个 CAPTCHA 响应提交给供应商验证 API。
             - type: notice
               title: 运营者信息
               text: 配置浏览器供应商前，请填写 privacy.controller.name、privacy.controller.contact 和 privacy.policyUrl。控制者名称或联系方式为空时，构建器会拒绝启用供应商服务。
@@ -85,8 +86,8 @@ blocks:
               items:
                 - label: Cloudflare Turnstile Siteverify
                   url: https://developers.cloudflare.com/turnstile/get-started/server-side-validation/
-                - label: EDPB 同意指南
-                  url: https://www.edpb.europa.eu/sites/default/files/files/file1/edpb_guidelines_202005_consent_en.pdf
+                - label: EDPB 同意摘要
+                  url: https://www.edpb.europa.eu/system/files/2026-04/edpb-summary-consent_en.pdf
   - columns: 1
     cells:
       -

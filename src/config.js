@@ -20,7 +20,7 @@ const defaults = {
     policyUrl: '/privacy-policy/'
   },
   browserPlugins: {
-    consent: { enabled: true, version: '1', expiresDays: 180 },
+    consent: { enabled: true, proposedDate: '', effectiveDate: '', expiresDays: 180 },
     tracking: { enabled: true, services: [] },
     statistics: { enabled: true, services: [] },
     advertising: { enabled: true, services: [] },
@@ -49,6 +49,31 @@ function merge(base, override) {
 
 function assertString(value, label) {
   if (typeof value !== 'string' || !value.trim()) throw new Error(label + ' must be a non-empty string');
+}
+
+function isDateOnly(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(value + 'T00:00:00.000Z');
+  return !Number.isNaN(date.valueOf()) && date.toISOString().slice(0, 10) === value;
+}
+
+function validateLocalizedServiceText(value, label, maxLength, locales) {
+  if (typeof value === 'string') {
+    if (!value.trim() || value.length > maxLength) throw new Error(label + ' must be a non-empty string of at most ' + maxLength + ' characters');
+    return;
+  }
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error(label + ' must be a string or a locale-to-string map');
+  }
+  for (const [locale, text] of Object.entries(value)) {
+    if (!locales.includes(locale)) throw new Error(label + ' uses unsupported locale ' + locale);
+    if (typeof text !== 'string' || !text.trim() || text.length > maxLength) {
+      throw new Error(label + '.' + locale + ' must be a non-empty string of at most ' + maxLength + ' characters');
+    }
+  }
+  for (const locale of locales) if (!Object.prototype.hasOwnProperty.call(value, locale)) {
+    throw new Error(label + ' needs a translation for every configured locale, including ' + locale);
+  }
 }
 
 const integrationProviders = {
@@ -185,7 +210,7 @@ function normalizeBrowserPlugins(value) {
   const groups = ['tracking', 'statistics', 'advertising', 'captcha'];
   for (const [key, section] of Object.entries(input)) {
     if (groups.includes(key)) normalized[key] = section;
-    else if (['enabled', 'version', 'expiresDays'].includes(key)) consent[key] = section;
+    else if (['enabled', 'proposedDate', 'effectiveDate', 'expiresDays'].includes(key)) consent[key] = section;
     else throw new Error('Unsupported plugins.consent option: ' + key);
   }
   normalized.consent = consent;
@@ -199,11 +224,16 @@ function validateBrowserPlugins(config) {
   for (const key of Object.keys(plugins)) if (!allowedGroups.includes(key)) throw new Error('Unsupported plugin configuration group: ' + key);
   const consent = plugins.consent;
   if (!consent || typeof consent !== 'object' || Array.isArray(consent) || typeof consent.enabled !== 'boolean' ||
-      typeof consent.version !== 'string' || !consent.version.trim() || !Number.isInteger(consent.expiresDays) ||
+      !isDateOnly(consent.proposedDate) ||
+      (consent.effectiveDate !== '' && consent.effectiveDate !== undefined && !isDateOnly(consent.effectiveDate)) ||
+      !Number.isInteger(consent.expiresDays) ||
       consent.expiresDays < 1 || consent.expiresDays > 730) {
-    throw new Error('plugins.consent needs enabled, version, and expiresDays from 1 to 730');
+    throw new Error('plugins.consent needs enabled, a YYYY-MM-DD proposedDate, an optional YYYY-MM-DD effectiveDate, and expiresDays from 1 to 730');
   }
-  for (const key of Object.keys(consent)) if (!['enabled', 'version', 'expiresDays'].includes(key)) {
+  if (consent.effectiveDate && consent.effectiveDate < consent.proposedDate) {
+    throw new Error('plugins.consent.effectiveDate cannot be earlier than proposedDate');
+  }
+  for (const key of Object.keys(consent)) if (!['enabled', 'proposedDate', 'effectiveDate', 'expiresDays'].includes(key)) {
     throw new Error('Unsupported plugins.consent option: ' + key);
   }
   const ids = new Set();
@@ -224,9 +254,13 @@ function validateBrowserPlugins(config) {
       ids.add(id);
       const definition = integrationProviders[provider];
       if (!definition || definition.group !== group) throw new Error('Unsupported provider for ' + groupPath + ': ' + provider);
-      if (typeof purpose !== 'string' || !purpose.trim() || purpose.length > 500) throw new Error('Service ' + id + ' needs a short purpose description');
-      if (typeof service.retention !== 'string' || !service.retention.trim() || service.retention.length > 300) throw new Error('Service ' + id + ' needs a retention description');
-      const allowedKeys = new Set(['id', 'provider', 'purpose', 'retention', definition.credential]);
+      const locales = config.i18n.locales;
+      validateLocalizedServiceText(service.name || provider, 'Service ' + id + '.name', 120, locales);
+      validateLocalizedServiceText(purpose, 'Service ' + id + '.purpose', 500, locales);
+      validateLocalizedServiceText(service.dataCategories, 'Service ' + id + '.dataCategories', 600, locales);
+      validateLocalizedServiceText(service.recipient, 'Service ' + id + '.recipient', 200, locales);
+      validateLocalizedServiceText(service.retention, 'Service ' + id + '.retention', 300, locales);
+      const allowedKeys = new Set(['id', 'provider', 'name', 'purpose', 'dataCategories', 'recipient', 'retention', definition.credential]);
       for (const key of Object.keys(service)) if (!allowedKeys.has(key)) throw new Error('Unsupported option for service ' + id + ': ' + key);
       const credential = service[definition.credential];
       if (typeof credential !== 'string' || !definition.pattern.test(credential)) throw new Error('Service ' + id + ' needs a valid public ' + definition.credential);
@@ -318,7 +352,6 @@ export async function loadConfig(root = process.cwd()) {
   if (typeof config.site.description !== 'string') throw new Error('site.description must be a string');
   validateSiteConfig(config);
   validatePrivacyConfig(config);
-  validateBrowserPlugins(config);
   if (typeof config.markdown.gfm !== 'boolean' || typeof config.markdown.breaks !== 'boolean') {
     throw new Error('markdown.gfm and markdown.breaks must be booleans');
   }
@@ -353,6 +386,7 @@ export async function loadConfig(root = process.cwd()) {
     throw new Error('i18n.languagePacks must not contain duplicates');
   }
   config.i18n.locales = [config.i18n.defaultLocale, ...config.i18n.languagePacks];
+  validateBrowserPlugins(config);
 
   const siteUrl = String(config.site.url ?? '').trim();
   if (siteUrl) {

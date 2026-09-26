@@ -127,13 +127,42 @@ async function startHeadlessBrowser(executable, profile) {
       await withTimeout(loaded, 20000, 'Screenshot page load timed out');
       await send('Runtime.evaluate', { expression: 'new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 150)))', awaitPromise: true });
     };
-    const screenshot = async () => {
-      const result = await send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: false });
-      return Buffer.from(result.data, 'base64');
+    const screenshot = async ({ hideConsent = false, clipSelector = '' } = {}) => {
+      let previousDisplay;
+      if (hideConsent) {
+        const hidden = await send('Runtime.evaluate', {
+          expression: '(() => { const node = document.querySelector("[data-consent-ui]"); if (!node) return null; const old = node.style.display; node.style.display = "none"; return old; })()',
+          returnByValue: true
+        });
+        previousDisplay = hidden.result.value;
+      }
+      try {
+        let clip;
+        if (clipSelector) {
+          const measured = await send('Runtime.evaluate', {
+            expression: '(() => { const node = document.querySelector("' + clipSelector + '"); if (!node) return null; const rect = node.getBoundingClientRect(); return JSON.stringify({x:Math.max(0,rect.left),y:Math.max(0,rect.top),width:Math.min(window.innerWidth,rect.right)-Math.max(0,rect.left),height:Math.min(window.innerHeight,rect.bottom)-Math.max(0,rect.top)}); })()',
+            returnByValue: true
+          });
+          if (!measured.result.value) return null;
+          const rect = JSON.parse(measured.result.value);
+          if (rect.width <= 0 || rect.height <= 0) return null;
+          clip = { x: rect.x, y: rect.y, width: rect.width, height: rect.height, scale: 1 };
+        }
+        const result = await send('Page.captureScreenshot', {
+          format: 'png', fromSurface: true, captureBeyondViewport: false, ...(clip ? { clip } : {})
+        });
+        return Buffer.from(result.data, 'base64');
+      } finally {
+        if (hideConsent && previousDisplay !== undefined && previousDisplay !== null) {
+          await send('Runtime.evaluate', {
+            expression: '(() => { const node = document.querySelector("[data-consent-ui]"); if (node) node.style.display = ' + JSON.stringify(previousDisplay) + '; })()'
+          });
+        }
+      }
     };
     const metrics = async () => {
       const result = await send('Runtime.evaluate', {
-        expression: 'JSON.stringify({viewportWidth:window.innerWidth,documentWidth:document.documentElement.scrollWidth})',
+        expression: '(() => { const manager = document.querySelector("[data-consent-ui]"); const oldDisplay = manager?.style.display; if (manager) manager.style.display = "none"; const pageDocumentWidth = Math.max(document.documentElement.scrollWidth,document.body?.scrollWidth || 0); if (manager) manager.style.display = oldDisplay; const panel = manager?.querySelector(".privacy-panel"); const rect = manager?.getBoundingClientRect(); const panelRect = panel?.getBoundingClientRect(); const buttons = [...(panel?.querySelectorAll("button") || [])]; const buttonsFit = !panelRect || buttons.every(button => { const r = button.getBoundingClientRect(); return r.left >= panelRect.left - 1 && r.right <= panelRect.right + 1; }); const consentInnerNoOverflow = !panel || (panel.scrollWidth <= panel.clientWidth + 1 && buttonsFit); const consentWithinViewport = !rect || (rect.left >= -1 && rect.top >= -1 && rect.right <= innerWidth + 1 && rect.bottom <= innerHeight + 1); const accept = panel?.querySelector(".privacy-accept"); const reject = panel?.querySelector(".privacy-reject"); const ar = accept?.getBoundingClientRect(); const rr = reject?.getBoundingClientRect(); const consentActionsBalanced = Boolean(accept && reject && Math.abs(ar.width-rr.width)<1 && Math.abs(ar.height-rr.height)<1 && getComputedStyle(accept).backgroundColor===getComputedStyle(reject).backgroundColor); const switches = [...(panel?.querySelectorAll(".privacy-service-toggle input") || [])]; const consentOptInDefault = switches.every(input => !input.checked); const serviceCards = [...(panel?.querySelectorAll(".privacy-service-setting") || [])]; const consentServiceDisclosures = serviceCards.length===0 || serviceCards.every(card => card.querySelectorAll(".privacy-service-disclosures dt").length>=4); const consentDetails = Boolean(panel?.querySelector(".privacy-details>summary")); return JSON.stringify({viewportWidth:innerWidth,documentWidth:document.documentElement.scrollWidth,pageDocumentWidth,consentExists:Boolean(manager),consentWithinViewport,consentInnerNoOverflow,consentActionsBalanced,consentOptInDefault,consentServiceDisclosures,consentDetails,consentWidth:rect?.width || 0,consentHeight:rect?.height || 0}); })()',
         returnByValue: true
       });
       return JSON.parse(result.result.value);
@@ -189,7 +218,11 @@ const mimeTypes = {
 function reportHtml(report, screenshots) {
   const documents = report.documents || [];
   const reportReading = report.visualEvidence?.reportAccessibility || { status: 'pending', checks: 0, passed: 0 };
-  const typeLabel = (type) => ({ post: 'Posts', page: 'Pages', homepage: 'Homepages', system: 'System routes' })[type] || type;
+  const consentChecks = report.consentUi?.checks || 0;
+  const consentPassed = report.consentUi?.passed || 0;
+  const consentErrors = Math.max(0, consentChecks - consentPassed);
+  const consentScore = consentChecks ? Math.floor(consentPassed / consentChecks * 100) + '%' : '—';
+  const typeLabel = (type) => ({ post: 'Posts', page: 'Pages', homepage: 'Homepages', system: 'System routes', consent: 'Consent interface' })[type] || type;
   const statusTable = '<table><caption>Audit results</caption><thead><tr><th scope="col">Audit</th><th scope="col">Status</th>' +
     '<th scope="col">Score</th><th scope="col">Checks</th><th scope="col">Errors</th><th scope="col">Warnings</th></tr></thead><tbody>' +
     '<tr><th scope="row">Accessibility</th><td>' + escapeHtml(report.accessibility.status) + '</td><td>' + report.accessibility.score +
@@ -198,6 +231,8 @@ function reportHtml(report, screenshots) {
     '%</td><td>' + report.agentFriendliness.checks + '</td><td>' + report.agentFriendliness.errors + '</td><td>' + report.agentFriendliness.warnings + '</td></tr>' +
     '<tr><th scope="row">Markdown rendering</th><td>' + escapeHtml(report.markdownRendering?.status || 'not run') + '</td><td>—</td><td>' +
     (report.markdownRendering?.checks || 0) + '</td><td>' + ((report.markdownRendering?.checks || 0) - (report.markdownRendering?.passed || 0)) + '</td><td>0</td></tr>' +
+    '<tr><th scope="row">Consent interface</th><td>' + escapeHtml(report.consentUi?.status || 'not checked') + '</td><td>' + consentScore +
+    '</td><td>' + consentChecks + '</td><td>' + consentErrors + '</td><td>0</td></tr>' +
     '<tr><th scope="row">Report reading structure</th><td>' + escapeHtml(reportReading.status) + '</td><td>' +
     Math.floor(reportReading.passed / Math.max(1, reportReading.checks) * 100) + '%</td><td>' + reportReading.checks +
     '</td><td>' + (reportReading.checks - reportReading.passed) + '</td><td>0</td></tr>' +
@@ -217,11 +252,13 @@ function reportHtml(report, screenshots) {
     ? '<ul>' + report.issues.map((item) => '<li><strong>' + escapeHtml(item.severity + ' · ' + item.category) +
       '</strong> ' + escapeHtml(item.page) + ' — ' + escapeHtml(item.message) + '</li>').join('') + '</ul>'
     : '<p>No findings.</p>';
-  const screenshotGroups = ['post', 'page', 'homepage', 'system'].map((type) => {
+  const screenshotGroups = ['post', 'page', 'homepage', 'system', 'consent'].map((type) => {
     const items = screenshots.filter((item) => item.type === type);
     if (!items.length) return '';
     return '<section><h3>' + typeLabel(type) + ' screenshots</h3>' + items.map((item) => {
-      const dimensions = item.viewportWidth + ' CSS pixels wide; document width ' + item.documentWidth + ' CSS pixels';
+      const dimensions = item.capture === 'consent'
+        ? 'Consent component ' + Math.round(item.consentWidth || 0) + ' by ' + Math.round(item.consentHeight || 0) + ' CSS pixels; within viewport: ' + Boolean(item.consentWithinViewport)
+        : item.viewportWidth + ' CSS pixels wide; page content width ' + item.documentWidth + ' CSS pixels with consent hidden';
       const alt = 'Screenshot of ' + (item.title || item.page) + ' at the ' + item.viewport + ' viewport, ' +
         item.width + ' by ' + item.height + ' pixels; ' + dimensions + '.';
       return '<h4>' + escapeHtml(item.title || item.page) + ' · ' + escapeHtml(item.viewport) + '</h4><figure><img src="./page-check-screenshots/' +
@@ -232,12 +269,15 @@ function reportHtml(report, screenshots) {
   }).join('');
   const markdownDetails = (report.markdownRendering?.documents || []).map((document) => '<section><h3>' + escapeHtml(document.path) +
     '</h4><ul>' + document.checks.map((item) => '<li>' + (item.passed ? 'Pass' : 'Fail') + ' — ' + escapeHtml(item.feature) + '</li>').join('') + '</ul></section>').join('');
+  const consentDetails = [...(report.consentUi?.results || []), ...(report.consentUi?.visualChecks || [])]
+    .map((item) => '<li>' + (item.passed ? 'Pass' : 'Fail') + ' — ' + escapeHtml(item.name ||
+      (item.page + ' at ' + item.viewport + ' viewport')) + '</li>').join('');
   return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
     '<title>EdgePress accessibility and content report</title><style>@page{size:A4;margin:15mm}*{box-sizing:border-box}html{scroll-behavior:smooth}body{font:12px/1.55 Arial,sans-serif;color:#202520;background:#fff;margin:0 auto;padding:16px;max-width:1100px}header,main,footer{display:block}h1{font-size:25px;line-height:1.2}h2{font-size:19px;margin:26px 0 8px}h3{font-size:15px;margin:20px 0 8px}h4{font-size:12px;margin:16px 0 6px}p{margin:6px 0}a{color:#174c35;text-decoration:underline;text-underline-offset:2px}a:focus-visible{outline:3px solid #9a481e;outline-offset:3px}.skip-link{position:absolute;left:-10000px;top:auto}.skip-link:focus{left:16px;top:16px;padding:8px;background:#fff;border:2px solid #174c35;z-index:2}.report-nav ul{display:flex;gap:18px;flex-wrap:wrap;padding-left:20px}table{width:100%;border-collapse:collapse;margin:10px 0 20px;table-layout:fixed}caption{text-align:left;font-weight:bold;padding:0 0 6px}th,td{padding:7px;border:1px solid #879188;text-align:left;vertical-align:top;overflow-wrap:anywhere}thead th{background:#e9eee9}tbody th{background:#f5f6f3}li{margin:4px 0;overflow-wrap:anywhere}code{overflow-wrap:anywhere}.status{font-weight:bold;text-transform:uppercase}.appendix{break-before:page}figure{margin:0 0 20px;break-inside:avoid}figure img{display:block;max-width:100%;max-height:220mm;width:auto;height:auto;margin:0 auto;border:1px solid #879188;object-fit:contain}figcaption{font-size:10px;color:#39443b;margin-top:5px}section{break-inside:auto}footer{border-top:1px solid #879188;margin-top:24px;padding-top:10px}@media(max-width:600px){body{padding:12px}.report-nav ul{display:block}table{font-size:11px}th,td{padding:5px}}@media print{body{max-width:none;padding:0}.report-nav{display:none}a{color:#202520}.appendix{break-before:page}h2,h3,h4{break-after:avoid}figure{break-inside:avoid}}</style></head>' +
     '<body><a class="skip-link" href="#main">Skip to report</a><header><h1>EdgePress accessibility and content report</h1><p>Generated ' +
     escapeHtml(report.generatedAt) + ' · Overall status: <span class="status">' + escapeHtml(report.status) + '</span>.</p>' +
     '<nav class="report-nav" aria-label="Report sections"><ul><li><a href="#summary">Summary</a></li><li><a href="#content">Content reviewed</a></li>' +
-    '<li><a href="#findings">Findings</a></li><li><a href="#markdown">Markdown rendering</a></li><li><a href="#evidence">Screenshots</a></li><li><a href="#scope">Scope</a></li></ul></nav></header>' +
+    '<li><a href="#findings">Findings</a></li><li><a href="#markdown">Markdown rendering</a></li><li><a href="#consent">Consent interface</a></li><li><a href="#evidence">Screenshots</a></li><li><a href="#scope">Scope</a></li></ul></nav></header>' +
     '<main id="main"><section id="summary"><h2>Audit summary</h2>' + statusTable + summary + '<p>Generated HTML documents: ' + report.pages +
     ' · HTML bytes: ' + report.metrics.htmlBytes + ' · Stylesheet references: ' + report.metrics.stylesheets +
     ' · Script references: ' + report.metrics.scripts + '.</p></section>' +
@@ -245,7 +285,9 @@ function reportHtml(report, screenshots) {
     documentSections + '</section><section id="findings"><h2>Findings</h2>' + findings + '</section>' +
     '<section id="markdown"><h2>Markdown rendering verification</h2><p>' + escapeHtml(String(report.markdownRendering?.passed || 0)) + ' of ' +
     escapeHtml(String(report.markdownRendering?.checks || 0)) + ' syntax checks passed across the tutorial post locales.</p>' + markdownDetails + '</section>' +
-    '<section id="evidence" class="appendix"><h2>Responsive page screenshots</h2><p>Mobile screenshots use a 390 by 844 CSS pixel viewport. Each caption includes the measured document width so horizontal overflow is visible in the report.</p>' +
+    '<section id="consent"><h2>Consent interface checks</h2><p>Consent component checks run separately from page-content layout checks.</p>' +
+    (consentDetails ? '<ul>' + consentDetails + '</ul>' : '<p>No consent UI checks were run.</p>') + '</section>' +
+    '<section id="evidence" class="appendix"><h2>Responsive and consent screenshots</h2><p>Page screenshots use a 390 by 844 CSS pixel mobile viewport and hide the consent component while measuring page content. Separate consent screenshots crop the component at desktop and mobile sizes.</p>' +
     screenshotGroups + '</section><section id="scope"><h2>Scope and limits</h2><ul>' + report.scope.map((item) => '<li>' + escapeHtml(item) + '</li>').join('') +
     '</ul></section></main><footer><p>EdgePress local PDF report. Screenshot details are included as evidence and may be small when printed.</p></footer></body></html>';
 }
@@ -407,9 +449,23 @@ export async function addVisualEvidence(config, report) {
         const digest = createHash('sha256').update(relativeFile + ':' + viewport.name).digest('hex').slice(0, 10);
         const file = 'page-' + digest + '.png';
         const target = resolve(evidenceDirectory, file);
-        screenshots.push({ page: relativeFile, type: document.type, title: document.title, viewport: viewport.name, width: viewport.width,
+        screenshots.push({ page: relativeFile, type: document.type, capture: 'page', title: document.title, viewport: viewport.name, width: viewport.width,
           height: viewport.height, file, target,
           label: relativeFile + ' · ' + viewport.name + ' (' + viewport.width + '×' + viewport.height + ')' });
+      }
+    }
+    if (config.browserPlugins.consent.enabled) {
+      const availableSet = new Set(available);
+      for (const relativeFile of new Set([...homePaths, ...privacyPaths])) {
+        if (!availableSet.has(relativeFile)) continue;
+        for (const viewport of [desktop, mobile]) {
+          const digest = createHash('sha256').update('consent:' + relativeFile + ':' + viewport.name).digest('hex').slice(0, 10);
+          const file = 'consent-' + digest + '.png';
+          screenshots.push({ page: relativeFile, type: 'consent', capture: 'consent', title: 'Privacy choices',
+            viewport: viewport.name, width: viewport.width, height: viewport.height, file,
+            target: resolve(evidenceDirectory, file), label: 'Privacy choices · ' + relativeFile + ' · ' + viewport.name +
+              ' (' + viewport.width + '×' + viewport.height + ')' });
+        }
       }
     }
     reportServer = await startReportServer(config.resolvedPaths.output, evidenceDirectory, htmlPath);
@@ -419,18 +475,56 @@ export async function addVisualEvidence(config, report) {
       await browserSession.setViewport(viewport);
       await browserSession.navigate('http://127.0.0.1:' + reportServer.port + siteAddress(screenshot.page));
       const dimensions = await browserSession.metrics();
-      await writeFile(screenshot.target, await browserSession.screenshot());
+      if (screenshot.capture === 'consent') {
+        report.consentUi.visualChecks ||= [];
+        const checks = [
+          ['component stays inside the viewport', dimensions.consentExists && dimensions.consentWithinViewport],
+          ['component content stays inside its own box', dimensions.consentExists && dimensions.consentInnerNoOverflow],
+          ['accept and reject actions have equal visual weight', dimensions.consentExists && dimensions.consentActionsBalanced],
+          ['optional services begin unchecked', dimensions.consentExists && dimensions.consentOptInDefault],
+          ['expanded service details disclose all configured fields', dimensions.consentExists && dimensions.consentServiceDisclosures && dimensions.consentDetails]
+        ];
+        report.consentUi.visualChecks.push(...checks.map(([name, passed]) => ({ page: screenshot.page, viewport: viewport.name,
+          name, passed, consentWidth: dimensions.consentWidth, consentHeight: dimensions.consentHeight })));
+        const withinViewport = dimensions.consentExists && dimensions.consentWithinViewport;
+        const noInnerOverflow = dimensions.consentExists && dimensions.consentInnerNoOverflow;
+        if (!dimensions.consentExists) {
+          report.issues.push({ severity: 'error', category: 'consent-ui', page: screenshot.page,
+            message: 'The consent manager did not appear in the browser.' });
+        } else if (!withinViewport || !noInnerOverflow) {
+          report.issues.push({ severity: 'error', category: 'consent-ui', page: screenshot.page,
+            message: 'Consent UI exceeded its viewport or its own content box at the ' + viewport.name + ' size.' });
+        }
+      }
+      const image = screenshot.capture === 'consent'
+        ? await browserSession.screenshot({ clipSelector: '[data-consent-ui]' })
+        : await browserSession.screenshot({ hideConsent: config.browserPlugins.consent.enabled });
+      if (!image) {
+        report.issues.push({ severity: 'error', category: screenshot.capture === 'consent' ? 'consent-ui' : 'visual-evidence',
+          page: screenshot.page, message: 'The requested screenshot area was not present in the browser.' });
+        continue;
+      }
+      await writeFile(screenshot.target, image);
       const imageInfo = await lstat(screenshot.target);
       if (!imageInfo.isFile() || imageInfo.size < 1000) throw new Error('Headless browser produced an empty screenshot');
       screenshot.viewportWidth = dimensions.viewportWidth;
-      screenshot.documentWidth = dimensions.documentWidth;
+      screenshot.documentWidth = dimensions.pageDocumentWidth;
+      screenshot.consentWidth = dimensions.consentWidth;
+      screenshot.consentHeight = dimensions.consentHeight;
+      screenshot.consentWithinViewport = dimensions.consentWithinViewport;
       if (viewport.name === 'mobile' && dimensions.viewportWidth !== viewport.width) {
         report.issues.push({ severity: 'error', category: 'responsive-layout', page: screenshot.page,
           message: 'Mobile viewport measured ' + dimensions.viewportWidth + ' CSS pixels instead of ' + viewport.width + '.' });
-      } else if (viewport.name === 'mobile' && dimensions.documentWidth > dimensions.viewportWidth) {
+      } else if (screenshot.capture === 'page' && viewport.name === 'mobile' && dimensions.pageDocumentWidth > dimensions.viewportWidth) {
         report.issues.push({ severity: 'error', category: 'responsive-layout', page: screenshot.page,
-          message: 'Mobile document width is ' + dimensions.documentWidth + ' CSS pixels for a ' + dimensions.viewportWidth + ' pixel viewport.' });
+          message: 'Page content width is ' + dimensions.pageDocumentWidth + ' CSS pixels for a ' + dimensions.viewportWidth + ' pixel viewport; consent UI is measured separately.' });
       }
+    }
+    if (report.consentUi?.visualChecks) {
+      const visualChecks = report.consentUi.visualChecks;
+      report.consentUi.checks += visualChecks.length;
+      report.consentUi.passed += visualChecks.filter((item) => item.passed).length;
+      report.consentUi.status = report.consentUi.passed === report.consentUi.checks ? 'pass' : 'fail';
     }
     report.errors = report.issues.filter((item) => item.severity === 'error').length;
     report.warnings = report.issues.filter((item) => item.severity === 'warning').length;
@@ -440,9 +534,10 @@ export async function addVisualEvidence(config, report) {
       if (findings.some((item) => item.severity === 'error')) document.status = 'fail';
       else if (findings.length) document.status = 'warning';
     }
-    report.visualEvidence = { status: 'complete', pdf: 'tools/page-check.pdf', screenshots: screenshots.map((item) => ({
-      page: item.page, type: item.type, title: item.title, viewport: item.viewport, width: item.width, height: item.height,
+    report.visualEvidence = { status: 'complete', pdf: 'tools/page-check.pdf', screenshots: screenshots.filter((item) => item.viewportWidth).map((item) => ({
+      page: item.page, type: item.type, capture: item.capture, title: item.title, viewport: item.viewport, width: item.width, height: item.height,
       viewportWidth: item.viewportWidth, documentWidth: item.documentWidth,
+      consentWidth: item.consentWidth, consentHeight: item.consentHeight, consentWithinViewport: item.consentWithinViewport,
       label: item.label
     })) };
     const initialHtml = reportHtml(report, screenshots);

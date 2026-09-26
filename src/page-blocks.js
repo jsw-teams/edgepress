@@ -1,7 +1,7 @@
-import { plainText } from './markdown.js';
-import { translate } from './i18n.js';
+import { renderMarkdownExcerpt } from './markdown.js';
+import { translate, translateValue } from './i18n.js';
 import { isIconName, renderIcon } from './icons.js';
-import { sortPostsNewest } from './content.js';
+import { postsForLocale } from './content.js';
 
 const captchaProviders = new Set(['cloudflare-turnstile', 'google-recaptcha', 'hcaptcha']);
 
@@ -59,6 +59,10 @@ function dateLabel(date, locale) {
   return new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeZone: 'UTC' }).format(date);
 }
 
+function dateOnlyLabel(value, locale) {
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(value + 'T00:00:00.000Z'));
+}
+
 function renderPrivacyServices(context) {
   const groups = [
     ['tracking', translate(context.config, context.locale, 'pluginTracking')],
@@ -73,24 +77,33 @@ function renderPrivacyServices(context) {
   if (!configured.length) {
     return '<p class="privacy-empty">' + escapeHtml(text(context.emptyText, 'privacy-services.emptyText', 2000)) + '</p>';
   }
-  return '<ul class="privacy-service-list">' + configured.map((service) => '<li><h3>' + escapeHtml(service.category + ' · ' + service.provider) +
-    '</h3><p><strong>' + escapeHtml(translate(context.config, context.locale, 'servicePurpose')) + ':</strong> ' + escapeHtml(service.purpose) +
-    '</p><p><strong>' + escapeHtml(translate(context.config, context.locale, 'serviceRetention')) + ':</strong> ' + escapeHtml(service.retention) + '</p></li>').join('') + '</ul>';
+  return '<ul class="privacy-service-list">' + configured.map((service) => '<li><h3>' + escapeHtml(service.category + ' · ' +
+    translateValue(context.config, context.locale, service.name || service.provider)) + '</h3><p><strong>' +
+    escapeHtml(translate(context.config, context.locale, 'servicePurpose')) + ':</strong> ' +
+    escapeHtml(translateValue(context.config, context.locale, service.purpose)) + '</p><p><strong>' +
+    escapeHtml(translate(context.config, context.locale, 'serviceDataCategories')) + ':</strong> ' +
+    escapeHtml(translateValue(context.config, context.locale, service.dataCategories)) + '</p><p><strong>' +
+    escapeHtml(translate(context.config, context.locale, 'serviceRecipient')) + ':</strong> ' +
+    escapeHtml(translateValue(context.config, context.locale, service.recipient)) + '</p><p><strong>' +
+    escapeHtml(translate(context.config, context.locale, 'serviceRetention')) + ':</strong> ' +
+    escapeHtml(translateValue(context.config, context.locale, service.retention)) + '</p></li>').join('') + '</ul>';
 }
 
-function renderLatestPosts(block, context) {
+async function renderLatestPosts(block, context) {
   const count = block.count ?? 3;
   if (!Number.isInteger(count) || count < 1 || count > 12) throw new Error('latest-posts.count must be an integer from 1 to 12');
   const paginate = block.paginate ?? false;
   if (typeof paginate !== 'boolean') throw new Error('latest-posts.paginate must be a boolean');
-  const hasLocalePosts = context.site.posts.some((post) => post.locale === context.locale);
-  const posts = sortPostsNewest(context.site.posts.filter((post) => post.locale === (hasLocalePosts ? context.locale : context.config.i18n.defaultLocale)));
+  const posts = postsForLocale(context.site.posts, context.locale, context.config.i18n.defaultLocale);
   const title = escapeHtml(text(block.title, 'latest-posts.title', 200));
   const authorLabel = (post) => post.author ? '<span class="post-author">' + escapeHtml(translate(context.config, context.locale, 'postAuthor')
     .replace('{author}', post.author)) + '</span>' : '';
-  const cards = posts.slice(0, count).map((post) => '<article class="post-card"><h3><a href="' + escapeHtml('/' + post.path.split('/').filter(Boolean).join('/') + (post.path.endsWith('/') ? '/' : '')) + '">' +
-    escapeHtml(post.title) + '</a></h3><p class="meta"><time datetime="' + post.date.toISOString() + '">' + escapeHtml(dateLabel(post.date, context.locale)) +
-    '</time>' + (post.author ? ' · ' + authorLabel(post) : '') + '</p><p>' + escapeHtml(plainText(post.description || post.markdown).slice(0, 220)) + '</p></article>').join('');
+  const cards = (await Promise.all(posts.slice(0, count).map(async (post) => {
+    const excerpt = await renderMarkdownExcerpt(post.description || post.markdown, context.config.markdown);
+    return '<article class="post-card" lang="' + escapeHtml(post.locale) + '"><h3><a href="' + escapeHtml('/' + post.path.split('/').filter(Boolean).join('/') + (post.path.endsWith('/') ? '/' : '')) + '">' +
+      escapeHtml(post.title) + '</a></h3><p class="meta"><time datetime="' + post.date.toISOString() + '">' + escapeHtml(dateLabel(post.date, context.locale)) +
+      '</time>' + (post.author ? ' · ' + authorLabel(post) : '') + '</p><div class="post-excerpt" lang="' + escapeHtml(post.locale) + '">' + excerpt + '</div></article>';
+  }))).join('');
   const pagination = paginate && context.latestPostsPagination?.totalPages > 1
     ? '<nav class="pagination latest-posts-pagination" aria-label="' + escapeHtml(translate(context.config, context.locale, 'pagination')) + '">' +
       '<a rel="next" href="' + escapeHtml(context.latestPostsPagination.olderUrl) + '">' + escapeHtml(translate(context.config, context.locale, 'older')) + '</a>' +
@@ -288,13 +301,15 @@ async function renderBlock(block, context, depth, index) {
     case 'privacy-consent': {
       const storageLabel = escapeHtml(text(block.storageLabel, 'privacy-consent.storageLabel', 120));
       const expiryLabel = escapeHtml(text(block.expiryLabel, 'privacy-consent.expiryLabel', 120));
-      const versionLabel = escapeHtml(text(block.versionLabel, 'privacy-consent.versionLabel', 120));
+      const proposedDateLabel = escapeHtml(text(block.proposedDateLabel, 'privacy-consent.proposedDateLabel', 120));
+      const effectiveDateLabel = escapeHtml(text(block.effectiveDateLabel, 'privacy-consent.effectiveDateLabel', 120));
       const expiryText = text(block.expiryText, 'privacy-consent.expiryText', 120);
       if (!expiryText.includes('{days}')) throw new Error('privacy-consent.expiryText must include a {days} placeholder');
       const consent = context.config.browserPlugins.consent;
       return '<dl class="privacy-controller-details"><div><dt>' + storageLabel + '</dt><dd>edgepress-privacy-choice</dd></div>' +
         '<div><dt>' + expiryLabel + '</dt><dd>' + escapeHtml(expiryText.replace('{days}', String(consent.expiresDays))) + '</dd></div>' +
-        '<div><dt>' + versionLabel + '</dt><dd>' + escapeHtml(consent.version) + '</dd></div></dl>';
+        '<div><dt>' + proposedDateLabel + '</dt><dd>' + escapeHtml(dateOnlyLabel(consent.proposedDate, context.locale)) + '</dd></div>' +
+        (consent.effectiveDate ? '<div><dt>' + effectiveDateLabel + '</dt><dd>' + escapeHtml(dateOnlyLabel(consent.effectiveDate, context.locale)) + '</dd></div>' : '') + '</dl>';
     }
     case 'privacy-controller': {
       const controller = context.config.privacy.controller;

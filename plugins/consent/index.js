@@ -21,7 +21,9 @@ export default function consentManager(api) {
     const ui = Object.fromEntries([
       'privacySettings', 'privacyNotice', 'privacyIntro', 'acceptOptional', 'rejectOptional',
       'savePreferences', 'optionalServices', 'noIntegrations', 'privacyPolicy', 'privacyController',
-      'servicePurpose', 'serviceRetention', 'consentReload', 'closePrivacy'
+      'servicePurpose', 'serviceDataCategories', 'serviceRecipient', 'serviceRetention', 'consentReload',
+      'closePrivacy', 'reviewDetails', 'managePrivacy', 'essentialStorage', 'pluginTracking',
+      'pluginStatistics', 'pluginAdvertising', 'pluginCaptcha'
     ].map((key) => [key, translate(config, locale, key)]));
     const services = ['tracking', 'statistics', 'advertising', 'captcha'].flatMap((group) =>
       config.browserPlugins[group].enabled ? config.browserPlugins[group].services.map((service) => ({ ...service, category: group })) : []
@@ -32,7 +34,7 @@ export default function consentManager(api) {
       integrations: services
     };
     if (privacy.policyUrl.startsWith('/')) privacy.policyUrl = localizedUrl(config, locale, privacy.policyUrl);
-    const payload = safeJson({ privacy, ui, siteLanguage: locale });
+    const payload = safeJson({ privacy, ui, siteLanguage: locale, defaultLocale: config.i18n.defaultLocale });
     const integration = '<script type="application/json" id="edgepress-privacy-config">' + payload + '</script>' +
       '<script src="/edgepress/plugins/consent/manager.js" defer></script>';
     return html.replace(/<\/body\s*>/i, integration + '</body>');

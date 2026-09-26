@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "frameworkVersion": "2026.9.7",
+  "frameworkVersion": "2026.9.8",
   "requirements": {
     "nodeMajor": 22,
     "nodeMinimumVersion": "22.12.0",
@@ -29,7 +29,9 @@
     { "name": "Localized Posts navigation and responsive code copy controls", "stage": "experimental", "since": "2026.9.6" },
     { "name": "Linked tables of contents on Markdown post pages", "stage": "experimental", "since": "2026.9.6" },
     { "name": "Consent-nested browser services and generated privacy disclosures", "stage": "experimental", "since": "2026.9.7" },
-    { "name": "Responsive homepage imagery and chronological all-post archives", "stage": "experimental", "since": "2026.9.7" }
+    { "name": "Responsive homepage imagery and chronological all-post archives", "stage": "experimental", "since": "2026.9.7" },
+    { "name": "Date-versioned localized consent disclosures with isolated responsive checks", "stage": "experimental", "since": "2026.9.8" },
+    { "name": "Markdown video syntax and locale-deduplicated chronological post lists", "stage": "experimental", "since": "2026.9.8" }
   ],
   "releaseHistory": [
     {
@@ -73,6 +75,12 @@
       "date": "2026-09-26",
       "request": 7,
       "notes": "Add consent-gated Cloudflare Web Analytics and configuration-generated privacy disclosures; optimize responsive homepage imagery and all-post archive ordering; improve Markdown excerpts and mobile consent controls; remove obsolete report cleanup code."
+    },
+    {
+      "version": "2026.9.8",
+      "date": "2026-09-26",
+      "request": 8,
+      "notes": "Replace consent version counters with proposed and effective dates; localize service data disclosures; audit the consent component independently from page layout; add Markdown video rendering; fix unique localized archive ordering and Markdown excerpts."
     }
   ]
 }

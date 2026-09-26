@@ -12,7 +12,7 @@ import { loadLanguagePacks } from './i18n.js';
 import { generateBuiltinRoutes } from './generators.js';
 
 const RENDER_CACHE_VERSION = 3;
-const MARKDOWN_SECURITY_POLICY_VERSION = 3;
+const MARKDOWN_SECURITY_POLICY_VERSION = 4;
 
 async function readCache(file) {
   try {

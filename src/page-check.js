@@ -1,6 +1,7 @@
 import { access, lstat, mkdir, readFile, readdir, realpath } from 'node:fs/promises';
 import { extname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { addVisualEvidence } from './report-visuals.js';
+import { renderMarkdown, renderMarkdownExcerpt } from './markdown.js';
 
 async function htmlFiles(directory) {
   let entries;
@@ -60,7 +61,7 @@ async function contentDocuments(output, config) {
   return documents;
 }
 
-function markdownFeatureCoverage(root, files, sourceByFile) {
+async function markdownFeatureCoverage(root, files, sourceByFile) {
   const expected = [
     ['headings 2 through 6', /<h2\b[\s\S]*?<h3\b[\s\S]*?<h4\b[\s\S]*?<h5\b[\s\S]*?<h6\b/i],
     ['Setext heading syntax', /<h2\b[^>]*>Setext (?:heading level two|二级标题示例)<\/h2>/i],
@@ -76,6 +77,7 @@ function markdownFeatureCoverage(root, files, sourceByFile) {
     ['GFM automatic links', /href="https:\/\/www\.markdownguide\.org\//i],
     ['angle-bracket, www, and email automatic links', /href="https:\/\/commonmark\.org"[\s\S]*?href="http:\/\/www\.example\.com"[\s\S]*?href="mailto:team@example\.com"/i],
     ['images with alternative text', /<img\b[^>]*src="\/edgepress-markdown-guide\.svg"[^>]*alt="[^"]+"/i],
+    ['image-shaped video Markdown syntax documented', (html) => html.includes('field-recording.mp4')],
     ['nested lists with inline formatting', /<li>[\s\S]*?<strong\b[\s\S]*?<ol\b[\s\S]*?<li>/i],
     ['task lists with accessible status names', /markdown-task-status" role="img" aria-label="[^"]+"/i],
     ['lists nested inside block quotes', /<blockquote>[\s\S]*?<ul\b[\s\S]*?<\/blockquote>/i],
@@ -84,16 +86,32 @@ function markdownFeatureCoverage(root, files, sourceByFile) {
     ['safe semantic inline HTML', /<kbd>Ctrl<\/kbd>/i],
     ['sanitization of active script markup', (html) => !/<script\b[^>]*>alert\(/i.test(html)]
   ];
+  const videoMarkdown = '![A kite crossing a field](https://media.example.org/field-recording.mp4 "Wind test")';
+  const videoHtml = await renderMarkdown(videoMarkdown);
+  const excerptHtml = await renderMarkdownExcerpt('A **formatted** excerpt with _emphasis_ and `code`.');
+  let unsafeVideoRejected = false;
+  try { await renderMarkdown('![Unsafe video](javascript:alert(1).mp4)'); }
+  catch { unsafeVideoRejected = true; }
+  const videoChecks = [
+    ['image-shaped video syntax renders an accessible native player with deferred media',
+      /<video controls playsinline preload="none" aria-label="A kite crossing a field"><source src="https:\/\/media\.example\.org\/field-recording\.mp4" type="video\/mp4"/i.test(videoHtml)],
+    ['video title renders as a caption', /<figcaption>Wind test<\/figcaption>/i.test(videoHtml)],
+    ['unsafe video URL is rejected', unsafeVideoRejected],
+    ['post-list excerpt preserves inline Markdown formatting', /<strong>formatted<\/strong>[\s\S]*?<em>emphasis<\/em>[\s\S]*?<code>code<\/code>/i.test(excerptHtml)]
+  ];
   const guides = files.filter((file) => /markdown-syntax-guide\/index\.html$/i.test(file.replace(/\\/g, '/')));
   const documents = guides.map((file) => {
     const html = sourceByFile.get(file) || '';
     const content = html.match(/<div class="post-content">([\s\S]*?)<\/div>/i)?.[1] || '';
-    const checks = expected.map(([feature, matcher]) => ({ feature, passed: typeof matcher === 'function' ? matcher(content) : matcher.test(content) }));
+    const checks = [
+      ...expected.map(([feature, matcher]) => ({ feature, passed: typeof matcher === 'function' ? matcher(content) : matcher.test(content) })),
+      ...videoChecks.map(([feature, passed]) => ({ feature, passed }))
+    ];
     return { path: relative(root, file).replace(/\\/g, '/'), checks, passed: checks.filter((item) => item.passed).length };
   });
   return {
     status: guides.length && documents.every((document) => document.checks.every((item) => item.passed)) ? 'pass' : 'fail',
-    checks: expected.length * Math.max(1, guides.length),
+    checks: (expected.length + videoChecks.length) * Math.max(1, guides.length),
     passed: documents.reduce((total, document) => total + document.passed, 0),
     documents
   };
@@ -166,7 +184,7 @@ export async function checkPages(config) {
     pageIds.set(file, new Set([...html.matchAll(/\bid\s*=\s*["']([^"']+)["']/gi)].map((match) => match[1])));
     metrics.htmlBytes += Buffer.byteLength(html);
   }
-  const markdownRendering = markdownFeatureCoverage(output, files, sourceByFile);
+  const markdownRendering = await markdownFeatureCoverage(output, files, sourceByFile);
   if (!markdownRendering.documents.length) {
     addFinding('error', 'markdown-rendering', 'content/posts', 'The Markdown syntax guide post was not generated.');
   }
@@ -259,11 +277,58 @@ export async function checkPages(config) {
   const hashedAssets = all.filter((file) => /\.[a-f0-9]{16}\.(?:css|js)$/i.test(file))
     .map((file) => relative(output, file).split(sep).join('/'));
   const styleFiles = all.filter((file) => extname(file).toLowerCase() === '.css');
+  let styles = '';
   if (styleFiles.length) {
-    const styles = (await Promise.all(styleFiles.map((file) => readFile(file, 'utf8')))).join('\n');
+    styles = (await Promise.all(styleFiles.map((file) => readFile(file, 'utf8')))).join('\n');
     inspect('accessibility', !/:focus(?:-visible)?\s*\{[^}]*outline/i.test(styles), 'warning', 'theme', 'No visible keyboard focus outline was found in the generated CSS.');
   } else {
     inspect('accessibility', true, 'warning', 'theme', 'No stylesheet was found to inspect for keyboard focus styles.');
+  }
+
+  const consentConfig = config.browserPlugins.consent;
+  const consentUiChecks = [];
+  if (consentConfig.enabled) {
+    const consentCheck = (name, passed) => consentUiChecks.push({ name, passed });
+    let managerScript = '';
+    const managerAsset = all.find((file) => {
+      const path = relative(output, file).split(sep).join('/');
+      return /^edgepress\/plugins\/consent\/manager\.[a-f0-9]{16}\.js$/i.test(path);
+    });
+    if (managerAsset) {
+      try { managerScript = await readFile(managerAsset, 'utf8'); }
+      catch { /* The missing manager is reported below. */ }
+    }
+    const htmlWithConsent = files.filter((file) => {
+      const html = sourceByFile.get(file) || '';
+      return html.includes('edgepress-privacy-config') && /\/edgepress\/plugins\/consent\/manager\.[a-f0-9]{16}\.js/i.test(html);
+    });
+    consentCheck('privacy controls are injected on every generated page', files.length > 0 && htmlWithConsent.length === files.length);
+    consentCheck('consent manager script was generated', Boolean(managerScript));
+    consentCheck('service disclosure supports data categories, recipient, and retention',
+      managerScript.includes('serviceDataCategories') && managerScript.includes('serviceRecipient') && managerScript.includes('serviceRetention'));
+    consentCheck('stored choices are tied to proposed and effective dates',
+      managerScript.includes('proposedDate: consent.proposedDate') && managerScript.includes('effectiveDate: consent.effectiveDate'));
+    consentCheck('new visitors start with every optional service off', managerScript.includes('checkbox.checked = false'));
+    consentCheck('accept and reject controls share the same component styling',
+      /\.privacy-panel \.privacy-accept,\.privacy-manager \.privacy-panel \.privacy-reject\s*\{[^}]*background:[^}]*\}/.test(styles));
+    const componentClass = /(?:^|[\s>+~])\.privacy-(?:manager|panel|settings-button|close|intro|essential|details|service-preview|preview-item|category|service-settings|service-setting|service-toggle|service-toggle-text|service-disclosures|actions|accept|reject|manage|save|empty|policy-link|controller)(?=$|[^\w-])/;
+    let scoped = true;
+    for (const match of styles.matchAll(/([^{}]+)\{[^{}]*\}/g)) {
+      const selector = match[1].trim();
+      if (componentClass.test(selector) && !selector.includes('.privacy-manager')) scoped = false;
+    }
+    consentCheck('consent component CSS selectors stay within the manager', scoped);
+  }
+  const consentUi = consentConfig.enabled
+    ? {
+        status: consentUiChecks.every((item) => item.passed) ? 'pass' : 'fail',
+        checks: consentUiChecks.length,
+        passed: consentUiChecks.filter((item) => item.passed).length,
+        results: consentUiChecks
+      }
+    : { status: 'not enabled', checks: 0, passed: 0, results: [] };
+  for (const check of consentUiChecks.filter((item) => !item.passed)) {
+    issues.push({ severity: 'error', category: 'consent-ui', page: 'privacy manager', message: 'Consent UI requirement failed: ' + check.name + '.' });
   }
 
   let robots = '';
@@ -319,6 +384,7 @@ export async function checkPages(config) {
     contentSummary,
     documents,
     markdownRendering,
+    consentUi,
     errors,
     warnings,
     accessibility,
@@ -328,6 +394,7 @@ export async function checkPages(config) {
     issues,
     scope: [
       'Accessibility checks inspect generated HTML and CSS. They do not measure color contrast, screen-reader behavior, keyboard interactions in a browser, or dynamic vendor widgets.',
+      'Page layout is measured with the consent manager hidden. The consent manager has separate component checks and screenshots, so its size does not change the page-content overflow result.',
       'Agent-friendliness checks inspect metadata, structured data, internal links, robots.txt, sitemap.xml, and llms.txt. They do not guarantee crawler indexing or answer quality.',
       'This automated report is not a legal-compliance assessment or a substitute for manual review.',
       'Screenshots capture generated local pages at desktop and mobile viewports. They do not replace manual keyboard, zoom, contrast, or assistive-technology review.'

@@ -1,8 +1,8 @@
-import { plainText } from './markdown.js';
+import { plainText, renderMarkdownExcerpt } from './markdown.js';
 import { renderBlocks } from './page-blocks.js';
 import { renderLayout } from './theme.js';
 import { localizedUrl, translate } from './i18n.js';
-import { slugify, sortPostsNewest } from './content.js';
+import { postsForLocale, slugify, sortPostsNewest } from './content.js';
 import { mapLimit } from './concurrency.js';
 
 function escapeHtml(value) {
@@ -120,13 +120,13 @@ function renderPostAuthor(post, locale, config) {
   return '<span class="post-author">' + escapeHtml(translate(config, locale, 'postAuthor').replace('{author}', post.author)) + '</span>';
 }
 
-function renderPostCard(post, locale, config, showLanguage = false) {
-  const summary = plainText(post.description || post.markdown).slice(0, 220);
+async function renderPostCard(post, locale, config, showLanguage = false) {
+  const summary = await renderMarkdownExcerpt(post.description || post.markdown, config.markdown);
   return '<article class="post-card" lang="' + escapeHtml(post.locale) + '"><h2><a href="' + escapeHtml(urlFor(post.path)) + '">' + escapeHtml(post.title) + '</a></h2>' +
     '<p class="meta"><time datetime="' + post.date.toISOString() + '">' + escapeHtml(dateLabel(post.date, post.locale)) + '</time>' +
     (showLanguage ? ' · <span class="post-language" lang="' + escapeHtml(post.locale) + '">' + escapeHtml(post.locale) + '</span>' : '') +
-    (post.author ? ' · ' + renderPostAuthor(post, locale, config) : '') + '</p><p>' +
-    escapeHtml(summary) + '</p></article>';
+    (post.author ? ' · ' + renderPostAuthor(post, locale, config) : '') + '</p><div class="post-excerpt" lang="' + escapeHtml(post.locale) + '">' +
+    summary + '</div></article>';
 }
 
 async function pageBodyForDocument(page, site, config, locale, isHomepage = false, renderContext = {}) {
@@ -172,13 +172,14 @@ export async function generateBuiltinRoutes(site, config, extensions) {
   const allPosts = sortPostsNewest(site.posts);
   for (const locale of config.i18n.locales) {
     const posts = allPosts.filter((post) => post.locale === locale);
+    const archivePosts = postsForLocale(allPosts, locale, defaultLocale);
     const pages = site.pages.filter((page) => page.locale === locale && !page.homepage);
     const homePage = homepageDocument(site.pages, locale, defaultLocale);
     const latestPostsPageSize = paginatedLatestPostsSize(homePage);
     if (latestPostsPageSize !== null && (!Number.isInteger(latestPostsPageSize) || latestPostsPageSize < 1 || latestPostsPageSize > 12)) {
       throw new Error('A paginated latest-posts block must use a count from 1 to 12');
     }
-    const homepageArchivePages = latestPostsPageSize ? Math.ceil(allPosts.length / latestPostsPageSize) : 0;
+    const homepageArchivePages = latestPostsPageSize ? Math.ceil(archivePosts.length / latestPostsPageSize) : 0;
     const prefix = locale === defaultLocale ? '' : locale + '/';
     const label = (key) => translate(config, locale, key);
     const localeHomeUrl = localizedUrl(config, locale, '');
@@ -206,12 +207,13 @@ export async function generateBuiltinRoutes(site, config, extensions) {
           }
         }));
     } else {
-      const totalPages = Math.max(1, Math.ceil(allPosts.length / config.pagination.perPage));
+      const totalPages = Math.max(1, Math.ceil(archivePosts.length / config.pagination.perPage));
       for (let pageNumber = 1; pageNumber <= totalPages; pageNumber += 1) {
-        const subset = allPosts.slice((pageNumber - 1) * config.pagination.perPage, pageNumber * config.pagination.perPage);
+        const subset = archivePosts.slice((pageNumber - 1) * config.pagination.perPage, pageNumber * config.pagination.perPage);
+        const cards = await Promise.all(subset.map((post) => renderPostCard(post, locale, config, true)));
         const body = '<section class="intro"><h1>' + escapeHtml(config.site.title) + '</h1><p>' + escapeHtml(config.site.description) +
           '</p></section><section class="post-list" aria-label="' + escapeHtml(label('latestPosts')) + '">' +
-          (subset.length ? subset.map((post) => renderPostCard(post, locale, config, true)).join('') : '<p>' + escapeHtml(label('noPosts')) + '</p>') +
+          (cards.length ? cards.join('') : '<p>' + escapeHtml(label('noPosts')) + '</p>') +
           '</section>' + (pageNumber === 1 && pages.length ? '<section class="page-links"><h2>' + escapeHtml(label('pages')) + '</h2><ul>' +
             pages.map((page) => '<li><a href="' + escapeHtml(urlFor(page.path)) + '">' + escapeHtml(page.title) + '</a></li>').join('') + '</ul></section>' : '') +
           (totalPages > 1 ? '<nav class="pagination" aria-label="' + escapeHtml(label('pagination')) + '">' +
@@ -259,9 +261,10 @@ export async function generateBuiltinRoutes(site, config, extensions) {
 
     if (!homePage) allPagePaths.add(localizedUrl(config, locale, ''));
     const archivePageSize = latestPostsPageSize || config.pagination.perPage;
-    const archivePageCount = Math.max(1, Math.ceil(allPosts.length / archivePageSize));
+    const archivePageCount = Math.max(1, Math.ceil(archivePosts.length / archivePageSize));
     for (let pageNumber = 1; pageNumber <= archivePageCount; pageNumber += 1) {
-      const subset = allPosts.slice((pageNumber - 1) * archivePageSize, pageNumber * archivePageSize);
+      const subset = archivePosts.slice((pageNumber - 1) * archivePageSize, pageNumber * archivePageSize);
+      const cards = await Promise.all(subset.map((post) => renderPostCard(post, locale, config, true)));
       const archiveUrl = pageNumber === 1 ? 'archives/' : 'archives/page/' + pageNumber + '/';
       const pagination = archivePageCount > 1
         ? '<nav class="pagination" aria-label="' + escapeHtml(label('pagination')) + '">' +
@@ -270,7 +273,7 @@ export async function generateBuiltinRoutes(site, config, extensions) {
           (pageNumber < archivePageCount ? '<a rel="next" href="' + escapeHtml(localizedUrl(config, locale, 'archives/page/' + (pageNumber + 1) + '/')) + '">' +
             escapeHtml(label('older')) + '</a>' : '') + '</nav>' : '';
       const archiveBody = '<section><h1>' + escapeHtml(label('archives')) + '</h1>' +
-        (subset.length ? subset.map((post) => renderPostCard(post, locale, config, true)).join('') : '<p>' + escapeHtml(label('noPosts')) + '</p>') + pagination + '</section>';
+        (cards.length ? cards.join('') : '<p>' + escapeHtml(label('noPosts')) + '</p>') + pagination + '</section>';
       routes.push(await pageRoute(prefix + (pageNumber === 1 ? 'archives/index.html' : 'archives/page/' + pageNumber + '/index.html'),
         pageNumber === 1 ? label('archives') : label('archives') + ' · ' + pageNumber, label('allPosts'), archiveBody, locale, config, extensions,
         { urlPath: localizedUrl(config, locale, archiveUrl) }));
@@ -284,8 +287,9 @@ export async function generateBuiltinRoutes(site, config, extensions) {
       tags.get(slug).posts.push(post);
     }
     const tagRoutes = await mapLimit([...tags.entries()], config.concurrency, async ([slug, value]) => {
+      const cards = await Promise.all(value.posts.map((post) => renderPostCard(post, locale, config)));
       const body = '<section><h1>' + escapeHtml(label('tag')) + ': ' + escapeHtml(value.label) + '</h1>' +
-        value.posts.map((post) => renderPostCard(post, locale, config)).join('') + '</section>';
+        cards.join('') + '</section>';
       return pageRoute(prefix + 'tags/' + slug + '/index.html', label('tag') + ': ' + value.label,
         label('tag') + ' ' + value.label, body, locale, config, extensions);
     });

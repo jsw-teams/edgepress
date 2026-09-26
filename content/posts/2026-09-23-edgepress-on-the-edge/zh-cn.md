@@ -104,6 +104,14 @@ CommonMark 也支持每行缩进四个空格的代码块：
 
 ![Markdown 源文件依次经过 EdgePress 渲染与 HTML 清理，生成发布文章的流程图](/edgepress-markdown-guide.svg "EdgePress 文章生成流程")
 
+文章也支持使用图片形状的 Markdown 语法插入直接视频文件。替代文字用于向辅助技术描述视频，可选标题会显示为视频说明：
+
+```markdown
+![一只风筝掠过田野](https://media.example.org/field-recording.mp4 "清晨的风况测试")
+```
+
+MP4、WebM、OGV 和 OGG 文件会渲染为带控制按钮的原生视频播放器，并设置 `preload="none"`，在访客播放前不预加载视频。文章不支持嵌入式播放器或任意 iframe 标记。
+
 ## 列表与嵌套组合
 
 无序列表项以 `-`、`+` 或 `*` 开头；有序列表项以数字和句点开头。子项目缩进至少两个空格。两种列表都可以包含强调、代码和链接：
@@ -160,7 +168,7 @@ GFM 也会把 `www.example.com` 与 `https://example.com` 转换成链接，并�
 
 <script>alert('unsafe');</script>
 
-视频请使用页面的「媒体与文字」元素；文章不允许嵌入框架或任意脚本。
+视频请使用上面的图片形状 Markdown 语法；文章不允许嵌入播放器框架或任意脚本。
 
 本项目启用的文章语法范围是：CommonMark 的块级和行内语法，加上 GFM 表格、自动链接、任务列表与删除线。脚注、数学公式、Mermaid 图表、下划线语法和定义列表等扩展没有启用；除非添加受信任的渲染扩展，否则它们会作为普通文字显示。
 

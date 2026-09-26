@@ -104,6 +104,14 @@ Images use the same shape as links, with an exclamation mark and useful alternat
 
 ![A diagram showing Markdown source passing through EdgePress rendering and HTML sanitization to a published post](/edgepress-markdown-guide.svg "The EdgePress post pipeline")
 
+Posts also accept a direct video file in the same image-shaped syntax. The alt text describes the video for assistive technology, and the optional title becomes its caption:
+
+```markdown
+![A kite passing over a field](https://media.example.org/field-recording.mp4 "Wind test, early morning")
+```
+
+MP4, WebM, OGV, and OGG files are rendered in a native video player with controls. Media uses `preload="none"` so the browser waits for playback before downloading the video. Embedded video players and arbitrary iframe markup are not supported.
+
 ## Lists, including nested combinations
 
 Start unordered items with `-`, `+`, or `*`; start ordered items with a number and a period. Indent child items by at least two spaces. Inline emphasis, code, and links work inside either level:
@@ -160,7 +168,7 @@ Small semantic HTML elements such as <kbd>Ctrl</kbd> can be useful inside Markdo
 
 <script>alert('unsafe');</script>
 
-Use a page's media-text element for video; embedded frames and arbitrary scripts are not allowed in posts.
+Use the Markdown image-shaped syntax above for a direct video file; embedded frames and arbitrary scripts are not allowed in posts.
 
 This is the complete enabled post dialect: CommonMark block and inline syntax plus GFM tables, autolinks, task lists, and strikethrough. Extensions such as footnotes, math notation, Mermaid diagrams, underline syntax, and definition lists are not enabled by this project. They remain ordinary text unless you add a trusted renderer extension.
 

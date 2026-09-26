@@ -43,9 +43,10 @@ blocks:
           blocks:
             - type: text
               paragraphs:
-                - Add browser providers in config.yml under plugins.consent.tracking, plugins.consent.statistics, plugins.consent.advertising, or plugins.consent.captcha. Each entry needs a unique ID, purpose, retention description, and a public provider identifier.
+                - Add browser providers in config.yml under plugins.consent.tracking, plugins.consent.statistics, plugins.consent.advertising, or plugins.consent.captcha. Each service needs a unique ID, provider, purpose, dataCategories, recipient, retention, and its public site identifier. Localized fields are maps keyed by every enabled locale, such as en and zh-CN.
                 - Available providers include Google Tag Manager and Meta Pixel; Cloudflare Web Analytics, Google Analytics, and Baidu Tongji; Google AdSense; and Cloudflare Turnstile, Google reCAPTCHA, and hCaptcha.
-                - Provider code is imported only after the visitor accepts that integration. Keep CAPTCHA secret keys out of config.yml and client code. The server must submit each CAPTCHA response to the provider verification API before accepting a form.
+                - Set plugins.consent.proposedDate to the YYYY-MM-DD date the notice was drafted. Set effectiveDate when the notice takes effect; omit it while no effective date has been set. Updating either date makes saved consent stale, so visitors are asked again.
+                - Provider code is imported only after the visitor accepts that integration. The first layer offers accept and reject together; service data and individual switches are available in its details. Keep CAPTCHA secret keys out of config.yml and client code. The server must submit each CAPTCHA response to the provider verification API before accepting a form.
             - type: notice
               title: Operator details
               text: Fill privacy.controller.name, privacy.controller.contact, and privacy.policyUrl before configuring any browser provider. The build rejects provider services when the controller name or contact is blank.
@@ -85,8 +86,8 @@ blocks:
               items:
                 - label: Cloudflare Turnstile Siteverify
                   url: https://developers.cloudflare.com/turnstile/get-started/server-side-validation/
-                - label: Consent guidelines from the EDPB
-                  url: https://www.edpb.europa.eu/sites/default/files/files/file1/edpb_guidelines_202005_consent_en.pdf
+                - label: EDPB consent summary
+                  url: https://www.edpb.europa.eu/system/files/2026-04/edpb-summary-consent_en.pdf
   - columns: 1
     cells:
       -

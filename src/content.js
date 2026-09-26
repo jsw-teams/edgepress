@@ -9,8 +9,19 @@ export function sortPostsNewest(posts) {
     if (dateOrder) return dateOrder;
     const leftPath = String(left.path);
     const rightPath = String(right.path);
-    return leftPath < rightPath ? -1 : leftPath > rightPath ? 1 : 0;
+    return rightPath.localeCompare(leftPath, undefined, { numeric: true, sensitivity: 'base' });
   });
+}
+
+export function postsForLocale(posts, locale, defaultLocale) {
+  const byBundle = new Map();
+  for (const post of posts) {
+    const current = byBundle.get(post.bundlePath);
+    if (!current || post.locale === locale || (current.locale !== locale && post.locale === defaultLocale)) {
+      byBundle.set(post.bundlePath, post);
+    }
+  }
+  return sortPostsNewest([...byBundle.values()]);
 }
 
 async function walkMarkdown(directory) {
@@ -184,7 +195,7 @@ export async function readDocuments(config) {
     }
     if (locale !== config.i18n.defaultLocale && metadata.homepage !== true) path = locale + '/' + path;
     return {
-      kind, file, relativePath, title, slug, date, locale,
+      kind, file, relativePath, bundlePath, title, slug, date, locale,
       author: kind === 'posts' ? normalizeAuthor(metadata.author, file) : '',
       videoId: (kind === 'posts' ? 'post-' : 'page-') + slugify(bundlePath + '-' + locale.toLowerCase()),
       video: kind === 'posts' ? normalizeVideo(metadata.video, file) : null,

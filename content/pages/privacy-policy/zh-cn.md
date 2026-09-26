@@ -32,7 +32,7 @@ blocks:
           title: 可选浏览器服务
           blocks:
             - type: text
-              text: 下方列表由 config.yml 中 plugins.consent 下已启用的浏览器服务自动生成，显示各服务的供应商、类别、用途和保留期限；该配置变更后，列表会随下次构建更新。
+              text: 下方列表会在每次构建时根据 config.yml 中 plugins.consent 下已启用的浏览器服务重新生成，显示服务名称、供应商类别、用途、数据类别、接收方和配置的保留期限。
             - type: privacy-services
               emptyText: 此源项目当前没有配置可选的第三方浏览器服务。
   - columns: 1
@@ -44,12 +44,14 @@ blocks:
           blocks:
             - type: text
               paragraphs:
-                - 浏览器集成只有在访客接受已配置服务后才会加载。存在可保存的选择时，同意界面会将第一方偏好存储在本地浏览器中；它不是服务器端审计日志。
-                - 访客可以重新打开“隐私设置”更改选择。撤回之前已启用的服务后，页面会重新载入，以停止该集成继续运行。
+                - 可选浏览器集成只有在访客主动接受后才会加载。首次访问时没有预先选中的服务；接受和拒绝选项处于同一层级，访客也可以展开服务详情并保存逐项选择。
+                - 同意界面会在第一方浏览器存储中保存访客选择的服务 ID，并遵循下方配置的有效期限。该偏好记录只保存在访客设备上，不是服务器端审计日志。
+                - 访客可以重新打开“隐私设置”更改或撤回选择。撤回之前已启用的服务后，页面会重新载入，以停止该集成继续运行。
             - type: privacy-consent
               storageLabel: 浏览器存储键
               expiryLabel: 偏好过期时间
-              versionLabel: 同意配置版本
+              proposedDateLabel: 隐私告知拟定日期
+              effectiveDateLabel: 隐私告知生效日期
               expiryText: "保存后 {days} 天"
   - columns: 1
     cells:
