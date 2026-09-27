@@ -29,6 +29,19 @@ function safeUrl(value, label) {
   return url;
 }
 
+function localizedSiteUrl(value, label, context) {
+  const url = safeUrl(value, label);
+  if (!url.startsWith('/')) return url;
+  const localeToken = /^\/\[launge\](?=\/|$)/i;
+  if (/\[launge\]/i.test(url) && !localeToken.test(url)) {
+    throw new Error(label + ' may use [launge] only as the first site-path segment');
+  }
+  if (!localeToken.test(url)) return url;
+  const suffix = url.replace(localeToken, '');
+  const prefix = context.locale === context.config.i18n.defaultLocale ? '' : '/' + context.locale;
+  return prefix + (suffix || '/');
+}
+
 function list(value, label, min = 1, max = 50) {
   if (!Array.isArray(value) || value.length < min || value.length > max) throw new Error(label + ' must contain ' + min + ' to ' + max + ' items');
   return value;
@@ -115,7 +128,7 @@ async function renderLatestPosts(block, context) {
     (cards ? '<div class="post-list">' + cards + '</div>' : '<p>' + escapeHtml(translate(context.config, context.locale, 'noPosts')) + '</p>') + pagination + '</section>';
 }
 
-function renderMediaText(block) {
+function renderMediaText(block, context) {
   const mediaType = text(block.mediaType, 'media-text.mediaType', 10);
   if (!['image', 'video'].includes(mediaType)) throw new Error('media-text.mediaType must be image or video');
   const src = escapeHtml(safeUrl(block.src, 'media-text.src'));
@@ -140,7 +153,7 @@ function renderMediaText(block) {
   const content = text(block.text, 'media-text.text', 2000);
   let action = '';
   if (block.cta) {
-    action = '<p><a class="button" href="' + escapeHtml(safeUrl(block.cta.url, 'media-text.cta.url')) + '">' +
+    action = '<p><a class="button" href="' + escapeHtml(localizedSiteUrl(block.cta.url, 'media-text.cta.url', context)) + '">' +
       escapeHtml(text(block.cta.label, 'media-text.cta.label', 120)) + '</a></p>';
   }
   return '<article class="media-text-block media-text-block--' + placement + '"><figure>' + media +
@@ -177,7 +190,7 @@ async function renderBlock(block, context, depth, index) {
       let action = '';
       if (block.cta) {
         const label = escapeHtml(text(block.cta.label, 'hero.cta.label', 120));
-        const url = escapeHtml(safeUrl(block.cta.url, 'hero.cta.url'));
+        const url = escapeHtml(localizedSiteUrl(block.cta.url, 'hero.cta.url', context));
         action = '<p><a class="button" href="' + url + '">' + label + '</a></p>';
       }
       const highlights = block.highlights === undefined ? [] : list(block.highlights, 'hero.highlights', 1, 4);
@@ -231,7 +244,7 @@ async function renderBlock(block, context, depth, index) {
       if (!Array.isArray(paragraphs) || paragraphs.length < 1 || paragraphs.length > 30) throw new Error('text needs a text value or 1 to 30 paragraphs');
       return '<div class="text-widget">' + paragraphs.map((paragraph) => '<p>' + escapeHtml(text(paragraph, 'text paragraph', 4000)) + '</p>').join('') + '</div>';
     }
-    case 'media-text': return renderMediaText(block);
+    case 'media-text': return renderMediaText(block, context);
     case 'display-text': {
       const value = escapeHtml(text(block.text, 'display-text.text', 1000));
       const style = block.style ?? 'editorial';
@@ -246,7 +259,7 @@ async function renderBlock(block, context, depth, index) {
       return '<nav class="link-list"' + (title ? ' aria-label="' + escapeHtml(title) + '"' : '') + '>' +
         (title ? '<h3>' + escapeHtml(title) + '</h3>' : '') + '<ul>' + items.map((item) => {
           const label = escapeHtml(text(item?.label, 'link-list label', 200));
-          const url = escapeHtml(safeUrl(item?.url, 'link-list.url'));
+          const url = escapeHtml(localizedSiteUrl(item?.url, 'link-list.url', context));
           const description = text(item?.text, 'link-list.text', 500, true);
           return '<li><a href="' + url + '">' + label + '</a>' + (description ? '<p>' + escapeHtml(description) + '</p>' : '') + '</li>';
         }).join('') + '</ul></nav>';
@@ -308,7 +321,7 @@ async function renderBlock(block, context, depth, index) {
       const expiryText = text(block.expiryText, 'privacy-consent.expiryText', 120);
       if (!expiryText.includes('{days}')) throw new Error('privacy-consent.expiryText must include a {days} placeholder');
       const consent = context.config.browserPlugins.consent;
-      return '<dl class="privacy-controller-details"><div><dt>' + storageLabel + '</dt><dd>edgepress-privacy-choice</dd></div>' +
+      return '<dl class="privacy-controller-details"><div><dt>' + storageLabel + '</dt><dd>' + escapeHtml(translate(context.config, context.locale, 'consentStoredOnDevice')) + '</dd></div>' +
         '<div><dt>' + expiryLabel + '</dt><dd>' + escapeHtml(expiryText.replace('{days}', String(consent.expiresDays))) + '</dd></div>' +
         '<div><dt>' + proposedDateLabel + '</dt><dd>' + escapeHtml(dateOnlyLabel(consent.proposedDate, context.locale)) + '</dd></div>' +
         (consent.effectiveDate ? '<div><dt>' + effectiveDateLabel + '</dt><dd>' + escapeHtml(dateOnlyLabel(consent.effectiveDate, context.locale)) + '</dd></div>' : '') + '</dl>';
@@ -336,7 +349,7 @@ async function renderBlock(block, context, depth, index) {
       const cells = items.map((item) => {
         const title = escapeHtml(text(item?.title, 'feature title', 200));
         const description = escapeHtml(text(item?.text, 'feature text', 1000, true));
-        const href = item?.url ? safeUrl(item.url, 'feature.url') : '';
+        const href = item?.url ? localizedSiteUrl(item.url, 'feature.url', context) : '';
         const iconName = item?.icon === undefined ? '' : text(item.icon, 'feature icon', 40);
         if (iconName && !isIconName(iconName)) throw new Error('Unsupported feature icon: ' + iconName);
         const icon = iconName ? renderIcon(iconName, 'feature-icon') : '';
@@ -361,7 +374,7 @@ async function renderBlock(block, context, depth, index) {
       const title = escapeHtml(text(block.title, 'cta.title', 240));
       const description = text(block.text, 'cta.text', 1000, true);
       const label = escapeHtml(text(block.label, 'cta.label', 120));
-      const url = escapeHtml(safeUrl(block.url, 'cta.url'));
+      const url = escapeHtml(localizedSiteUrl(block.url, 'cta.url', context));
       return '<section class="cta-block"><h2>' + title + '</h2>' + (description ? '<p>' + escapeHtml(description) + '</p>' : '') +
         '<p><a class="button" href="' + url + '">' + label + '</a></p></section>';
     }

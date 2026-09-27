@@ -29,7 +29,7 @@ blocks:
               width: 418
           cta:
             label: 从快速入门开始
-            url: /quick-start/
+            url: /[launge]/quick-start/
           highlights:
             - 在本地化 Markdown 前置数据中编辑页面
             - 使用 Markdown 撰写文章
@@ -43,19 +43,19 @@ blocks:
             - title: 页面使用可编辑元素
               icon: layout-grid
               text: 先设置栏数，再选择元素类型，并在各页面文件中编辑对应内容。
-              url: /theme-development/
+              url: /[launge]/theme-development/
             - title: 文章使用 Markdown
               icon: file-text
               text: 使用 Markdown 撰写长文，由内置渲染器进行清理和排版。
-              url: /project-introduction/
+              url: /[launge]/project-introduction/
             - title: 主题负责视觉设计
               icon: palette
               text: 使用 HTML 局部模板构建布局，并将各主题的配色保留在样式表中。
-              url: /theme-development/
+              url: /[launge]/theme-development/
             - title: 集成遵循用户同意
               icon: shield-check
               text: 配置跟踪、统计、广告或人机验证服务及其供应商信息。
-              url: /plugin-development/
+              url: /[launge]/plugin-development/
   - columns: 2
     cells:
       -
@@ -70,9 +70,9 @@ blocks:
               title: 项目指南
               items:
                 - label: 项目介绍
-                  url: /project-introduction/
+                  url: /[launge]/project-introduction/
                 - label: 快速入门
-                  url: /quick-start/
+                  url: /[launge]/quick-start/
       -
         - type: section
           title: 扩展项目
@@ -86,9 +86,9 @@ blocks:
               title: 开发指南
               items:
                 - label: 主题开发
-                  url: /theme-development/
+                  url: /[launge]/theme-development/
                 - label: 插件开发
-                  url: /plugin-development/
+                  url: /[launge]/plugin-development/
   - columns: 1
     cells:
       -

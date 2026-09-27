@@ -38,6 +38,7 @@ blocks:
               paragraphs:
                 - The shared layout renders every page and post. The head, header, and footer partials provide common site components. Configure the page-title suffix and separator, site title, shared navigation, language links, footer text, and component visibility in config.yml.
                 - Use double-brace placeholders for escaped values. The approved raw placeholders are generated page content, JSON-LD, and EdgePress-generated navigation markup. Keep the skip link, one main landmark, labeled navigation, visible focus, and one page-level h1.
+                - Page-block links can use /[launge]/quick-start/. The generated page replaces [launge] with the current language path and removes the segment for the default language, so the same link works in both locales.
                 - Keep the body as a full-height vertical layout and let main grow so the footer stays at the bottom on short pages.
                 - Style shared code blocks, copy buttons, and article contents in the theme. Code lines wrap on small viewports, copy controls have visible keyboard focus, and the generated post contents list links to heading anchors.
       -

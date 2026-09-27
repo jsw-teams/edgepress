@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "frameworkVersion": "2026.9.8",
+  "frameworkVersion": "2026.9.10",
   "requirements": {
     "nodeMajor": 22,
     "nodeMinimumVersion": "22.12.0",
@@ -31,7 +31,9 @@
     { "name": "Consent-nested browser services and generated privacy disclosures", "stage": "experimental", "since": "2026.9.7" },
     { "name": "Responsive homepage imagery and chronological all-post archives", "stage": "experimental", "since": "2026.9.7" },
     { "name": "Date-versioned localized consent disclosures with isolated responsive checks", "stage": "experimental", "since": "2026.9.8" },
-    { "name": "Markdown video syntax and locale-deduplicated chronological post lists", "stage": "experimental", "since": "2026.9.8" }
+    { "name": "Markdown video syntax and locale-deduplicated chronological post lists", "stage": "experimental", "since": "2026.9.8" },
+    { "name": "Floating post contents and compact consent controls", "stage": "experimental", "since": "2026.9.9" },
+    { "name": "Locale-stable consent choices and localized page-block links", "stage": "experimental", "since": "2026.9.10" }
   ],
   "releaseHistory": [
     {
@@ -81,6 +83,18 @@
       "date": "2026-09-26",
       "request": 8,
       "notes": "Replace consent version counters with proposed and effective dates; localize service data disclosures; audit the consent component independently from page layout; add Markdown video rendering; fix unique localized archive ordering and Markdown excerpts."
+    },
+    {
+      "version": "2026.9.9",
+      "date": "2026-09-26",
+      "request": 9,
+      "notes": "Add a floating post contents widget, compact consent controls, supplier privacy links, and fuller bilingual privacy disclosures."
+    },
+    {
+      "version": "2026.9.10",
+      "date": "2026-09-27",
+      "request": 10,
+      "notes": "Keep consent choices across locale changes and migrate existing records; add localized page-block links; make article tags clear; load search only where needed; redraw icons and simplify privacy wording."
     }
   ]
 }

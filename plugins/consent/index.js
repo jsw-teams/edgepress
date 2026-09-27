@@ -34,7 +34,21 @@ export default function consentManager(api) {
       integrations: services
     };
     if (privacy.policyUrl.startsWith('/')) privacy.policyUrl = localizedUrl(config, locale, privacy.policyUrl);
-    const payload = safeJson({ privacy, ui, siteLanguage: locale, defaultLocale: config.i18n.defaultLocale });
+    const choiceFingerprint = JSON.stringify({
+      controller: config.privacy.controller,
+      policyUrl: config.privacy.policyUrl,
+      consent: config.browserPlugins.consent,
+      integrations: services
+    });
+    const legacyChoiceFingerprints = config.i18n.locales.map((legacyLocale) => JSON.stringify({
+      controller: config.privacy.controller,
+      policyUrl: config.privacy.policyUrl.startsWith('/')
+        ? localizedUrl(config, legacyLocale, config.privacy.policyUrl)
+        : config.privacy.policyUrl,
+      consent: config.browserPlugins.consent,
+      integrations: services
+    }));
+    const payload = safeJson({ privacy, ui, siteLanguage: locale, defaultLocale: config.i18n.defaultLocale, choiceFingerprint, legacyChoiceFingerprints });
     const integration = '<script type="application/json" id="edgepress-privacy-config">' + payload + '</script>' +
       '<script src="/edgepress/plugins/consent/manager.js" defer></script>';
     return html.replace(/<\/body\s*>/i, integration + '</body>');

@@ -61,5 +61,6 @@
   "pluginCaptcha": "Human verification",
   "consentReload": "Your choice was saved. Reloading to apply the updated settings.",
   "agentSummary": "Project guides and reference pages for the EdgePress website builder.",
-  "closePrivacy": "Close settings"
+  "closePrivacy": "Close settings",
+  "consentStoredOnDevice": "This device"
 }

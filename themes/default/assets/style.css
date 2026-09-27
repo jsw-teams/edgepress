@@ -250,3 +250,7 @@ body{background:radial-gradient(ellipse at 92% 0%,#e9e9ff 0,transparent 33%),var
 .post-content .markdown-video{margin:1.5rem 0}
 .post-content .markdown-video video{display:block;width:100%;max-width:100%;height:auto;border-radius:10px;background:#101410}
 .post-content .markdown-video figcaption{margin-top:.5rem;color:var(--muted);font-size:.9rem}
+.post-tags{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:1.75rem 0 0;padding-top:1rem;border-top:1px solid var(--line);color:var(--muted);font-size:.92rem}
+.post-tags ul{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
+.post-tags a{display:inline-block;padding:2px 10px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--accent);font-weight:600;text-decoration:none}
+.post-tags a:hover{background:var(--line)}

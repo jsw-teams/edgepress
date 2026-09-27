@@ -238,8 +238,9 @@ export async function generateBuiltinRoutes(site, config, extensions) {
       const body = '<article class="post"><header><h1>' + escapeHtml(post.title) + '</h1><p class="meta"><time datetime="' + post.date.toISOString() + '">' +
         escapeHtml(dateLabel(post.date, locale)) + '</time>' + (post.author ? ' · ' + renderPostAuthor(post, locale, config) : '') +
         '</p></header>' + renderPostVideo(post.video, locale) + renderedMarkdown.toc + '<div class="post-content">' + renderedMarkdown.html + '</div>' +
-        (post.tags.length ? '<p class="tags">' + escapeHtml(label('tags')) + ': ' + post.tags.map((tag) => '<a href="' +
-          escapeHtml(localizedUrl(config, locale, 'tags/' + tagSlug(tag) + '/')) + '">' + escapeHtml(tag) + '</a>').join(' ') + '</p>' : '') + '</article>';
+        (post.tags.length ? '<nav class="post-tags" aria-label="' + escapeHtml(label('tags')) + '"><span class="post-tags-label">' + escapeHtml(label('tags')) + ':</span><ul>' +
+          post.tags.map((tag) => '<li><a rel="tag" href="' + escapeHtml(localizedUrl(config, locale, 'tags/' + tagSlug(tag) + '/')) + '">' + escapeHtml(tag) + '</a></li>').join('') +
+          '</ul></nav>' : '') + '</article>';
       const canonicalPath = urlFor(post.path);
       return pageRoute(post.path + 'index.html', post.title, post.description || plainText(post.markdown).slice(0, 160), body,
         locale, config, extensions, {
@@ -315,8 +316,7 @@ export async function generateBuiltinRoutes(site, config, extensions) {
       'aria-describedby="edgepress-search-hint"><button type="submit">' + escapeHtml(label('searchButton')) + '</button></div>' +
       '<p id="edgepress-search-hint">' + escapeHtml(label('searchHint')) + '</p></form><p id="edgepress-search-status" role="status" aria-live="polite">' +
       escapeHtml(label('searchPrompt')) + '</p><ol id="edgepress-search-results" class="local-search-results"></ol>' +
-      '<noscript><p>' + escapeHtml(label('searchNeedsJavaScript')) + '</p></noscript></section>' +
-      '<script defer src="/edgepress/search.js"></script>';
+      '<noscript><p>' + escapeHtml(label('searchNeedsJavaScript')) + '</p></noscript></section>';
     routes.push(await pageRoute(prefix + 'search/index.html', label('searchPosts'), label('searchIntro'), searchBody,
       locale, config, extensions));
 

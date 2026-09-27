@@ -56,10 +56,10 @@ blocks:
           blocks:
             - type: text
               paragraphs:
-                - The consent choice is stored in first-party localStorage on the visitor's device for the configured period. This site does not send that choice to the operator as a receipt or server-side audit record. A visitor can reopen Privacy settings to change or withdraw it; withdrawal stops an active integration after the page reloads. If the operator relies on consent to process personal data, the operator must ensure it can demonstrate consent as required by GDPR Article 7.
+                - The privacy choice is saved in the visitor's browser on that device for the configured period. This site does not send the choice to the operator or keep a server-side receipt. A visitor can reopen Privacy settings to change or withdraw it; withdrawal stops an active integration after the page reloads. If the operator relies on consent to process personal data, the operator must ensure it can demonstrate consent as required by GDPR Article 7.
                 - Hosting and security log retention depends on the deployed provider account and is not set by this source configuration. Cloudflare's data processing addendum describes transfer safeguards, including standard contractual clauses for restricted transfers; the operator must confirm the applicable agreement and safeguards for this deployment.
             - type: privacy-consent
-              storageLabel: Browser storage key
+              storageLabel: Saved on
               expiryLabel: Preference expiry
               proposedDateLabel: Notice proposed
               effectiveDateLabel: Notice effective

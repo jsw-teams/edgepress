@@ -146,7 +146,7 @@ function initialize(config) {
   root.append(settingsButton, panel);
   document.body.append(root);
 
-  const saved = readChoice(privacy);
+  const saved = readChoice(config);
   for (const [id, checkbox] of checkboxes) checkbox.checked = Boolean(saved?.allowed.includes(id));
 
   settingsButton.addEventListener('click', () => {
@@ -169,8 +169,8 @@ function initialize(config) {
   }
 
   function saveChoice(allowed) {
-    const previous = readChoice(privacy);
-    const next = makeChoice(privacy, allowed);
+    const previous = readChoice(config);
+    const next = makeChoice(config, allowed);
     persistChoice(next);
     closePanel();
     if (previous && previous.allowed.some((id) => !next.allowed.includes(id))) {
@@ -276,10 +276,11 @@ function makeIcon(name) {
   return svg;
 }
 
-function makeChoice(privacy, allowed) {
+function makeChoice(config, allowed) {
+  const privacy = config.privacy || {};
   const consent = privacy.consent || {};
   const expiresAt = Date.now() + Math.max(1, Math.min(730, consent.expiresDays || 180)) * 86400000;
-  const fingerprint = JSON.stringify({ controller: privacy.controller, policyUrl: privacy.policyUrl, consent, integrations: privacy.integrations });
+  const fingerprint = config.choiceFingerprint || JSON.stringify({ controller: privacy.controller, policyUrl: privacy.policyUrl, consent, integrations: privacy.integrations });
   return {
     proposedDate: consent.proposedDate || '',
     effectiveDate: consent.effectiveDate || '',
@@ -289,15 +290,21 @@ function makeChoice(privacy, allowed) {
   };
 }
 
-function readChoice(privacy) {
+function readChoice(config) {
   try {
     const saved = JSON.parse(localStorage.getItem(storageKey));
+    const privacy = config.privacy || {};
     const consent = privacy.consent || {};
-    const fingerprint = JSON.stringify({ controller: privacy.controller, policyUrl: privacy.policyUrl, consent, integrations: privacy.integrations });
+    const fingerprint = config.choiceFingerprint || JSON.stringify({ controller: privacy.controller, policyUrl: privacy.policyUrl, consent, integrations: privacy.integrations });
+    const isLegacyFingerprint = Array.isArray(config.legacyChoiceFingerprints) && config.legacyChoiceFingerprints.includes(saved?.fingerprint);
     if (!saved || saved.proposedDate !== (consent.proposedDate || '') || saved.effectiveDate !== (consent.effectiveDate || '') ||
-        saved.fingerprint !== fingerprint || saved.expiresAt <= Date.now() || !Array.isArray(saved.allowed)) {
+        (saved.fingerprint !== fingerprint && !isLegacyFingerprint) || saved.expiresAt <= Date.now() || !Array.isArray(saved.allowed)) {
       localStorage.removeItem(storageKey);
       return null;
+    }
+    if (isLegacyFingerprint && saved.fingerprint !== fingerprint) {
+      saved.fingerprint = fingerprint;
+      persistChoice(saved);
     }
     const validIds = new Set((privacy.integrations || []).map((item) => item.id));
     saved.allowed = saved.allowed.filter((id) => validIds.has(id));

@@ -169,6 +169,9 @@ export async function renderLayout(config, extensions, page, body) {
   if (/data-post-toc(?:\s|>)/i.test(filtered) && !/src=["']\/edgepress\/post-toc\.js["']/i.test(filtered)) {
     scripts.push('<script defer src="/edgepress/post-toc.js"></script>');
   }
+  if (/data-edgepress-search(?:\s|=|>)/i.test(filtered) && !/src=["']\/edgepress\/search\.js["']/i.test(filtered)) {
+    scripts.push('<script defer src="/edgepress/search.js"></script>');
+  }
   if (!scripts.length) return filtered;
   const integration = scripts.join('');
   return /<\/body\s*>/i.test(filtered)

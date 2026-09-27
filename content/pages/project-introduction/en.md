@@ -82,7 +82,7 @@ blocks:
                   - No longer shipped; the compatibility manifest records the removal release.
             - type: text
               paragraphs:
-                - "Monthly releases use the year.month.request format. This release is 2026.9.1: the first requested release update for September 2026."
+                - "Monthly releases use the year.month.request format. This release is 2026.9.10: the tenth requested release update for September 2026."
                 - Ship a minor release when the monthly review is ready, and use patch releases for defects, security fixes, and dependency updates. Support the previous major release with security fixes for 12 months after a new major line begins.
                 - Before a release, update project-compatibility.json and this feature matrix together. Run edgepress doctor to review the local Node.js version, Worker entry, and configured compatibility date.
 ---
