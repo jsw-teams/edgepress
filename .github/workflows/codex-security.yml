@@ -1,0 +1,152 @@
+name: Codex Security version scan
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codex-security-version-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan:
+    name: Version build security scan
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.CODEX_SECURITY_ENABLED == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+    env:
+      CODEX_SECURITY_VERSION: "0.1.27"
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Resolve version
+        id: version
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          package_version="$(python3 -c 'import json; print(json.load(open("package.json", encoding="utf-8"))["version"])')"
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "should-scan=true" >> "$GITHUB_OUTPUT"
+            echo "version=$package_version" >> "$GITHUB_OUTPUT"
+            echo "Manual Codex Security baseline scan requested for version $package_version."
+            exit 0
+          fi
+
+          tag_version="${REF_NAME#v}"
+          if [[ "$tag_version" != "$package_version" ]]; then
+            echo "::error::Release tag $REF_NAME does not match package.json version $package_version."
+            exit 1
+          fi
+
+          echo "should-scan=true" >> "$GITHUB_OUTPUT"
+          echo "version=$package_version" >> "$GITHUB_OUTPUT"
+          echo "Version tag $REF_NAME matched package.json version $package_version."
+
+      - name: Set up Node.js
+        if: ${{ steps.version.outputs.should-scan == 'true' }}
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24.21.0"
+
+      - name: Set up Python
+        if: ${{ steps.version.outputs.should-scan == 'true' }}
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14.7"
+
+      - name: Install Codex Security
+        if: ${{ steps.version.outputs.should-scan == 'true' }}
+        working-directory: ${{ runner.temp }}
+        shell: bash
+        run: |
+          npm install --prefix "$RUNNER_TEMP/codex-security-cli" \
+            --ignore-scripts --no-audit --no-fund \
+            --registry=https://registry.npmjs.org/ \
+            "@openai/codex-security@$CODEX_SECURITY_VERSION"
+          echo "$RUNNER_TEMP/codex-security-cli/node_modules/.bin" >> "$GITHUB_PATH"
+
+      - name: Build version
+        if: ${{ steps.version.outputs.should-scan == 'true' }}
+        shell: bash
+        run: |
+          npm ci
+          npm run build
+
+      - name: Check scanner credentials
+        if: ${{ steps.version.outputs.should-scan == 'true' }}
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        shell: bash
+        run: |
+          if [[ -z "$OPENAI_API_KEY" ]]; then
+            echo "::error::Missing repository Actions secret OPENAI_API_KEY."
+            exit 1
+          fi
+
+      - name: Scan built version
+        id: scan
+        if: ${{ steps.version.outputs.should-scan == 'true' }}
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        shell: bash
+        run: |
+          scan_status=0
+          codex-security scan "$GITHUB_WORKSPACE" \
+            --auth api-key \
+            --mode standard \
+            --effort high \
+            --output-dir "$RUNNER_TEMP/codex-security-scan" \
+            --json \
+            > "$RUNNER_TEMP/codex-security-result.json" || scan_status=$?
+          echo "exit-code=$scan_status" >> "$GITHUB_OUTPUT"
+          exit "$scan_status"
+
+      - name: Export completed findings as SARIF
+        id: sarif
+        if: ${{ !cancelled() && steps.version.outputs.should-scan == 'true' && (steps.scan.outputs.exit-code == '0' || steps.scan.outputs.exit-code == '1') }}
+        shell: bash
+        run: |
+          codex-security export "$RUNNER_TEMP/codex-security-scan" \
+            --export-format sarif \
+            --source-root "$GITHUB_WORKSPACE" \
+            --output "$RUNNER_TEMP/codex-security.sarif"
+
+      - name: Upload SARIF to GitHub Code Scanning
+        if: ${{ !cancelled() && steps.sarif.outcome == 'success' }}
+        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
+        with:
+          sarif_file: ${{ runner.temp }}/codex-security.sarif
+          category: codex-security/version
+
+      - name: Save scan reports
+        if: ${{ !cancelled() && steps.version.outputs.should-scan == 'true' && steps.scan.outputs.exit-code != '' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: codex-security-v${{ steps.version.outputs.version }}-${{ github.run_id }}
+          retention-days: 7
+          if-no-files-found: warn
+          path: |
+            ${{ runner.temp }}/codex-security-result.json
+            ${{ runner.temp }}/codex-security.sarif
+            ${{ runner.temp }}/codex-security-scan/report.md
+            ${{ runner.temp }}/codex-security-scan/coverage.json
+            ${{ runner.temp }}/codex-security-scan/findings.json
