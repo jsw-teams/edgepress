@@ -1,4 +1,4 @@
-name: Dependency security
+name: Verify dependency update
 
 on:
   pull_request:
@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   audit:
-    name: Audit and build
+    name: npm audit + build
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
