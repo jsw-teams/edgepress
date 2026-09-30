@@ -1,20 +1,24 @@
-name: Codex Security scan
+name: Codex Security version scan
 
 on:
-  schedule:
-    - cron: "17 3 * * 3"
+  push:
+    branches:
+      - main
+    paths:
+      - "package.json"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: codex-security-${{ github.ref }}
+  group: codex-security-version-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   scan:
-    name: Full repository security scan
+    name: Version build security scan
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.CODEX_SECURITY_ENABLED == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
@@ -25,17 +29,60 @@ jobs:
       CODEX_SECURITY_VERSION: "0.1.27"
 
     steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Detect package version change
+        id: version
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+
+          new_version="$(python3 -c 'import json; print(json.load(open("package.json", encoding="utf-8"))["version"])')"
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "should-scan=true" >> "$GITHUB_OUTPUT"
+            echo "version=$new_version" >> "$GITHUB_OUTPUT"
+            echo "Manual baseline scan requested for version $new_version."
+            exit 0
+          fi
+
+          old_version=""
+          if [[ -n "$BEFORE_SHA" && "$BEFORE_SHA" != "0000000000000000000000000000000000000000" ]] \
+            && git cat-file -e "$BEFORE_SHA:package.json" 2>/dev/null; then
+            old_version="$(git show "$BEFORE_SHA:package.json" | python3 -c 'import json,sys; print(json.load(sys.stdin)["version"])')"
+          fi
+
+          if [[ "$old_version" != "$new_version" ]]; then
+            echo "should-scan=true" >> "$GITHUB_OUTPUT"
+            echo "version=$new_version" >> "$GITHUB_OUTPUT"
+            echo "Package version changed: ${old_version:-<unknown>} -> $new_version."
+          else
+            echo "should-scan=false" >> "$GITHUB_OUTPUT"
+            echo "version=$new_version" >> "$GITHUB_OUTPUT"
+            echo "package.json changed, but package version stayed at $new_version; Codex Security will not run."
+          fi
+
       - name: Set up Node.js
+        if: ${{ steps.version.outputs.should-scan == 'true' }}
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "24.21.0"
 
       - name: Set up Python
+        if: ${{ steps.version.outputs.should-scan == 'true' }}
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.14.7"
 
       - name: Install Codex Security
+        if: ${{ steps.version.outputs.should-scan == 'true' }}
         working-directory: ${{ runner.temp }}
         shell: bash
         run: |
@@ -45,13 +92,15 @@ jobs:
             "@openai/codex-security@$CODEX_SECURITY_VERSION"
           echo "$RUNNER_TEMP/codex-security-cli/node_modules/.bin" >> "$GITHUB_PATH"
 
-      - name: Check out repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
+      - name: Build version
+        if: ${{ steps.version.outputs.should-scan == 'true' }}
+        shell: bash
+        run: |
+          npm ci
+          npm run build
 
       - name: Check scanner credentials
+        if: ${{ steps.version.outputs.should-scan == 'true' }}
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         shell: bash
@@ -61,8 +110,9 @@ jobs:
             exit 1
           fi
 
-      - name: Scan repository
+      - name: Scan built version
         id: scan
+        if: ${{ steps.version.outputs.should-scan == 'true' }}
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         shell: bash
@@ -80,7 +130,7 @@ jobs:
 
       - name: Export completed findings as SARIF
         id: sarif
-        if: ${{ !cancelled() && (steps.scan.outputs.exit-code == '0' || steps.scan.outputs.exit-code == '1') }}
+        if: ${{ !cancelled() && steps.version.outputs.should-scan == 'true' && (steps.scan.outputs.exit-code == '0' || steps.scan.outputs.exit-code == '1') }}
         shell: bash
         run: |
           codex-security export "$RUNNER_TEMP/codex-security-scan" \
@@ -93,13 +143,13 @@ jobs:
         uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
         with:
           sarif_file: ${{ runner.temp }}/codex-security.sarif
-          category: codex-security/full
+          category: codex-security/version
 
       - name: Save scan reports
-        if: ${{ !cancelled() && steps.scan.outputs.exit-code != '' }}
+        if: ${{ !cancelled() && steps.version.outputs.should-scan == 'true' && steps.scan.outputs.exit-code != '' }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: codex-security-${{ github.run_id }}-${{ github.run_attempt }}
+          name: codex-security-v${{ steps.version.outputs.version }}-${{ github.run_id }}
           retention-days: 7
           if-no-files-found: warn
           path: |
