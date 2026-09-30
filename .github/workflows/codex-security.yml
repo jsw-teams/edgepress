@@ -2,10 +2,8 @@ name: Codex Security version scan
 
 on:
   push:
-    branches:
-      - main
-    paths:
-      - "package.json"
+    tags:
+      - "v*"
   workflow_dispatch:
 
 permissions:
@@ -35,39 +33,33 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Detect package version change
+      - name: Resolve version
         id: version
         shell: bash
         env:
           EVENT_NAME: ${{ github.event_name }}
-          BEFORE_SHA: ${{ github.event.before }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
           set -euo pipefail
 
-          new_version="$(python3 -c 'import json; print(json.load(open("package.json", encoding="utf-8"))["version"])')"
+          package_version="$(python3 -c 'import json; print(json.load(open("package.json", encoding="utf-8"))["version"])')"
 
           if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
             echo "should-scan=true" >> "$GITHUB_OUTPUT"
-            echo "version=$new_version" >> "$GITHUB_OUTPUT"
-            echo "Manual baseline scan requested for version $new_version."
+            echo "version=$package_version" >> "$GITHUB_OUTPUT"
+            echo "Manual Codex Security baseline scan requested for version $package_version."
             exit 0
           fi
 
-          old_version=""
-          if [[ -n "$BEFORE_SHA" && "$BEFORE_SHA" != "0000000000000000000000000000000000000000" ]] \
-            && git cat-file -e "$BEFORE_SHA:package.json" 2>/dev/null; then
-            old_version="$(git show "$BEFORE_SHA:package.json" | python3 -c 'import json,sys; print(json.load(sys.stdin)["version"])')"
+          tag_version="${REF_NAME#v}"
+          if [[ "$tag_version" != "$package_version" ]]; then
+            echo "::error::Release tag $REF_NAME does not match package.json version $package_version."
+            exit 1
           fi
 
-          if [[ "$old_version" != "$new_version" ]]; then
-            echo "should-scan=true" >> "$GITHUB_OUTPUT"
-            echo "version=$new_version" >> "$GITHUB_OUTPUT"
-            echo "Package version changed: ${old_version:-<unknown>} -> $new_version."
-          else
-            echo "should-scan=false" >> "$GITHUB_OUTPUT"
-            echo "version=$new_version" >> "$GITHUB_OUTPUT"
-            echo "package.json changed, but package version stayed at $new_version; Codex Security will not run."
-          fi
+          echo "should-scan=true" >> "$GITHUB_OUTPUT"
+          echo "version=$package_version" >> "$GITHUB_OUTPUT"
+          echo "Version tag $REF_NAME matched package.json version $package_version."
 
       - name: Set up Node.js
         if: ${{ steps.version.outputs.should-scan == 'true' }}
