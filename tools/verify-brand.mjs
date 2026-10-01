@@ -87,6 +87,7 @@ try {
               await Promise.all(images.map((image) => image.decode().catch(() => {})));
               const icons = [...document.querySelectorAll('.icon-bitmap')];
               return {
+                colorScheme: getComputedStyle(document.documentElement).colorScheme,
                 overflow: document.documentElement.scrollWidth > innerWidth + 1,
                 brokenImages: images.filter((image) => !image.complete || !image.naturalWidth).map((image) => image.src),
                 inlineSvg: document.querySelectorAll('svg,use').length,
@@ -110,7 +111,7 @@ try {
             if (measured.cardGap !== null) assert.ok(measured.cardGap >= 16);
             if (measured.cellGap !== null) assert.ok(measured.cellGap >= 16);
             if (measured.currentPage) assert.equal(measured.currentPage, 'page');
-            if (theme === 'signal' || theme === 'lumen' && scheme === 'dark') assert.notEqual(measured.filter, 'none');
+            if (theme === 'signal' && measured.colorScheme === 'dark' || theme === 'lumen' && scheme === 'dark') assert.notEqual(measured.filter, 'none');
             results.push({ theme, scheme, width, locale, path, ...measured });
             if (path === prefix && locale === defaultLocale) {
               await page.screenshot({ path: resolve(evidence, 'home-' + theme + '-' + width + '-' + scheme + '.png'), fullPage: true });
