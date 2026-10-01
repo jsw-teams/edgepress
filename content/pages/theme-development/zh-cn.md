@@ -40,6 +40,7 @@ blocks:
                 - 使用双花括号占位符输出经过转义的值。唯一允许的原样占位符是生成的页面内容、JSON-LD 和 EdgePress 生成的导航标记。保留跳转链接、唯一 main 主区域、带标签的导航、可见焦点和一个页面级 h1。
                 - 页面块中的站内链接可写成 /[launge]/quick-start/。生成页面会把 [launge] 替换为当前语言路径；默认语言会移除该段，因此同一链接可用于中英文页面。
                 - 将 body 保持为全高纵向布局，并让 main 延伸，这样短页面的页脚也会留在视口底部。
+                - 将页面图片和下载文件放在 content/assets/。EdgePress 会按原相对路径发布到站点根目录，例如 content/assets/images/diagram.svg 对应 /images/diagram.svg。themes/<name>/assets/ 用于共享 CSS 和 JavaScript。
                 - 在主题中统一设计代码块、复制按钮和文章目录。窄屏代码行会自动折行，复制控件具有清晰的键盘焦点，生成的文章目录会链接到标题锚点。
       -
         - type: section

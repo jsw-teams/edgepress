@@ -40,6 +40,7 @@ blocks:
                 - Use double-brace placeholders for escaped values. The approved raw placeholders are generated page content, JSON-LD, and EdgePress-generated navigation markup. Keep the skip link, one main landmark, labeled navigation, visible focus, and one page-level h1.
                 - Page-block links can use /[launge]/quick-start/. The generated page replaces [launge] with the current language path and removes the segment for the default language, so the same link works in both locales.
                 - Keep the body as a full-height vertical layout and let main grow so the footer stays at the bottom on short pages.
+                - Put page images and downloads in content/assets/. EdgePress publishes each file at its matching site-root path. For example, content/assets/images/diagram.svg becomes /images/diagram.svg. Keep themes/<name>/assets/ for shared CSS and JavaScript.
                 - Style shared code blocks, copy buttons, and article contents in the theme. Code lines wrap on small viewports, copy controls have visible keyboard focus, and the generated post contents list links to heading anchors.
       -
         - type: section
