@@ -9,6 +9,8 @@ import { loadConfig } from './config.js';
 import { slugify } from './content.js';
 import { checkPages } from './page-check.js';
 import { checkCompatibility, writeIterationPlan } from './maintenance.js';
+import { loadLanguagePacks, translate } from './i18n.js';
+import { postTemplate } from './post-template.js';
 
 const siteGitignore = ['node_modules/', 'dist/', '.edgepress/', '.wrangler/', '.dev.vars', '*.tgz', ''].join('\n');
 const siteReadme = [
@@ -19,9 +21,11 @@ const siteReadme = [
   '## Start locally',
   '',
   '    npm install',
-  '    edgepress server',
+  '    npm run dev',
   '',
-  'Edit localized pages in `content/pages/` and Markdown posts in `content/posts/`. Choose a shared layout with `edgepress theme list` and `edgepress theme use <name>`.',
+  'Create an article with `npm run new -- "My first article"`. Open the printed file path and write Markdown below the second `---` line. The command fills the title, date, and language. Run `npm run dev` to preview and `npm run build` before publishing.',
+  '',
+  'Page layouts in `content/pages/` and theme customization are optional for everyday article writing. Choose a shared layout with `npx edgepress theme list` and `npx edgepress theme use <name>` when needed.',
   '',
   '## Deploy to Cloudflare Workers',
   '',
@@ -95,7 +99,7 @@ async function initializeProject() {
   await mkdir(resolve(root, 'src'), { recursive: true });
   await cp(resolve(packageRoot, 'src/worker.js'), resolve(root, 'src/worker.js'), { errorOnExist: true });
   await writeFile(resolve(root, 'package.json'), JSON.stringify(projectManifest, null, 2) + '\n', { flag: packageManifestExists ? 'w' : 'wx' });
-  console.log('Created an EdgePress site. Next run npm install, then edgepress server.');
+  console.log('Created an EdgePress site. Next run npm install, then npm run dev. Create an article with npm run new -- "My first article".');
 }
 
 async function runWrangler(command, args = []) {
@@ -249,12 +253,14 @@ async function createPost(title, config) {
   if (!title) throw new Error('Usage: edgepress new "Post title"');
   const releaseLock = await acquireBuildLock(config.resolvedPaths.cache);
   try {
+    if (title.length > 160 || /[\x00-\x1f\x7f]/.test(title)) throw new Error('Post title must be one line of at most 160 characters.');
+    await loadLanguagePacks(config);
     const today = new Date().toISOString().slice(0, 10);
     const folder = resolve(config.resolvedPaths.content, 'posts', today + '-' + slugify(title));
     const locale = config.i18n.defaultLocale;
     const file = resolve(folder, locale.toLowerCase() + '.md');
     await mkdir(folder, { recursive: true });
-    const body = '---\ntitle: ' + JSON.stringify(title) + '\ndate: ' + today + '\nlang: ' + locale + '\ntags: []\n---\n\n# ' + title + '\n\nWrite your post here.\n';
+    const body = postTemplate(title, today, locale, translate(config, locale, 'postStarter'));
     let handle;
     try { handle = await open(file, 'wx'); }
     catch (error) {
@@ -269,7 +275,9 @@ async function createPost(title, config) {
       await rm(file, { force: true });
       throw writeError;
     }
-    console.log('Created ' + file);
+    console.log(translate(config, locale, 'postCreated').replace('{file}', relative(config.root, file)));
+    console.log(translate(config, locale, 'postNextSteps'));
+    console.log(translate(config, locale, 'postPreview'));
   } finally {
     await releaseLock();
   }

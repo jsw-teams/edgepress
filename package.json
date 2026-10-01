@@ -1,6 +1,6 @@
 {
   "name": "edgepress",
-  "version": "2026.10.1",
+  "version": "2026.10.2",
   "description": "A static website builder for Cloudflare Workers with editable pages, Markdown posts, local search, themes, and consent-gated integrations.",
   "type": "module",
   "bin": {
@@ -17,7 +17,9 @@
     "edgepress.config.mjs",
     "project-compatibility.json",
     "wrangler.jsonc",
-    "README.md"
+    "README.md",
+    "tools/writing.test.mjs",
+    "tools/brand-regression.test.mjs"
   ],
   "repository": {
     "type": "git",
@@ -45,7 +47,8 @@
     "check": "node src/cli.js check",
     "doctor": "node src/cli.js doctor",
     "iterate": "node src/cli.js iterate",
-    "security:check": "node src/cli.js security"
+    "security:check": "node src/cli.js security",
+    "test": "node --test tools/writing.test.mjs tools/brand-regression.test.mjs"
   },
   "dependencies": {
     "marked": "^18.0.13",

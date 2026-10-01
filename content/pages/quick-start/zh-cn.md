@@ -35,8 +35,41 @@ blocks:
               language: sh
               code: |
                 npm ci
-                edgepress build
-                edgepress server
+                npm run build
+                npm run dev
+  - columns: 1
+    cells:
+      -
+        - type: section
+          title: 只用 Markdown 写第一篇文章
+          tone: soft
+          blocks:
+            - type: text
+              text: 完成一次性配置后，日常写作只需 Markdown。EdgePress 会自动填写标题、日期和语言。打开命令输出的文件路径，在第二个 --- 后写正文。主题会处理文章标题、列表、目录、搜索和订阅。
+            - type: steps
+              items:
+                - title: 新建文章
+                  text: 命令会输出新文件的路径，不会覆盖已有文章。
+                  command: npm run new -- "我的第一篇文章"
+                - title: 写 Markdown 正文
+                  text: 替换示例段落。使用 ## 小标题、列表、链接、图片和代码块即可。图片放在 content/assets/images/，正文用 /images/文件名.png 引用。
+                - title: 预览并发布
+                  text: 写作时保持预览运行，保存文件即可刷新。发布前运行 npm run build，再使用已有部署流程。
+                  command: npm run dev
+            - type: code
+              title: 简单的文章正文
+              language: markdown
+              code: |
+                这是我的第一篇文章。使用 **Markdown** 排版。
+
+                ## 学到的内容
+
+                - 记录问题现象。
+                - 说明解决方法。
+
+                [项目源码](https://github.com/jsw-teams/edgepress)
+            - type: text
+              text: 站点配置在初次设置时完成。想调整页面设计时，再阅读下面的页面布局与主题说明；日常发文无需掌握这些开发内容。
   - columns: 2
     cells:
       -

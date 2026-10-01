@@ -13,13 +13,21 @@ Install EdgePress from npm and initialize a new project directory:
     mkdir my-edgepress-site
     cd my-edgepress-site
     npm install edgepress
-    edgepress init
+    npx edgepress init
     npm install
-    edgepress server
+    npm run dev
 
 Use Node.js 22.12 or newer. Set the real site URL and operator contact in config.yml before publishing. Deploy with edgepress deploy. When developing EdgePress itself, use `npm ci`, then `npm link` to expose the local CLI.
 
 Run `edgepress init` in a new project directory to scaffold a site pinned to the installed EdgePress release. The initializer keeps the existing package name and scripts.
+
+## Everyday writing
+
+After the one-time site setup, create an article with `npm run new -- "My first article"`. Open the printed file path and write Markdown below the second `---` line. The command fills the title, date, and language; the theme supplies the page title, article list, contents, search, and feed.
+
+Use `##` for sections, lists, links, and fenced code blocks as needed. Put article images in `content/assets/images/` and link to `/images/filename.png`. Run `npm run dev` while writing, then `npm run build` before publishing through your existing deployment workflow. Page layouts and theme development are optional for everyday writing.
+
+日常发文：运行 `npm run new -- "我的第一篇文章"`，打开输出的文件，在第二个 `---` 后写 Markdown 正文。标题、日期和语言自动填写。运行 `npm run dev` 预览，发布前运行 `npm run build`。页面布局和主题开发可以在需要调整设计时再了解。
 
 ## Page editing
 
@@ -33,6 +41,10 @@ Each page has a folder under content/pages/ and one lowercase locale Markdown fi
 Put images and other page media in content/assets/, preserving their public URL path. For example, content/assets/images/diagram.svg is published as /images/diagram.svg. Posts under content/posts/ use the Markdown renderer. Themes own shared head, navigation, footer, error-page layout, and their CSS color palettes.
 
 ## Project files
+
+The 2026.10.2 source uses a giant panda and Taiwanese black bear as its shared project identity, with 28 transparent local raster icons. Generated avatar masters and exact prompts are saved in `content/brand-sources/`; the original full-body and homepage masters are `mascot.png` and `home-hero.png` in `content/assets/edgepress/brand/`. Favicons and icons are in `content/assets/edgepress/favicon/` and `content/assets/edgepress/icons/`. Themes apply bitmap filters for dark backgrounds. The technical Markdown pipeline diagram keeps its editable SVG source.
+
+To export the saved imagegen masters, install Pillow and run `python tools/generate-brand-assets.py --master content/assets/edgepress/brand/mascot.png --avatar-master content/brand-sources/edgepress-avatar-master.png --home-master content/assets/edgepress/brand/home-hero.png --output-dir content/assets/edgepress/brand --icons-dir content/assets/edgepress/icons --favicon-dir content/assets/edgepress/favicon --brand edgepress`. Functional icons are drawn directly as raster images; old SVGs are not rasterized. Run `python tools/verify-brand-assets.py .` and `node tools/verify-brand.mjs .` to check dimensions, transparency, resource paths, themes, mobile layout, and keyboard access. Browser verification uses an installed Microsoft Edge browser; screenshots and results are saved under `tools/brand-verification/`.
 
 - content/posts/<post-id>/: Markdown articles with one file per locale.
 - content/pages/<page-id>/: page layouts and all page element content.

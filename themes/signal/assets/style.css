@@ -234,9 +234,12 @@ body{background:radial-gradient(ellipse at 14% 0%,#302052 0,transparent 38%),var
 .hero-block--banner .hero-aside{max-width:100%}
 
 .icon-bitmap{filter:brightness(0) invert(1)}
-.privacy-manager .privacy-accept,.privacy-manager .privacy-reject{color:#101426}
+.privacy-manager .privacy-panel .privacy-accept,.privacy-manager .privacy-panel .privacy-reject{color:#101426}
 .privacy-manager .privacy-accept .icon-bitmap,.privacy-manager .privacy-reject .icon-bitmap{filter:brightness(0)}
 
 .brand-mark{width:36px;height:36px;object-fit:contain;border-radius:50%;background:#f8efdc;padding:2px}
 .hero-mascot,.hero-mascot-picture{width:min(100%,320px);max-height:240px}
 .hero-banner-picture{display:block;margin-top:24px}
+
+/* Signal uses the theme panel color for floating controls. */
+:root{--paper:var(--panel)}

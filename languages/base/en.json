@@ -63,5 +63,9 @@
   "agentSummary": "Project guides and reference pages for the EdgePress website builder.",
   "closePrivacy": "Close settings",
   "consentStoredOnDevice": "This device",
+  "postStarter": "Write your first paragraph here. Use ## for sections, lists, links, and fenced code blocks as needed.",
+  "postCreated": "Created {file}",
+  "postNextSteps": "Open this file and replace the text after the closing --- with Markdown. The title, date, and language are already set.",
+  "postPreview": "Preview with npm run dev. Build with npm run build; publish through your existing deployment workflow.",
   "pageNumber": "Page {page}"
 }

@@ -330,7 +330,8 @@ def generate(master_path: Path, avatar_path: Path, home_path: Path, output_dir: 
     avatar_master = Image.open(avatar_path).convert("RGBA")
     avatar = contained(avatar_master.crop(alpha_bbox(avatar_master)), (512, 512), 20)
     avatar.save(output_dir / "avatar.png", optimize=True)
-    shutil.copyfile(home_path, output_dir / "home-hero.png")
+    if home_path.resolve() != (output_dir / "home-hero.png").resolve():
+        shutil.copyfile(home_path, output_dir / "home-hero.png")
     home = Image.open(home_path).convert("RGBA")
     home.save(output_dir / "home-hero.webp", format="WEBP", quality=88, method=4)
     small_home = home.copy()

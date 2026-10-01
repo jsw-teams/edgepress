@@ -122,6 +122,22 @@ try {
                 assert.equal(await page.locator('.privacy-settings-button').getAttribute('aria-expanded'), 'true');
                 assert.equal(await page.locator('.privacy-panel').isVisible(), true);
                 assert.equal(await page.locator('.privacy-panel svg').count(), 0);
+                const contrasts = await page.evaluate(() => {
+                  const luminance = (color) => {
+                    const values = color.match(/[\d.]+/g).slice(0, 3).map(Number).map((value) => {
+                      value /= 255;
+                      return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+                    });
+                    return values[0] * 0.2126 + values[1] * 0.7152 + values[2] * 0.0722;
+                  };
+                  return [...document.querySelectorAll('.privacy-settings-button,.privacy-accept,.privacy-reject')].map((button) => {
+                    const style = getComputedStyle(button);
+                    const foreground = luminance(style.color);
+                    const background = luminance(style.backgroundColor);
+                    return (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05);
+                  });
+                });
+                assert.ok(contrasts.every((ratio) => ratio >= 4.5), theme + ' privacy button contrast: ' + contrasts.join(', '));
                 await page.locator('.privacy-close').click();
                 assert.equal(await page.locator('.privacy-panel').isVisible(), false);
                 await page.screenshot({ path: resolve(evidence, 'home-' + theme + '-' + width + '-' + scheme + '.png'), fullPage: true });
