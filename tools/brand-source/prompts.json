@@ -1,0 +1,29 @@
+{
+  "key": "dual",
+  "output": "content/assets/edgepress/brand",
+  "favicon": "static/edgepress/favicon",
+  "tool": "image_gen.imagegen",
+  "date": "2026-10-02",
+  "assets": {
+    "mascot": {
+      "master": "content/assets/edgepress/brand/mascot.png",
+      "prompt": "Use case: illustration-story. Asset: new production transparent full-body EdgePress mascot master. Reference image is style/character guidance only. Create a fresh warm hand-painted gouache and colored-pencil illustration of a round black-and-white giant panda and a Taiwanese black bear naturally standing side by side, feet fully visible, slight inward lean and friendly smiles expressing cooperation. Black bear has deep charcoal fur, warm tan muzzle, a large clear pale V chest marking unobscured by arms. Panda black ears, eye patches and limbs, cream-white face and belly. Short bear-like limbs and rounded animal proportions, no clothing, not humanized. Natural relaxed paws at sides, neither holding anything. Gentle warm texture, clear silhouette, clean edges with no white fringe. Centered wide composition with ample transparent margin. No books, notebooks, computers, tools, props, furniture, scenery, text, letters, logos or watermark. Output genuine transparent RGBA PNG.",
+      "imagegenOutput": "exec-46096e0b-c7dd-4c9e-8814-ccfab9e535c0.png"
+    },
+    "avatar": {
+      "master": "tools/brand-source/avatar-master.png",
+      "prompt": "Use case: logo-brand. Asset: square small-size avatar/favicon master. Reference is character identity and warm gouache/colored pencil style guidance. Create a NEW simplified raster avatar with The giant panda and Taiwanese black bear heads side by side, both same size, readable as a pair. Friendly smile, round silhouette, broad solid color areas, very restrained pencil texture, larger simple eyes. Fill the central 80% of square; complete ears visible, no fine details that disappear at 16px. Transparent background around the silhouette, genuine RGBA PNG. No circular border, backdrop, letters, text, books, computers, tools, handheld objects, clothes or watermark.",
+      "imagegenOutput": "exec-f554a533-0176-4dfe-af25-8cf94a540e5c.png"
+    },
+    "hero": {
+      "master": "tools/brand-source/home-master.png",
+      "prompt": "Use case: illustration-story. Asset: NEW wide 3:2 homepage illustration master, output genuine transparent RGBA PNG. Reference is style and character identity guidance only. Paint a black-and-white giant panda and Taiwanese black bear standing naturally side by side, gently leaning toward each other and sharing friendly smiles. Both full bodies and feet visible. Warm gouache and colored pencil, soft rounded animal proportions, hand-painted texture. Compose on a wide transparent canvas with soft pale sage and warm peach watercolor washes behind and a faint grounding shadow under feet; outside the washes remains fully transparent. Character silhouette large and clear in center with generous side margin. Black bear chest V must not be obscured. No books, notebooks, computers, tools, handheld objects, clothing, architecture, text, symbols or watermark.",
+      "imagegenOutput": "exec-b993afe3-e245-4602-959a-3dee066c92e6.png"
+    },
+    "share": {
+      "master": "tools/brand-source/share-master.png",
+      "prompt": "Use case: ads-marketing. Asset: NEW horizontal website sharing card, approximately 1.905:1 aspect ratio, suitable for exact 1200x630 export. Reference is character identity and warm gouache/colored pencil style guidance. Background warm ivory paper with faint sage watercolor washes, clean editorial composition. Right 45% shows a giant panda and Taiwanese black bear naturally standing side by side, full bodies and friendly smiles, black bear clear pale chest V. Use round animal proportions, no clothing, no excessive humanization. Left 50% roomy typography with exact title 'EdgePress' and exact subtitle 'Build for the edge. Publish with clarity.'. Dark forest green readable lettering, subtle warm peach accent line. Keep all text safely within canvas and away from bears. No books, notebooks, computers, tools, hand-held props, extra labels or watermark. Real PNG, opaque background.",
+      "imagegenOutput": "exec-cc2e1a5f-91bc-4341-89ab-9431b6a6704e.png"
+    }
+  }
+}

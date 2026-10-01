@@ -35,8 +35,41 @@ blocks:
               language: sh
               code: |
                 npm ci
-                edgepress build
-                edgepress server
+                npm run build
+                npm run dev
+  - columns: 1
+    cells:
+      -
+        - type: section
+          title: Write your first article with Markdown
+          tone: soft
+          blocks:
+            - type: text
+              text: After the one-time setup, everyday writing uses Markdown. EdgePress creates the title, date, and language for you. Open the path printed by the command and write below the second --- line. The theme handles the page title, article list, contents, search, and feed.
+            - type: steps
+              items:
+                - title: Create an article
+                  text: The command prints the new Markdown file path and never overwrites an existing post.
+                  command: npm run new -- "My first article"
+                - title: Write in Markdown
+                  text: Replace the starter paragraph. Use ## for section headings, lists, links, images, and fenced code blocks. Put images in content/assets/images/ and reference them as /images/filename.png.
+                - title: Preview and publish
+                  text: Keep the preview running while you edit. Save the file to refresh it. Build before publishing through your existing deployment workflow.
+                  command: npm run dev
+            - type: code
+              title: A short article body
+              language: markdown
+              code: |
+                This is my first article. **Markdown** formats the text.
+
+                ## What I learned
+
+                - Record the problem.
+                - Explain the solution.
+
+                [Project source](https://github.com/jsw-teams/edgepress)
+            - type: text
+              text: Site settings are handled during setup. The page-layout and theme guides below are available when you want to change the website design. They are optional for everyday article writing.
   - columns: 2
     cells:
       -

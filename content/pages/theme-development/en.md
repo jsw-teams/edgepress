@@ -113,15 +113,13 @@ blocks:
         - type: section
           title: Use the shared icon library
           tone: soft
-          text: EdgePress ships 22 local SVG icons at /edgepress/icons.svg. Theme navigation uses them automatically; feature-grid items can also name an icon, with no runtime package or third-party request.
+          text: EdgePress ships 28 local transparent PNG icons under /edgepress/icons/. Theme navigation and the post contents button use them automatically; feature-grid items can also name an icon, with no runtime package or third-party request.
           blocks:
             - type: code
               title: Add a decorative icon to a theme partial
               language: html
               code: |
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <use href="/edgepress/icons.svg#layers"></use>
-                </svg>
+                <img class="icon" src="/edgepress/icons/layers.png" width="24" height="24" alt="" aria-hidden="true">
             - type: code
               title: Choose an icon for a feature card
               language: yaml

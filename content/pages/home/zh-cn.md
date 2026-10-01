@@ -17,16 +17,16 @@ blocks:
           eyebrow: 为边缘网络构建
           title: 用清晰、可编辑的源文件构建快速网站。
           text: EdgePress 将 Markdown 文章、页面布局、主题和遵循同意状态的集成构建为由 Cloudflare Workers 提供服务的静态网站。
-          mascotSrc: /edgepress/brand/mascot-418.png
-          mascotAlt: EdgePress 吉祥物，一只由层叠折页构成、神情好奇的小鸟。
-          mascotWidth: 418
-          mascotHeight: 440
-          mascotSizes: 209px
+          mascotSrc: /edgepress/brand/home-hero.png
+          mascotAlt: 大熊猫与台湾黑熊自然并肩微笑，黑熊的浅色 V 形胸斑清晰可见。
+          mascotWidth: 1536
+          mascotHeight: 1024
+          mascotSizes: "(max-width: 600px) 280px, 360px"
           mascotWebpSrcset:
-            - src: /edgepress/brand/mascot-209.webp
-              width: 209
-            - src: /edgepress/brand/mascot-418.webp
-              width: 418
+            - src: /edgepress/brand/home-hero-768.webp
+              width: 768
+            - src: /edgepress/brand/home-hero.webp
+              width: 1536
           cta:
             label: 从快速入门开始
             url: /[launge]/quick-start/
@@ -34,6 +34,8 @@ blocks:
             - 在本地化 Markdown 前置数据中编辑页面
             - 使用 Markdown 撰写文章
             - 复用布局，配色由主题定义
+        - type: text
+          text: "Build for the edge. Publish with clarity."
   - columns: 1
     cells:
       -

@@ -1,0 +1,103 @@
+{
+  "generatedAt": "2026-10-01T17:45:12.191Z",
+  "activeTheme": "default",
+  "checks": [
+    {
+      "theme": "atelier",
+      "colorScheme": "light",
+      "width": 390,
+      "urls": 4,
+      "references": 1794,
+      "status": "pass"
+    },
+    {
+      "theme": "atelier",
+      "colorScheme": "light",
+      "width": 1440,
+      "urls": 4,
+      "references": 1794,
+      "status": "pass"
+    },
+    {
+      "theme": "atelier",
+      "colorScheme": "dark",
+      "width": 390,
+      "urls": 4,
+      "references": 1794,
+      "status": "pass"
+    },
+    {
+      "theme": "atelier",
+      "colorScheme": "dark",
+      "width": 1440,
+      "urls": 4,
+      "references": 1794,
+      "status": "pass"
+    },
+    {
+      "theme": "default",
+      "colorScheme": "light",
+      "width": 390,
+      "urls": 4,
+      "references": 1794,
+      "status": "pass"
+    },
+    {
+      "theme": "default",
+      "colorScheme": "light",
+      "width": 1440,
+      "urls": 4,
+      "references": 1794,
+      "status": "pass"
+    },
+    {
+      "theme": "default",
+      "colorScheme": "dark",
+      "width": 390,
+      "urls": 4,
+      "references": 1794,
+      "status": "pass"
+    },
+    {
+      "theme": "default",
+      "colorScheme": "dark",
+      "width": 1440,
+      "urls": 4,
+      "references": 1794,
+      "status": "pass"
+    },
+    {
+      "theme": "signal",
+      "colorScheme": "light",
+      "width": 390,
+      "urls": 4,
+      "references": 1794,
+      "status": "pass"
+    },
+    {
+      "theme": "signal",
+      "colorScheme": "light",
+      "width": 1440,
+      "urls": 4,
+      "references": 1794,
+      "status": "pass"
+    },
+    {
+      "theme": "signal",
+      "colorScheme": "dark",
+      "width": 390,
+      "urls": 4,
+      "references": 1794,
+      "status": "pass"
+    },
+    {
+      "theme": "signal",
+      "colorScheme": "dark",
+      "width": 1440,
+      "urls": 4,
+      "references": 1794,
+      "status": "pass"
+    }
+  ],
+  "failures": []
+}

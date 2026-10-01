@@ -1,0 +1,772 @@
+{
+  "status": "pass",
+  "iconCount": 28,
+  "iconDisplaySizes": [
+    16,
+    20,
+    24,
+    32
+  ],
+  "checks": [
+    {
+      "path": "content/assets/edgepress/brand/mascot.png",
+      "format": "PNG",
+      "size": [
+        1312,
+        1199
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "content/assets/edgepress/brand/avatar.png",
+      "format": "PNG",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "content/assets/edgepress/brand/home-hero.png",
+      "format": "PNG",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "content/assets/edgepress/brand/home-hero.webp",
+      "format": "WEBP",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "content/assets/edgepress/brand/mascot-512.webp",
+      "format": "WEBP",
+      "size": [
+        512,
+        468
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "content/assets/edgepress/brand/mascot-1024.webp",
+      "format": "WEBP",
+      "size": [
+        1024,
+        936
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "content/assets/edgepress/brand/avatar.png",
+      "format": "PNG",
+      "size": [
+        512,
+        512
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "content/assets/edgepress/brand/home-hero.png",
+      "format": "PNG",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "content/assets/edgepress/brand/home-hero-768.webp",
+      "format": "WEBP",
+      "size": [
+        768,
+        512
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "content/assets/edgepress/brand/og-image.png",
+      "format": "PNG",
+      "size": [
+        1200,
+        630
+      ],
+      "mode": "RGB",
+      "transparent": false
+    },
+    {
+      "path": "content/assets/edgepress/brand/og-image.webp",
+      "format": "WEBP",
+      "size": [
+        1200,
+        630
+      ],
+      "mode": "RGB",
+      "transparent": false
+    },
+    {
+      "path": "static/edgepress/favicon/favicon-16.png",
+      "format": "PNG",
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/favicon/favicon-32.png",
+      "format": "PNG",
+      "size": [
+        32,
+        32
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/favicon/favicon-48.png",
+      "format": "PNG",
+      "size": [
+        48,
+        48
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/favicon/favicon-64.png",
+      "format": "PNG",
+      "size": [
+        64,
+        64
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/favicon/apple-touch-icon.png",
+      "format": "PNG",
+      "size": [
+        180,
+        180
+      ],
+      "mode": "RGB",
+      "transparent": false
+    },
+    {
+      "path": "content/assets/edgepress/brand/mascot.png",
+      "format": "PNG",
+      "size": [
+        1312,
+        1199
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "tools/brand-source/avatar-master.png",
+      "format": "PNG",
+      "size": [
+        1254,
+        1254
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "tools/brand-source/home-master.png",
+      "format": "PNG",
+      "size": [
+        1536,
+        1024
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "tools/brand-source/share-master.png",
+      "format": "PNG",
+      "size": [
+        1730,
+        909
+      ],
+      "mode": "RGB",
+      "transparent": false
+    },
+    {
+      "path": "static/edgepress/icons/arrow-right.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/arrow-right.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/arrow-up-right.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/arrow-up-right.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/book-open.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/book-open.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/check-circle.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/check-circle.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/check.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/check.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/cloud.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/cloud.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/code.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/code.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/cpu.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/cpu.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/file-text.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/file-text.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/github.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/github.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/globe.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/globe.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/help-circle.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/help-circle.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/home.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/home.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/layers.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/layers.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/layout-grid.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/layout-grid.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/mail.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/mail.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/newspaper.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/newspaper.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/palette.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/palette.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/plug.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/plug.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/puzzle.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/puzzle.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/rocket.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/rocket.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/rss.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/rss.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/search.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/search.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/settings.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/settings.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/shield-check.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/shield-check.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/sparkles.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/sparkles.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/terminal.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/terminal.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/x.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    },
+    {
+      "path": "static/edgepress/icons/dark/x.png",
+      "format": "PNG",
+      "size": [
+        96,
+        96
+      ],
+      "mode": "RGBA",
+      "transparent": true
+    }
+  ]
+}

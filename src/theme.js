@@ -97,7 +97,8 @@ export async function renderLayout(config, extensions, page, body) {
   const title = page.title ? page.title + config.site.head.titleSeparator + titleSuffix : titleSuffix;
   const robots = page.robots || config.site.seo.robots || 'index,follow';
   const keywords = (page.keywords || config.site.seo.keywords || []).join(', ');
-  const image = page.image || config.site.seo.image || '';
+  const imagePath = page.image || config.site.seo.image || '';
+  const image = imagePath.startsWith('/') && config.site.url ? new URL(imagePath, config.site.url).href : imagePath;
   const currentPrefix = localePrefix(config, locale);
   const currentPath = page.urlPath || localizedUrl(config, locale, '');
   const localeRoute = currentPrefix && currentPath.startsWith(currentPrefix + '/')

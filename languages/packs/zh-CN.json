@@ -62,5 +62,9 @@
   "consentReload": "选择已保存，正在重新载入以应用设置。",
   "agentSummary": "EdgePress 网站构建器的项目指南与参考文档。",
   "closePrivacy": "关闭设置",
-  "consentStoredOnDevice": "此设备"
+  "consentStoredOnDevice": "此设备",
+  "postStarter": "在这里写第一段正文。需要时可使用 ## 小标题、列表、链接和代码块。",
+  "postCreated": "已创建 {file}",
+  "postNextSteps": "打开这个文件，在第二个 --- 后用 Markdown 写正文。标题、日期和语言已经填好。",
+  "postPreview": "运行 npm run dev 预览，npm run build 构建，再通过已有部署流程发布。"
 }

@@ -113,15 +113,13 @@ blocks:
         - type: section
           title: 使用共享图标库
           tone: soft
-          text: EdgePress 随站点提供 22 个本地 SVG 图标 /edgepress/icons.svg。主题导航会自动使用图标；feature-grid 也可为功能卡片指定图标，不增加运行时依赖，也不会请求第三方服务器。
+          text: EdgePress 随站点提供 28 个本地透明 PNG 图标，保存在 /edgepress/icons/。主题导航和文章目录按钮会自动使用图标；feature-grid 也可为功能卡片指定图标名称，不增加运行时依赖，也不会请求第三方服务器。
           blocks:
             - type: code
               title: 在主题局部模板中添加装饰图标
               language: html
               code: |
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                  <use href="/edgepress/icons.svg#layers"></use>
-                </svg>
+                <img class="icon" src="/edgepress/icons/layers.png" width="24" height="24" alt="" aria-hidden="true">
             - type: code
               title: 为功能卡片指定图标
               language: yaml

@@ -254,26 +254,22 @@ function makeButton(label, className, iconName) {
 }
 
 function makeIcon(name) {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('viewBox', '0 0 24 24');
-  svg.setAttribute('aria-hidden', 'true');
-  svg.setAttribute('focusable', 'false');
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  const paths = {
-    settings: 'M4 6h16M4 12h16M4 18h16M8 4v4m8 2v4m-5 2v4',
-    accept: 'm5 12 4 4L19 6',
-    reject: 'm6 6 12 12M18 6 6 18',
-    close: 'm6 6 12 12M18 6 6 18',
-    save: 'M5 12h14m-6-6 6 6-6 6'
-  };
-  path.setAttribute('d', paths[name] || paths.settings);
-  path.setAttribute('fill', 'none');
-  path.setAttribute('stroke', 'currentColor');
-  path.setAttribute('stroke-width', '2');
-  path.setAttribute('stroke-linecap', 'round');
-  path.setAttribute('stroke-linejoin', 'round');
-  svg.append(path);
-  return svg;
+  const names = Object.freeze({ settings: 'settings', accept: 'check', reject: 'x', close: 'x', save: 'arrow-right' });
+  if (!Object.hasOwn(names, name)) throw new Error('Unsupported consent icon: ' + String(name));
+  const picture = document.createElement('picture');
+  picture.className = 'icon-picture';
+  const dark = document.createElement('source');
+  dark.media = '(prefers-color-scheme: dark)';
+  dark.srcset = '/edgepress/icons/dark/' + names[name] + '.png';
+  const image = document.createElement('img');
+  image.className = 'icon-bitmap';
+  image.src = '/edgepress/icons/' + names[name] + '.png';
+  image.width = 20;
+  image.height = 20;
+  image.alt = '';
+  image.setAttribute('aria-hidden', 'true');
+  picture.append(dark, image);
+  return picture;
 }
 
 function makeChoice(config, allowed) {
