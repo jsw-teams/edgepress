@@ -17,16 +17,16 @@ blocks:
           eyebrow: A project built for the edge
           title: Build a fast website from clear, editable source files.
           text: EdgePress turns Markdown posts, page layouts, themes, and consent-aware integrations into a static site served by Cloudflare Workers.
-          mascotSrc: /edgepress/brand/mascot-418.png
-          mascotAlt: A curious sparrow folded from layered paper pages, EdgePress's project mascot.
-          mascotWidth: 418
-          mascotHeight: 440
-          mascotSizes: 209px
+          mascotSrc: /edgepress/brand/home-hero.png
+          mascotAlt: A giant panda and Taiwanese black bear standing together with friendly smiles; the bear has a clear pale V chest marking.
+          mascotWidth: 1536
+          mascotHeight: 1024
+          mascotSizes: "(max-width: 620px) calc(100vw - 64px), 320px"
           mascotWebpSrcset:
-            - src: /edgepress/brand/mascot-209.webp
-              width: 209
-            - src: /edgepress/brand/mascot-418.webp
-              width: 418
+            - src: /edgepress/brand/home-hero-768.webp
+              width: 768
+            - src: /edgepress/brand/home-hero.webp
+              width: 1536
           cta:
             label: Start with the quick guide
             url: /quick-start/

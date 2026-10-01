@@ -1,0 +1,532 @@
+{
+  "iconCount": 28,
+  "assets": [
+    {
+      "path": "content/assets/edgepress/brand/avatar.png",
+      "format": "PNG",
+      "dimensions": [
+        512,
+        512
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "fdbada39980869d7cb02d2082cb6a986cf9714957d332e0b360a49eac577ac66"
+    },
+    {
+      "path": "content/assets/edgepress/brand/home-hero.png",
+      "format": "PNG",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "sha256": "22a77eb0d9396ca1bbc5e45effcba0fc0ac64ef7cae0f172678a62be21020d10"
+    },
+    {
+      "path": "content/assets/edgepress/brand/mascot.png",
+      "format": "PNG",
+      "dimensions": [
+        1312,
+        1199
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "94dba136cdfd0c23c847ca4f3792fa9b75b45dfdc1e6a3bc25c514ff63e93dfe"
+    },
+    {
+      "path": "content/assets/edgepress/brand/og-image.png",
+      "format": "PNG",
+      "dimensions": [
+        1200,
+        630
+      ],
+      "alphaRange": null,
+      "sha256": "0ff7e76c5b90d0285e8ba0d00428298a5ec19bcfd9c1905c1ba3624066651c62"
+    },
+    {
+      "path": "content/assets/edgepress/brand/home-hero-768.webp",
+      "format": "WEBP",
+      "dimensions": [
+        768,
+        512
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "f95fcd52017213df482e4718def2c6e2c0e0c2142773bf71b101dfbacd0e88a0"
+    },
+    {
+      "path": "content/assets/edgepress/brand/home-hero.webp",
+      "format": "WEBP",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "sha256": "6ea3111a1ccd79cee7e82825ca907216a73151ce462590eb03cfd26e3e725d03"
+    },
+    {
+      "path": "content/assets/edgepress/brand/mascot.webp",
+      "format": "WEBP",
+      "dimensions": [
+        768,
+        702
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "d34544362877d1ae10b8af6bdc345d9375aaa777e10b839bb40adf2ecb2663a7"
+    },
+    {
+      "path": "content/assets/edgepress/brand/og-image.webp",
+      "format": "WEBP",
+      "dimensions": [
+        1200,
+        630
+      ],
+      "alphaRange": null,
+      "sha256": "79044ffa13fb407b2fd715befb45f71f70f5b9f003c7986341e5b45cea6f0003"
+    },
+    {
+      "path": "content/assets/edgepress/favicon/apple-touch-icon.png",
+      "format": "PNG",
+      "dimensions": [
+        180,
+        180
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "sha256": "90ca1fd67318ad4aaeffa9fcf7881c3bd93b96f87c77fc8381d832e8c3368ff1"
+    },
+    {
+      "path": "content/assets/edgepress/favicon/favicon-16.png",
+      "format": "PNG",
+      "dimensions": [
+        16,
+        16
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "387a744c660732ca6c2fa166a36df40b594484dd51e6f1df84d3947d3352bbce"
+    },
+    {
+      "path": "content/assets/edgepress/favicon/favicon-32.png",
+      "format": "PNG",
+      "dimensions": [
+        32,
+        32
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "b1be2f46a9277773b112dbe8c3247243246e1d9426529a1b8b781755c695ab5f"
+    },
+    {
+      "path": "content/assets/edgepress/favicon/favicon-48.png",
+      "format": "PNG",
+      "dimensions": [
+        48,
+        48
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "8c1e2491f1026fbd454fda84ae1edb66e3e648dd5e44bd3baaf05704be302c54"
+    },
+    {
+      "path": "content/assets/edgepress/favicon/favicon-64.png",
+      "format": "PNG",
+      "dimensions": [
+        64,
+        64
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "4191df3d3f9276cb29983baeadf42b760c015cc5bf1c964cbc31a00348319588"
+    },
+    {
+      "path": "content/assets/edgepress/icons/arrow-right.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "b6bcc499994efc33a13c026454d2f5e0d4e984d398275dd7adc3e3dcd15faae5"
+    },
+    {
+      "path": "content/assets/edgepress/icons/arrow-up-right.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "1c5494c79429cf9c19281701143fdebfd2c0ce5d9846799efd4d2e8f2d75c9c6"
+    },
+    {
+      "path": "content/assets/edgepress/icons/book-open.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "c86642cc94114dfa0fbee013ed1fc76283434621ebd77b474bc3cbe93669cb91"
+    },
+    {
+      "path": "content/assets/edgepress/icons/check-circle.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "7b1794cf763e8d3761b968576d1807c85786f50b57b5f4de4cac816e27a067cd"
+    },
+    {
+      "path": "content/assets/edgepress/icons/check.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "7ab2441360ef75cefbe02b6dec075e474f524e14e7ae5561482f39f521abc5f4"
+    },
+    {
+      "path": "content/assets/edgepress/icons/cloud.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "7e6197d363e14aa5795c69aa00ff67f309e9702ad794dfdbd13aa37531d48fc0"
+    },
+    {
+      "path": "content/assets/edgepress/icons/code.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "fdb0136340c1afcaabc6381a19c2fb3be665169828e0dc560e37671d33b40421"
+    },
+    {
+      "path": "content/assets/edgepress/icons/cpu.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "ed4fe64e0977ac86852961c33542f1a47fbeaa01e46ca16452123244a6d6f092"
+    },
+    {
+      "path": "content/assets/edgepress/icons/file-text.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "3ae3e5feec4222c41b3a92d3a00f5cdd3487348c10d939d65055602e1e38baa9"
+    },
+    {
+      "path": "content/assets/edgepress/icons/github.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "f6395d7482b9705b4287c80f68cdc5fcff7799e99469f7be73bb319a691d6478"
+    },
+    {
+      "path": "content/assets/edgepress/icons/globe.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "874d70fb15aab6be1437054f74c431f53dec566c9d66ba786a5b0350b51306b3"
+    },
+    {
+      "path": "content/assets/edgepress/icons/help-circle.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "13e40d0b542764353eadf773cd20eab05f12cfc5c36a718f301f196479c67128"
+    },
+    {
+      "path": "content/assets/edgepress/icons/home.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "d1348b7dbd15b40c0a4d12c5be7c1b13d752c90396512515c87be384cd3b2818"
+    },
+    {
+      "path": "content/assets/edgepress/icons/layers.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "78788351757fe97fd5b98efd7fd1ce48e1e273bc251edefcb18925e6dd0736c3"
+    },
+    {
+      "path": "content/assets/edgepress/icons/layout-grid.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "66b7ccf1b17188b40ef7050d103d4b600901f2345827a4558efc3e9c48a642f4"
+    },
+    {
+      "path": "content/assets/edgepress/icons/mail.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "663310878956d65547c881d77ef84a06e83bbf25d369d14040d0950c976818ff"
+    },
+    {
+      "path": "content/assets/edgepress/icons/newspaper.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "c25882ca1ae7b1e615061b0894f44960e550b984fd403ab39cbe5edf9a28829e"
+    },
+    {
+      "path": "content/assets/edgepress/icons/palette.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "a7e0b8ad6d618c981ad8b7aff23aaa55df66017e9249fd1d5ea0e424d043b1aa"
+    },
+    {
+      "path": "content/assets/edgepress/icons/plug.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "e41df8c9119541f670119349deea547270436c3f92e9db4f4e8fbaa03ed9f17d"
+    },
+    {
+      "path": "content/assets/edgepress/icons/puzzle.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "2b7225364230b074d61e2288171c57f8f5eb78b8457cee6dc29c2f912b1d1a07"
+    },
+    {
+      "path": "content/assets/edgepress/icons/rocket.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "aa6a598dbf84367324f6dc2bc01dc545b9682dd1474ee4f1831f9e412143bd43"
+    },
+    {
+      "path": "content/assets/edgepress/icons/rss.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "a573e850c3668e8b35bd51727df0704d81f2ebc11b9043ea7842fe813b7dc0b4"
+    },
+    {
+      "path": "content/assets/edgepress/icons/search.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "743220b16ce13fb040513d0095495f69c7e5d56bcac64a42feff7206bb3b28b4"
+    },
+    {
+      "path": "content/assets/edgepress/icons/settings.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "59432c6eb94bbf0c5e877f8caa7b0251a8a50536ab5c7b32f164bf7811de0667"
+    },
+    {
+      "path": "content/assets/edgepress/icons/shield-check.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "e7f2f1bb69c18b493d45a750fb9bbda9a8d2709f9684a8b8848f255864153b6c"
+    },
+    {
+      "path": "content/assets/edgepress/icons/sparkles.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "fcd1585be4d34dab69e6979a87572fd7f3df3caa62d64809dcf89831285ed234"
+    },
+    {
+      "path": "content/assets/edgepress/icons/terminal.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "1eff1e241767933eda27f5491e3d27c0de5e8b59faa3651c7fce5f8a13a27caa"
+    },
+    {
+      "path": "content/assets/edgepress/icons/x.png",
+      "format": "PNG",
+      "dimensions": [
+        128,
+        128
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "dcc00cd542985247528c015b41d87d54c531658ee2ada6af700b28aae9194499"
+    }
+  ]
+}

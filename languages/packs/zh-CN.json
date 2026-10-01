@@ -62,5 +62,6 @@
   "consentReload": "选择已保存，正在重新载入以应用设置。",
   "agentSummary": "EdgePress 网站构建器的项目指南与参考文档。",
   "closePrivacy": "关闭设置",
-  "consentStoredOnDevice": "此设备"
+  "consentStoredOnDevice": "此设备",
+  "pageNumber": "第 {page} 页"
 }

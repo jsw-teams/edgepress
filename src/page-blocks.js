@@ -171,6 +171,20 @@ async function renderBlock(block, context, depth, index) {
       const level = context.isHomepage && index === 0 ? 'h1' : 'h2';
       const eyebrow = text(block.eyebrow, 'hero.eyebrow', 120, true);
       const description = text(block.text, 'hero.text', 1000, true);
+      const bannerSrc = block.bannerSrc === undefined ? '' : safeUrl(block.bannerSrc, 'hero.bannerSrc');
+      const bannerAlt = block.bannerAlt === undefined ? '' : text(block.bannerAlt, 'hero.bannerAlt', 500);
+      if (Boolean(bannerSrc) !== Boolean(bannerAlt)) throw new Error('hero.bannerSrc and hero.bannerAlt must be provided together');
+      const bannerSrcset = block.bannerSrcset === undefined ? '' : imageCandidates(block.bannerSrcset, 'hero.bannerSrcset');
+      if (bannerSrcset && !bannerSrc) throw new Error('hero.bannerSrcset requires hero.bannerSrc');
+      const bannerWebpSrcset = block.bannerWebpSrcset === undefined ? '' : imageCandidates(block.bannerWebpSrcset, 'hero.bannerWebpSrcset');
+      if (bannerWebpSrcset && !bannerSrc) throw new Error('hero.bannerWebpSrcset requires hero.bannerSrc');
+      const bannerSizes = escapeHtml(text(block.bannerSizes ?? '(max-width: 620px) 90vw, 680px', 'hero.bannerSizes', 200));
+      const bannerWidth = block.bannerWidth;
+      const bannerHeight = block.bannerHeight;
+      if (bannerSrc && (!Number.isInteger(bannerWidth) || bannerWidth < 1 || bannerWidth > 10000 ||
+          !Number.isInteger(bannerHeight) || bannerHeight < 1 || bannerHeight > 10000)) {
+        throw new Error('hero banner dimensions must be integers from 1 to 10000');
+      }
       const mascotSrc = block.mascotSrc === undefined ? '' : safeUrl(block.mascotSrc, 'hero.mascotSrc');
       const mascotAlt = block.mascotAlt === undefined ? '' : text(block.mascotAlt, 'hero.mascotAlt', 500);
       if (Boolean(mascotSrc) !== Boolean(mascotAlt)) throw new Error('hero.mascotSrc and hero.mascotAlt must be provided together');
@@ -202,9 +216,14 @@ async function renderBlock(block, context, depth, index) {
         ? '<picture class="hero-mascot-picture"><source type="image/webp" srcset="' + mascotWebpSrcset + '" sizes="' + mascotSizes + '">' + mascotImage + '</picture>'
         : mascotImage;
       const aside = mascot || highlightPanel ? '<div class="hero-aside">' + mascot + highlightPanel + '</div>' : '';
-      return '<section class="hero-block' + (aside ? ' hero-block--split' : '') + '"><div class="hero-main">' +
+      const bannerImage = bannerSrc ? '<img class="hero-banner" src="' + escapeHtml(bannerSrc) + '" alt="' + escapeHtml(bannerAlt) +
+        '" width="' + bannerWidth + '" height="' + bannerHeight + '"' + (bannerSrcset ? ' srcset="' + bannerSrcset +
+        '" sizes="(max-width: 620px) calc(100vw - 32px), (max-width: 1168px) calc(100vw - 48px), 1120px"' : '') +
+        ' decoding="async" fetchpriority="high">' : '';
+      const banner = bannerWebpSrcset ? '<picture class="hero-banner-picture"><source type="image/webp" srcset="' + bannerWebpSrcset + '" sizes="' + bannerSizes + '">' + bannerImage + '</picture>' : bannerImage;
+      return '<section class="hero-block' + (aside ? ' hero-block--split' : '') + (banner ? ' hero-block--banner' : '') + '"><div class="hero-main">' +
         (eyebrow ? '<p class="eyebrow">' + escapeHtml(eyebrow) + '</p>' : '') + '<' + level + '>' + escapeHtml(heading) + '</' + level + '>' +
-        (description ? '<p class="hero-copy">' + escapeHtml(description) + '</p>' : '') + action + '</div>' + aside + '</section>';
+        (description ? '<p class="hero-copy">' + escapeHtml(description) + '</p>' : '') + action + '</div>' + aside + banner + '</section>';
     }
     case 'section': {
       const heading = text(block.title, 'section.title', 200, true);

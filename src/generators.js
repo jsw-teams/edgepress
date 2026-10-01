@@ -129,11 +129,34 @@ function renderPostAuthor(post, locale, config) {
 
 async function renderPostCard(post, locale, config, showLanguage = false) {
   const summary = await renderMarkdownExcerpt(post.description || post.markdown, config.markdown);
+  const language = showLanguage && post.locale !== locale ? translate(config, post.locale, 'languageName') : '';
   return '<article class="post-card" lang="' + escapeHtml(post.locale) + '"><h2><a href="' + escapeHtml(urlFor(post.path)) + '">' + escapeHtml(post.title) + '</a></h2>' +
     '<p class="meta"><time datetime="' + post.date.toISOString() + '">' + escapeHtml(dateLabel(post.date, post.locale)) + '</time>' +
-    (showLanguage ? ' · <span class="post-language" lang="' + escapeHtml(post.locale) + '">' + escapeHtml(post.locale) + '</span>' : '') +
+    (language ? ' · <span class="post-language" lang="' + escapeHtml(post.locale) + '">' + escapeHtml(language) + '</span>' : '') +
     (post.author ? ' · ' + renderPostAuthor(post, locale, config) : '') + '</p><div class="post-excerpt" lang="' + escapeHtml(post.locale) + '">' +
     summary + '</div></article>';
+}
+
+function renderPagination(config, locale, currentPage, totalPages, hrefForPage) {
+  if (totalPages <= 1) return '';
+  const label = (key) => translate(config, locale, key);
+  const visible = new Set([1, totalPages]);
+  for (let page = Math.max(1, currentPage - 2); page <= Math.min(totalPages, currentPage + 2); page += 1) visible.add(page);
+  const pages = [...visible].sort((left, right) => left - right);
+  const entries = [];
+  let previous = 0;
+  const pageLink = (page) => '<li><a href="' + escapeHtml(hrefForPage(page)) + '" aria-label="' +
+    escapeHtml(label('pageNumber').replace('{page}', String(page))) + '">' + page + '</a></li>';
+  for (const page of pages) {
+    if (page - previous === 2) entries.push(pageLink(page - 1));
+    else if (page - previous > 2) entries.push('<li class="pagination-ellipsis" aria-hidden="true">…</li>');
+    entries.push(page === currentPage ? '<li><span class="pagination-current" aria-current="page">' + page + '</span></li>' : pageLink(page));
+    previous = page;
+  }
+  return '<nav class="pagination" aria-label="' + escapeHtml(label('pagination')) + '">' +
+    (currentPage > 1 ? '<a rel="prev" href="' + escapeHtml(hrefForPage(currentPage - 1)) + '">' + escapeHtml(label('newer')) + '</a>' : '') +
+    '<ol class="pagination-pages">' + entries.join('') + '</ol>' +
+    (currentPage < totalPages ? '<a rel="next" href="' + escapeHtml(hrefForPage(currentPage + 1)) + '">' + escapeHtml(label('older')) + '</a>' : '') + '</nav>';
 }
 
 async function pageBodyForDocument(page, site, config, locale, isHomepage = false, renderContext = {}) {
@@ -223,9 +246,7 @@ export async function generateBuiltinRoutes(site, config, extensions) {
           (cards.length ? cards.join('') : '<p>' + escapeHtml(label('noPosts')) + '</p>') +
           '</section>' + (pageNumber === 1 && pages.length ? '<section class="page-links"><h2>' + escapeHtml(label('pages')) + '</h2><ul>' +
             pages.map((page) => '<li><a href="' + escapeHtml(urlFor(page.path)) + '">' + escapeHtml(page.title) + '</a></li>').join('') + '</ul></section>' : '') +
-          (totalPages > 1 ? '<nav class="pagination" aria-label="' + escapeHtml(label('pagination')) + '">' +
-            (pageNumber > 1 ? '<a href="' + escapeHtml(pageNumber === 2 ? localizedUrl(config, locale, '') : localizedUrl(config, locale, 'page/' + (pageNumber - 1) + '/')) + '">' + escapeHtml(label('newer')) + '</a>' : '') +
-            (pageNumber < totalPages ? '<a href="' + escapeHtml(localizedUrl(config, locale, 'page/' + (pageNumber + 1) + '/')) + '">' + escapeHtml(label('older')) + '</a>' : '') + '</nav>' : '');
+          renderPagination(config, locale, pageNumber, totalPages, (page) => localizedUrl(config, locale, page === 1 ? '' : 'page/' + page + '/'));
         const routePath = pageNumber === 1 ? prefix + 'index.html' : prefix + 'page/' + pageNumber + '/index.html';
         routes.push(await pageRoute(routePath, pageNumber === 1 ? config.site.title : 'Page ' + pageNumber,
           config.site.description, body, locale, config, extensions));
@@ -274,14 +295,10 @@ export async function generateBuiltinRoutes(site, config, extensions) {
       const subset = archivePosts.slice((pageNumber - 1) * archivePageSize, pageNumber * archivePageSize);
       const cards = await Promise.all(subset.map((post) => renderPostCard(post, locale, config, true)));
       const archiveUrl = pageNumber === 1 ? 'archives/' : 'archives/page/' + pageNumber + '/';
-      const pagination = archivePageCount > 1
-        ? '<nav class="pagination" aria-label="' + escapeHtml(label('pagination')) + '">' +
-          (pageNumber > 1 ? '<a rel="prev" href="' + escapeHtml(pageNumber === 2 ? localizedUrl(config, locale, 'archives/') :
-            localizedUrl(config, locale, 'archives/page/' + (pageNumber - 1) + '/')) + '">' + escapeHtml(label('newer')) + '</a>' : '') +
-          (pageNumber < archivePageCount ? '<a rel="next" href="' + escapeHtml(localizedUrl(config, locale, 'archives/page/' + (pageNumber + 1) + '/')) + '">' +
-            escapeHtml(label('older')) + '</a>' : '') + '</nav>' : '';
+      const pagination = renderPagination(config, locale, pageNumber, archivePageCount, (page) => localizedUrl(config, locale,
+        page === 1 ? 'archives/' : 'archives/page/' + page + '/'));
       const archiveBody = '<section><h1>' + escapeHtml(label('archives')) + '</h1>' +
-        (cards.length ? cards.join('') : '<p>' + escapeHtml(label('noPosts')) + '</p>') + pagination + '</section>';
+        (cards.length ? '<div class="post-list archive-post-list">' + cards.join('') + '</div>' : '<p>' + escapeHtml(label('noPosts')) + '</p>') + pagination + '</section>';
       routes.push(await pageRoute(prefix + (pageNumber === 1 ? 'archives/index.html' : 'archives/page/' + pageNumber + '/index.html'),
         pageNumber === 1 ? label('archives') : label('archives') + ' · ' + pageNumber, label('allPosts'), archiveBody, locale, config, extensions,
         { urlPath: localizedUrl(config, locale, archiveUrl) }));
@@ -297,7 +314,7 @@ export async function generateBuiltinRoutes(site, config, extensions) {
     const tagRoutes = await mapLimit([...tags.entries()], config.concurrency, async ([slug, value]) => {
       const cards = await Promise.all(value.posts.map((post) => renderPostCard(post, locale, config)));
       const body = '<section><h1>' + escapeHtml(label('tag')) + ': ' + escapeHtml(value.label) + '</h1>' +
-        cards.join('') + '</section>';
+        '<div class="post-list">' + cards.join('') + '</div></section>';
       return pageRoute(prefix + 'tags/' + slug + '/index.html', label('tag') + ': ' + value.label,
         label('tag') + ' ' + value.label, body, locale, config, extensions);
     });
