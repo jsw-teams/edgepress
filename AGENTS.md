@@ -5,6 +5,7 @@ EdgePress builds static websites from Markdown and YAML source. Follow these rul
 ## Source files
 
 - Put published project guides and site copy in `content/**/*.md`.
+- Put page media and other content-owned files under `content/assets/`; the builder publishes them at matching site-root paths.
 - Keep root Markdown limited to `README.md` and this `AGENTS.md`.
 - Edit site-wide title, description, URL, agent SEO (GEO), SEO, and privacy settings in root `config.yml`.
 - Keep build paths, permalink settings, locale packs, and trusted build-time plugin paths in `edgepress.config.mjs`.
@@ -22,7 +23,7 @@ EdgePress builds static websites from Markdown and YAML source. Follow these rul
 ## Themes
 
 - Themes use HTML layouts at `themes/<name>/layouts/layout.html` and `.html` partials under `layouts/partials/`; they do not use TSX renderers.
-- Keep CSS, scripts, and images in that theme's `assets/` directory. The builder fingerprints CSS and JavaScript files.
+- Keep shared theme CSS and scripts in that theme's `assets/` directory. The builder fingerprints CSS and JavaScript files.
 - Escape normal layout placeholders. Only generated page content, JSON-LD, and generated navigation may use the renderer's approved raw placeholders.
 - Keep semantic landmarks, a skip link, one main landmark, labeled navigation, visible keyboard focus, and one page-level `h1`.
 - Use a full-height vertical body layout and a growing main area so the footer reaches the bottom on short pages. Footer copy is configured with `site.footer` and has no hard-coded EdgePress attribution.

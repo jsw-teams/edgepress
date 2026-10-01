@@ -79,16 +79,17 @@ function rewriteCodeReferences(item, text, outputByOriginal) {
 
 export async function collectAssets(config) {
   const sources = [];
-  for (const source of await walk(config.resolvedPaths.static)) {
-    const path = relative(config.resolvedPaths.static, source).split(sep).join('/');
-    if (path.split('/').includes('.gitkeep')) continue;
-    sources.push({ source, path });
-  }
-  const themeAssets = resolve(config.resolvedPaths.theme, 'assets');
-  for (const source of await walk(themeAssets)) {
-    const path = relative(themeAssets, source).split(sep).join('/');
-    if (path.split('/').includes('.gitkeep')) continue;
-    sources.push({ source, path });
+  const directories = [
+    { root: config.resolvedPaths.static, name: 'static' },
+    { root: resolve(config.resolvedPaths.content, 'assets'), name: 'content/assets' },
+    { root: resolve(config.resolvedPaths.theme, 'assets'), name: 'theme assets' }
+  ];
+  for (const { root, name } of directories) {
+    for (const source of await walk(root)) {
+      const path = relative(root, source).split(sep).join('/');
+      if (path.split('/').includes('.gitkeep')) continue;
+      sources.push({ source, path, sourceName: name });
+    }
   }
 
   const headers = [];
@@ -104,11 +105,14 @@ export async function collectAssets(config) {
       content: isCodeAsset(item.path) ? await readFile(item.source) : null
     }))
   ]);
-  const originals = new Set();
+  const originals = new Map();
   for (const item of items) {
     const normalized = item.path.toLowerCase();
-    if (originals.has(normalized)) throw new Error('Static and theme assets have the same output path: ' + item.path);
-    originals.add(normalized);
+    const previousSource = originals.get(normalized);
+    if (previousSource) {
+      throw new Error(previousSource + ' and ' + item.sourceName + ' assets have the same output path: ' + item.path);
+    }
+    originals.set(normalized, item.sourceName);
   }
   const byOriginal = new Map(items.map((item) => [item.path, item]));
   const dependencies = new Map();

@@ -30,12 +30,13 @@ Each page has a folder under content/pages/ and one lowercase locale Markdown fi
 - Choose element types inside each cell.
 - Edit each element's copy, media, links, and presentation options in that page file.
 
-Posts under content/posts/ use the Markdown renderer. Themes own shared head, navigation, footer, error-page layout, and their CSS color palettes.
+Put images and other page media in content/assets/, preserving their public URL path. For example, content/assets/images/diagram.svg is published as /images/diagram.svg. Posts under content/posts/ use the Markdown renderer. Themes own shared head, navigation, footer, error-page layout, and their CSS color palettes.
 
 ## Project files
 
 - content/posts/<post-id>/: Markdown articles with one file per locale.
 - content/pages/<page-id>/: page layouts and all page element content.
+- content/assets/: page images and other content media, copied to the output root with matching paths.
 - themes/default/, themes/atelier/, themes/signal/: shared HTML layouts, partials, and theme styles. Themes installed from npm or created as a blank scaffold live here too.
 - config.yml: site metadata, navigation, privacy settings, and consent-gated browser services.
 - edgepress.config.mjs: paths, permalink, locales, and trusted build-time plugins.
