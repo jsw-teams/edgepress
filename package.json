@@ -1,6 +1,6 @@
 {
   "name": "edgepress",
-  "version": "2026.10.2",
+  "version": "2026.10.3",
   "description": "A static website builder for Cloudflare Workers with editable pages, Markdown posts, local search, themes, and consent-gated integrations.",
   "type": "module",
   "bin": {
@@ -22,7 +22,8 @@
     "tools/brand-regression.test.mjs",
     "tools/post-list.test.mjs",
     "tools/audit.test.mjs",
-    "tools/navigation.test.mjs"
+    "tools/navigation.test.mjs",
+    "tools/revisions.test.mjs"
   ],
   "repository": {
     "type": "git",
@@ -51,15 +52,18 @@
     "doctor": "node src/cli.js doctor",
     "iterate": "node src/cli.js iterate",
     "security:check": "node src/cli.js security",
-    "test": "node --test tools/writing.test.mjs tools/brand-regression.test.mjs tools/post-list.test.mjs tools/audit.test.mjs tools/navigation.test.mjs"
+    "test": "node --test tools/writing.test.mjs tools/brand-regression.test.mjs tools/post-list.test.mjs tools/audit.test.mjs tools/navigation.test.mjs tools/revisions.test.mjs",
+    "icons:sync": "node tools/sync-icons.mjs"
   },
   "dependencies": {
     "marked": "^18.0.13",
     "sanitize-html": "^2.17.7",
-    "yaml": "^2.9.1"
+    "yaml": "^2.9.1",
+    "@jsw-teams/reporelay": "https://codeload.github.com/jsw-teams/RepoRelay/tar.gz/c0fc62c1db152743ac733332bea1fb223fd5c388"
   },
   "devDependencies": {
     "playwright": "^1.63.0",
-    "wrangler": "^4.144.0"
+    "wrangler": "^4.144.0",
+    "lucide-static": "1.50.0"
   }
 }

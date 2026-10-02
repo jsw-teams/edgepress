@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "frameworkVersion": "2026.9.10",
+  "frameworkVersion": "2026.10.3",
   "requirements": {
     "nodeMajor": 22,
     "nodeMinimumVersion": "22.12.0",
@@ -10,30 +10,131 @@
     "pluginApiMajor": 1
   },
   "features": [
-    { "name": "Static generation and content-hash cache", "stage": "stable", "since": "2026.9.1" },
-    { "name": "Cloudflare Static Assets deployment", "stage": "stable", "since": "2026.9.1" },
-    { "name": "Row-based editable pages and reusable layout components", "stage": "experimental", "since": "2026.9.1" },
-    { "name": "Image/video with text and display typography elements", "stage": "experimental", "since": "2026.9.1" },
-    { "name": "i18n locale routes", "stage": "experimental", "since": "2026.9.1" },
-    { "name": "Accessibility and agent-friendliness PDF report with embedded screenshots", "stage": "experimental", "since": "2026.9.1" },
-    { "name": "Consent-gated browser plugins", "stage": "experimental", "since": "2026.9.1" },
-    { "name": "Service binding and URL/token backend proxy", "stage": "experimental", "since": "2026.9.1" },
-    { "name": "Live local preview and theme switching", "stage": "experimental", "since": "2026.9.1" },
-    { "name": "Report-only maintenance iteration", "stage": "experimental", "since": "2026.9.1" },
-    { "name": "Local browser search across Markdown posts", "stage": "experimental", "since": "2026.9.2" },
-    { "name": "Markdown syntax verification and responsive post screenshots", "stage": "experimental", "since": "2026.9.2" },
-    { "name": "Compact localized language selector", "stage": "experimental", "since": "2026.9.2" },
-    { "name": "npm theme installation and blank theme scaffolds", "stage": "experimental", "since": "2026.9.3" },
-    { "name": "PDF-only audit output and temporary screenshot capture", "stage": "experimental", "since": "2026.9.4" },
-    { "name": "Cloudflare one-click deployment guidance for existing and new projects", "stage": "stable", "since": "2026.9.5" },
-    { "name": "Localized Posts navigation and responsive code copy controls", "stage": "experimental", "since": "2026.9.6" },
-    { "name": "Linked tables of contents on Markdown post pages", "stage": "experimental", "since": "2026.9.6" },
-    { "name": "Consent-nested browser services and generated privacy disclosures", "stage": "experimental", "since": "2026.9.7" },
-    { "name": "Responsive homepage imagery and chronological all-post archives", "stage": "experimental", "since": "2026.9.7" },
-    { "name": "Date-versioned localized consent disclosures with isolated responsive checks", "stage": "experimental", "since": "2026.9.8" },
-    { "name": "Markdown video syntax and locale-deduplicated chronological post lists", "stage": "experimental", "since": "2026.9.8" },
-    { "name": "Floating post contents and compact consent controls", "stage": "experimental", "since": "2026.9.9" },
-    { "name": "Locale-stable consent choices and localized page-block links", "stage": "experimental", "since": "2026.9.10" }
+    {
+      "name": "Static generation and content-hash cache",
+      "stage": "stable",
+      "since": "2026.9.1"
+    },
+    {
+      "name": "Cloudflare Static Assets deployment",
+      "stage": "stable",
+      "since": "2026.9.1"
+    },
+    {
+      "name": "Row-based editable pages and reusable layout components",
+      "stage": "experimental",
+      "since": "2026.9.1"
+    },
+    {
+      "name": "Image/video with text and display typography elements",
+      "stage": "experimental",
+      "since": "2026.9.1"
+    },
+    {
+      "name": "i18n locale routes",
+      "stage": "experimental",
+      "since": "2026.9.1"
+    },
+    {
+      "name": "Accessibility and agent-friendliness PDF report with embedded screenshots",
+      "stage": "experimental",
+      "since": "2026.9.1"
+    },
+    {
+      "name": "Consent-gated browser plugins",
+      "stage": "experimental",
+      "since": "2026.9.1"
+    },
+    {
+      "name": "Service binding and URL/token backend proxy",
+      "stage": "experimental",
+      "since": "2026.9.1"
+    },
+    {
+      "name": "Live local preview and theme switching",
+      "stage": "experimental",
+      "since": "2026.9.1"
+    },
+    {
+      "name": "Report-only maintenance iteration",
+      "stage": "experimental",
+      "since": "2026.9.1"
+    },
+    {
+      "name": "Local browser search across Markdown posts",
+      "stage": "experimental",
+      "since": "2026.9.2"
+    },
+    {
+      "name": "Markdown syntax verification and responsive post screenshots",
+      "stage": "experimental",
+      "since": "2026.9.2"
+    },
+    {
+      "name": "Compact localized language selector",
+      "stage": "experimental",
+      "since": "2026.9.2"
+    },
+    {
+      "name": "npm theme installation and blank theme scaffolds",
+      "stage": "experimental",
+      "since": "2026.9.3"
+    },
+    {
+      "name": "PDF-only audit output and temporary screenshot capture",
+      "stage": "experimental",
+      "since": "2026.9.4"
+    },
+    {
+      "name": "Cloudflare one-click deployment guidance for existing and new projects",
+      "stage": "stable",
+      "since": "2026.9.5"
+    },
+    {
+      "name": "Localized Posts navigation and responsive code copy controls",
+      "stage": "experimental",
+      "since": "2026.9.6"
+    },
+    {
+      "name": "Linked tables of contents on Markdown post pages",
+      "stage": "experimental",
+      "since": "2026.9.6"
+    },
+    {
+      "name": "Consent-nested browser services and generated privacy disclosures",
+      "stage": "experimental",
+      "since": "2026.9.7"
+    },
+    {
+      "name": "Responsive homepage imagery and chronological all-post archives",
+      "stage": "experimental",
+      "since": "2026.9.7"
+    },
+    {
+      "name": "Date-versioned localized consent disclosures with isolated responsive checks",
+      "stage": "experimental",
+      "since": "2026.9.8"
+    },
+    {
+      "name": "Markdown video syntax and locale-deduplicated chronological post lists",
+      "stage": "experimental",
+      "since": "2026.9.8"
+    },
+    {
+      "name": "Floating post contents and compact consent controls",
+      "stage": "experimental",
+      "since": "2026.9.9"
+    },
+    {
+      "name": "Locale-stable consent choices and localized page-block links",
+      "stage": "experimental",
+      "since": "2026.9.10"
+    },
+    {
+      "name": "Consent-gated RepoRelay GitHub App comments, pinned posts, local times and automatic content revisions",
+      "stage": "experimental",
+      "since": "2026.10.3"
+    }
   ],
   "releaseHistory": [
     {

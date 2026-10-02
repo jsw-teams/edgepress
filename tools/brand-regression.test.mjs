@@ -58,9 +58,9 @@ test('journal routes exclude project categories while article profiles and tags 
   assert.match(article, /src="\/edgepress\/navigation-select.js"/);
 });
 
-test('raster icon paths accept only known names and safe CSS classes', () => {
-  assert.match(renderIcon('book-open', 'toc-icon compact'), /class="toc-icon compact icon-bitmap"/);
-  assert.match(renderIcon('book-open'), /src="\/edgepress\/icons\/book-open\.png"[^>]*alt="" aria-hidden="true"/);
+test('library icon paths accept only known names and safe CSS classes', () => {
+  assert.match(renderIcon('book-open', 'toc-icon compact'), /class="toc-icon compact icon-library"/);
+  assert.match(renderIcon('book-open'), /src="\/edgepress\/icons\/book-open\.svg"[^>]*alt="" aria-hidden="true"/);
   for (const name of ['../search', '__proto__', 'home?x', null]) assert.throws(() => renderIcon(name));
   assert.throws(() => renderIcon('home', 'icon" onerror="alert(1)'));
   assert.doesNotMatch(renderIcon('home'), /<svg|<use/);

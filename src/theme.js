@@ -175,9 +175,10 @@ export async function renderLayout(config, extensions, page, body) {
       return escapeHtml(value);
     });
   const html = '<!doctype html>' + rendered;
-  const filtered = await extensions.filter('html:afterLayout', html, context);
+  let filtered = await extensions.filter('html:afterLayout', html, context);
   if (typeof filtered !== 'string') throw new Error('html:afterLayout filters must return a string');
   const scripts = [];
+  if (filtered.includes('data-local-time')) scripts.push('<script defer src="/edgepress/local-time.js"></script>');
   if (filtered.includes('data-navigation-select')) scripts.push('<script defer src="/edgepress/navigation-select.js"></script>');
   if (!/src=["']\/edgepress\/code-copy\.js["']/i.test(filtered)) scripts.push('<script defer src="/edgepress/code-copy.js"></script>');
   if (/data-post-toc(?:\s|>)/i.test(filtered) && !/src=["']\/edgepress\/post-toc\.js["']/i.test(filtered)) {
@@ -185,6 +186,10 @@ export async function renderLayout(config, extensions, page, body) {
   }
   if (/data-edgepress-search(?:\s|=|>)/i.test(filtered) && !/src=["']\/edgepress\/search\.js["']/i.test(filtered)) {
     scripts.push('<script defer src="/edgepress/search.js"></script>');
+  }
+  if (/data-edgepress-comments(?:\s|=|>)/i.test(filtered) && !/src=["']\/edgepress\/comments\.js["']/i.test(filtered)) {
+    scripts.push('<script defer src="/edgepress/comments-consent.js"></script>');
+    filtered = filtered.replace(/<\/head\s*>/i, '<link rel="stylesheet" href="/edgepress/comments.css"></head>');
   }
   if (!scripts.length) return filtered;
   const integration = scripts.join('');

@@ -42,9 +42,9 @@ Put images and other page media in content/assets/, preserving their public URL 
 
 ## Project files
 
-The 2026.10.2 source uses a giant panda and Taiwanese black bear as its shared project identity, with 28 transparent local raster icons. Generated avatar masters and exact prompts are saved in `content/brand-sources/`; the original full-body and homepage masters are `mascot.png` and `home-hero.png` in `content/assets/edgepress/brand/`. Favicons and icons are in `content/assets/edgepress/favicon/` and `content/assets/edgepress/icons/`. Themes apply bitmap filters for dark backgrounds. The technical Markdown pipeline diagram keeps its editable SVG source.
+The shared project identity uses a giant panda and Taiwanese black bear. All content media and saved masters live in `content/assets/`. UI icons use 28 licensed Lucide SVGs, with the pinned source version and license in `content/assets/edgepress/icons/`.
 
-To export the saved imagegen masters, install Pillow and run `python tools/generate-brand-assets.py --master content/assets/edgepress/brand/mascot.png --avatar-master content/brand-sources/edgepress-avatar-master.png --home-master content/assets/edgepress/brand/home-hero.png --output-dir content/assets/edgepress/brand --icons-dir content/assets/edgepress/icons --favicon-dir content/assets/edgepress/favicon --brand edgepress`. Functional icons are drawn directly as raster images; old SVGs are not rasterized. Run `python tools/verify-brand-assets.py .` and `node tools/verify-brand.mjs .` to check dimensions, transparency, resource paths, themes, mobile layout, and keyboard access. Browser verification uses an installed Microsoft Edge browser; screenshots and results are saved under `tools/brand-verification/`.
+Brand image derivatives can be exported from the saved masters with `tools/generate-brand-assets.py` and Pillow. Keep generated UI icons separate: install dependencies and run `npm run icons:sync`. Verify assets with `python tools/verify-brand-assets.py .` and `node tools/verify-brand.mjs .`.
 
 - content/posts/<post-id>/: Markdown articles with one file per locale.
 - content/pages/<page-id>/: page layouts and all page element content.
@@ -120,3 +120,19 @@ Place your avatar in `content/assets/images/authors/me.png`. Avatars accept site
 Navigation `children` turns an item into a native select with localized options and accessible labels. A disabled display placeholder keeps the parent label visible; the parent page is the first selectable option, so selecting it always opens the overview. The placeholder resets on navigation, including from a child page. Without JavaScript, all options appear as links. Only one child level is supported, and child URLs use the same validation as normal navigation.
 
 Use `category: edgepress` or `categories: [blog, uncategorized]` on a `post-list` block. `latest-posts` without an explicit filter inherits `site.archive.categories`. Homepage pagination must use that same category set. To change only the number shown on a project page, edit its block's `count` (1–12); the full category archive remains paginated and available.
+
+## Optional article discussions
+
+RepoRelay connects published article discussions to GitHub Issues through a self-hosted GitHub App. Configure `plugins.consent.comments.enabled: true` and a service with `provider: github-comments`, and enable the consent plugin. Comments load only after the reader selects the service. Unselected comments load no discussion module, API, session request or GitHub request.
+
+Add the `REPORELAY_THREADS` Durable Object binding for the exported `CommentCoordinator` and its SQLite migration to your Worker configuration. The [RepoRelay Worker example](https://github.com/jsw-teams/RepoRelay/tree/main/examples/comments) includes the complete configuration. Set repository, site origin, App ID and Client ID as variables; store the App private key and Client Secret as Worker Secrets. Installation identity and signing keys are managed automatically. Preserve the Durable Object storage across deployments. Each origin and repository combination has an independent discussion scope. Multiple owned sites can use one App with an exact callback registered for each site; other operators register their own Apps.
+
+## Publication times and article changes
+
+New articles include an ISO publication timestamp with a timezone. Readers see that instant in their browser’s current timezone; date-only historical articles keep their calendar date because the publication time is unknown. The server output and feeds preserve the original instant.
+
+An article shows the latest content update time from Git history. Only title and Markdown body changes count; metadata edits do not. Add `showChanges: true` to its front matter to display the actual latest content diff in an expandable panel. This is disabled by default and requires no hand-written revision note. Build from a full Git checkout (`fetch-depth: 0` in GitHub Actions); unavailable history produces no invented update. The latest 20 file commits are inspected.
+
+Set `pinned: true` in the selected article translations to place them first in `post-list`. Category and locale selection happen before pinning and limiting. Feeds, archives and `latest-posts` remain chronological.
+
+The first production comment format isolates unsupported test Issues and retains them. Later releases preserve established data; an incompatible change requires an explicit migration, retaining and isolating unmigrated records without impersonating their authors. RepoRelay release labels use year and month plus update count, such as `202610.2`.

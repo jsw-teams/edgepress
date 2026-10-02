@@ -118,6 +118,48 @@ async function pageRoute(path, title, description, body, locale, config, extensi
   return fileRoute(path, html);
 }
 
+function renderPostComments(post, locale, config) {
+  const label = (key) => translate(config, locale, key);
+  const enabled = config.browserPlugins?.comments?.enabled && config.browserPlugins.comments.services.some(service => service.provider === 'github-comments');
+  if (!enabled) return '';
+  return '<section id="comments" class="post-comments" data-edgepress-comments data-comments-thread="' + escapeHtml(post.bundlePath) +
+    '" data-comments-title="' + escapeHtml(post.title) +
+    '" data-comments-loading="' + escapeHtml(label('commentsLoading')) +
+    '" data-comments-empty="' + escapeHtml(label('commentsEmpty')) +
+    '" data-comments-error="' + escapeHtml(label('commentsError')) +
+    '" data-comments-posted="' + escapeHtml(label('commentsPosted')) +
+    '" data-comments-closed="' + escapeHtml(label('commentsClosed')) +
+    '" data-comments-count="' + escapeHtml(label('commentsCount')) +
+    '" data-comments-login-required="' + escapeHtml(label('commentsLoginRequired')) +
+    '" data-comments-service-unavailable="' + escapeHtml(label('commentsServiceUnavailable')) +
+    '" data-comments-rate-limited="' + escapeHtml(label('commentsRateLimited')) +
+    '" data-comments-thread-reset="' + escapeHtml(label('commentsThreadReset')) +
+    '" data-comments-attachment-label="' + escapeHtml(label('commentAttachment')) +
+    '" data-comments-attachment-help="' + escapeHtml(label('commentAttachmentHelp')) +
+    '" data-comments-attachment-too-large="' + escapeHtml(label('commentAttachmentTooLarge')) +
+    '" data-comments-attachment-invalid="' + escapeHtml(label('commentAttachmentInvalid')) +
+    '" data-comments-uploading="' + escapeHtml(label('commentAttachmentUploading')) + '">' +
+    '<header class="post-comments-header"><h2>' + escapeHtml(label('commentsTitle')) + '</h2><p>' +
+    escapeHtml(label('commentsIntro')) + '</p></header>' +
+    '<p class="comments-status" data-comments-status role="status" aria-live="polite">' +
+    escapeHtml(label('commentsConsentRequired')) + '</p><button type="button" data-comments-consent-settings>' + escapeHtml(label('privacySettings')) + '</button>' +
+    '<ol class="comment-list" data-comments-list></ol>' +
+    '<p data-comments-account hidden><span data-comments-identity></span> <button type="button" data-comments-logout>' +
+    escapeHtml(label('commentsLogout')) + '</button></p>' +
+    '<p data-comments-signin hidden><a data-comments-login>' + escapeHtml(label('commentsLogin')) + '</a></p>' +
+    '<form class="comment-form" data-comments-form hidden>' +
+    '<label><span>' + escapeHtml(label('commentBody')) +
+    '</span><textarea name="body" rows="6" maxlength="5000"></textarea></label>' +
+    '<label class="comment-attachment-picker"><span>' + escapeHtml(label('commentAttachment')) +
+    '</span><input name="attachments" type="file" accept="image/png,image/jpeg,image/gif,image/webp,image/avif" multiple>' +
+    '<small>' + escapeHtml(label('commentAttachmentHelp')) + '</small></label>' +
+    '<div class="comment-attachment-list" data-comments-attachments></div>' +
+    '<div class="comment-honeypot" aria-hidden="true"><label>Company<input name="company" type="text" tabindex="-1" autocomplete="off"></label></div>' +
+    '<button type="submit">' + escapeHtml(label('commentSubmit')) + '</button>' +
+    '<p class="comment-note">' + escapeHtml(label('commentNotice')) + '</p>' +
+    '</form><noscript><p class="comment-note">' + escapeHtml(label('commentsNeedJavaScript')) + '</p></noscript></section>';
+}
+
 function renderPostAuthor(post, locale, config) {
   if (!post.author) return '';
   return '<span class="post-author">' + escapeHtml(translate(config, locale, 'postAuthor').replace('{author}', post.author)) + '</span>';
@@ -125,34 +167,45 @@ function renderPostAuthor(post, locale, config) {
 
 async function renderPostCard(post, locale, config, showLanguage = false) {
   const summary = await renderMarkdownExcerpt(post.description || post.markdown, config.markdown);
-  const language = showLanguage && post.locale !== locale ? translate(config, post.locale, 'languageName') : '';
+  const postLanguage = showLanguage && post.locale !== locale ? translate(config, post.locale, 'languageName') : '';
   return '<article class="post-card" lang="' + escapeHtml(post.locale) + '"><h2><a href="' + escapeHtml(urlFor(post.path)) + '">' + escapeHtml(post.title) + '</a></h2>' +
-    '<p class="meta"><time datetime="' + post.date.toISOString() + '">' + escapeHtml(dateLabel(post.date, post.locale)) + '</time>' +
-    (language ? ' · <span class="post-language" lang="' + escapeHtml(post.locale) + '">' + escapeHtml(language) + '</span>' : '') +
+    '<p class="meta"><time data-local-time data-time-locale="' + escapeHtml(post.locale || locale) + '" data-date-only="' + (post.dateOnly === true) + '" datetime="' + post.date.toISOString() + '">' + escapeHtml(dateLabel(post.date, post.locale)) + '</time>' +
+    (postLanguage ? ' · <span class="post-language" lang="' + escapeHtml(post.locale) + '">' + escapeHtml(postLanguage) + '</span>' : '') +
     (post.author ? ' · ' + renderPostAuthor(post, locale, config) : '') + '</p><div class="post-excerpt" lang="' + escapeHtml(post.locale) + '">' +
-    summary + '</div></article>';
+    summary + '</div></article>' + renderPostComments(post, locale, config);
 }
 
-function renderPagination(config, locale, currentPage, totalPages, hrefForPage) {
-  if (totalPages <= 1) return '';
-  const label = (key) => translate(config, locale, key);
+function paginationPageNumbers(currentPage, totalPages) {
   const visible = new Set([1, totalPages]);
   for (let page = Math.max(1, currentPage - 2); page <= Math.min(totalPages, currentPage + 2); page += 1) visible.add(page);
   const pages = [...visible].sort((left, right) => left - right);
   const entries = [];
-  let previous = 0;
-  const pageLink = (page) => '<li><a href="' + escapeHtml(hrefForPage(page)) + '" aria-label="' +
-    escapeHtml(label('pageNumber').replace('{page}', String(page))) + '">' + page + '</a></li>';
-  for (const page of pages) {
-    if (page - previous === 2) entries.push(pageLink(page - 1));
-    else if (page - previous > 2) entries.push('<li class="pagination-ellipsis" aria-hidden="true">…</li>');
-    entries.push(page === currentPage ? '<li><span class="pagination-current" aria-current="page">' + page + '</span></li>' : pageLink(page));
-    previous = page;
+  for (let index = 0; index < pages.length; index += 1) {
+    const page = pages[index];
+    const previous = pages[index - 1];
+    if (previous !== undefined && page - previous > 1) {
+      if (page - previous === 2) entries.push(previous + 1);
+      else entries.push(null);
+    }
+    entries.push(page);
   }
-  return '<nav class="pagination" aria-label="' + escapeHtml(label('pagination')) + '">' +
-    (currentPage > 1 ? '<a rel="prev" href="' + escapeHtml(hrefForPage(currentPage - 1)) + '">' + escapeHtml(label('newer')) + '</a>' : '') +
-    '<ol class="pagination-pages">' + entries.join('') + '</ol>' +
-    (currentPage < totalPages ? '<a rel="next" href="' + escapeHtml(hrefForPage(currentPage + 1)) + '">' + escapeHtml(label('older')) + '</a>' : '') + '</nav>';
+  return entries;
+}
+
+function renderPagination(locale, currentPage, totalPages, config, pageUrl) {
+  const label = (key) => translate(config, locale, key);
+  const pageLinks = paginationPageNumbers(currentPage, totalPages).map((page) => {
+    if (page === null) return '<li class="pagination-ellipsis" aria-hidden="true">…</li>';
+    if (page === currentPage) return '<li><span class="pagination-current" aria-current="page">' + page + '</span></li>';
+    const pageLabel = label('pageNumber').replace('{page}', String(page));
+    return '<li><a href="' + escapeHtml(pageUrl(page)) + '" aria-label="' + escapeHtml(pageLabel) + '">' + page + '</a></li>';
+  }).join('');
+  const previous = currentPage > 1
+    ? '<a rel="prev" href="' + escapeHtml(pageUrl(currentPage - 1)) + '">' + escapeHtml(label('newer')) + '</a>' : '';
+  const next = currentPage < totalPages
+    ? '<a rel="next" href="' + escapeHtml(pageUrl(currentPage + 1)) + '">' + escapeHtml(label('older')) + '</a>' : '';
+  return '<nav class="pagination" aria-label="' + escapeHtml(label('pagination')) + '">' + previous +
+    '<ol class="pagination-pages">' + pageLinks + '</ol>' + next + '</nav>';
 }
 
 async function pageBodyForDocument(page, site, config, locale, isHomepage = false, renderContext = {}) {
@@ -240,10 +293,11 @@ export async function generateBuiltinRoutes(site, config, extensions) {
         const cards = await Promise.all(subset.map((post) => renderPostCard(post, locale, config, true)));
         const body = '<section class="intro"><h1>' + escapeHtml(config.site.title) + '</h1><p>' + escapeHtml(config.site.description) +
           '</p></section><section class="post-list" aria-label="' + escapeHtml(label('latestPosts')) + '">' +
-          (cards.length ? cards.join('') : '<p>' + escapeHtml(label('noPosts')) + '</p>') +
+          (cards.length ? '<div class="post-list archive-post-list">' + cards.join('') + '</div>' : '<p>' + escapeHtml(label('noPosts')) + '</p>') +
           '</section>' + (pageNumber === 1 && pages.length ? '<section class="page-links"><h2>' + escapeHtml(label('pages')) + '</h2><ul>' +
             pages.map((page) => '<li><a href="' + escapeHtml(urlFor(page.path)) + '">' + escapeHtml(page.title) + '</a></li>').join('') + '</ul></section>' : '') +
-          renderPagination(config, locale, pageNumber, totalPages, (page) => localizedUrl(config, locale, page === 1 ? '' : 'page/' + page + '/'));
+          (totalPages > 1 ? renderPagination(locale, pageNumber, totalPages, config, (page) =>
+            localizedUrl(config, locale, page === 1 ? '' : 'page/' + page + '/')) : '');
         const routePath = pageNumber === 1 ? prefix + 'index.html' : prefix + 'page/' + pageNumber + '/index.html';
         routes.push(await pageRoute(routePath, pageNumber === 1 ? config.site.title : 'Page ' + pageNumber,
           config.site.description, body, locale, config, extensions));
@@ -261,9 +315,11 @@ export async function generateBuiltinRoutes(site, config, extensions) {
       const tagsHtml = post.tags.length ? '<div class="post-tags" role="group" aria-label="' + escapeHtml(label('tags')) + '"><span class="post-tags-label">' +
         escapeHtml(label('tags')) + ':</span>' + post.tags.map(tag => '<span class="post-tag">' + escapeHtml(tag) + '</span>').join('') + '</div>' : '';
       const body = '<article class="post"><header><h1>' + escapeHtml(post.title) + '</h1><div class="meta post-byline">' + authorHtml +
-        '<time datetime="' + post.date.toISOString() + '">' + escapeHtml(dateLabel(post.date, locale)) + '</time>' +
+        '<time data-local-time data-time-locale="' + escapeHtml(post.locale || locale) + '" data-date-only="' + (post.dateOnly === true) + '" datetime="' + post.date.toISOString() + '">' + escapeHtml(dateLabel(post.date, locale)) + '</time>' +
         '<span class="post-reading-time" data-reading-minutes="' + minutes + '">' + escapeHtml(label('postReadingTime').replace('{minutes}', minutes)) + '</span>' +
-        '</div>' + tagsHtml + '</header>' + renderPostVideo(post.video, locale) + renderedMarkdown.toc + '<div class="post-content">' + renderedMarkdown.html + '</div></article>';
+        (post.updated ? '<span class="post-updated">' + escapeHtml(label('postUpdated')) + ' <time data-local-time data-time-locale="' + escapeHtml(locale) + '" datetime="' + post.updated.toISOString() + '">' + escapeHtml(dateLabel(post.updated, locale)) + '</time></span>' : '') +
+        '</div>' + tagsHtml + '</header>' + (post.showChanges && post.changes ? '<details class="post-changes"><summary>' + escapeHtml(label('postChanges')) + '</summary><pre><code>' + escapeHtml(post.changes) + '</code></pre></details>' : '') + renderPostVideo(post.video, locale) + renderedMarkdown.toc + '<div class="post-content">' + renderedMarkdown.html +
+        '</div></article>' + renderPostComments(post, locale, config);
       const canonicalPath = urlFor(post.path);
       return pageRoute(post.path + 'index.html', post.title, post.description || plainText(post.markdown).slice(0, 160), body,
         locale, config, extensions, {
@@ -271,7 +327,7 @@ export async function generateBuiltinRoutes(site, config, extensions) {
           structuredData: {
             '@context': 'https://schema.org', '@type': 'BlogPosting', headline: post.title,
             description: post.description || plainText(post.markdown).slice(0, 160),
-            datePublished: post.date.toISOString(), dateModified: post.date.toISOString(),
+            datePublished: post.date.toISOString(), dateModified: (post.updated || post.date).toISOString(),
             author: { '@type': 'Person', name: author.name || config.site.title },
             mainEntityOfPage: config.site.url ? config.site.url + canonicalPath : undefined,
             inLanguage: locale
@@ -297,8 +353,9 @@ export async function generateBuiltinRoutes(site, config, extensions) {
       const subset = archivePosts.slice((pageNumber - 1) * archivePageSize, pageNumber * archivePageSize);
       const cards = await Promise.all(subset.map((post) => renderPostCard(post, locale, config, true)));
       const archiveUrl = pageNumber === 1 ? 'archives/' : 'archives/page/' + pageNumber + '/';
-      const pagination = renderPagination(config, locale, pageNumber, archivePageCount, (page) => localizedUrl(config, locale,
-        page === 1 ? 'archives/' : 'archives/page/' + page + '/'));
+      const pagination = archivePageCount > 1
+        ? renderPagination(locale, pageNumber, archivePageCount, config, (page) => localizedUrl(config, locale,
+          page === 1 ? 'archives/' : 'archives/page/' + page + '/')) : '';
       const archiveBody = '<section><h1>' + escapeHtml(label('archives')) + '</h1>' +
         (cards.length ? '<div class="post-list archive-post-list">' + cards.join('') + '</div>' : '<p>' + escapeHtml(label('noPosts')) + '</p>') + pagination + '</section>';
       routes.push(await pageRoute(prefix + (pageNumber === 1 ? 'archives/index.html' : 'archives/page/' + pageNumber + '/index.html'),
@@ -321,7 +378,7 @@ export async function generateBuiltinRoutes(site, config, extensions) {
       for (let number = 1; number <= totalPages; number += 1) {
         const cards = await Promise.all(categoryPosts.slice((number - 1) * config.pagination.perPage, number * config.pagination.perPage)
           .map(post => renderPostCard(post, locale, config, true)));
-        const pagination = totalPages > 1 ? renderPagination(config, locale, number, totalPages,
+        const pagination = totalPages > 1 ? renderPagination(locale, number, totalPages, config,
           page => localizedUrl(config, locale, categoryPath(page))) : '';
         const body = '<section><h1>' + escapeHtml(title) + '</h1><div class="post-list archive-post-list">' + cards.join('') + '</div>' + pagination + '</section>';
         const urlPath = localizedUrl(config, locale, categoryPath(number));
@@ -395,5 +452,7 @@ export async function generateBuiltinRoutes(site, config, extensions) {
       escapeHtml(translate(config, locale, 'returnHome')) + '</a></p></section>';
     routes.push(await pageRoute(prefix + '403.html', forbiddenTitle, forbiddenText, forbiddenBody, locale, config, extensions, { robots: 'noindex,nofollow' }));
   }
+  routes.push(fileRoute('edgepress/comment-threads.json', JSON.stringify(config.browserPlugins?.comments?.enabled && config.browserPlugins.comments.services.some(service => service.provider === 'github-comments') ? [...new Map(site.posts.filter(post => !post.draft)
+    .map(post => [post.bundlePath, { thread: post.bundlePath, title: post.title }])).values()] : []), 'application/json; charset=utf-8'));
   return routes;
 }

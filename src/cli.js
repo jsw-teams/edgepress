@@ -260,7 +260,7 @@ async function createPost(title, config) {
     const locale = config.i18n.defaultLocale;
     const file = resolve(folder, locale.toLowerCase() + '.md');
     await mkdir(folder, { recursive: true });
-    const body = postTemplate(title, today, locale, translate(config, locale, 'postStarter'));
+    const body = postTemplate(title, new Date().toISOString(), locale, translate(config, locale, 'postStarter'));
     let handle;
     try { handle = await open(file, 'wx'); }
     catch (error) {

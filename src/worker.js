@@ -1,3 +1,5 @@
+import { handleCommentRequest } from '@jsw-teams/reporelay';
+export { CommentCoordinator } from '@jsw-teams/reporelay';
 const MAX_BACKEND_BODY_BYTES = 1_000_000;
 
 const json = (data, status = 200, headers = {}) => Response.json(data, {
@@ -94,6 +96,8 @@ async function proxyConfiguredBackend(request, env, requestUrl) {
 
 export default {
   async fetch(request, env) {
+    const comments = await handleCommentRequest(request, env);
+    if (comments) return comments;
     const url = new URL(request.url);
     if (url.pathname === '/api/health') {
       if (request.method !== 'GET') {

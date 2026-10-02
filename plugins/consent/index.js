@@ -23,10 +23,10 @@ export default function consentManager(api) {
       'savePreferences', 'optionalServices', 'noIntegrations', 'privacyPolicy', 'privacyController', 'privacyContact',
       'serviceDataCategories', 'serviceRecipient', 'serviceRetention', 'servicePrivacyDetails', 'servicePrivacyLink', 'consentReload',
       'closePrivacy', 'reviewDetails', 'essentialStorage', 'pluginTracking',
-      'pluginStatistics', 'pluginAdvertising', 'pluginCaptcha'
+      'pluginStatistics', 'pluginAdvertising', 'pluginCaptcha', 'pluginComments'
     ].map((key) => [key, translate(config, locale, key)]));
-    const services = ['tracking', 'statistics', 'advertising', 'captcha'].flatMap((group) =>
-      config.browserPlugins[group].enabled ? config.browserPlugins[group].services.map((service) => ({ ...service, category: group })) : []
+    const services = Object.entries(config.browserPlugins).flatMap(([group, section]) =>
+      group !== 'consent' && section.enabled ? section.services.map(service => ({...service, category:group})) : []
     );
     const privacy = {
       ...config.privacy,
@@ -40,15 +40,7 @@ export default function consentManager(api) {
       consent: config.browserPlugins.consent,
       integrations: services
     });
-    const legacyChoiceFingerprints = config.i18n.locales.map((legacyLocale) => JSON.stringify({
-      controller: config.privacy.controller,
-      policyUrl: config.privacy.policyUrl.startsWith('/')
-        ? localizedUrl(config, legacyLocale, config.privacy.policyUrl)
-        : config.privacy.policyUrl,
-      consent: config.browserPlugins.consent,
-      integrations: services
-    }));
-    const payload = safeJson({ privacy, ui, siteLanguage: locale, defaultLocale: config.i18n.defaultLocale, choiceFingerprint, legacyChoiceFingerprints });
+    const payload = safeJson({ privacy, ui, siteLanguage: locale, defaultLocale: config.i18n.defaultLocale, choiceFingerprint });
     const integration = '<script type="application/json" id="edgepress-privacy-config">' + payload + '</script>' +
       '<script src="/edgepress/plugins/consent/manager.js" defer></script>';
     return html.replace(/<\/body\s*>/i, integration + '</body>');

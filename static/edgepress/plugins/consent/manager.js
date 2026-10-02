@@ -1,4 +1,5 @@
 const modules = {
+  'github-comments': () => import('../comments/github-comments.js'),
   'google-tag-manager': () => import('../tracking/google-tag-manager.js'),
   'meta-pixel': () => import('../tracking/meta-pixel.js'),
   'cloudflare-web-analytics': () => import('../statistics/cloudflare-web-analytics.js'),
@@ -10,7 +11,7 @@ const modules = {
   'hcaptcha': () => import('../captcha/hcaptcha.js')
 };
 
-const storageKey = 'edgepress-privacy-choice';
+const storageKey = 'edgepress-privacy-selection';
 const configElement = document.getElementById('edgepress-privacy-config');
 if (configElement) {
   try { initialize(JSON.parse(configElement.textContent)); }
@@ -109,7 +110,7 @@ function initialize(config) {
   const essential = document.createElement('p');
   essential.className = 'privacy-essential';
   essential.textContent = (ui.essentialStorage || 'Your choice is saved in this browser for up to {days} days.')
-    .replace('{days}', String(privacy.consent?.expiresDays || 180));
+    .replace('{days}', String(privacy.consent.expiresDays));
 
   const operator = privacy.controller || {};
   const controller = document.createElement('p');
@@ -146,13 +147,27 @@ function initialize(config) {
   root.append(settingsButton, panel);
   document.body.append(root);
 
+  document.addEventListener('edgepress:privacy-open', () => {
+    panel.hidden = false;
+    settingsButton.setAttribute('aria-expanded','true');
+    heading.focus();
+  });
   const saved = readChoice(config);
   for (const [id, checkbox] of checkboxes) checkbox.checked = Boolean(saved?.allowed.includes(id));
 
   settingsButton.addEventListener('click', () => {
     panel.hidden = !panel.hidden;
     settingsButton.setAttribute('aria-expanded', String(!panel.hidden));
-    if (!panel.hidden) heading.focus();
+    if (!panel.hidden) {
+      document.dispatchEvent(new CustomEvent('edgepress:floating-panel-open', { detail: 'privacy' }));
+      heading.focus();
+    }
+  });
+  document.addEventListener('edgepress:floating-panel-open', (event) => {
+    if (event.detail !== 'privacy') {
+      panel.hidden = true;
+      settingsButton.setAttribute('aria-expanded', 'false');
+    }
   });
   close.addEventListener('click', () => closePanel());
   reject.addEventListener('click', () => saveChoice([]));
@@ -183,6 +198,7 @@ function initialize(config) {
 
   if (saved) activate(saved.allowed);
   else if (integrations.length) {
+    document.dispatchEvent(new CustomEvent('edgepress:floating-panel-open', { detail: 'privacy' }));
     panel.hidden = false;
     settingsButton.setAttribute('aria-expanded', 'true');
   }
@@ -257,8 +273,8 @@ function makeIcon(name) {
   const icons = { settings: 'settings', accept: 'check', reject: 'x', close: 'x', save: 'arrow-right' };
   if (!Object.hasOwn(icons, name)) throw new Error('Unsupported consent icon: ' + String(name));
   const image = document.createElement('img');
-  image.className = 'icon-bitmap';
-  image.src = '/edgepress/icons/' + icons[name] + '.png';
+  image.className = 'icon-library';
+  image.src = '/edgepress/icons/' + icons[name] + '.svg';
   image.width = 20;
   image.height = 20;
   image.alt = '';
@@ -270,7 +286,7 @@ function makeIcon(name) {
 function makeChoice(config, allowed) {
   const privacy = config.privacy || {};
   const consent = privacy.consent || {};
-  const expiresAt = Date.now() + Math.max(1, Math.min(730, consent.expiresDays || 180)) * 86400000;
+  const expiresAt = Date.now() + consent.expiresDays * 86400000;
   const fingerprint = config.choiceFingerprint || JSON.stringify({ controller: privacy.controller, policyUrl: privacy.policyUrl, consent, integrations: privacy.integrations });
   return {
     proposedDate: consent.proposedDate || '',
@@ -287,15 +303,10 @@ function readChoice(config) {
     const privacy = config.privacy || {};
     const consent = privacy.consent || {};
     const fingerprint = config.choiceFingerprint || JSON.stringify({ controller: privacy.controller, policyUrl: privacy.policyUrl, consent, integrations: privacy.integrations });
-    const isLegacyFingerprint = Array.isArray(config.legacyChoiceFingerprints) && config.legacyChoiceFingerprints.includes(saved?.fingerprint);
     if (!saved || saved.proposedDate !== (consent.proposedDate || '') || saved.effectiveDate !== (consent.effectiveDate || '') ||
-        (saved.fingerprint !== fingerprint && !isLegacyFingerprint) || saved.expiresAt <= Date.now() || !Array.isArray(saved.allowed)) {
+        saved.fingerprint !== fingerprint || saved.expiresAt <= Date.now() || !Array.isArray(saved.allowed)) {
       localStorage.removeItem(storageKey);
       return null;
-    }
-    if (isLegacyFingerprint && saved.fingerprint !== fingerprint) {
-      saved.fingerprint = fingerprint;
-      persistChoice(saved);
     }
     const validIds = new Set((privacy.integrations || []).map((item) => item.id));
     saved.allowed = saved.allowed.filter((id) => validIds.has(id));

@@ -2,7 +2,7 @@ import { renderMarkdownExcerpt } from './markdown.js';
 import { translate, translateValue } from './i18n.js';
 import { isIconName, renderIcon } from './icons.js';
 import { postsForLocale } from './content.js';
-import { categoryFilter, filterPostsByCategory, categorySlug } from './post-details.js';
+import { categoryFilter, filterPostsByCategory, categorySlug, sortPinnedPosts } from './post-details.js';
 
 const captchaProviders = new Set(['cloudflare-turnstile', 'google-recaptcha', 'hcaptcha']);
 
@@ -78,18 +78,13 @@ function dateOnlyLabel(value, locale) {
 }
 
 function renderPrivacyServices(context) {
-  const groups = [
-    ['tracking', translate(context.config, context.locale, 'pluginTracking')],
-    ['statistics', translate(context.config, context.locale, 'pluginStatistics')],
-    ['advertising', translate(context.config, context.locale, 'pluginAdvertising')],
-    ['captcha', translate(context.config, context.locale, 'pluginCaptcha')]
-  ];
-  const configured = groups.flatMap(([key, label]) => {
-    const section = context.config.browserPlugins[key];
-    return (section?.enabled ? section.services : []).map((service) => ({ ...service, category: label }));
+  const configured = Object.entries(context.config.browserPlugins).flatMap(([key, section]) => {
+    if (key === 'consent' || !section.enabled) return [];
+    const label = translate(context.config, context.locale, 'plugin' + key.charAt(0).toUpperCase() + key.slice(1));
+    return section.services.map(service => ({...service, category:label}));
   });
   if (!configured.length) {
-    return '<p class="privacy-empty">' + escapeHtml(text(context.emptyText, 'privacy-services.emptyText', 2000)) + '</p>';
+    return '<p class="privacy-services-empty">' + escapeHtml(text(context.emptyText, 'privacy-services.emptyText', 2000)) + '</p>';
   }
   return '<ul class="privacy-service-list">' + configured.map((service) => '<li><h3>' + escapeHtml(service.category + ' · ' +
     translateValue(context.config, context.locale, service.name || service.provider)) + '</h3><p><strong>' +
@@ -116,14 +111,15 @@ async function renderLatestPosts(block, context) {
   const archiveCategories = categoryFilter(context.config.site?.archive?.categories);
   const sameArchive = [...categories].sort().join('\0') === [...archiveCategories].sort().join('\0');
   if (paginate && (block.type === 'post-list' || !sameArchive)) throw new Error('Homepage pagination must use the same categories as site.archive.categories');
-  const posts = filterPostsByCategory(postsForLocale(context.site.posts, context.locale, context.config.i18n.defaultLocale), categories);
+  const selected = filterPostsByCategory(postsForLocale(context.site.posts, context.locale, context.config.i18n.defaultLocale), categories);
+  const posts = block.type === 'post-list' ? sortPinnedPosts(selected) : selected;
   const title = escapeHtml(text(block.title, 'latest-posts.title', 200));
   const authorLabel = (post) => post.author ? '<span class="post-author">' + escapeHtml(translate(context.config, context.locale, 'postAuthor')
     .replace('{author}', post.author)) + '</span>' : '';
   const cards = (await Promise.all(posts.slice(0, count).map(async (post) => {
     const excerpt = await renderMarkdownExcerpt(post.description || post.markdown, context.config.markdown);
     return '<article class="post-card" lang="' + escapeHtml(post.locale) + '"><h3><a href="' + escapeHtml('/' + post.path.split('/').filter(Boolean).join('/') + (post.path.endsWith('/') ? '/' : '')) + '">' +
-      escapeHtml(post.title) + '</a></h3><p class="meta"><time datetime="' + post.date.toISOString() + '">' + escapeHtml(dateLabel(post.date, context.locale)) +
+      escapeHtml(post.title) + '</a></h3>' + (block.type === 'post-list' && post.pinned ? '<span class="post-pinned">' + escapeHtml(translate(context.config, context.locale, 'postPinned')) + '</span>' : '') + '<p class="meta"><time data-local-time data-time-locale="' + escapeHtml(post.locale || context.locale) + '" data-date-only="' + (post.dateOnly === true) + '" datetime="' + post.date.toISOString() + '">' + escapeHtml(dateLabel(post.date, context.locale)) +
       '</time>' + (post.author ? ' · ' + authorLabel(post) : '') + '</p><div class="post-excerpt" lang="' + escapeHtml(post.locale) + '">' + excerpt + '</div></article>';
   }))).join('');
   const pagination = paginate && context.latestPostsPagination?.totalPages > 1

@@ -1,3 +1,4 @@
+import { readPostRevision } from './revisions.js';
 import { normalizeCategory, safeAvatar, readingMinutes } from './post-details.js';
 import { readdir, readFile } from 'node:fs/promises';
 import { basename, dirname, extname, relative, resolve, sep } from 'node:path';
@@ -110,6 +111,7 @@ function normalizeDate(value, filename, kind, file) {
     throw new Error('Invalid date in ' + file);
   }
   if (value != null) {
+    if (typeof value === 'string' && /T/.test(value) && !/(Z|[+-]\d{2}:\d{2})$/.test(value)) throw new Error('Timestamp must include a timezone in ' + file);
     const date = new Date(value);
     if (!Number.isNaN(date.valueOf())) return date;
     throw new Error('Invalid date in ' + file);
@@ -182,10 +184,13 @@ export async function readDocuments(config) {
     if (kind === 'pages' && markdown.trim()) {
       throw new Error('Page body must be empty; move content into page blocks: ' + file);
     }
+    if (metadata.pinned !== undefined && typeof metadata.pinned !== 'boolean') throw new Error('pinned must be a boolean in ' + file);
     const rawSlug = metadata.slug ?? (kind === 'posts' ? fallbackName : fallbackSlug);
     const normalizedPagePath = kind === 'pages' && metadata.homepage !== true ? normalizePagePath(rawSlug, file) : '';
     const slug = slugify(String(rawSlug).split('/').pop());
     const date = normalizeDate(metadata.date, bundleName, kind, file);
+    if (metadata.showChanges !== undefined && typeof metadata.showChanges !== 'boolean') throw new Error('showChanges must be a boolean in ' + file);
+    const revision = kind === 'posts' ? await readPostRevision(file, source, metadata.showChanges === true) : {updated:null,changes:''};
     let path;
     if (kind === 'posts') {
       path = config.permalink
@@ -202,9 +207,12 @@ export async function readDocuments(config) {
     if (locale !== config.i18n.defaultLocale && metadata.homepage !== true) path = locale + '/' + path;
     return {
       kind, file, relativePath, bundlePath, title, slug, date, locale,
+      dateOnly: metadata.date == null || /^\d{4}-\d{2}-\d{2}$/.test(String(metadata.date)),
+      updated: revision.updated, changes: revision.changes, showChanges: metadata.showChanges === true,
       author: kind === 'posts' ? normalizeAuthor(metadata.author, file) : '',
       authorAvatar: safeAvatar(metadata.authorAvatar ?? (typeof metadata.author === 'object' && metadata.author !== null ? metadata.author.avatar : undefined), 'author avatar in ' + file),
       category: normalizeCategory(metadata.category),
+      pinned: kind === 'posts' && metadata.pinned === true,
       readingMinutes: kind === 'posts' ? readingMinutes(markdown) : 0,
       videoId: (kind === 'posts' ? 'post-' : 'page-') + slugify(bundlePath + '-' + locale.toLowerCase()),
       video: kind === 'posts' ? normalizeVideo(metadata.video, file) : null,

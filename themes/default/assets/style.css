@@ -28,8 +28,8 @@ main{flex:1;min-height:0}
 .privacy-manager .privacy-panel h2{margin:0;padding-inline-end:44px;font-size:1.08rem;line-height:1.3}
 .privacy-manager .privacy-panel p{margin:0;overflow-wrap:anywhere}
 .privacy-manager .privacy-panel .privacy-close{position:absolute;inset-block-start:6px;inset-inline-end:6px;width:44px;min-width:44px;min-height:44px;padding:8px;border-radius:50%}
-.privacy-manager .privacy-panel .privacy-close .icon-bitmap{width:20px;height:20px}
-.privacy-manager .icon-bitmap{width:18px;height:18px;flex:none}
+.privacy-manager .privacy-panel .privacy-close .icon-library{width:20px;height:20px}
+.privacy-manager .icon-library{width:18px;height:18px;flex:none}
 .privacy-manager .privacy-intro,.privacy-manager .privacy-essential,.privacy-manager .privacy-controller{color:var(--muted,#536159)}
 .privacy-manager .privacy-service-settings{display:grid;gap:7px;min-width:0}
 .privacy-manager .privacy-service-setting{display:grid;gap:5px;min-width:0;padding:10px;border:1px solid var(--line,#c7d0c9);border-radius:10px;background:var(--panel,#fff)}
@@ -190,7 +190,7 @@ main,.page-builder,.page-builder-row,.page-builder-cell,.post,.post-content,.pos
 .post-toc-widget{position:fixed;inset-inline-end:max(12px,env(safe-area-inset-right));inset-block-start:50%;z-index:950;max-width:calc(100vw - 24px);transform:translateY(-50%);color:var(--ink);font:14px/1.5 ui-sans-serif,system-ui,sans-serif}
 .post-toc-widget[hidden]{display:none}
 .post-toc-toggle{display:inline-flex;align-items:center;gap:7px;min-height:44px;padding:9px 12px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--ink);font:inherit;font-weight:700;box-shadow:0 4px 18px #0002;cursor:pointer}
-.post-toc-toggle .icon-bitmap{width:18px;height:18px;flex:none}
+.post-toc-toggle .icon-library{width:18px;height:18px;flex:none}
 .post-toc-toggle:focus-visible,.post-toc-close:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .post-toc-panel{position:absolute;inset-inline-end:0;inset-block-end:calc(100% + 8px);display:grid;gap:8px;width:min(22rem,calc(100vw - 24px));max-height:min(60vh,32rem);overflow:auto;overscroll-behavior:contain;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--paper);box-shadow:0 12px 36px #0003}
 .post-toc-panel[hidden]{display:none}
@@ -256,11 +256,11 @@ body{background:radial-gradient(ellipse at 92% 0%,#e9e9ff 0,transparent 33%),var
 .post-tags a:hover{background:var(--line)}
 
 /* Raster artwork and predictable spacing for generated page elements. */
-.icon-bitmap{display:inline-block;width:24px;height:24px;flex:none;object-fit:contain;vertical-align:middle}
+.icon-library{display:inline-block;width:24px;height:24px;flex:none;object-fit:contain;vertical-align:middle}
 .navigation-icon{width:20px;height:20px}
 .feature-icon{width:32px;height:32px}
-.post-toc-toggle .icon-bitmap,.privacy-manager .icon-bitmap{width:20px;height:20px}
-.privacy-manager .privacy-accept .icon-bitmap,.privacy-manager .privacy-reject .icon-bitmap{filter:brightness(0) invert(1)}
+.post-toc-toggle .icon-library,.privacy-manager .icon-library{width:20px;height:20px}
+.privacy-manager .privacy-accept .icon-library,.privacy-manager .privacy-reject .icon-library{filter:brightness(0) invert(1)}
 .page-builder-cell{display:grid;align-content:start;gap:clamp(16px,2.5vw,28px)}
 .page-builder-cell>*,.section-inner>*{min-width:0;margin-block:0}
 .section-inner{display:grid;gap:16px}
@@ -278,7 +278,7 @@ body{background:radial-gradient(ellipse at 92% 0%,#e9e9ff 0,transparent 33%),var
 .hero-banner{display:block;width:min(100%,680px);height:auto;max-height:460px;margin:0 auto;object-fit:contain}
 .hero-block--banner .hero-aside{max-width:100%}
 
-.page-section--dark .icon-bitmap{filter:brightness(0) invert(1)}
+.page-section--dark .icon-library{filter:brightness(0) invert(1)}
 
 .brand-mark{width:36px;height:36px;object-fit:contain;border-radius:50%;background:#f8efdc;padding:2px}
 .hero-mascot,.hero-mascot-picture{width:min(100%,320px);max-height:240px}
@@ -296,3 +296,7 @@ body{background:radial-gradient(ellipse at 92% 0%,#e9e9ff 0,transparent 33%),var
 .author-avatar { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%; object-fit: cover; }
 .post-tags { display: flex; align-items: center; flex-wrap: wrap; gap: .45rem; margin-block: 1rem 1.5rem; }
 .post-tag { display: inline-block; max-width: 100%; overflow-wrap: anywhere; border: 1px solid currentColor; border-radius: 1rem; padding: .15rem .6rem; font-size: .85em; }
+
+.post-changes { margin: 1rem 0; }
+.post-changes summary { cursor: pointer; font-weight: 600; }
+.post-changes pre { overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }

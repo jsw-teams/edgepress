@@ -85,13 +85,13 @@ try {
               const images = [...document.querySelectorAll('img')];
               for (const image of images) image.loading = 'eager';
               await Promise.all(images.map((image) => image.decode().catch(() => {})));
-              const icons = [...document.querySelectorAll('.icon-bitmap')];
+              const icons = [...document.querySelectorAll('.icon-library')];
               return {
                 colorScheme: getComputedStyle(document.documentElement).colorScheme,
                 overflow: document.documentElement.scrollWidth > innerWidth + 1,
                 brokenImages: images.filter((image) => !image.complete || !image.naturalWidth).map((image) => image.src),
                 inlineSvg: document.querySelectorAll('svg,use').length,
-                iconSemantics: icons.every((image) => image.tagName === 'IMG' && image.alt === '' && image.getAttribute('aria-hidden') === 'true' && /\/edgepress\/icons\/[a-z-]+\.png$/.test(image.src)),
+                iconSemantics: icons.every((image) => image.tagName === 'IMG' && image.alt === '' && image.getAttribute('aria-hidden') === 'true' && /\/edgepress\/icons\/[a-z-]+\.svg$/.test(image.src)),
                 rawLanguageCodes: [...document.querySelectorAll('.post-language')].some((element) => /^(?:en|zh-(?:CN|TW|SG))$/.test(element.textContent.trim())),
                 cardGap: document.querySelector('.post-list') ? parseFloat(getComputedStyle(document.querySelector('.post-list')).rowGap) : null,
                 cellGap: document.querySelector('.page-builder-cell') ? parseFloat(getComputedStyle(document.querySelector('.page-builder-cell')).rowGap) : null,
@@ -161,7 +161,7 @@ try {
         await context.close();
       }
     }
-    console.log(theme + ': image references, layouts, locales, light/dark, keyboard and bitmap controls passed.');
+    console.log(theme + ': image references, layouts, locales, light/dark, keyboard and library icon controls passed.');
   }
 } catch (error) {
   failures.push(error.message);

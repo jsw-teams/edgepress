@@ -1,0 +1,181 @@
+{
+  "iconCount": 28,
+  "assets": [
+    {
+      "path": "content/assets/edgepress/brand/avatar.png",
+      "format": "PNG",
+      "dimensions": [
+        512,
+        512
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "fdbada39980869d7cb02d2082cb6a986cf9714957d332e0b360a49eac577ac66"
+    },
+    {
+      "path": "content/assets/edgepress/brand/home-hero.png",
+      "format": "PNG",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "sha256": "22a77eb0d9396ca1bbc5e45effcba0fc0ac64ef7cae0f172678a62be21020d10"
+    },
+    {
+      "path": "content/assets/edgepress/brand/mascot.png",
+      "format": "PNG",
+      "dimensions": [
+        1312,
+        1199
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "94dba136cdfd0c23c847ca4f3792fa9b75b45dfdc1e6a3bc25c514ff63e93dfe"
+    },
+    {
+      "path": "content/assets/edgepress/brand/og-image.png",
+      "format": "PNG",
+      "dimensions": [
+        1200,
+        630
+      ],
+      "alphaRange": null,
+      "sha256": "0ff7e76c5b90d0285e8ba0d00428298a5ec19bcfd9c1905c1ba3624066651c62"
+    },
+    {
+      "path": "content/assets/edgepress/brand/sources/edgepress-avatar-master.png",
+      "format": "PNG",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "8bb4d9bd2b5277d8802ab84264460fbd6ecbb9fdfcdfa0afaf2f6f95f5374dbc"
+    },
+    {
+      "path": "content/assets/edgepress/brand/home-hero-768.webp",
+      "format": "WEBP",
+      "dimensions": [
+        768,
+        512
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "f95fcd52017213df482e4718def2c6e2c0e0c2142773bf71b101dfbacd0e88a0"
+    },
+    {
+      "path": "content/assets/edgepress/brand/home-hero.webp",
+      "format": "WEBP",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "alphaRange": [
+        0,
+        254
+      ],
+      "sha256": "6ea3111a1ccd79cee7e82825ca907216a73151ce462590eb03cfd26e3e725d03"
+    },
+    {
+      "path": "content/assets/edgepress/brand/mascot.webp",
+      "format": "WEBP",
+      "dimensions": [
+        768,
+        702
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "d34544362877d1ae10b8af6bdc345d9375aaa777e10b839bb40adf2ecb2663a7"
+    },
+    {
+      "path": "content/assets/edgepress/brand/og-image.webp",
+      "format": "WEBP",
+      "dimensions": [
+        1200,
+        630
+      ],
+      "alphaRange": null,
+      "sha256": "79044ffa13fb407b2fd715befb45f71f70f5b9f003c7986341e5b45cea6f0003"
+    },
+    {
+      "path": "content/assets/edgepress/favicon/apple-touch-icon.png",
+      "format": "PNG",
+      "dimensions": [
+        180,
+        180
+      ],
+      "alphaRange": [
+        255,
+        255
+      ],
+      "sha256": "90ca1fd67318ad4aaeffa9fcf7881c3bd93b96f87c77fc8381d832e8c3368ff1"
+    },
+    {
+      "path": "content/assets/edgepress/favicon/favicon-16.png",
+      "format": "PNG",
+      "dimensions": [
+        16,
+        16
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "387a744c660732ca6c2fa166a36df40b594484dd51e6f1df84d3947d3352bbce"
+    },
+    {
+      "path": "content/assets/edgepress/favicon/favicon-32.png",
+      "format": "PNG",
+      "dimensions": [
+        32,
+        32
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "b1be2f46a9277773b112dbe8c3247243246e1d9426529a1b8b781755c695ab5f"
+    },
+    {
+      "path": "content/assets/edgepress/favicon/favicon-48.png",
+      "format": "PNG",
+      "dimensions": [
+        48,
+        48
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "8c1e2491f1026fbd454fda84ae1edb66e3e648dd5e44bd3baaf05704be302c54"
+    },
+    {
+      "path": "content/assets/edgepress/favicon/favicon-64.png",
+      "format": "PNG",
+      "dimensions": [
+        64,
+        64
+      ],
+      "alphaRange": [
+        0,
+        255
+      ],
+      "sha256": "4191df3d3f9276cb29983baeadf42b760c015cc5bf1c964cbc31a00348319588"
+    }
+  ]
+}

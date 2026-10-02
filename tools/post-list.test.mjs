@@ -66,3 +66,18 @@ test('fallback language selection stays stable when neither requested nor defaul
   assert.equal(postsForLocale([simplified, traditional], 'en', 'en')[0].locale, 'zh-SG');
   assert.equal(postsForLocale([simplified, traditional], 'zh-TW', 'en')[0].locale, 'zh-TW');
 });
+
+test('post-list places pinned articles before the count limit while latest-posts keep date order', async () => {
+  const old = {...post('old-pin','en','edgepress',1),pinned:true};
+  const recent = post('recent','en','edgepress',8);
+  const translated = {...post('old-pin','zh-TW','edgepress',1),pinned:true};
+  const posts=[recent,old,translated];
+  const featured=await render({category:'edgepress',count:1},posts,'zh-TW');
+  assert.match(featured,/old-pin-zh-TW/);
+  assert.match(featured,/post-pinned/);
+  assert.doesNotMatch(featured,/recent-en|old-pin-en/);
+  const latest=await render({type:'latest-posts',category:'edgepress',count:1},posts);
+  assert.match(latest,/recent-en/);
+  assert.doesNotMatch(latest,/old-pin-en/);
+  assert.equal(posts[0],recent,'Sorting must not mutate the source used by archives and feeds');
+});

@@ -53,3 +53,8 @@ export function readingMinutes(markdown) {
   const words = (content.replace(cjk, ' ').match(/[\p{L}\p{N}]+(?:['’][\p{L}\p{N}]+)*/gu) || []).length;
   return Math.max(1, Math.ceil(characters / 300 + words / 200));
 }
+
+export function sortPinnedPosts(posts) {
+  return [...posts].sort((left,right) => Number(right.pinned === true) - Number(left.pinned === true) ||
+    right.date - left.date || left.bundlePath.localeCompare(right.bundlePath));
+}

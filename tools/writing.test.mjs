@@ -74,7 +74,7 @@ test('CLI creates a localized post and refuses to overwrite it', async () => {
 });
 
 test('bitmap icon paths reject traversal and preserve safe caller classes', () => {
-  assert.match(renderIcon('book-open', 'icon nav_icon'), /class="icon nav_icon icon-bitmap"/);
+  assert.match(renderIcon('book-open', 'icon nav_icon'), /class="icon nav_icon icon-library"/);
   assert.match(renderIcon('book-open'), /alt="" aria-hidden="true"/);
   for (const name of ['../home', 'home.png', '__proto__', 'HOME', '" onerror="x']) assert.throws(() => renderIcon(name));
   for (const value of ['icon" onerror="x', 'icon<svg', '', undefined + '"']) assert.throws(() => renderIcon('home', value));

@@ -1,0 +1,29 @@
+/* GitHub-backed article comments. */
+.post-comments{width:min(100%,860px);margin:clamp(48px,8vw,88px) auto 0;padding-top:clamp(28px,5vw,48px);border-top:1px solid var(--line)}
+.post-comments-header{margin-bottom:18px}
+.post-comments-header h2{margin:0 0 8px;font-size:clamp(1.6rem,3vw,2.2rem)}
+.post-comments-header p,.comments-status,.comment-note{color:var(--muted)}
+.comments-status{min-height:1.6em;margin:0 0 18px}
+.comments-status[data-state="error"]{color:var(--warning,#b12e24)}
+.comment-list{display:grid;gap:14px;margin:0 0 24px;padding:0;list-style:none}
+.comment-item article{padding:18px 20px;border:1px solid var(--line);border-radius:18px;background:var(--surface,var(--paper,transparent))}
+.comment-meta{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:6px 14px;margin-bottom:10px}
+.comment-meta strong{font-size:.96rem}
+.comment-meta time{color:var(--muted);font-size:.82rem}
+.comment-body{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.comment-form{position:relative;display:grid;gap:14px;padding:20px;border:1px solid var(--line);border-radius:20px;background:var(--surface,var(--paper,transparent))}
+.comment-form[hidden]{display:none}
+.comment-form>label{display:grid;gap:7px;font-weight:650}
+.comment-form input,.comment-form textarea{width:100%;min-width:0;padding:11px 13px;border:1px solid var(--line);border-radius:12px;background:var(--canvas,var(--paper,transparent));color:var(--ink);font:inherit}
+.comment-form textarea{resize:vertical;min-height:8rem}
+.comment-form button{justify-self:start;min-height:44px;padding:9px 18px;border:1px solid var(--button-bg,var(--accent,#315e49));border-radius:999px;background:var(--button-bg,var(--accent,#315e49));color:#fff;font:inherit;font-weight:650;cursor:pointer}
+.comment-form button:hover:not(:disabled){background:var(--button-hover,var(--accent,#315e49));border-color:var(--button-hover,var(--accent,#315e49))}
+.comment-form button:disabled{opacity:.55;cursor:not-allowed}
+.comment-note{margin:0;font-size:.84rem}
+.comment-honeypot{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;clip-path:inset(50%)!important;white-space:nowrap!important}
+@media(max-width:620px){.comment-item article,.comment-form{padding:16px}.comment-meta{display:grid}}
+
+.post-comments [hidden]{display:none!important}
+.post-comments :is(a,button,input,textarea):focus-visible{outline:3px solid currentColor;outline-offset:3px}
+.post-comments [data-comments-logout]{min-height:44px;font:inherit;background:transparent;color:inherit;border:1px solid currentColor;border-radius:8px;padding:6px 12px;cursor:pointer}
+.post-comments [data-comments-login]{display:inline-flex;align-items:center;min-height:44px}

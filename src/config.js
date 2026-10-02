@@ -24,10 +24,11 @@ const defaults = {
   },
   browserPlugins: {
     consent: { enabled: true, proposedDate: '', effectiveDate: '', expiresDays: 180 },
-    tracking: { enabled: true, services: [] },
-    statistics: { enabled: true, services: [] },
-    advertising: { enabled: true, services: [] },
-    captcha: { enabled: true, services: [] }
+    tracking: { enabled: false, services: [] },
+    statistics: { enabled: false, services: [] },
+    advertising: { enabled: false, services: [] },
+    captcha: { enabled: false, services: [] },
+    comments: { enabled: false, services: [] }
   },
   paths: { content: 'content', static: 'static', theme: 'themes/default', output: 'dist', cache: '.edgepress' },
   permalink: '/:year/:month/:slug/',
@@ -80,6 +81,7 @@ function validateLocalizedServiceText(value, label, maxLength, locales) {
 }
 
 const integrationProviders = {
+  'github-comments': { group: 'comments' },
   'google-tag-manager': { group: 'tracking', credential: 'containerId', pattern: /^GTM-[A-Z0-9]{4,20}$/i },
   'meta-pixel': { group: 'tracking', credential: 'pixelId', pattern: /^[0-9]{6,20}$/ },
   'cloudflare-web-analytics': { group: 'statistics', credential: 'token', pattern: /^[A-Fa-f0-9-]{20,64}$/ },
@@ -104,7 +106,10 @@ async function readSiteYaml(root) {
   try { parsed = parseYaml(source.toString('utf8'), { uniqueKeys: true, maxAliasCount: 20 }) ?? {}; }
   catch (error) { throw new Error('Invalid YAML in config.yml: ' + error.message, { cause: error }); }
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('config.yml must contain an object');
-  for (const key of Object.keys(parsed)) if (!['site', 'privacy', 'plugins'].includes(key)) throw new Error('Unsupported config.yml section: ' + key);
+  for (const key of Object.keys(parsed)) if (!['theme', 'site', 'privacy', 'plugins'].includes(key)) throw new Error('Unsupported config.yml section: ' + key);
+  if (parsed.theme !== undefined && (typeof parsed.theme !== 'string' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(parsed.theme))) {
+    throw new Error('config.yml theme must be a lowercase theme name such as lumen');
+  }
   return parsed;
 }
 
@@ -221,7 +226,7 @@ function normalizeBrowserPlugins(value) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('plugins.consent must be an object');
   const consent = {};
   const normalized = {};
-  const groups = ['tracking', 'statistics', 'advertising', 'captcha'];
+  const groups = ['tracking', 'statistics', 'advertising', 'captcha', 'comments'];
   for (const [key, section] of Object.entries(input)) {
     if (groups.includes(key)) normalized[key] = section;
     else if (['enabled', 'proposedDate', 'effectiveDate', 'expiresDays'].includes(key)) consent[key] = section;
@@ -233,7 +238,7 @@ function normalizeBrowserPlugins(value) {
 
 function validateBrowserPlugins(config) {
   const plugins = config.browserPlugins;
-  const allowedGroups = ['consent', 'tracking', 'statistics', 'advertising', 'captcha'];
+  const allowedGroups = ['consent', 'tracking', 'statistics', 'advertising', 'captcha', 'comments'];
   if (!plugins || typeof plugins !== 'object' || Array.isArray(plugins)) throw new Error('plugins in config.yml must be an object');
   for (const key of Object.keys(plugins)) if (!allowedGroups.includes(key)) throw new Error('Unsupported plugin configuration group: ' + key);
   const consent = plugins.consent;
@@ -252,15 +257,14 @@ function validateBrowserPlugins(config) {
   }
   const ids = new Set();
   let servicesCount = 0;
-  for (const group of ['tracking', 'statistics', 'advertising', 'captcha']) {
+  for (const group of ['tracking', 'statistics', 'advertising', 'captcha', 'comments']) {
     const groupPath = 'plugins.consent.' + group;
     const section = plugins[group];
     if (!section || typeof section !== 'object' || Array.isArray(section) || typeof section.enabled !== 'boolean' || !Array.isArray(section.services)) {
       throw new Error(groupPath + ' needs enabled and a services array');
     }
     for (const key of Object.keys(section)) if (!['enabled', 'services'].includes(key)) throw new Error('Unsupported ' + groupPath + ' option: ' + key);
-    if (!section.enabled && section.services.length) throw new Error('Clear ' + groupPath + '.services or enable the plugin group');
-    servicesCount += section.services.length;
+    if (section.enabled) servicesCount += section.services.length;
     for (const service of section.services) {
       if (!service || typeof service !== 'object' || Array.isArray(service)) throw new Error('Each ' + groupPath + '.services item must be an object');
       const { id, provider, purpose } = service;
@@ -283,10 +287,10 @@ function validateBrowserPlugins(config) {
         safePrivacyUrl = parsed.protocol === 'https:' && !parsed.username && !parsed.password;
       } catch { safePrivacyUrl = false; }
       if (!safePrivacyUrl) throw new Error('Service ' + id + '.privacyUrl must be a safe HTTPS URL');
-      const allowedKeys = new Set(['id', 'provider', 'name', 'purpose', 'dataCategories', 'recipient', 'retention', 'privacyUrl', definition.credential]);
+      const allowedKeys = new Set(['id', 'provider', 'name', 'purpose', 'dataCategories', 'recipient', 'retention', 'privacyUrl', ...(definition.credential ? [definition.credential] : [])]);
       for (const key of Object.keys(service)) if (!allowedKeys.has(key)) throw new Error('Unsupported option for service ' + id + ': ' + key);
       const credential = service[definition.credential];
-      if (typeof credential !== 'string' || !definition.pattern.test(credential)) throw new Error('Service ' + id + ' needs a valid public ' + definition.credential);
+      if (definition.credential && (typeof credential !== 'string' || !definition.pattern.test(credential))) throw new Error('Service ' + id + ' needs a valid public ' + definition.credential);
     }
   }
   if (servicesCount && !consent.enabled) throw new Error('plugins.consent must be enabled when browser services are configured');
@@ -369,6 +373,7 @@ export async function loadConfig(root = process.cwd()) {
   config.site = merge(config.site, siteYaml.site);
   config.privacy = merge(config.privacy, siteYaml.privacy);
   config.browserPlugins = merge(config.browserPlugins, normalizeBrowserPlugins(siteYaml.plugins));
+  if (siteYaml.theme !== undefined) config.paths.theme = 'themes/' + siteYaml.theme;
   assertString(config.site.title, 'site.title');
   assertString(config.site.language, 'site.language');
   if (!isCanonicalLocale(config.site.language)) throw new Error('site.language must be a valid canonical language tag');

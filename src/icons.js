@@ -13,5 +13,5 @@ export function renderIcon(name, className = 'icon') {
   if (typeof className !== 'string' || !/^[a-zA-Z_][a-zA-Z0-9_-]*(?: [a-zA-Z_][a-zA-Z0-9_-]*)*$/.test(className)) {
     throw new Error('Icon class must contain space-separated CSS identifiers');
   }
-  return '<img class="' + className + ' icon-bitmap" src="/edgepress/icons/' + name + '.png" width="24" height="24" alt="" aria-hidden="true" decoding="async">';
+  return '<img class="' + className + ' icon-library" src="/edgepress/icons/' + name + '.svg" width="24" height="24" alt="" aria-hidden="true" decoding="async">';
 }
