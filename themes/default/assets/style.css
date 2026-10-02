@@ -283,3 +283,15 @@ body{background:radial-gradient(ellipse at 92% 0%,#e9e9ff 0,transparent 33%),var
 .brand-mark{width:36px;height:36px;object-fit:contain;border-radius:50%;background:#f8efdc;padding:2px}
 .hero-mascot,.hero-mascot-picture{width:min(100%,320px);max-height:240px}
 .hero-banner-picture{display:block;margin-top:24px}
+
+/* Journal metadata and accessible project navigation. */
+.navigation-select[hidden] { display: none; }
+.navigation-select { display: inline-flex; align-items: center; gap: .35rem; max-width: 100%; }
+.navigation-select select { font: inherit; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: .5rem; padding: .5rem .65rem; min-height: 44px; max-width: 100%; cursor: pointer; }
+.navigation-select option { color: CanvasText; background: Canvas; }
+.navigation-select select:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.post-byline { display: flex; align-items: center; flex-wrap: wrap; gap: .7rem 1.2rem; margin-block: 1rem; }
+.post-byline .post-author { display: inline-flex; align-items: center; gap: .55rem; }
+.author-avatar { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%; object-fit: cover; }
+.post-tags { display: flex; align-items: center; flex-wrap: wrap; gap: .45rem; margin-block: 1rem 1.5rem; }
+.post-tag { display: inline-block; max-width: 100%; overflow-wrap: anywhere; border: 1px solid currentColor; border-radius: 1rem; padding: .15rem .6rem; font-size: .85em; }

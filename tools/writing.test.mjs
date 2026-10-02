@@ -24,7 +24,27 @@ test('new post metadata round-trips quotes and Markdown titles, with one page ti
     assert.equal(post.locale, 'zh-CN');
     assert.equal(post.date.toISOString().slice(0, 10), '2026-10-02');
     assert.equal(post.markdown, '在这里写正文。');
+    assert.equal(post.category, 'uncategorized');
     assert.doesNotMatch(await renderMarkdown(post.markdown), /<h1/);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test('article authors accept a profile object and unsafe avatar URLs fail at content loading', async () => {
+  const root = await mkdtemp(resolve(tmpdir(), 'edgepress-profile-'));
+  try {
+    const content = resolve(root, 'content');
+    const file = resolve(content, 'posts/profile/en.md');
+    await mkdir(resolve(content, 'posts/profile'), { recursive: true });
+    const config = { resolvedPaths: { content }, i18n: { locales: ['en'], defaultLocale: 'en' }, concurrency: 1, permalink: '/:slug/' };
+    const metadata = { title: 'Profile', date: '2026-10-02', author: { name: 'Guest', avatar: '/images/guest.png' }, category: '博客', tags: ['notes'] };
+    await writeFile(file, '---\n' + stringify(metadata) + '---\nText');
+    const [post] = await readDocuments(config);
+    assert.equal(post.author, 'Guest');
+    assert.equal(post.authorAvatar, '/images/guest.png');
+    assert.equal(post.category, 'blog');
+    metadata.author.avatar = 'javascript:alert(1)';
+    await writeFile(file, '---\n' + stringify(metadata) + '---\nText');
+    await assert.rejects(readDocuments(config), /author avatar/);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 

@@ -1,3 +1,4 @@
+import { normalizeCategory, safeAvatar, readingMinutes } from './post-details.js';
 import { readdir, readFile } from 'node:fs/promises';
 import { basename, dirname, extname, relative, resolve, sep } from 'node:path';
 import { parse as parseYaml } from 'yaml';
@@ -17,7 +18,8 @@ export function postsForLocale(posts, locale, defaultLocale) {
   const byBundle = new Map();
   for (const post of posts) {
     const current = byBundle.get(post.bundlePath);
-    if (!current || post.locale === locale || (current.locale !== locale && post.locale === defaultLocale)) {
+    if (!current || post.locale === locale || (current.locale !== locale && post.locale === defaultLocale) ||
+        (current.locale !== locale && current.locale !== defaultLocale && post.locale !== defaultLocale && post.locale.localeCompare(current.locale) < 0)) {
       byBundle.set(post.bundlePath, post);
     }
   }
@@ -63,17 +65,16 @@ export function slugify(value) {
   return slug || 'post';
 }
 
-export function tagSlug(tag) {
-  if (/[^\x00-\x7F]/.test(tag)) return 'tag-' + Array.from(tag).map((char) => char.codePointAt(0).toString(16)).join('-');
-  return slugify(tag);
-}
-
 function normalizeTags(value) {
   if (value == null || value === '') return [];
   return (Array.isArray(value) ? value : [value]).map(String).map((tag) => tag.trim()).filter(Boolean);
 }
 
 function normalizeAuthor(value, file) {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    if (Object.keys(value).some(key => !['name', 'avatar'].includes(key))) throw new Error('Unsupported author field in ' + file);
+    value = value.name;
+  }
   if (value === undefined || value === null || value === '') return '';
   if (typeof value !== 'string' || !value.trim() || value.length > 160) {
     throw new Error('author must be a non-empty string of at most 160 characters in ' + file);
@@ -202,6 +203,9 @@ export async function readDocuments(config) {
     return {
       kind, file, relativePath, bundlePath, title, slug, date, locale,
       author: kind === 'posts' ? normalizeAuthor(metadata.author, file) : '',
+      authorAvatar: safeAvatar(metadata.authorAvatar ?? (typeof metadata.author === 'object' && metadata.author !== null ? metadata.author.avatar : undefined), 'author avatar in ' + file),
+      category: normalizeCategory(metadata.category),
+      readingMinutes: kind === 'posts' ? readingMinutes(markdown) : 0,
       videoId: (kind === 'posts' ? 'post-' : 'page-') + slugify(bundlePath + '-' + locale.toLowerCase()),
       video: kind === 'posts' ? normalizeVideo(metadata.video, file) : null,
       tags: normalizeTags(metadata.tags),

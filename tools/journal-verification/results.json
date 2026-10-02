@@ -1,0 +1,14 @@
+{
+  "status": "pass",
+  "validatedSourceTree": "c3dbe8e2bb8b8341bfb792e3e4b37674044dee4e",
+  "tests": 16,
+  "buildRoutes": 61,
+  "compatibility": "pass",
+  "pageCheck": "pass",
+  "dependencyVulnerabilities": 0,
+  "themeBrowserCases": 72,
+  "limitations": [
+    "Physical devices and assistive screen readers were not tested.",
+    "Production deployment was not verified."
+  ]
+}

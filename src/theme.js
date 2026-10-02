@@ -18,7 +18,7 @@ function escapeHtml(value) {
   })[char]);
 }
 
-function navigationItems(config, locale, items) {
+function navigationItems(config, locale, items, currentPath = '') {
   const values = items.length ? items : [
     { key: 'home', url: '@home' },
     { key: 'archives', url: '@archives' },
@@ -34,6 +34,18 @@ function navigationItems(config, locale, items) {
     const label = item.labels?.[locale] ?? item.labels?.[config.i18n.defaultLocale] ?? translate(config, locale, item.key);
     const iconName = item.icon || defaultNavigationIcons[item.key];
     const icon = isIconName(iconName) ? renderIcon(iconName, 'navigation-icon') : '';
+    if (item.children?.length) {
+      const choices = [{ path, label }, ...item.children.map(child => ({
+        path: child.url === '@home' ? localizedUrl(config, locale, '') : child.url === '@archives' ? localizedUrl(config, locale, 'archives/') :
+          child.url === '@feed' ? localizedUrl(config, locale, 'feed.xml') : child.url === '@search' ? localizedUrl(config, locale, 'search/') :
+          child.url.startsWith('/') ? localizedUrl(config, locale, child.url) : child.url,
+        label: child.labels?.[locale] ?? child.labels?.[config.i18n.defaultLocale] ?? translate(config, locale, child.key)
+      }))];
+      const selected = choices.slice(1).find(choice => choice.path.startsWith('/') && currentPath.startsWith(choice.path)) || choices[0];
+      return '<span class="navigation-select" hidden>' + icon + '<select data-navigation-select aria-label="' + escapeHtml(label) + '">' +
+        choices.map(choice => '<option value="' + escapeHtml(choice.path) + '"' + (choice === selected ? ' selected' : '') + '>' + escapeHtml(choice.label) + '</option>').join('') +
+        '</select></span><noscript>' + choices.map(choice => '<a href="' + escapeHtml(choice.path) + '">' + escapeHtml(choice.label) + '</a>').join('') + '</noscript>';
+    }
     return '<a href="' + escapeHtml(path) + '">' + icon + escapeHtml(label) + '</a>';
   }).join('');
 }
@@ -131,7 +143,7 @@ export async function renderLayout(config, extensions, page, body) {
       footerClass: componentClass(config.site.components.footer, 'site-footer'),
       footerCopyClass: componentClass(Boolean(config.site.footer), 'footer-copy'),
       footerNavigationClass: componentClass(config.site.components.footerNavigation && config.site.footerNavigation.length, 'footer-navigation'),
-      primaryNavigationHtml: navigationItems(config, locale, config.site.navigation),
+      primaryNavigationHtml: navigationItems(config, locale, config.site.navigation, page.urlPath || localizedUrl(config, locale, '')),
       footerNavigationHtml: navigationItems(config, locale, config.site.footerNavigation),
       localeLinksHtml,
       stylesheet,
@@ -166,6 +178,7 @@ export async function renderLayout(config, extensions, page, body) {
   const filtered = await extensions.filter('html:afterLayout', html, context);
   if (typeof filtered !== 'string') throw new Error('html:afterLayout filters must return a string');
   const scripts = [];
+  if (filtered.includes('data-navigation-select')) scripts.push('<script defer src="/edgepress/navigation-select.js"></script>');
   if (!/src=["']\/edgepress\/code-copy\.js["']/i.test(filtered)) scripts.push('<script defer src="/edgepress/code-copy.js"></script>');
   if (/data-post-toc(?:\s|>)/i.test(filtered) && !/src=["']\/edgepress\/post-toc\.js["']/i.test(filtered)) {
     scripts.push('<script defer src="/edgepress/post-toc.js"></script>');

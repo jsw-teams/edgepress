@@ -27,6 +27,37 @@ async function fixtureRoutes() {
   return generateBuiltinRoutes({ posts, pages: [] }, config, extensions);
 }
 
+test('journal routes exclude project categories while article profiles and tags remain visible', async () => {
+  const config = await configForTest();
+  config.site.archive.categories = ['博客', '未分类'];
+  config.site.author = { name: 'Site author', avatar: '/images/authors/default.png' };
+  config.site.navigation = [{ key: 'projects', url: '/projects/', labels: { en: 'Projects', 'zh-CN': '项目' },
+    children: [{ key: 'edgepress', url: '/edgepress/', labels: { en: 'EdgePress' } }] }];
+  const posts = ['blog', undefined, 'edgepress'].map((category, index) => ({
+    locale: 'en', category, title: 'Entry ' + index, date: new Date('2026-10-02'),
+    path: 'entries/' + index + '/', bundlePath: 'entry-' + index, tags: ['<unsafe>', 'edgepress'],
+    author: index === 0 ? 'Guest <author>' : '', authorAvatar: index === 0 ? '/images/authors/guest.png' : '',
+    description: 'Readable summary', markdown: 'word '.repeat(201), html: '<p>Readable text</p>'
+  }));
+  const routes = await generateBuiltinRoutes({ posts, pages: [] }, config, extensions);
+  const get = path => routes.find(route => route.path === path)?.body;
+  assert.equal(routes.filter(route => /^archives\/(?:page\/\d+\/)?index.html$/.test(route.path)).length, 2);
+  for (const route of routes.filter(route => /^archives\//.test(route.path))) assert.doesNotMatch(route.body, /href="\/entries\/2\/"/);
+  assert.match(get('categories/edgepress/index.html'), /href="\/entries\/2\/"/);
+  assert.ok(routes.every(route => !route.path.includes('tags/')));
+  const article = get('entries/0/index.html');
+  assert.match(article, /Guest &lt;author&gt;/);
+  assert.match(article, /class="author-avatar" src="\/images\/authors\/guest.png" width="40" height="40" alt=""/);
+  assert.match(article, /data-reading-minutes="2"/);
+  assert.match(article, /class="post-tag">&lt;unsafe&gt;<\/span>/);
+  assert.doesNotMatch(article, /rel="tag"|<script>unsafe/);
+  assert.match(get('entries/1/index.html'), /Site author/);
+  assert.match(get('zh-CN/archives/index.html'), /value="\/zh-CN\/edgepress\/"/);
+  assert.match(article, /data-navigation-select aria-label="Projects"/);
+  assert.match(article, /<noscript><a href="\/projects\/">Projects<\/a><a href="\/edgepress\/">EdgePress<\/a><\/noscript>/);
+  assert.match(article, /src="\/edgepress\/navigation-select.js"/);
+});
+
 test('raster icon paths accept only known names and safe CSS classes', () => {
   assert.match(renderIcon('book-open', 'toc-icon compact'), /class="toc-icon compact icon-bitmap"/);
   assert.match(renderIcon('book-open'), /src="\/edgepress\/icons\/book-open\.png"[^>]*alt="" aria-hidden="true"/);

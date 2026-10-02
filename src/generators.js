@@ -1,8 +1,9 @@
+import { authorForPost, readingMinutes, filterPostsByCategory, categorySlug, normalizeCategory } from './post-details.js';
 import { plainText, renderMarkdownExcerpt } from './markdown.js';
 import { renderBlocks } from './page-blocks.js';
 import { renderLayout } from './theme.js';
 import { localizedUrl, translate } from './i18n.js';
-import { postsForLocale, slugify, sortPostsNewest, tagSlug } from './content.js';
+import { postsForLocale, slugify, sortPostsNewest } from './content.js';
 import { mapLimit } from './concurrency.js';
 import { renderIcon } from './icons.js';
 
@@ -197,7 +198,8 @@ export async function generateBuiltinRoutes(site, config, extensions) {
   const allPosts = sortPostsNewest(site.posts);
   for (const locale of config.i18n.locales) {
     const posts = allPosts.filter((post) => post.locale === locale);
-    const archivePosts = postsForLocale(allPosts, locale, defaultLocale);
+    const localizedPosts = postsForLocale(allPosts, locale, defaultLocale);
+    const archivePosts = filterPostsByCategory(localizedPosts, config.site.archive?.categories);
     const pages = site.pages.filter((page) => page.locale === locale && !page.homepage);
     const homePage = homepageDocument(site.pages, locale, defaultLocale);
     const latestPostsPageSize = paginatedLatestPostsSize(homePage);
@@ -251,12 +253,17 @@ export async function generateBuiltinRoutes(site, config, extensions) {
     for (const post of posts) allPagePaths.add(urlFor(post.path));
     const postRoutes = await mapLimit(posts, config.concurrency, async (post) => {
       const renderedMarkdown = addPostContents(post.html, locale, config);
-      const body = '<article class="post"><header><h1>' + escapeHtml(post.title) + '</h1><p class="meta"><time datetime="' + post.date.toISOString() + '">' +
-        escapeHtml(dateLabel(post.date, locale)) + '</time>' + (post.author ? ' · ' + renderPostAuthor(post, locale, config) : '') +
-        '</p></header>' + renderPostVideo(post.video, locale) + renderedMarkdown.toc + '<div class="post-content">' + renderedMarkdown.html + '</div>' +
-        (post.tags.length ? '<nav class="post-tags" aria-label="' + escapeHtml(label('tags')) + '"><span class="post-tags-label">' + escapeHtml(label('tags')) + ':</span><ul>' +
-          post.tags.map((tag) => '<li><a rel="tag" href="' + escapeHtml(localizedUrl(config, locale, 'tags/' + tagSlug(tag) + '/')) + '">' + escapeHtml(tag) + '</a></li>').join('') +
-          '</ul></nav>' : '') + '</article>';
+      const author = authorForPost(post, config);
+      const minutes = post.readingMinutes || readingMinutes(post.markdown);
+      const authorHtml = author.name ? '<span class="post-author">' +
+        (author.avatar ? '<img class="author-avatar" src="' + escapeHtml(author.avatar) + '" width="40" height="40" alt="" decoding="async">' : '') +
+        escapeHtml(label('postAuthor').replace('{author}', author.name)) + '</span>' : '';
+      const tagsHtml = post.tags.length ? '<div class="post-tags" role="group" aria-label="' + escapeHtml(label('tags')) + '"><span class="post-tags-label">' +
+        escapeHtml(label('tags')) + ':</span>' + post.tags.map(tag => '<span class="post-tag">' + escapeHtml(tag) + '</span>').join('') + '</div>' : '';
+      const body = '<article class="post"><header><h1>' + escapeHtml(post.title) + '</h1><div class="meta post-byline">' + authorHtml +
+        '<time datetime="' + post.date.toISOString() + '">' + escapeHtml(dateLabel(post.date, locale)) + '</time>' +
+        '<span class="post-reading-time" data-reading-minutes="' + minutes + '">' + escapeHtml(label('postReadingTime').replace('{minutes}', minutes)) + '</span>' +
+        '</div>' + tagsHtml + '</header>' + renderPostVideo(post.video, locale) + renderedMarkdown.toc + '<div class="post-content">' + renderedMarkdown.html + '</div></article>';
       const canonicalPath = urlFor(post.path);
       return pageRoute(post.path + 'index.html', post.title, post.description || plainText(post.markdown).slice(0, 160), body,
         locale, config, extensions, {
@@ -265,7 +272,7 @@ export async function generateBuiltinRoutes(site, config, extensions) {
             '@context': 'https://schema.org', '@type': 'BlogPosting', headline: post.title,
             description: post.description || plainText(post.markdown).slice(0, 160),
             datePublished: post.date.toISOString(), dateModified: post.date.toISOString(),
-            author: { '@type': 'Person', name: post.author || config.site.seo.author || config.site.title },
+            author: { '@type': 'Person', name: author.name || config.site.title },
             mainEntityOfPage: config.site.url ? config.site.url + canonicalPath : undefined,
             inLanguage: locale
           }
@@ -300,20 +307,28 @@ export async function generateBuiltinRoutes(site, config, extensions) {
       allPagePaths.add(localizedUrl(config, locale, archiveUrl));
     }
 
-    const tags = new Map();
-    for (const post of posts) for (const tag of post.tags) {
-      const slug = tagSlug(tag);
-      if (!tags.has(slug)) tags.set(slug, { label: tag, posts: [] });
-      tags.get(slug).posts.push(post);
+    const categories = new Map();
+    for (const post of localizedPosts) {
+      const category = normalizeCategory(post.category);
+      if (!categories.has(category)) categories.set(category, []);
+      categories.get(category).push(post);
     }
-    const tagRoutes = await mapLimit([...tags.entries()], config.concurrency, async ([slug, value]) => {
-      const cards = await Promise.all(value.posts.map((post) => renderPostCard(post, locale, config)));
-      const body = '<section><h1>' + escapeHtml(label('tag')) + ': ' + escapeHtml(value.label) + '</h1>' +
-        '<div class="post-list">' + cards.join('') + '</div></section>';
-      return pageRoute(prefix + 'tags/' + slug + '/index.html', label('tag') + ': ' + value.label,
-        label('tag') + ' ' + value.label, body, locale, config, extensions);
-    });
-    routes.push(...tagRoutes);
+    for (const [category, categoryPosts] of categories) {
+      const slug = categorySlug(category);
+      const title = category === 'blog' ? label('categoryBlog') : category === 'uncategorized' ? label('categoryUncategorized') : category;
+      const totalPages = Math.ceil(categoryPosts.length / config.pagination.perPage);
+      const categoryPath = number => 'categories/' + slug + '/' + (number === 1 ? '' : 'page/' + number + '/');
+      for (let number = 1; number <= totalPages; number += 1) {
+        const cards = await Promise.all(categoryPosts.slice((number - 1) * config.pagination.perPage, number * config.pagination.perPage)
+          .map(post => renderPostCard(post, locale, config, true)));
+        const pagination = totalPages > 1 ? renderPagination(config, locale, number, totalPages,
+          page => localizedUrl(config, locale, categoryPath(page))) : '';
+        const body = '<section><h1>' + escapeHtml(title) + '</h1><div class="post-list archive-post-list">' + cards.join('') + '</div>' + pagination + '</section>';
+        const urlPath = localizedUrl(config, locale, categoryPath(number));
+        allPagePaths.add(urlPath);
+        routes.push(await pageRoute(prefix + categoryPath(number) + 'index.html', title, title, body, locale, config, extensions, { urlPath }));
+      }
+    }
 
     const searchable = [
       ...posts.map((post) => ({ title: post.title, author: post.author, date: post.date.toISOString(), url: urlFor(post.path), summary: plainText(post.description || post.markdown).slice(0, 220), content: plainText(post.markdown), type: 'post' })),

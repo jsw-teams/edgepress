@@ -54,6 +54,9 @@ site:
         en: Atom feed
         zh-CN: Atom 订阅
   footer: ""
+  author:
+    name: toewpq
+    avatar: /edgepress/brand/avatar.png
   seo:
     author: toewpq
     keywords:

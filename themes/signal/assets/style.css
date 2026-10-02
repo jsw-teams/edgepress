@@ -243,3 +243,15 @@ body{background:radial-gradient(ellipse at 14% 0%,#302052 0,transparent 38%),var
 
 /* Signal uses the theme panel color for floating controls. */
 :root{--paper:var(--panel)}
+
+/* Journal metadata and accessible project navigation. */
+.navigation-select[hidden] { display: none; }
+.navigation-select { display: inline-flex; align-items: center; gap: .35rem; max-width: 100%; }
+.navigation-select select { font: inherit; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: .5rem; padding: .5rem .65rem; min-height: 44px; max-width: 100%; cursor: pointer; }
+.navigation-select option { color: CanvasText; background: Canvas; }
+.navigation-select select:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+.post-byline { display: flex; align-items: center; flex-wrap: wrap; gap: .7rem 1.2rem; margin-block: 1rem; }
+.post-byline .post-author { display: inline-flex; align-items: center; gap: .55rem; }
+.author-avatar { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%; object-fit: cover; }
+.post-tags { display: flex; align-items: center; flex-wrap: wrap; gap: .45rem; margin-block: 1rem 1.5rem; }
+.post-tag { display: inline-block; max-width: 100%; overflow-wrap: anywhere; border: 1px solid currentColor; border-radius: 1rem; padding: .15rem .6rem; font-size: .85em; }

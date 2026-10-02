@@ -1,3 +1,4 @@
+import { categoryFilter, safeAvatar } from './post-details.js';
 import { access, readFile, realpath, stat } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -9,6 +10,8 @@ const defaults = {
     head: { titleSuffix: '', titleSeparator: ' · ' },
     header: { showBrand: true, brandLabel: '' },
     components: { header: true, primaryNavigation: true, languageNavigation: true, footer: true, footerNavigation: true },
+    author: { name: '', avatar: '' },
+    archive: { categories: [] },
     navigation: [],
     footerNavigation: [],
     footer: '',
@@ -139,7 +142,14 @@ function validateSiteConfig(config) {
   for (const key of Object.keys(components)) if (!componentKeys.includes(key)) throw new Error('Unsupported site.components option: ' + key);
   for (const key of componentKeys) if (typeof components[key] !== 'boolean') throw new Error('site.components.' + key + ' must be a boolean');
 
-  function validateNavigation(items, field) {
+  const { author, archive } = config.site;
+  if (!author || typeof author !== 'object' || Array.isArray(author) || typeof author.name !== 'string' || author.name.length > 160 ||
+      Object.keys(author).some(key => !['name', 'avatar'].includes(key))) throw new Error('site.author needs name and an optional avatar');
+  safeAvatar(author.avatar, 'site.author.avatar');
+  if (!archive || typeof archive !== 'object' || Array.isArray(archive) || Object.keys(archive).some(key => key !== 'categories')) throw new Error('site.archive needs categories');
+  categoryFilter(archive.categories);
+
+  function validateNavigation(items, field, depth = 0) {
     if (!Array.isArray(items) || items.length > 30) throw new Error(field + ' must be an array with at most 30 items');
     const keys = new Set();
     for (const item of items) {
@@ -148,7 +158,11 @@ function validateSiteConfig(config) {
         throw new Error(field + ' items need a unique key and URL');
       }
       keys.add(item.key);
-      for (const key of Object.keys(item)) if (!['key', 'url', 'labels'].includes(key)) throw new Error('Unsupported ' + field + ' item option: ' + key);
+      if (item.children !== undefined) {
+        if (depth || !item.children.length) throw new Error('Navigation children allow one non-empty level');
+        validateNavigation(item.children, field + '.children', depth + 1);
+      }
+      for (const key of Object.keys(item)) if (!['key', 'url', 'labels', 'children'].includes(key)) throw new Error('Unsupported ' + field + ' item option: ' + key);
       const url = item.url.trim();
       if (!['@home', '@archives', '@feed', '@search'].includes(url)) {
         const safeLocal = url.startsWith('/') && !url.startsWith('//') && !/[\\\x00-\x20]/.test(url) && !/^(?:javascript|data|vbscript):/i.test(url);

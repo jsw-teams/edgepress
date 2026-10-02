@@ -134,7 +134,7 @@ blocks:
           blocks:
             - type: text
               paragraphs:
-                - "使用 post-list 的 tag 字段筛选文章，按日期由新到旧排列，优先选择当前语言版本。标签匹配不分大小写。count 可设为 1 到 12；超出的文章会链接到当前语言的标签列表。"
+                - "使用 post-list 的 category: edgepress 或 categories: [博客, 未分类] 筛选栏目，按日期由新到旧排列，优先选择当前语言版本。count 可设为 1 到 12；单个分类超出的文章链接到当前语言分类归档。"
             - type: code
               title: 项目文章列表
               language: yaml
@@ -143,9 +143,9 @@ blocks:
                   cells:
                     - - type: post-list
                         title: EdgePress articles
-                        tag: edgepress
+                        category: edgepress
                         count: 6
             - type: text
               paragraphs:
-                - "在文章前置数据加入 tags: [edgepress]。省略 tag 时可显示所有文章。标签列表使用对应的标签归档页，不使用首页分页。"
+                - "在文章前置数据加入 category: edgepress；省略分类时默认未分类。标签仅在文章页展示，移除 tag 筛选和标签归档。site.archive.categories 控制主见闻栏目；首页分页时使用相同分类。"
 ---

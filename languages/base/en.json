@@ -67,5 +67,9 @@
   "postCreated": "Created {file}",
   "postNextSteps": "Open this file and replace the text after the closing --- with Markdown. The title, date, and language are already set.",
   "postPreview": "Preview with npm run dev. Build with npm run build; publish through your existing deployment workflow.",
-  "pageNumber": "Page {page}"
+  "pageNumber": "Page {page}",
+  "postReadingTime": "About {minutes} min read",
+  "categoryBlog": "Blog",
+  "categoryUncategorized": "Uncategorized",
+  "allCategoryPosts": "All articles in this category"
 }
