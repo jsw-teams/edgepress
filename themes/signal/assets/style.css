@@ -246,8 +246,9 @@ body{background:radial-gradient(ellipse at 14% 0%,#302052 0,transparent 38%),var
 
 /* Journal metadata and accessible project navigation. */
 .navigation-select[hidden] { display: none; }
-.navigation-select { display: inline-flex; align-items: center; gap: .35rem; max-width: 100%; }
-.navigation-select select { font: inherit; color: inherit; background: transparent; border: 1px solid currentColor; border-radius: .5rem; padding: .5rem .65rem; min-height: 44px; max-width: 100%; cursor: pointer; }
+.navigation-select { display: inline-flex; align-items: center; gap: .42em; max-width: 100%; color: var(--accent); }
+.navigation-select select { font: inherit; color: inherit; background: transparent; border: 0; border-radius: 0; padding: .25rem 0; min-height: 44px; max-width: 100%; field-sizing: content; cursor: pointer; }
+.primary-navigation a { min-height: 44px; }
 .navigation-select option { color: CanvasText; background: Canvas; }
 .navigation-select select:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 .post-byline { display: flex; align-items: center; flex-wrap: wrap; gap: .7rem 1.2rem; margin-block: 1rem; }
