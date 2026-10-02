@@ -6,15 +6,13 @@ description: Install EdgePress, create Markdown posts, edit page elements, build
 blocks:
   - columns: 1
     cells:
-      -
-        - type: hero
+      - - type: hero
           eyebrow: Start here
           title: Set up the project and open the live preview.
           text: Use the edgepress command after installing project dependencies. Local preview rebuilds changed source files and refreshes the PDF accessibility and agent-friendliness report.
   - columns: 1
     cells:
-      -
-        - type: section
+      - - type: section
           title: Requirements and first commands
           tone: soft
           blocks:
@@ -39,8 +37,7 @@ blocks:
                 npm run dev
   - columns: 1
     cells:
-      -
-        - type: section
+      - - type: section
           title: Write your first article with Markdown
           tone: soft
           blocks:
@@ -52,7 +49,7 @@ blocks:
                   text: The command prints the new Markdown file path and never overwrites an existing post.
                   command: npm run new -- "My first article"
                 - title: Write in Markdown
-                  text: Replace the starter paragraph. Use ## for section headings, lists, links, images, and fenced code blocks. Put images in content/assets/images/ and reference them as /images/filename.png.
+                  text: Replace the starter paragraph. Use
                 - title: Preview and publish
                   text: Keep the preview running while you edit. Save the file to refresh it. Build before publishing through your existing deployment workflow.
                   command: npm run dev
@@ -72,8 +69,7 @@ blocks:
               text: Site settings are handled during setup. The page-layout and theme guides below are available when you want to change the website design. They are optional for everyday article writing.
   - columns: 2
     cells:
-      -
-        - type: section
+      - - type: section
           title: Create content
           blocks:
             - type: steps
@@ -85,8 +81,7 @@ blocks:
                   text: Add content/pages/<page-id>/en.md. Each configured locale gets its own lowercase locale filename.
                 - title: Set the language
                   text: Match the front matter lang value to the filename and enable optional locales in edgepress.config.mjs.
-      -
-        - type: section
+      - - type: section
           title: Edit a page layout
           blocks:
             - type: text
@@ -100,8 +95,7 @@ blocks:
               tone: info
   - columns: 1
     cells:
-      -
-        - type: section
+      - - type: section
           title: Configure and preview
           blocks:
             - type: text
@@ -187,4 +181,15 @@ blocks:
                   title: Worker-only integrations
                   text: Static hosting does not run src/worker.js. The built-in /api/ proxy and Cloudflare service bindings require an EdgePress Worker deployment; otherwise configure an equivalent server-side route on your host. Keep backend tokens out of browser settings.
                   tone: warning
+  - columns: 1
+    cells:
+      - - type: text
+          heading: Publication dates and time zones
+          text: Set site.timeZone in config.yml (default Asia/Taipei). New posts include a complete timestamp with an explicit offset. Timestamps without an offset are interpreted in that configured zone, independently of the build host. Date-only articles stay calendar dates; complete timestamps are shown in the reader’s current zone. Ambiguous daylight-saving times require an explicit offset.
+        - type: code
+          title: config.yml
+          language: yaml
+          code: |
+            site:
+              timeZone: Asia/Taipei
 ---

@@ -35,7 +35,9 @@ test('reader timezone changes timestamps while preserving date-only publication 
   for(const timeZone of ['Asia/Tokyo','America/Los_Angeles']) {
    const context=await browser.newContext({timezoneId:timeZone});const page=await context.newPage();
    await page.setContent('<time data-local-time data-time-locale="en" datetime="2026-10-03T00:30:00Z"></time><time data-local-time data-time-locale="en" data-date-only="true" datetime="2026-10-03T00:00:00Z"></time>');
-   await page.addScriptTag({content:script});values.push(await page.locator('time').allTextContents());await context.close();
+   await page.addScriptTag({content:script});values.push(await page.locator('time').allTextContents());
+   assert.equal(await page.locator('time').last().getAttribute('title'),'2026-10-03');
+   await context.close();
   }
   assert.match(values[0][0],/October 3/);assert.match(values[1][0],/October 2/);
   assert.equal(values[0][1],values[1][1]);assert.match(values[0][1],/October 3/);

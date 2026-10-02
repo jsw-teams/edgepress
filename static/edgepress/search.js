@@ -31,7 +31,7 @@ if (form) {
     if (item.date) {
       const time = document.createElement('time');
       time.dateTime = item.date;
-      time.textContent = new Intl.DateTimeFormat(language, { dateStyle: 'long', timeZone: 'UTC' }).format(new Date(item.date));
+      time.textContent = new Intl.DateTimeFormat(language, { dateStyle: 'long', ...(item.dateOnly ? {timeZone:'UTC'} : {timeStyle:'short'}) }).format(new Date(item.date));
       article.append(time);
     }
     const summary = document.createElement('p');
@@ -45,7 +45,7 @@ if (form) {
     const query = value.normalize('NFKC').toLocaleLowerCase(language).trim();
     results.replaceChildren();
     if (!query) {
-      status.textContent = chinese ? '输入搜索词以查找文章。' : 'Enter a search term to find articles.';
+      status.textContent = '';
       return;
     }
     status.textContent = chinese ? '正在搜索文章…' : 'Searching articles…';

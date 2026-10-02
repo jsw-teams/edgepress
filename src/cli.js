@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {publicationTimestamp} from './publication-time.js';
 import { access, cp, lstat, mkdir, mkdtemp, open, readFile, readdir, realpath, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -255,12 +256,13 @@ async function createPost(title, config) {
   try {
     if (title.length > 160 || /[\x00-\x1f\x7f]/.test(title)) throw new Error('Post title must be one line of at most 160 characters.');
     await loadLanguagePacks(config);
-    const today = new Date().toISOString().slice(0, 10);
+    const timestamp = publicationTimestamp(new Date(), config.site.timeZone);
+    const today = timestamp.slice(0, 10);
     const folder = resolve(config.resolvedPaths.content, 'posts', today + '-' + slugify(title));
     const locale = config.i18n.defaultLocale;
     const file = resolve(folder, locale.toLowerCase() + '.md');
     await mkdir(folder, { recursive: true });
-    const body = postTemplate(title, new Date().toISOString(), locale, translate(config, locale, 'postStarter'));
+    const body = postTemplate(title, timestamp, locale, translate(config, locale, 'postStarter'));
     let handle;
     try { handle = await open(file, 'wx'); }
     catch (error) {

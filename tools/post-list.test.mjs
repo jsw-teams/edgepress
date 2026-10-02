@@ -18,6 +18,19 @@ function render(block, posts, locale = 'en') {
     { config, locale, site: { posts } });
 }
 
+test('pinned and recent lists display each article once per page, filling remaining slots',async()=>{
+  const posts=[{...post('latest','en','blog',5),pinned:true},post('second','en','blog',4),post('third','en','blog',3)];
+  const rows=[{columns:2,cells:[[
+    {type:'section',title:'Featured',blocks:[{type:'post-list',title:'Pinned',category:'blog',count:1}]}
+  ],[{type:'latest-posts',title:'Recent',category:'blog',count:2}]]}];
+  const context={config,locale:'en',site:{posts}};
+  const html=await renderBlocks(rows,context);
+  assert.equal((html.match(/latest-en/g)||[]).length,1);
+  assert.match(html,/second-en/);assert.match(html,/third-en/);
+  assert.equal((html.match(/class="post-card"/g)||[]).length,3);
+  assert.match(await renderBlocks([{columns:1,cells:[[{type:'latest-posts',title:'Other page',count:1}]]}],context),/latest-en/);
+});
+
 test('categories select translations, sort before limiting, and ignore tags', async () => {
   const posts = [post('old', 'en', 'edgepress'), post('new', 'en', 'EdgePress', 3),
     post('new', 'zh-SG', 'edgepress', 3), post('other', 'zh-SG', 'blog', 4)];

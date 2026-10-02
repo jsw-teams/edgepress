@@ -1,3 +1,4 @@
+import {renderCommentsBlock,commentsEnabled,pageCommentThread,hasCommentBlock} from './comment-block.js';
 import { authorForPost, readingMinutes, filterPostsByCategory, categorySlug, normalizeCategory } from './post-details.js';
 import { plainText, renderMarkdownExcerpt } from './markdown.js';
 import { renderBlocks } from './page-blocks.js';
@@ -24,8 +25,8 @@ function urlFor(path) {
   return '/' + parts.join('/') + (String(path).endsWith('/') && parts.length ? '/' : '');
 }
 
-function dateLabel(date, language) {
-  return new Intl.DateTimeFormat(language, { dateStyle: 'long', timeZone: 'UTC' }).format(date);
+function dateLabel(date, language, timeZone = 'UTC') {
+  return new Intl.DateTimeFormat(language, { dateStyle: 'long', timeZone }).format(date);
 }
 
 function fileRoute(path, body, contentType = 'text/html; charset=utf-8') {
@@ -118,48 +119,6 @@ async function pageRoute(path, title, description, body, locale, config, extensi
   return fileRoute(path, html);
 }
 
-function renderPostComments(post, locale, config) {
-  const label = (key) => translate(config, locale, key);
-  const enabled = config.browserPlugins?.comments?.enabled && config.browserPlugins.comments.services.some(service => service.provider === 'github-comments');
-  if (!enabled) return '';
-  return '<section id="comments" class="post-comments" data-edgepress-comments data-comments-thread="' + escapeHtml(post.bundlePath) +
-    '" data-comments-title="' + escapeHtml(post.title) +
-    '" data-comments-loading="' + escapeHtml(label('commentsLoading')) +
-    '" data-comments-empty="' + escapeHtml(label('commentsEmpty')) +
-    '" data-comments-error="' + escapeHtml(label('commentsError')) +
-    '" data-comments-posted="' + escapeHtml(label('commentsPosted')) +
-    '" data-comments-closed="' + escapeHtml(label('commentsClosed')) +
-    '" data-comments-count="' + escapeHtml(label('commentsCount')) +
-    '" data-comments-login-required="' + escapeHtml(label('commentsLoginRequired')) +
-    '" data-comments-service-unavailable="' + escapeHtml(label('commentsServiceUnavailable')) +
-    '" data-comments-rate-limited="' + escapeHtml(label('commentsRateLimited')) +
-    '" data-comments-thread-reset="' + escapeHtml(label('commentsThreadReset')) +
-    '" data-comments-attachment-label="' + escapeHtml(label('commentAttachment')) +
-    '" data-comments-attachment-help="' + escapeHtml(label('commentAttachmentHelp')) +
-    '" data-comments-attachment-too-large="' + escapeHtml(label('commentAttachmentTooLarge')) +
-    '" data-comments-attachment-invalid="' + escapeHtml(label('commentAttachmentInvalid')) +
-    '" data-comments-uploading="' + escapeHtml(label('commentAttachmentUploading')) + '">' +
-    '<header class="post-comments-header"><h2>' + escapeHtml(label('commentsTitle')) + '</h2><p>' +
-    escapeHtml(label('commentsIntro')) + '</p></header>' +
-    '<p class="comments-status" data-comments-status role="status" aria-live="polite">' +
-    escapeHtml(label('commentsConsentRequired')) + '</p><button type="button" data-comments-consent-settings>' + escapeHtml(label('privacySettings')) + '</button>' +
-    '<ol class="comment-list" data-comments-list></ol>' +
-    '<p data-comments-account hidden><span data-comments-identity></span> <button type="button" data-comments-logout>' +
-    escapeHtml(label('commentsLogout')) + '</button></p>' +
-    '<p data-comments-signin hidden><a data-comments-login>' + escapeHtml(label('commentsLogin')) + '</a></p>' +
-    '<form class="comment-form" data-comments-form hidden>' +
-    '<label><span>' + escapeHtml(label('commentBody')) +
-    '</span><textarea name="body" rows="6" maxlength="5000"></textarea></label>' +
-    '<label class="comment-attachment-picker"><span>' + escapeHtml(label('commentAttachment')) +
-    '</span><input name="attachments" type="file" accept="image/png,image/jpeg,image/gif,image/webp,image/avif" multiple>' +
-    '<small>' + escapeHtml(label('commentAttachmentHelp')) + '</small></label>' +
-    '<div class="comment-attachment-list" data-comments-attachments></div>' +
-    '<div class="comment-honeypot" aria-hidden="true"><label>Company<input name="company" type="text" tabindex="-1" autocomplete="off"></label></div>' +
-    '<button type="submit">' + escapeHtml(label('commentSubmit')) + '</button>' +
-    '<p class="comment-note">' + escapeHtml(label('commentNotice')) + '</p>' +
-    '</form><noscript><p class="comment-note">' + escapeHtml(label('commentsNeedJavaScript')) + '</p></noscript></section>';
-}
-
 function renderPostAuthor(post, locale, config) {
   if (!post.author) return '';
   return '<span class="post-author">' + escapeHtml(translate(config, locale, 'postAuthor').replace('{author}', post.author)) + '</span>';
@@ -169,10 +128,10 @@ async function renderPostCard(post, locale, config, showLanguage = false) {
   const summary = await renderMarkdownExcerpt(post.description || post.markdown, config.markdown);
   const postLanguage = showLanguage && post.locale !== locale ? translate(config, post.locale, 'languageName') : '';
   return '<article class="post-card" lang="' + escapeHtml(post.locale) + '"><h2><a href="' + escapeHtml(urlFor(post.path)) + '">' + escapeHtml(post.title) + '</a></h2>' +
-    '<p class="meta"><time data-local-time data-time-locale="' + escapeHtml(post.locale || locale) + '" data-date-only="' + (post.dateOnly === true) + '" datetime="' + post.date.toISOString() + '">' + escapeHtml(dateLabel(post.date, post.locale)) + '</time>' +
+    '<p class="meta"><time data-local-time data-time-locale="' + escapeHtml(post.locale || locale) + '" data-date-only="' + (post.dateOnly === true) + '" datetime="' + (post.dateOnly ? post.date.toISOString().slice(0,10) : post.date.toISOString()) + '">' + escapeHtml(dateLabel(post.date, post.locale, post.dateOnly ? 'UTC' : config.site.timeZone)) + '</time>' +
     (postLanguage ? ' · <span class="post-language" lang="' + escapeHtml(post.locale) + '">' + escapeHtml(postLanguage) + '</span>' : '') +
     (post.author ? ' · ' + renderPostAuthor(post, locale, config) : '') + '</p><div class="post-excerpt" lang="' + escapeHtml(post.locale) + '">' +
-    summary + '</div></article>' + renderPostComments(post, locale, config);
+    summary + '</div></article>';
 }
 
 function paginationPageNumbers(currentPage, totalPages) {
@@ -209,7 +168,7 @@ function renderPagination(locale, currentPage, totalPages, config, pageUrl) {
 }
 
 async function pageBodyForDocument(page, site, config, locale, isHomepage = false, renderContext = {}) {
-  const content = await renderBlocks(page.blocks, { config, locale, site, isHomepage, ...renderContext });
+  const content = await renderBlocks(page.blocks, { config, locale, site, document: page, isHomepage, ...renderContext });
   const firstElement = page.blocks[0]?.cells?.[0]?.[0];
   const needsTitle = !isHomepage || firstElement?.type !== 'hero';
   const title = needsTitle ? '<header class="page-title"><h1>' + escapeHtml(page.title) + '</h1></header>' : '';
@@ -315,11 +274,11 @@ export async function generateBuiltinRoutes(site, config, extensions) {
       const tagsHtml = post.tags.length ? '<div class="post-tags" role="group" aria-label="' + escapeHtml(label('tags')) + '"><span class="post-tags-label">' +
         escapeHtml(label('tags')) + ':</span>' + post.tags.map(tag => '<span class="post-tag">' + escapeHtml(tag) + '</span>').join('') + '</div>' : '';
       const body = '<article class="post"><header><h1>' + escapeHtml(post.title) + '</h1><div class="meta post-byline">' + authorHtml +
-        '<time data-local-time data-time-locale="' + escapeHtml(post.locale || locale) + '" data-date-only="' + (post.dateOnly === true) + '" datetime="' + post.date.toISOString() + '">' + escapeHtml(dateLabel(post.date, locale)) + '</time>' +
+        '<time data-local-time data-time-locale="' + escapeHtml(post.locale || locale) + '" data-date-only="' + (post.dateOnly === true) + '" datetime="' + (post.dateOnly ? post.date.toISOString().slice(0,10) : post.date.toISOString()) + '">' + escapeHtml(dateLabel(post.date, locale, post.dateOnly ? 'UTC' : config.site.timeZone)) + '</time>' +
         '<span class="post-reading-time" data-reading-minutes="' + minutes + '">' + escapeHtml(label('postReadingTime').replace('{minutes}', minutes)) + '</span>' +
-        (post.updated ? '<span class="post-updated">' + escapeHtml(label('postUpdated')) + ' <time data-local-time data-time-locale="' + escapeHtml(locale) + '" datetime="' + post.updated.toISOString() + '">' + escapeHtml(dateLabel(post.updated, locale)) + '</time></span>' : '') +
+        (post.updated ? '<span class="post-updated">' + escapeHtml(label('postUpdated')) + ' <time data-local-time data-time-locale="' + escapeHtml(locale) + '" datetime="' + post.updated.toISOString() + '">' + escapeHtml(dateLabel(post.updated, locale, config.site.timeZone)) + '</time></span>' : '') +
         '</div>' + tagsHtml + '</header>' + (post.showChanges && post.changes ? '<details class="post-changes"><summary>' + escapeHtml(label('postChanges')) + '</summary><pre><code>' + escapeHtml(post.changes) + '</code></pre></details>' : '') + renderPostVideo(post.video, locale) + renderedMarkdown.toc + '<div class="post-content">' + renderedMarkdown.html +
-        '</div></article>' + renderPostComments(post, locale, config);
+        '</div></article>' + renderCommentsBlock(post, locale, config);
       const canonicalPath = urlFor(post.path);
       return pageRoute(post.path + 'index.html', post.title, post.description || plainText(post.markdown).slice(0, 160), body,
         locale, config, extensions, {
@@ -327,7 +286,7 @@ export async function generateBuiltinRoutes(site, config, extensions) {
           structuredData: {
             '@context': 'https://schema.org', '@type': 'BlogPosting', headline: post.title,
             description: post.description || plainText(post.markdown).slice(0, 160),
-            datePublished: post.date.toISOString(), dateModified: (post.updated || post.date).toISOString(),
+            datePublished: post.dateOnly ? post.date.toISOString().slice(0,10) : post.date.toISOString(), dateModified: post.updated ? post.updated.toISOString() : post.dateOnly ? post.date.toISOString().slice(0,10) : post.date.toISOString(),
             author: { '@type': 'Person', name: author.name || config.site.title },
             mainEntityOfPage: config.site.url ? config.site.url + canonicalPath : undefined,
             inLanguage: locale
@@ -388,7 +347,7 @@ export async function generateBuiltinRoutes(site, config, extensions) {
     }
 
     const searchable = [
-      ...posts.map((post) => ({ title: post.title, author: post.author, date: post.date.toISOString(), url: urlFor(post.path), summary: plainText(post.description || post.markdown).slice(0, 220), content: plainText(post.markdown), type: 'post' })),
+      ...posts.map((post) => ({ title: post.title, author: post.author, date: post.dateOnly ? post.date.toISOString().slice(0,10) : post.date.toISOString(), dateOnly: post.dateOnly, url: urlFor(post.path), summary: plainText(post.description || post.markdown).slice(0, 220), content: plainText(post.markdown), type: 'post' })),
       ...pages.map((page) => ({ title: page.title, url: urlFor(page.path), summary: page.description || plainText(page.markdown).slice(0, 220), type: 'page' }))
     ];
     routes.push(fileRoute(prefix + 'search.json', JSON.stringify(searchable), 'application/json; charset=utf-8'));
@@ -397,9 +356,9 @@ export async function generateBuiltinRoutes(site, config, extensions) {
       '<p>' + escapeHtml(label('searchIntro')) + '</p><form class="local-search-form" data-edgepress-search data-index="' +
       escapeHtml(localizedUrl(config, locale, 'search.json')) + '"><label for="edgepress-search-query">' + escapeHtml(label('searchLabel')) +
       '</label><div class="local-search-controls"><input id="edgepress-search-query" name="q" type="search" autocomplete="off" ' +
-      'aria-describedby="edgepress-search-hint"><button type="submit">' + escapeHtml(label('searchButton')) + '</button></div>' +
-      '<p id="edgepress-search-hint">' + escapeHtml(label('searchHint')) + '</p></form><p id="edgepress-search-status" role="status" aria-live="polite">' +
-      escapeHtml(label('searchPrompt')) + '</p><ol id="edgepress-search-results" class="local-search-results"></ol>' +
+      '><button type="submit">' + escapeHtml(label('searchButton')) + '</button></div>' +
+      '</form><p id="edgepress-search-status" role="status" aria-live="polite">' +
+      '' + '</p><ol id="edgepress-search-results" class="local-search-results"></ol>' +
       '<noscript><p>' + escapeHtml(label('searchNeedsJavaScript')) + '</p></noscript></section>';
     routes.push(await pageRoute(prefix + 'search/index.html', label('searchPosts'), label('searchIntro'), searchBody,
       locale, config, extensions));
@@ -452,7 +411,10 @@ export async function generateBuiltinRoutes(site, config, extensions) {
       escapeHtml(translate(config, locale, 'returnHome')) + '</a></p></section>';
     routes.push(await pageRoute(prefix + '403.html', forbiddenTitle, forbiddenText, forbiddenBody, locale, config, extensions, { robots: 'noindex,nofollow' }));
   }
-  routes.push(fileRoute('edgepress/comment-threads.json', JSON.stringify(config.browserPlugins?.comments?.enabled && config.browserPlugins.comments.services.some(service => service.provider === 'github-comments') ? [...new Map(site.posts.filter(post => !post.draft)
-    .map(post => [post.bundlePath, { thread: post.bundlePath, title: post.title }])).values()] : []), 'application/json; charset=utf-8'));
+  const discussions = commentsEnabled(config) ? [
+    ...site.posts.filter(post => !post.draft).map(post => ({thread:post.bundlePath,title:post.title})),
+    ...site.pages.filter(page => !page.draft && hasCommentBlock(page.blocks)).map(page => ({thread:pageCommentThread(page),title:page.title}))
+  ] : [];
+  routes.push(fileRoute('edgepress/comment-threads.json', JSON.stringify([...new Map(discussions.map(item => [item.thread,item])).values()]), 'application/json; charset=utf-8'));
   return routes;
 }

@@ -6,15 +6,13 @@ description: Extend EdgePress with trusted build plugins, consent-gated browser 
 blocks:
   - columns: 1
     cells:
-      -
-        - type: hero
+      - - type: hero
           eyebrow: Extension guide
           title: Connect trusted build code, browser providers, and backend services.
           text: Build-time plugins run in Node. Browser integrations wait for visitor consent. Runtime backend requests stay behind the Worker.
   - columns: 2
     cells:
-      -
-        - type: section
+      - - type: section
           title: Build-time plugins
           tone: soft
           blocks:
@@ -36,8 +34,7 @@ blocks:
                     contentType: 'application/json; charset=utf-8'
                   }));
                 }
-      -
-        - type: section
+      - - type: section
           title: Tracking, statistics, advertising, and CAPTCHA
           tone: soft
           blocks:
@@ -53,8 +50,7 @@ blocks:
               tone: warning
   - columns: 1
     cells:
-      -
-        - type: section
+      - - type: section
           title: Forward requests to a URL and token backend
           blocks:
             - type: text
@@ -90,8 +86,7 @@ blocks:
                   url: https://www.edpb.europa.eu/system/files/2026-04/edpb-summary-consent_en.pdf
   - columns: 1
     cells:
-      -
-        - type: section
+      - - type: section
           title: Content security and maintenance
           blocks:
             - type: text
@@ -106,4 +101,24 @@ blocks:
                 edgepress iterate
                 edgepress check
                 edgepress server
+  - columns: 1
+    cells:
+      - - type: text
+          heading: RepoRelay
+          text: Verified GitHub identity and avatars, a local image/GIF sticker gallery, and deletion of your own comments. Discussions load only after you opt in.
+        - type: link-list
+          title: Install and integrate
+          items:
+            - label: Installation and EdgePress integration
+              url: https://github.com/jsw-teams/RepoRelay/blob/main/docs/edgepress.md
+            - label: RepoRelay release notes
+              url: https://github.com/jsw-teams/RepoRelay/blob/main/CHANGELOG.md
+        - type: code
+          title: Optional page discussion block
+          language: yaml
+          code: |
+            blocks:
+              - columns: 1
+                cells:
+                  - - type: comments
 ---

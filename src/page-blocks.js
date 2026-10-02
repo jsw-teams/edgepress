@@ -1,3 +1,4 @@
+import {renderCommentsBlock,commentsEnabled} from './comment-block.js';
 import { renderMarkdownExcerpt } from './markdown.js';
 import { translate, translateValue } from './i18n.js';
 import { isIconName, renderIcon } from './icons.js';
@@ -69,8 +70,8 @@ function enabledIntegration(config, id, category) {
   return match;
 }
 
-function dateLabel(date, locale) {
-  return new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeZone: 'UTC' }).format(date);
+function dateLabel(date, locale, timeZone = 'UTC') {
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeZone }).format(date);
 }
 
 function dateOnlyLabel(value, locale) {
@@ -112,14 +113,17 @@ async function renderLatestPosts(block, context) {
   const sameArchive = [...categories].sort().join('\0') === [...archiveCategories].sort().join('\0');
   if (paginate && (block.type === 'post-list' || !sameArchive)) throw new Error('Homepage pagination must use the same categories as site.archive.categories');
   const selected = filterPostsByCategory(postsForLocale(context.site.posts, context.locale, context.config.i18n.defaultLocale), categories);
-  const posts = block.type === 'post-list' ? sortPinnedPosts(selected) : selected;
+  const ordered = block.type === 'post-list' ? sortPinnedPosts(selected) : selected;
+  const posts = ordered.filter(post => !context.displayedPostBundles?.has(post.bundlePath));
+  const displayed = posts.slice(0, count);
+  for (const post of displayed) context.displayedPostBundles?.add(post.bundlePath);
   const title = escapeHtml(text(block.title, 'latest-posts.title', 200));
   const authorLabel = (post) => post.author ? '<span class="post-author">' + escapeHtml(translate(context.config, context.locale, 'postAuthor')
     .replace('{author}', post.author)) + '</span>' : '';
-  const cards = (await Promise.all(posts.slice(0, count).map(async (post) => {
+  const cards = (await Promise.all(displayed.map(async (post) => {
     const excerpt = await renderMarkdownExcerpt(post.description || post.markdown, context.config.markdown);
     return '<article class="post-card" lang="' + escapeHtml(post.locale) + '"><h3><a href="' + escapeHtml('/' + post.path.split('/').filter(Boolean).join('/') + (post.path.endsWith('/') ? '/' : '')) + '">' +
-      escapeHtml(post.title) + '</a></h3>' + (block.type === 'post-list' && post.pinned ? '<span class="post-pinned">' + escapeHtml(translate(context.config, context.locale, 'postPinned')) + '</span>' : '') + '<p class="meta"><time data-local-time data-time-locale="' + escapeHtml(post.locale || context.locale) + '" data-date-only="' + (post.dateOnly === true) + '" datetime="' + post.date.toISOString() + '">' + escapeHtml(dateLabel(post.date, context.locale)) +
+      escapeHtml(post.title) + '</a></h3>' + (block.type === 'post-list' && post.pinned ? '<span class="post-pinned">' + escapeHtml(translate(context.config, context.locale, 'postPinned')) + '</span>' : '') + '<p class="meta"><time data-local-time data-time-locale="' + escapeHtml(post.locale || context.locale) + '" data-date-only="' + (post.dateOnly === true) + '" datetime="' + (post.dateOnly ? post.date.toISOString().slice(0,10) : post.date.toISOString()) + '">' + escapeHtml(dateLabel(post.date, context.locale, post.dateOnly ? 'UTC' : context.config.site.timeZone)) +
       '</time>' + (post.author ? ' · ' + authorLabel(post) : '') + '</p><div class="post-excerpt" lang="' + escapeHtml(post.locale) + '">' + excerpt + '</div></article>';
   }))).join('');
   const pagination = paginate && context.latestPostsPagination?.totalPages > 1
@@ -410,6 +414,12 @@ async function renderBlock(block, context, depth, index) {
       return '<section class="faq-block"><h2>' + title + '</h2>' + items.map((item) => '<details><summary>' +
         escapeHtml(text(item?.question, 'faq.question', 500)) + '</summary><p>' + escapeHtml(text(item?.answer, 'faq.answer', 4000)) + '</p></details>').join('') + '</section>';
     }
+    case 'comments': {
+      if (!commentsEnabled(context.config)) return '';
+      if (context.commentsRendered) throw new Error('A page may contain only one comments block');
+      context.commentsRendered = true;
+      return renderCommentsBlock(context.document,context.locale,context.config,true);
+    }
     case 'post-list':
     case 'latest-posts': return renderLatestPosts(block, context);
     case 'ad-slot': {
@@ -439,6 +449,7 @@ async function renderElements(blocks, context, depth = 0) {
 }
 
 export async function renderBlocks(rows, context) {
+  context = {...context, displayedPostBundles:new Set(), commentsRendered:false, blockCount:0};
   if (!Array.isArray(rows) || rows.length > 100) throw new Error('Page layout needs an array of at most 100 rows');
   const rendered = [];
   for (const row of rows) {
@@ -451,10 +462,11 @@ export async function renderBlocks(rows, context) {
     if (!Array.isArray(row.cells) || row.cells.length !== columns) throw new Error('Each row needs one cells entry per configured column');
     context.blockCount = (context.blockCount || 0) + 1;
     if (context.blockCount > 200) throw new Error('A page may contain at most 200 blocks including nested blocks');
-    const cells = await Promise.all(row.cells.map(async (blocks, index) => {
+    const cells = [];
+    for (const [index,blocks] of row.cells.entries()) {
       if (!Array.isArray(blocks) || !blocks.length) throw new Error('Every page row cell needs at least one element block');
-      return '<div class="page-builder-cell" data-cell="' + (index + 1) + '">' + await renderElements(blocks, context, 1) + '</div>';
-    }));
+      cells.push('<div class="page-builder-cell" data-cell="' + (index + 1) + '">' + await renderElements(blocks, context, 1) + '</div>');
+    }
     rendered.push('<div class="page-builder-row" data-columns="' + columns + '">' + cells.join('') + '</div>');
   }
   return rendered.join('\n');

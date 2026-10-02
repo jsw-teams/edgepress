@@ -1,3 +1,4 @@
+import {defaultTimeZone,validateTimeZone} from './publication-time.js';
 import { categoryFilter, safeAvatar } from './post-details.js';
 import { access, readFile, realpath, stat } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, relative, resolve, sep } from 'node:path';
@@ -6,7 +7,7 @@ import { parse as parseYaml } from 'yaml';
 
 const defaults = {
   site: {
-    title: 'EdgePress', description: '', url: '', language: 'en',
+    title: 'EdgePress', description: '', url: '', language: 'en', timeZone: defaultTimeZone,
     head: { titleSuffix: '', titleSeparator: ' · ' },
     header: { showBrand: true, brandLabel: '' },
     components: { header: true, primaryNavigation: true, languageNavigation: true, footer: true, footerNavigation: true },
@@ -360,6 +361,7 @@ export async function loadConfig(root = process.cwd()) {
   }
 
   const config = merge(defaults, userConfig);
+  validateTimeZone(config.site.timeZone);
   const siteYaml = await readSiteYaml(root);
   if (siteYaml.site !== undefined && (!siteYaml.site || typeof siteYaml.site !== 'object' || Array.isArray(siteYaml.site))) {
     throw new Error('config.yml site must be an object');

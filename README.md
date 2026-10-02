@@ -125,14 +125,18 @@ Use `category: edgepress` or `categories: [blog, uncategorized]` on a `post-list
 
 RepoRelay connects published article discussions to GitHub Issues through a self-hosted GitHub App. Configure `plugins.consent.comments.enabled: true` and a service with `provider: github-comments`, and enable the consent plugin. Comments load only after the reader selects the service. Unselected comments load no discussion module, API, session request or GitHub request.
 
+Articles show the enabled discussion area automatically. Pages opt in with a `comments` block; disabled sites render neither area nor module. GitHub avatars, a local sticker gallery, uploads and deletion of your own comments are supported. Extend `content/assets/edgepress/stickers/packs.json` with your own licensed image/GIF packs. See the separate [installation and EdgePress integration guide](https://github.com/jsw-teams/RepoRelay/blob/main/docs/edgepress.md) and [RepoRelay changelog](https://github.com/jsw-teams/RepoRelay/blob/main/CHANGELOG.md).
+
 Add the `REPORELAY_THREADS` Durable Object binding for the exported `CommentCoordinator` and its SQLite migration to your Worker configuration. The [RepoRelay Worker example](https://github.com/jsw-teams/RepoRelay/tree/main/examples/comments) includes the complete configuration. Set repository, site origin, App ID and Client ID as variables; store the App private key and Client Secret as Worker Secrets. Installation identity and signing keys are managed automatically. Preserve the Durable Object storage across deployments. Each origin and repository combination has an independent discussion scope. Multiple owned sites can use one App with an exact callback registered for each site; other operators register their own Apps.
 
 ## Publication times and article changes
 
-New articles include an ISO publication timestamp with a timezone. Readers see that instant in their browser’s current timezone; date-only historical articles keep their calendar date because the publication time is unknown. The server output and feeds preserve the original instant.
+Set `site.timeZone` in `config.yml`, default `Asia/Taipei`. The CLI writes complete publication timestamps with that zone’s offset and names the folder using its calendar date. Timestamps without an offset are interpreted in that configured zone; an explicit offset is respected. No build-host timezone is used. Readers see complete times in their current zone. Date-only articles retain their calendar date in displayed text, HTML, search and structured data, without a fabricated midnight. Ambiguous or nonexistent daylight-saving times need an explicit offset.
 
 An article shows the latest content update time from Git history. Only title and Markdown body changes count; metadata edits do not. Add `showChanges: true` to its front matter to display the actual latest content diff in an expandable panel. This is disabled by default and requires no hand-written revision note. Build from a full Git checkout (`fetch-depth: 0` in GitHub Actions); unavailable history produces no invented update. The latest 20 file commits are inspected.
 
 Set `pinned: true` in the selected article translations to place them first in `post-list`. Category and locale selection happen before pinning and limiting. Feeds, archives and `latest-posts` remain chronological.
+
+Multiple post lists on the same page share a displayed-article set: an article already shown in a pinned list is omitted from the following recent list, which fills its remaining slots with other articles. Each new page starts a fresh set.
 
 The first production comment format isolates unsupported test Issues and retains them. Later releases preserve established data; an incompatible change requires an explicit migration, retaining and isolating unmigrated records without impersonating their authors. RepoRelay release labels use year and month plus update count, such as `202610.2`.

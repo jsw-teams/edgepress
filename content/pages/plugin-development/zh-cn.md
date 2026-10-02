@@ -6,15 +6,13 @@ description: 使用可信构建插件、遵循同意设置的浏览器集成和�
 blocks:
   - columns: 1
     cells:
-      -
-        - type: hero
+      - - type: hero
           eyebrow: 扩展指南
           title: 连接可信构建代码、浏览器供应商和后端服务。
           text: 构建插件在 Node 中运行。浏览器集成需等待访客同意。运行时后端请求由 Worker 转发。
   - columns: 2
     cells:
-      -
-        - type: section
+      - - type: section
           title: 构建插件
           tone: soft
           blocks:
@@ -36,8 +34,7 @@ blocks:
                     contentType: 'application/json; charset=utf-8'
                   }));
                 }
-      -
-        - type: section
+      - - type: section
           title: 跟踪、统计、广告和人机验证
           tone: soft
           blocks:
@@ -53,8 +50,7 @@ blocks:
               tone: warning
   - columns: 1
     cells:
-      -
-        - type: section
+      - - type: section
           title: 通过 URL 和令牌转发后端请求
           blocks:
             - type: text
@@ -90,8 +86,7 @@ blocks:
                   url: https://www.edpb.europa.eu/system/files/2026-04/edpb-summary-consent_en.pdf
   - columns: 1
     cells:
-      -
-        - type: section
+      - - type: section
           title: 内容安全与维护
           blocks:
             - type: text
@@ -106,4 +101,24 @@ blocks:
                 edgepress iterate
                 edgepress check
                 edgepress server
+  - columns: 1
+    cells:
+      - - type: text
+          heading: RepoRelay
+          text: 显示经过验证的 GitHub 身份和头像，可从本地图片、GIF 图集中选择表情包，支持删除自己的评论。读者选中评论后才加载讨论。
+        - type: link-list
+          title: 安装与接入
+          items:
+            - label: 安装及 EdgePress 接入说明
+              url: https://github.com/jsw-teams/RepoRelay/blob/main/docs/edgepress.md
+            - label: RepoRelay 独立更新日志
+              url: https://github.com/jsw-teams/RepoRelay/blob/main/CHANGELOG.md
+        - type: code
+          title: 可选页面评论区块
+          language: yaml
+          code: |
+            blocks:
+              - columns: 1
+                cells:
+                  - - type: comments
 ---

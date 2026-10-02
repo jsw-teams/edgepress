@@ -6,15 +6,13 @@ description: 安装 EdgePress、创建 Markdown 文章、编辑页面元素、�
 blocks:
   - columns: 1
     cells:
-      -
-        - type: hero
+      - - type: hero
           eyebrow: 从这里开始
           title: 配置项目并打开实时预览。
           text: 安装项目依赖后使用 edgepress 命令。本地预览会在源文件变更后自动构建，并刷新无障碍化和 agent 友好度 PDF 报告。
   - columns: 1
     cells:
-      -
-        - type: section
+      - - type: section
           title: 环境要求与初始命令
           tone: soft
           blocks:
@@ -39,8 +37,7 @@ blocks:
                 npm run dev
   - columns: 1
     cells:
-      -
-        - type: section
+      - - type: section
           title: 只用 Markdown 写第一篇文章
           tone: soft
           blocks:
@@ -52,7 +49,7 @@ blocks:
                   text: 命令会输出新文件的路径，不会覆盖已有文章。
                   command: npm run new -- "我的第一篇文章"
                 - title: 写 Markdown 正文
-                  text: 替换示例段落。使用 ## 小标题、列表、链接、图片和代码块即可。图片放在 content/assets/images/，正文用 /images/文件名.png 引用。
+                  text: 替换示例段落。使用
                 - title: 预览并发布
                   text: 写作时保持预览运行，保存文件即可刷新。发布前运行 npm run build，再使用已有部署流程。
                   command: npm run dev
@@ -72,8 +69,7 @@ blocks:
               text: 站点配置在初次设置时完成。想调整页面设计时，再阅读下面的页面布局与主题说明；日常发文无需掌握这些开发内容。
   - columns: 2
     cells:
-      -
-        - type: section
+      - - type: section
           title: 创建内容
           blocks:
             - type: steps
@@ -85,8 +81,7 @@ blocks:
                   text: 新建 content/pages/<page-id>/en.md。每种已配置语言都有一个小写语言文件名。
                 - title: 设置语言
                   text: front matter 的 lang 值需与文件名匹配；在 edgepress.config.mjs 中启用可选语言。
-      -
-        - type: section
+      - - type: section
           title: 编辑页面布局
           blocks:
             - type: text
@@ -100,8 +95,7 @@ blocks:
               tone: info
   - columns: 1
     cells:
-      -
-        - type: section
+      - - type: section
           title: 配置与预览
           blocks:
             - type: text
@@ -187,4 +181,15 @@ blocks:
                   title: 仅 Worker 支持的集成
                   text: 静态托管不会运行 src/worker.js。内置 /api/ 代理和 Cloudflare Service Binding 需要部署 EdgePress Worker；否则需在当前服务器配置等效的服务端路由。不要把后端 Token 写入浏览器设置。
                   tone: warning
+  - columns: 1
+    cells:
+      - - type: text
+          heading: 发表日期与时区
+          text: 在 config.yml 设置 site.timeZone，默认 Asia/Taipei。新文章生成带明确时差的完整时间；没有写时差的具体时间按此配置解释，不依赖构建机器时区。仅有年月日的文章保留日历日期，不补午夜或随读者时区变更。完整时间按读者当前时区展示，遇到夏令时重复或不存在的时间需明确填写时差。
+        - type: code
+          title: config.yml
+          language: yaml
+          code: |
+            site:
+              timeZone: Asia/Taipei
 ---

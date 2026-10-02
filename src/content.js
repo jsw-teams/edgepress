@@ -1,3 +1,4 @@
+import {parsePublicationDate,publicationCalendar} from './publication-time.js';
 import { readPostRevision } from './revisions.js';
 import { normalizeCategory, safeAvatar, readingMinutes } from './post-details.js';
 import { readdir, readFile } from 'node:fs/promises';
@@ -105,25 +106,14 @@ function normalizeVideo(value, file) {
   return value;
 }
 
-function normalizeDate(value, filename, kind, file) {
-  if (value instanceof Date) {
-    if (!Number.isNaN(value.valueOf())) return value;
-    throw new Error('Invalid date in ' + file);
+function normalizeDate(value, filename, kind, file, timeZone) {
+  const fallback = filename.match(/^(\d{4}-\d{2}-\d{2})-/)?.[1];
+  if (value == null && !fallback) {
+    if (kind === 'posts') throw new Error('Posts need a valid date in front matter or a YYYY-MM-DD filename: ' + file);
+    return new Date(0);
   }
-  if (value != null) {
-    if (typeof value === 'string' && /T/.test(value) && !/(Z|[+-]\d{2}:\d{2})$/.test(value)) throw new Error('Timestamp must include a timezone in ' + file);
-    const date = new Date(value);
-    if (!Number.isNaN(date.valueOf())) return date;
-    throw new Error('Invalid date in ' + file);
-  }
-  const match = filename.match(/^(\d{4}-\d{2}-\d{2})-/);
-  if (match) {
-    const date = new Date(match[1] + 'T00:00:00Z');
-    if (!Number.isNaN(date.valueOf()) && date.toISOString().slice(0, 10) === match[1]) return date;
-    throw new Error('Invalid date in filename: ' + file);
-  }
-  if (kind === 'posts') throw new Error('Posts need a valid date in front matter or a YYYY-MM-DD filename: ' + file);
-  return new Date(0);
+  try { return parsePublicationDate(value ?? fallback, timeZone); }
+  catch (error) { throw new Error(error.message + ' in ' + file); }
 }
 
 function normalizePagePath(value, file) {
@@ -188,15 +178,16 @@ export async function readDocuments(config) {
     const rawSlug = metadata.slug ?? (kind === 'posts' ? fallbackName : fallbackSlug);
     const normalizedPagePath = kind === 'pages' && metadata.homepage !== true ? normalizePagePath(rawSlug, file) : '';
     const slug = slugify(String(rawSlug).split('/').pop());
-    const date = normalizeDate(metadata.date, bundleName, kind, file);
+    const date = normalizeDate(metadata.date, bundleName, kind, file, config.site?.timeZone);
+    const calendar = metadata.date == null ? (bundleName.match(/^(\d{4}-\d{2}-\d{2})-/)?.[1] || '1970-01-01') : publicationCalendar(metadata.date,date,config.site?.timeZone);
     if (metadata.showChanges !== undefined && typeof metadata.showChanges !== 'boolean') throw new Error('showChanges must be a boolean in ' + file);
     const revision = kind === 'posts' ? await readPostRevision(file, source, metadata.showChanges === true) : {updated:null,changes:''};
     let path;
     if (kind === 'posts') {
       path = config.permalink
-        .replace(/:year/g, String(date.getUTCFullYear()))
-        .replace(/:month/g, String(date.getUTCMonth() + 1).padStart(2, '0'))
-        .replace(/:day/g, String(date.getUTCDate()).padStart(2, '0'))
+        .replace(/:year/g, calendar.slice(0,4))
+        .replace(/:month/g, calendar.slice(5,7))
+        .replace(/:day/g, calendar.slice(8,10))
         .replace(/:slug/g, slug)
         .replace(/:title/g, slug)
         .replace(/^\/+|\/+$/g, '') + '/';

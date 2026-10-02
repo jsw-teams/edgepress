@@ -1,5 +1,6 @@
 # Site owner metadata and shared website components.
 site:
+  timeZone: Asia/Taipei
   title: EdgePress
   description: A static website builder for Cloudflare Workers with editable pages, Markdown posts, themes, and plugins.
   url: https://example.org

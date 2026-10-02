@@ -28,6 +28,12 @@
     try { sessionStorage.setItem(draftKey, bodyInput.value); } catch {}
   });
   const messages = {
+    delete: root.dataset.commentsDeleteLabel || 'Delete',
+    deleteConfirm: root.dataset.commentsDeleteConfirm || 'Delete this comment?',
+    cancel: root.dataset.commentsCancel || 'Cancel',
+    deleted: root.dataset.commentsDeleted || 'Comment deleted.',
+    removeAttachment: root.dataset.commentsRemoveAttachment || 'Remove image',
+    stickersError: root.dataset.commentsStickersError || 'The sticker gallery is unavailable.',
     loading: root.dataset.commentsLoading || 'Loading comments…',
     empty: root.dataset.commentsEmpty || 'No comments yet.',
     error: root.dataset.commentsError || 'Comments are unavailable right now.',
@@ -92,7 +98,7 @@
       const remove = document.createElement('button');
       remove.type = 'button';
       remove.textContent = '×';
-      remove.setAttribute('aria-label', 'Remove attachment');
+      remove.setAttribute('aria-label', messages.removeAttachment);
       remove.addEventListener('click', () => {
         uploadedAttachments = uploadedAttachments.filter(entry => entry.url !== attachment.url);
         renderPendingAttachments();
@@ -129,6 +135,16 @@
     return data;
   }
 
+  function avatar(id, name) {
+    const wrapper=document.createElement('span');wrapper.className='comment-avatar';wrapper.setAttribute('aria-hidden','true');
+    wrapper.dataset.initial=String(name || '?').slice(0,1).toUpperCase();
+    if(Number.isSafeInteger(id) && id>0) {
+      const image=document.createElement('img');image.src='/api/comments/avatar/'+id;image.alt='';image.width=40;image.height=40;image.loading='lazy';image.decoding='async';
+      image.addEventListener('error',()=>image.remove(),{once:true});wrapper.append(image);
+    }
+    return wrapper;
+  }
+
   function renderComment(comment) {
     const item = document.createElement('li');
     item.className = 'comment-item';
@@ -149,7 +165,7 @@
         timeStyle: 'short'
       }).format(date);
     }
-    header.append(author, time);
+    header.append(avatar(comment.authorId,comment.author), author, time);
 
     const body = document.createElement('p');
     body.className = 'comment-body';
@@ -160,6 +176,36 @@
       media.className = 'comment-attachments';
       renderAttachments(comment.attachments, media);
       article.append(media);
+    }
+    if (session?.user && Number.isSafeInteger(comment.authorId) && comment.authorId === session.user.id) {
+      const actions = document.createElement('div');
+      actions.className = 'comment-actions';
+      const remove = document.createElement('button');
+      remove.type = 'button'; remove.className = 'comment-secondary'; remove.textContent = messages.delete;
+      remove.dataset.commentsDelete = comment.id;
+      const cancel = document.createElement('button');
+      cancel.type = 'button'; cancel.className = 'comment-secondary'; cancel.textContent = messages.cancel; cancel.hidden = true;
+      let confirming = false;
+      const reset = () => {confirming=false;remove.textContent=messages.delete;cancel.hidden=true;remove.disabled=false;cancel.disabled=false;};
+      cancel.addEventListener('click',()=>{reset();remove.focus();});
+      remove.addEventListener('click',async()=>{
+        if (!confirming) {confirming=true;remove.textContent=messages.deleteConfirm;cancel.hidden=false;return;}
+        remove.disabled=true;cancel.disabled=true;
+        try {
+          const data=await requestJson('/api/comments',{method:'DELETE',headers:{'Content-Type':'application/json','X-Comments-CSRF':session.csrf},body:JSON.stringify({thread,commentId:comment.id})});
+          if (!data?.ok) throw new Error('comments_request_failed');
+          item.remove();setStatus(messages.deleted);
+          (list.querySelector('[data-comments-delete]') || (!form?.hidden ? bodyInput : logout))?.focus();
+        } catch(error) {
+          reset();
+          if (['login_required','invalid_csrf'].includes(error.message)) {
+            session=null;form.hidden=true;account.hidden=true;signin.hidden=false;
+            for(const action of list.querySelectorAll('.comment-actions'))action.hidden=true;
+            setStatus(root.dataset.commentsLoginRequired || 'Sign in with GitHub to comment.',true);login?.focus();
+          } else {setStatus(backendMessage(error),true);remove.focus();}
+        }
+      });
+      actions.append(remove,cancel);article.append(actions);
     }
     item.append(article);
     return item;
@@ -192,19 +238,16 @@
     try {
       const data = await requestJson('/api/comments?thread=' + encodeURIComponent(thread));
       const comments = Array.isArray(data?.comments) ? data.comments : [];
-      renderComments(comments);
-      if (data?.closed) {
-        if (form) form.hidden = true;
-        if (account) account.hidden = true;
-        if (signin) signin.hidden = true;
-        setStatus(messages.closed);
-        return;
-      }
       try { session = await requestJson('/api/comments/session'); } catch { session = null; }
-      if (form) form.hidden = !session?.user;
+      renderComments(comments);
+      if (form) form.hidden = !session?.user || !!data.closed;
       if (account) account.hidden = !session?.user;
       if (signin) signin.hidden = !session || !!session.user;
-      if (identity) identity.textContent = session?.user ? '@' + session.user.login : '';
+      if (identity) {
+        identity.replaceChildren();
+        if(session?.user)identity.append(avatar(session.user.id,session.user.login),document.createTextNode('@'+session.user.login));
+      }
+      if (data.closed) {setStatus(messages.closed);return;}
       setStatus(!session ? messages.error : data.threadReset ? messages.reset : comments.length ? countLabel(comments.length) : messages.empty, !session);
     } catch (error) {
       if (form) form.hidden = true;
@@ -214,13 +257,72 @@
     }
   }
 
+  const stickerToggle=root.querySelector('[data-comments-stickers-toggle]');
+  const stickerPanel=root.querySelector('[data-comments-stickers]');
+  const stickerPacks=root.querySelector('[data-comments-sticker-packs]');
+  const stickerGrid=root.querySelector('[data-comments-sticker-grid]');
+  let catalogPromise;
+  const localized=value => typeof value==='string' ? value : value?.[document.documentElement.lang] || value?.en || '';
+  const stickerPath=value => typeof value==='string' && /^\/edgepress\/stickers\/[A-Za-z0-9_/-]+\.(png|jpe?g|gif|webp|avif)$/.test(value) && !value.includes('//');
+  function showPack(pack) {
+    stickerGrid.replaceChildren();
+    for(const tab of stickerPacks.children)tab.setAttribute('aria-pressed',String(tab.dataset.pack===pack.id));
+    for(const entry of pack.items.slice(0,100)) {
+      if(!stickerPath(entry.src) || !localized(entry.label))continue;
+      const button=document.createElement('button');button.type='button';button.className='comment-sticker';button.setAttribute('aria-label',localized(entry.label));button.title=localized(entry.label);
+      const image=document.createElement('img');image.src=entry.src;image.alt='';image.loading='lazy';image.width=64;image.height=64;button.append(image);
+      button.addEventListener('click',async()=>{
+        if(attachmentInput.disabled || !session?.user)return;
+        if(uploadedAttachments.length>=4){setStatus(messages.attachmentHelp,true);return;}
+        attachmentInput.disabled=true;submit.disabled=true;stickerToggle.disabled=true;button.disabled=true;
+        setStatus(messages.uploading);
+        try {
+          const response=await fetch(entry.src,{credentials:'same-origin',redirect:'error'});
+          if(!response.ok || Number(response.headers.get('content-length'))>5_000_000)throw new Error('attachment_invalid');
+          const blob=await response.blob();
+          const uploaded=await uploadAttachment(blob);uploadedAttachments.push(uploaded);renderPendingAttachments();
+          setStatus(messages.attachmentHelp);
+        }catch(error){setStatus(error.message==='attachment_too_large'?messages.attachmentTooLarge:backendMessage(error),true);}
+        finally{attachmentInput.disabled=false;submit.disabled=false;stickerToggle.disabled=false;button.disabled=false;}
+      });
+      stickerGrid.append(button);
+    }
+  }
+  stickerToggle?.addEventListener('click',async()=>{
+    if(!stickerPanel || !session?.user)return;
+    stickerPanel.hidden=!stickerPanel.hidden;stickerToggle.setAttribute('aria-expanded',String(!stickerPanel.hidden));
+    if(stickerPanel.hidden)return;
+    try {
+      if(!catalogPromise)catalogPromise=fetch('/edgepress/stickers/packs.json',{credentials:'same-origin',redirect:'error'}).then(async response=>{
+        if(!response.ok)throw new Error('sticker_catalog_unavailable');
+        const text=await response.text();if(text.length>200_000)throw new Error('sticker_catalog_unavailable');
+        const catalog=JSON.parse(text);
+        if(!Array.isArray(catalog.packs))throw new Error('sticker_catalog_unavailable');
+        return catalog.packs.slice(0,20).filter(pack=>typeof pack.id==='string' && localized(pack.label) && Array.isArray(pack.items));
+      }).catch(error=>{catalogPromise=null;throw error;});
+      const packs=await catalogPromise;
+      if(!packs.length)throw new Error('sticker_catalog_unavailable');
+      if(!stickerPacks.children.length) {
+        for(const pack of packs) {
+          const button=document.createElement('button');button.type='button';button.className='comment-secondary';button.textContent=localized(pack.label);button.dataset.pack=pack.id;
+          button.addEventListener('click',()=>showPack(pack));stickerPacks.append(button);
+        }
+        showPack(packs[0]);
+      }
+    }catch{setStatus(messages.stickersError,true);}
+  });
+  stickerPanel?.addEventListener('keydown',event=>{
+    if(event.key==='Escape'){stickerPanel.hidden=true;stickerToggle.setAttribute('aria-expanded','false');stickerToggle.focus();}
+  });
+
   attachmentInput?.addEventListener('change', async () => {
     if (attachmentInput.disabled) return;
     attachmentInput.disabled = true;
+    if (stickerToggle) stickerToggle.disabled = true;
     if (submit) submit.disabled = true;
     const files = [...(attachmentInput.files || [])];
     attachmentInput.value = '';
-    if (!files.length) { attachmentInput.disabled = false; if (submit) submit.disabled = false; return; }
+    if (!files.length) { attachmentInput.disabled = false; if(stickerToggle)stickerToggle.disabled=false; if (submit) submit.disabled = false; return; }
     for (const file of files) {
       if (uploadedAttachments.length >= 4) break;
       try {
@@ -236,6 +338,7 @@
       }
     }
     attachmentInput.disabled = false;
+    if (stickerToggle) stickerToggle.disabled = false;
     if (submit) submit.disabled = false;
   });
 
@@ -244,6 +347,8 @@
     if (attachmentInput?.disabled) return;
     if (!form.reportValidity() || (!String(bodyInput?.value || '').trim() && uploadedAttachments.length === 0)) return;
     if (submit) submit.disabled = true;
+    if (attachmentInput) attachmentInput.disabled = true;
+    if (stickerToggle) stickerToggle.disabled = true;
     setStatus(messages.loading);
     try {
       const data = await requestJson('/api/comments', {
@@ -278,6 +383,8 @@
         setStatus(backendMessage(error), true);
       }
     } finally {
+      if (attachmentInput) attachmentInput.disabled = false;
+      if (stickerToggle) stickerToggle.disabled = false;
       if (submit) submit.disabled = false;
     }
   });
