@@ -2,7 +2,7 @@ import { plainText, renderMarkdownExcerpt } from './markdown.js';
 import { renderBlocks } from './page-blocks.js';
 import { renderLayout } from './theme.js';
 import { localizedUrl, translate } from './i18n.js';
-import { postsForLocale, slugify, sortPostsNewest } from './content.js';
+import { postsForLocale, slugify, sortPostsNewest, tagSlug } from './content.js';
 import { mapLimit } from './concurrency.js';
 import { renderIcon } from './icons.js';
 
@@ -21,11 +21,6 @@ function escapeXml(value) {
 function urlFor(path) {
   const parts = String(path ?? '').split('/').filter(Boolean).map(encodeURIComponent);
   return '/' + parts.join('/') + (String(path).endsWith('/') && parts.length ? '/' : '');
-}
-
-function tagSlug(tag) {
-  if (/[^\x00-\x7F]/.test(tag)) return 'tag-' + Array.from(tag).map((char) => char.codePointAt(0).toString(16)).join('-');
-  return slugify(tag);
 }
 
 function dateLabel(date, language) {

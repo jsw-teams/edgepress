@@ -2,7 +2,7 @@
 site:
   title: EdgePress
   description: A static website builder for Cloudflare Workers with editable pages, Markdown posts, themes, and plugins.
-  url: https://edgepress.js.gripe
+  url: https://example.org
   language: en
   head:
     titleSuffix: ""
@@ -60,7 +60,7 @@ site:
       - Markdown website builder
       - Cloudflare Workers
       - static site generator
-    image: https://edgepress.js.gripe/edgepress/brand/og-image.png
+    image: https://example.org/edgepress/brand/og-image.png
     robots: index,follow
   # GEO here means agent SEO: make authoritative project information easy to discover and interpret.
   agentSeo:

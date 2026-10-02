@@ -127,4 +127,25 @@ blocks:
                 - title: 文章使用 Markdown
                   icon: file-text
                   text: 撰写并发布文章。
+  - columns: 1
+    cells:
+      - - type: section
+          title: 显示单个项目的文章
+          blocks:
+            - type: text
+              paragraphs:
+                - "使用 post-list 的 tag 字段筛选文章，按日期由新到旧排列，优先选择当前语言版本。标签匹配不分大小写。count 可设为 1 到 12；超出的文章会链接到当前语言的标签列表。"
+            - type: code
+              title: 项目文章列表
+              language: yaml
+              code: |
+                - columns: 1
+                  cells:
+                    - - type: post-list
+                        title: EdgePress articles
+                        tag: edgepress
+                        count: 6
+            - type: text
+              paragraphs:
+                - "在文章前置数据加入 tags: [edgepress]。省略 tag 时可显示所有文章。标签列表使用对应的标签归档页，不使用首页分页。"
 ---

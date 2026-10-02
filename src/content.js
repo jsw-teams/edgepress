@@ -63,6 +63,11 @@ export function slugify(value) {
   return slug || 'post';
 }
 
+export function tagSlug(tag) {
+  if (/[^\x00-\x7F]/.test(tag)) return 'tag-' + Array.from(tag).map((char) => char.codePointAt(0).toString(16)).join('-');
+  return slugify(tag);
+}
+
 function normalizeTags(value) {
   if (value == null || value === '') return [];
   return (Array.isArray(value) ? value : [value]).map(String).map((tag) => tag.trim()).filter(Boolean);

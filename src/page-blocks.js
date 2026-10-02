@@ -1,7 +1,7 @@
 import { renderMarkdownExcerpt } from './markdown.js';
 import { translate, translateValue } from './i18n.js';
 import { isIconName, renderIcon } from './icons.js';
-import { postsForLocale } from './content.js';
+import { postsForLocale, tagSlug } from './content.js';
 
 const captchaProviders = new Set(['cloudflare-turnstile', 'google-recaptcha', 'hcaptcha']);
 
@@ -109,7 +109,14 @@ async function renderLatestPosts(block, context) {
   if (!Number.isInteger(count) || count < 1 || count > 12) throw new Error('latest-posts.count must be an integer from 1 to 12');
   const paginate = block.paginate ?? false;
   if (typeof paginate !== 'boolean') throw new Error('latest-posts.paginate must be a boolean');
-  const posts = postsForLocale(context.site.posts, context.locale, context.config.i18n.defaultLocale);
+  const tag = block.tag === undefined ? '' : text(block.tag, 'post-list.tag', 160).trim();
+  if (block.tag !== undefined && !tag) throw new Error('post-list.tag must not be empty');
+  if (paginate && (tag || block.type === 'post-list')) {
+    throw new Error('Use the tag archive for filtered post lists; paginate is reserved for unfiltered latest-posts homepages');
+  }
+  const normalizedTag = tag.normalize('NFKC').toLowerCase();
+  const posts = postsForLocale(context.site.posts, context.locale, context.config.i18n.defaultLocale)
+    .filter((post) => !tag || post.tags.some((value) => value.normalize('NFKC').toLowerCase() === normalizedTag));
   const title = escapeHtml(text(block.title, 'latest-posts.title', 200));
   const authorLabel = (post) => post.author ? '<span class="post-author">' + escapeHtml(translate(context.config, context.locale, 'postAuthor')
     .replace('{author}', post.author)) + '</span>' : '';
@@ -124,8 +131,12 @@ async function renderLatestPosts(block, context) {
       '<a rel="next" href="' + escapeHtml(context.latestPostsPagination.olderUrl) + '">' + escapeHtml(translate(context.config, context.locale, 'older')) + '</a>' +
       '<a href="' + escapeHtml(context.latestPostsPagination.archiveUrl) + '">' + escapeHtml(translate(context.config, context.locale, 'allPosts')) + '</a></nav>'
     : '';
+  const tagArchive = tag && posts.length > count
+    ? '<p class="post-list-more"><a href="' + escapeHtml(localizedSiteUrl('/[launge]/tags/' + tagSlug(posts[0].tags.find((value) => value.normalize('NFKC').toLowerCase() === normalizedTag)) + '/', 'post-list.tagArchive', context)) + '">' +
+      escapeHtml(translate(context.config, context.locale, 'allPosts')) + '</a></p>'
+    : '';
   return '<section class="latest-posts"><h2>' + title + '</h2>' +
-    (cards ? '<div class="post-list">' + cards + '</div>' : '<p>' + escapeHtml(translate(context.config, context.locale, 'noPosts')) + '</p>') + pagination + '</section>';
+    (cards ? '<div class="post-list">' + cards + '</div>' : '<p>' + escapeHtml(translate(context.config, context.locale, 'noPosts')) + '</p>') + pagination + tagArchive + '</section>';
 }
 
 function renderMediaText(block, context) {
@@ -403,6 +414,7 @@ async function renderBlock(block, context, depth, index) {
       return '<section class="faq-block"><h2>' + title + '</h2>' + items.map((item) => '<details><summary>' +
         escapeHtml(text(item?.question, 'faq.question', 500)) + '</summary><p>' + escapeHtml(text(item?.answer, 'faq.answer', 4000)) + '</p></details>').join('') + '</section>';
     }
+    case 'post-list':
     case 'latest-posts': return renderLatestPosts(block, context);
     case 'ad-slot': {
       const integration = enabledIntegration(context.config, block.integration, 'advertising');

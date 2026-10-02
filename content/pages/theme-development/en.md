@@ -127,4 +127,25 @@ blocks:
                 - title: Posts use Markdown
                   icon: file-text
                   text: Write and publish an article.
+  - columns: 1
+    cells:
+      - - type: section
+          title: Show articles for one project
+          blocks:
+            - type: text
+              paragraphs:
+                - "Use post-list with tag to show only matching articles, newest first. Matching ignores letter case and chooses the current language version when available. count accepts 1 to 12; longer lists link to the localized tag archive."
+            - type: code
+              title: A project article list
+              language: yaml
+              code: |
+                - columns: 1
+                  cells:
+                    - - type: post-list
+                        title: EdgePress articles
+                        tag: edgepress
+                        count: 6
+            - type: text
+              paragraphs:
+                - "Add tags: [edgepress] to article front matter. Omitting tag keeps all articles eligible. Tagged lists use their tag archive instead of homepage pagination."
 ---

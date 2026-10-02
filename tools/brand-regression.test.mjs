@@ -13,6 +13,7 @@ async function configForTest() {
   const config = await loadConfig(root);
   await loadLanguagePacks(config);
   config.pagination.perPage = 1;
+  config.site.url = 'https://fixture.example.org';
   config.site.seo.image = '/edgepress/brand/og-image.png';
   return config;
 }
@@ -74,5 +75,5 @@ test('homepage artwork supports a typed WebP source and rejects unsafe URLs', as
 test('share metadata resolves local images against the configured site URL', async () => {
   const routes = await fixtureRoutes();
   assert.match(routes.find((route) => route.path === 'index.html').body,
-    /property="og:image" content="https:\/\/edgepress\.js\.gripe\/edgepress\/brand\/og-image\.png"/);
+    /property="og:image" content="https:\/\/fixture\.example\.org\/edgepress\/brand\/og-image\.png"/);
 });
