@@ -41,9 +41,9 @@ function navigationItems(config, locale, items, currentPath = '') {
           child.url.startsWith('/') ? localizedUrl(config, locale, child.url) : child.url,
         label: child.labels?.[locale] ?? child.labels?.[config.i18n.defaultLocale] ?? translate(config, locale, child.key)
       }))];
-      const selected = choices.slice(1).find(choice => choice.path.startsWith('/') && currentPath.startsWith(choice.path)) || choices[0];
       return '<span class="navigation-select" hidden>' + icon + '<select data-navigation-select aria-label="' + escapeHtml(label) + '">' +
-        choices.map(choice => '<option value="' + escapeHtml(choice.path) + '"' + (choice === selected ? ' selected' : '') + '>' + escapeHtml(choice.label) + '</option>').join('') +
+        '<option value="" selected disabled hidden>' + escapeHtml(label) + '</option>' +
+        choices.map(choice => '<option value="' + escapeHtml(choice.path) + '">' + escapeHtml(choice.label) + '</option>').join('') +
         '</select></span><noscript>' + choices.map(choice => '<a href="' + escapeHtml(choice.path) + '">' + escapeHtml(choice.label) + '</a>').join('') + '</noscript>';
     }
     return '<a href="' + escapeHtml(path) + '">' + icon + escapeHtml(label) + '</a>';
