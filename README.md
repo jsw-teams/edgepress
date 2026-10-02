@@ -62,8 +62,8 @@ To export the saved imagegen masters, install Pillow and run `python tools/gener
 - edgepress new "Article title": create a Markdown post.
 - edgepress build and edgepress generate: run the same generator and write static files to dist/ for Cloudflare Workers or static hosting.
 - edgepress server: start live local preview, rebuild on source changes, and refresh the PDF audit report.
-- edgepress check: build, audit accessibility, agent-friendliness, and Markdown rendering, capture post/page desktop and mobile screenshots temporarily, and write only the PDF report under tools/.
-- edgepress doctor: inspect runtime and Worker compatibility.
+- edgepress check: build, audit page structure, agent-friendliness, and Markdown rendering, simulate device profiles, inspect the browser accessibility tree and sample keyboard navigation, capture screenshots temporarily, and write only the PDF report under tools/.
+- edgepress doctor: inspect runtime and Worker compatibility using the entry configured in Wrangler's `main` field; unreadable or unsafe entries are reported as errors.
 - edgepress theme list and edgepress theme use <name>: inspect or select an installed theme.
 - edgepress theme install <npm-package>[@version]: install a theme package from npm without running its install scripts.
 - edgepress theme create <name>: make an empty, accessible HTML theme skeleton with editable partials and a blank stylesheet.
@@ -76,7 +76,13 @@ To export the saved imagegen masters, install Pillow and run `python tools/gener
 
 The only persisted page-audit report is the accessible PDF at tools/page-check.pdf. Desktop and mobile screenshots are embedded in the PDF and removed from temporary storage afterward. Automated checks do not replace manual accessibility or legal review.
 
-The main navigation includes a Posts entry to the localized article archive. The header search page filters Markdown posts from the generated local search index; it does not send search queries to an external service. Long articles show a floating, scroll-aware table of contents, and code blocks have accessible copy buttons. The first post, “EdgePress and Markdown: a complete writing guide,” documents and verifies the supported Markdown syntax in English and Chinese.
+`edgepress check` supports page-only sites, an absent `content/posts/` directory, and ordinary articles without a tutorial slug. Markdown self-checks render a built-in fixture in memory and never add articles to your site. Actual generated pages still receive structural and resource-link checks.
+
+When Edge, Chrome or Chromium is installed, the audit runs desktop (1440px), phone (390px) and tablet (820px) profiles in light and dark modes. Phone/tablet profiles emulate pixel density and touch capability. It checks main/heading semantics and accessible names through the [Chromium DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/), and sends real Tab, Shift+Tab and Enter events to the isolated headless browser. Keyboard checks sample at most 12 focus stops, verify focus visibility and backward navigation, and activate the skip-to-main link. Browser failures affect the check result; missing browser support is reported as unavailable, never as a pass.
+
+These are browser simulations, not physical-device or screen-reader tests. The tool launches no visible browser window, mutes its own browser audio and disables notifications, does not send keyboard input to your desktop, and never starts Narrator, NVDA, VoiceOver or TalkBack. Physical devices and actual assistive technology require a separate, authorized test environment. The PDF labels this limitation explicitly.
+
+The main navigation includes a Posts entry to the localized article archive. The header search page filters Markdown posts from the generated local search index; it does not send search queries to an external service. Long articles show a floating, scroll-aware table of contents, and code blocks have accessible copy buttons. Markdown verification runs independently of published content.
 
 Project guides are published from content/pages/: project introduction, quick start, theme development, plugin development, and privacy policy. The public project page and release notes are hosted at [js.gripe/edgepress/](https://js.gripe/edgepress/). This repository remains the framework and reusable demo source. The starter config uses the placeholder `https://example.org` and credits `toewpq`. Before production use, confirm that the configured operator name identifies the responsible person or organization and complete any applicable representative or data protection officer details.
 

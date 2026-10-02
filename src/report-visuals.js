@@ -4,6 +4,7 @@ import { createServer } from 'node:http';
 import { extname, relative, resolve, sep } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawn } from 'node:child_process';
+import { auditBrowser, deviceProfiles } from './browser-audit.js';
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -64,7 +65,7 @@ function withTimeout(promise, timeoutMs, message) {
 async function startHeadlessBrowser(executable, profile) {
   const port = await freePort();
   const child = spawn(executable, [
-    '--headless=new', '--disable-gpu', '--no-sandbox', '--no-first-run', '--no-default-browser-check',
+    '--headless=new', '--mute-audio', '--disable-notifications', '--disable-gpu', '--no-sandbox', '--no-first-run', '--no-default-browser-check',
     '--disable-background-networking', '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost, EXCLUDE 127.0.0.1',
     '--remote-debugging-port=' + port, '--remote-allow-origins=*', '--user-data-dir=' + profile, 'about:blank'
   ], { stdio: 'ignore', windowsHide: true });
@@ -114,11 +115,16 @@ async function startHeadlessBrowser(executable, profile) {
     });
     await send('Page.enable');
     await send('Runtime.enable');
+    await send('Accessibility.enable');
     const setViewport = async (viewport) => {
       await send('Emulation.setDeviceMetricsOverride', {
-        width: viewport.width, height: viewport.height, deviceScaleFactor: 1, mobile: viewport.name === 'mobile',
+        width: viewport.width, height: viewport.height, deviceScaleFactor: viewport.deviceScaleFactor || 1,
+        mobile: viewport.mobile ?? viewport.name === 'mobile',
         screenWidth: viewport.width, screenHeight: viewport.height
       });
+      await send('Emulation.setTouchEmulationEnabled', { enabled: viewport.touch ?? viewport.name === 'mobile', maxTouchPoints: 5 });
+      await send('Emulation.setEmulatedMedia', { features: viewport.colorScheme
+        ? [{ name: 'prefers-color-scheme', value: viewport.colorScheme }] : [] });
     };
     const navigate = async (url) => {
       const loaded = waitFor('Page.loadEventFired');
@@ -186,7 +192,7 @@ async function startHeadlessBrowser(executable, profile) {
         await new Promise((resolveExit) => child.once('exit', resolveExit));
       }
     };
-    return { setViewport, navigate, screenshot, metrics, printToPdf, close };
+    return { setViewport, navigate, screenshot, metrics, printToPdf, close, audit: profile => auditBrowser(send, profile) };
   } catch (error) {
     if (child.exitCode === null) {
       child.kill();
@@ -222,16 +228,30 @@ function reportHtml(report, screenshots) {
   const consentPassed = report.consentUi?.passed || 0;
   const consentErrors = Math.max(0, consentChecks - consentPassed);
   const consentScore = consentChecks ? Math.floor(consentPassed / consentChecks * 100) + '%' : '—';
+  const browserChecks = report.browserChecks || { status: 'not run', results: [] };
+  const browserRows = [['Device emulation', ['device']], ['Browser structure and accessibility tree', ['structure', 'semantics']], ['Keyboard sample', ['keyboard']]]
+    .map(([label, groups]) => {
+      const checks = browserChecks.results.flatMap(result => result.checks).filter(check => groups.includes(check.group));
+      const errors = checks.filter(check => !check.passed).length;
+      const status = ['unavailable', 'incomplete'].includes(browserChecks.status) ? browserChecks.status : checks.length ? errors ? 'fail' : 'pass' : 'not run';
+      return '<tr><th scope="row">' + label + '</th><td>' + escapeHtml(status) + '</td><td>—</td><td>' + checks.length + '</td><td>' + errors + '</td><td>0</td></tr>';
+    }).join('');
+  const browserDetails = '<p>Device profiles run in an isolated headless Chromium browser. Accessibility-tree checks inspect what assistive technology can receive; no physical device or screen reader was operated. Keyboard checks use real Tab, Shift+Tab and Enter events, sampling at most 12 focus stops per page/profile.</p>' +
+    '<p>Status: ' + escapeHtml(browserChecks.status) + (browserChecks.reason ? ' · ' + escapeHtml(browserChecks.reason) : '') + '</p>' +
+    (browserChecks.results.length ? '<table><caption>Browser simulation results</caption><thead><tr><th scope="col">Page</th><th scope="col">Profile</th><th scope="col">Status</th><th scope="col">Checks</th><th scope="col">Failures</th></tr></thead><tbody>' +
+      browserChecks.results.map(result => '<tr><th scope="row">' + escapeHtml(result.page) + '</th><td>' + escapeHtml(result.profile + ' · ' + result.colorScheme) +
+        '</td><td>' + escapeHtml(result.status) + '</td><td>' + result.checks.length + '</td><td>' +
+        escapeHtml(result.checks.filter(check => !check.passed).map(check => check.group + ': ' + check.name + (check.detail ? ' (' + check.detail + ')' : '')).join('; ')) + '</td></tr>').join('') + '</tbody></table>' : '');
   const typeLabel = (type) => ({ post: 'Posts', page: 'Pages', homepage: 'Homepages', system: 'System routes', consent: 'Consent interface' })[type] || type;
   const statusTable = '<table><caption>Audit results</caption><thead><tr><th scope="col">Audit</th><th scope="col">Status</th>' +
     '<th scope="col">Score</th><th scope="col">Checks</th><th scope="col">Errors</th><th scope="col">Warnings</th></tr></thead><tbody>' +
-    '<tr><th scope="row">Accessibility</th><td>' + escapeHtml(report.accessibility.status) + '</td><td>' + report.accessibility.score +
+    '<tr><th scope="row">Accessibility (HTML/CSS structure)</th><td>' + escapeHtml(report.accessibility.status) + '</td><td>' + report.accessibility.score +
     '%</td><td>' + report.accessibility.checks + '</td><td>' + report.accessibility.errors + '</td><td>' + report.accessibility.warnings + '</td></tr>' +
     '<tr><th scope="row">Agent friendliness</th><td>' + escapeHtml(report.agentFriendliness.status) + '</td><td>' + report.agentFriendliness.score +
     '%</td><td>' + report.agentFriendliness.checks + '</td><td>' + report.agentFriendliness.errors + '</td><td>' + report.agentFriendliness.warnings + '</td></tr>' +
     '<tr><th scope="row">Markdown rendering</th><td>' + escapeHtml(report.markdownRendering?.status || 'not run') + '</td><td>—</td><td>' +
     (report.markdownRendering?.checks || 0) + '</td><td>' + ((report.markdownRendering?.checks || 0) - (report.markdownRendering?.passed || 0)) + '</td><td>0</td></tr>' +
-    '<tr><th scope="row">Consent interface</th><td>' + escapeHtml(report.consentUi?.status || 'not checked') + '</td><td>' + consentScore +
+    browserRows + '<tr><th scope="row">Consent interface</th><td>' + escapeHtml(report.consentUi?.status || 'not checked') + '</td><td>' + consentScore +
     '</td><td>' + consentChecks + '</td><td>' + consentErrors + '</td><td>0</td></tr>' +
     '<tr><th scope="row">Report reading structure</th><td>' + escapeHtml(reportReading.status) + '</td><td>' +
     Math.floor(reportReading.passed / Math.max(1, reportReading.checks) * 100) + '%</td><td>' + reportReading.checks +
@@ -277,14 +297,15 @@ function reportHtml(report, screenshots) {
     '<body><a class="skip-link" href="#main">Skip to report</a><header><h1>EdgePress accessibility and content report</h1><p>Generated ' +
     escapeHtml(report.generatedAt) + ' · Overall status: <span class="status">' + escapeHtml(report.status) + '</span>.</p>' +
     '<nav class="report-nav" aria-label="Report sections"><ul><li><a href="#summary">Summary</a></li><li><a href="#content">Content reviewed</a></li>' +
-    '<li><a href="#findings">Findings</a></li><li><a href="#markdown">Markdown rendering</a></li><li><a href="#consent">Consent interface</a></li><li><a href="#evidence">Screenshots</a></li><li><a href="#scope">Scope</a></li></ul></nav></header>' +
+    '<li><a href="#findings">Findings</a></li><li><a href="#markdown">Markdown rendering</a></li><li><a href="#browser">Browser simulations</a></li><li><a href="#consent">Consent interface</a></li><li><a href="#evidence">Screenshots</a></li><li><a href="#scope">Scope</a></li></ul></nav></header>' +
     '<main id="main"><section id="summary"><h2>Audit summary</h2>' + statusTable + summary + '<p>Generated HTML documents: ' + report.pages +
     ' · HTML bytes: ' + report.metrics.htmlBytes + ' · Stylesheet references: ' + report.metrics.stylesheets +
     ' · Script references: ' + report.metrics.scripts + '.</p></section>' +
     '<section id="content"><h2>Content reviewed</h2><p>Every generated post and customizable page is listed with its generated route and audit status. Posts are checked alongside pages.</p>' +
     documentSections + '</section><section id="findings"><h2>Findings</h2>' + findings + '</section>' +
     '<section id="markdown"><h2>Markdown rendering verification</h2><p>' + escapeHtml(String(report.markdownRendering?.passed || 0)) + ' of ' +
-    escapeHtml(String(report.markdownRendering?.checks || 0)) + ' syntax checks passed across the tutorial post locales.</p>' + markdownDetails + '</section>' +
+    escapeHtml(String(report.markdownRendering?.checks || 0)) + ' syntax checks passed using an in-memory renderer fixture. No tutorial article needs to be published.</p>' + markdownDetails + '</section>' +
+    '<section id="browser"><h2>Device, accessibility-tree and keyboard simulations</h2>' + browserDetails + '</section>' +
     '<section id="consent"><h2>Consent interface checks</h2><p>Consent component checks run separately from page-content layout checks.</p>' +
     (consentDetails ? '<ul>' + consentDetails + '</ul>' : '<p>No consent UI checks were run.</p>') + '</section>' +
     '<section id="evidence" class="appendix"><h2>Responsive and consent screenshots</h2><p>Page screenshots use a 390 by 844 CSS pixel mobile viewport and hide the consent component while measuring page content. Separate consent screenshots crop the component at desktop and mobile sizes.</p>' +
@@ -362,6 +383,10 @@ async function startReportServer(output, evidenceDirectory, htmlPath) {
           catch { target = resolve(target, 'index.html'); info = await lstat(target); }
         } else throw error;
       }
+      if (info.isDirectory() && !info.isSymbolicLink()) {
+        target = resolve(target, 'index.html');
+        info = await lstat(target);
+      }
       if (info.isSymbolicLink() || !info.isFile()) {
         response.writeHead(404);
         response.end();
@@ -396,7 +421,10 @@ export async function addVisualEvidence(config, report) {
   const directoryInfo = await lstat(root);
   if (directoryInfo.isSymbolicLink() || !directoryInfo.isDirectory()) throw new Error('Report directory must be a real directory');
   const browser = await browserPath();
+  report.browserChecks = { status: 'unavailable', physicalDevices: 'not tested', screenReaders: 'not tested',
+    method: 'Headless Chromium device emulation, accessibility tree and CDP keyboard input', keyboardSampleLimit: 12, results: [] };
   if (!browser) {
+    report.browserChecks.reason = 'No installed Chromium browser was found.';
     return { status: 'unavailable', reason: 'Install Microsoft Edge, Chrome, or Chromium to capture page screenshots and PDF evidence.' };
   }
 
@@ -418,6 +446,8 @@ export async function addVisualEvidence(config, report) {
     for (const locale of config.i18n.locales) {
       const prefix = locale === config.i18n.defaultLocale ? '' : locale + '/';
       candidates.add(prefix + 'index.html');
+      candidates.add(prefix + 'archives/index.html');
+      candidates.add(prefix + 'search/index.html');
       candidates.add(prefix + 'privacy-policy/index.html');
     }
     for (const issue of report.issues) {
@@ -470,6 +500,24 @@ export async function addVisualEvidence(config, report) {
     }
     reportServer = await startReportServer(config.resolvedPaths.output, evidenceDirectory, htmlPath);
     browserSession = await startHeadlessBrowser(browser, profile);
+    for (const relativeFile of available) {
+      for (const device of deviceProfiles) for (const colorScheme of ['light', 'dark']) {
+        const emulation = { ...device, colorScheme };
+        await browserSession.setViewport(emulation);
+        await browserSession.navigate('http://127.0.0.1:' + reportServer.port + siteAddress(relativeFile));
+        const result = { page: relativeFile, profile: device.name, colorScheme, ...await browserSession.audit(emulation) };
+        report.browserChecks.results.push(result);
+        for (const check of result.checks.filter(item => !item.passed)) {
+          report.issues.push({ severity: 'error', category: 'browser-' + check.group, page: relativeFile,
+            message: device.name + '/' + colorScheme + ': ' + check.name + (check.detail ? ' (' + check.detail + ')' : '') + '.' });
+        }
+      }
+    }
+    report.browserChecks.status = report.browserChecks.results.every(result => result.status === 'pass') ? 'pass' : 'fail';
+    if (!report.browserChecks.results.length) {
+      report.browserChecks.status = 'unavailable';
+      report.browserChecks.reason = 'No generated pages were available for browser checks.';
+    }
     for (const screenshot of screenshots) {
       const viewport = screenshot.viewport === 'mobile' ? mobile : desktop;
       await browserSession.setViewport(viewport);

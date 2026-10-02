@@ -119,6 +119,10 @@ blocks:
                 edgepress deploy
             - type: text
               text: Compatibility checks read the Node.js baseline, Worker entry, and compatibility date from project-compatibility.json and wrangler.jsonc. Review the PDF report before deploying.
+            - type: text
+              paragraphs:
+                - You can run edgepress check before writing your first article. Markdown verification uses a built-in in-memory sample; no tutorial post or posts directory is required. Worker compatibility reads the actual main entry from Wrangler configuration.
+                - With Edge, Chrome or Chromium installed, the report includes headless desktop, phone and tablet profiles in light and dark modes, browser accessibility-tree checks, and a sample of Tab, Shift+Tab and Enter navigation. No visible browser or desktop screen reader is launched. Simulations do not replace physical-device or assistive-technology testing; unavailable browser checks are labeled accordingly.
             - type: section
               title: Publish the source on GitHub
               blocks:

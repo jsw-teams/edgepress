@@ -1,5 +1,5 @@
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { mkdir, readFile, realpath, writeFile } from 'node:fs/promises';
+import { isAbsolute, relative, resolve, sep } from 'node:path';
 
 async function readJson(file) {
   return JSON.parse(await readFile(file, 'utf8'));
@@ -37,9 +37,26 @@ export async function checkCompatibility(config) {
   if (!wrangler.assets || !wrangler.assets.directory || wrangler.assets.binding !== 'ASSETS') {
     issues.push({ severity: 'error', message: 'Configure the ASSETS binding and static assets directory in Wrangler.' });
   }
-  const workerSource = await readFile(resolve(root, 'src/worker.js'), 'utf8');
-  if (/from\s+['"]node:|require\s*\(\s*['"]node:/i.test(workerSource)) {
-    issues.push({ severity: 'error', message: 'The Worker entry imports a Node.js built-in; keep build-only APIs out of src/worker.js.' });
+  const entry = wrangler.main;
+  if (typeof entry !== 'string' || !entry.trim()) {
+    issues.push({ severity: 'error', message: 'Configure a Worker entry in wrangler.jsonc main.' });
+  } else {
+    try {
+      const realRoot = await realpath(root);
+      const workerFile = await realpath(resolve(root, entry));
+      const rel = relative(realRoot, workerFile);
+      if (rel === '..' || rel.startsWith('..' + sep) || isAbsolute(rel)) {
+        issues.push({ severity: 'error', message: 'The configured Worker entry must stay inside the project root.' });
+      } else {
+        const workerSource = await readFile(workerFile, 'utf8');
+        if (/from\s+['"]node:|require\s*\(\s*['"]node:/i.test(workerSource)) {
+          issues.push({ severity: 'error', message: 'The configured Worker entry imports a Node.js built-in; keep build-only APIs out of the Worker.' });
+        }
+      }
+    } catch (error) {
+      if (!['ENOENT', 'EISDIR', 'EACCES', 'EPERM'].includes(error.code)) throw error;
+      issues.push({ severity: 'error', message: 'Cannot read the configured Worker entry: ' + entry + ' (' + error.code + ').' });
+    }
   }
   const first = wrangler.assets?.run_worker_first;
   if (!Array.isArray(first) || !first.includes('/api/*')) {

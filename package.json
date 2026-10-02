@@ -20,7 +20,8 @@
     "README.md",
     "tools/writing.test.mjs",
     "tools/brand-regression.test.mjs",
-    "tools/post-list.test.mjs"
+    "tools/post-list.test.mjs",
+    "tools/audit.test.mjs"
   ],
   "repository": {
     "type": "git",
@@ -49,7 +50,7 @@
     "doctor": "node src/cli.js doctor",
     "iterate": "node src/cli.js iterate",
     "security:check": "node src/cli.js security",
-    "test": "node --test tools/writing.test.mjs tools/brand-regression.test.mjs tools/post-list.test.mjs"
+    "test": "node --test tools/writing.test.mjs tools/brand-regression.test.mjs tools/post-list.test.mjs tools/audit.test.mjs"
   },
   "dependencies": {
     "marked": "^18.0.13",

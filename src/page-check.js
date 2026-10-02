@@ -2,6 +2,7 @@ import { access, lstat, mkdir, readFile, readdir, realpath } from 'node:fs/promi
 import { extname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { addVisualEvidence } from './report-visuals.js';
 import { renderMarkdown, renderMarkdownExcerpt } from './markdown.js';
+import { markdownFixture } from './markdown-fixture.js';
 
 async function htmlFiles(directory) {
   let entries;
@@ -61,7 +62,7 @@ async function contentDocuments(output, config) {
   return documents;
 }
 
-async function markdownFeatureCoverage(root, files, sourceByFile) {
+export async function markdownFeatureCoverage() {
   const expected = [
     ['headings 2 through 6', /<h2\b[\s\S]*?<h3\b[\s\S]*?<h4\b[\s\S]*?<h5\b[\s\S]*?<h6\b/i],
     ['Setext heading syntax', /<h2\b[^>]*>Setext (?:heading level two|二级标题示例)<\/h2>/i],
@@ -72,11 +73,11 @@ async function markdownFeatureCoverage(root, files, sourceByFile) {
     ['inline and fenced code', /<code\b[\s\S]*?<\/code>[\s\S]*?<pre\b[\s\S]*?<code\b[^>]*class="language-js"/i],
     ['tilde-fenced and four-space-indented code', /class="language-text"[\s\S]*?<pre\b[^>]*><code[^>]*>const indented =/i],
     ['code spans containing a literal backtick', (html) => html.includes('<code>`</code>')],
-    ['escaped Markdown punctuation and character references', /\\\*[\s\S]*?&lt;[\s\S]*?&amp;/i],
+    ['escaped Markdown punctuation and character references', (html) => html.includes('<p>*escaped punctuation* &lt; &amp;</p>')],
     ['inline and reference links', /href="\/quick-start\/"/i],
     ['GFM automatic links', /href="https:\/\/www\.markdownguide\.org\//i],
     ['angle-bracket, www, and email automatic links', /href="https:\/\/commonmark\.org"[\s\S]*?href="http:\/\/www\.example\.com"[\s\S]*?href="mailto:team@example\.com"/i],
-    ['images with alternative text', /<img\b[^>]*src="\/edgepress-markdown-guide\.svg"[^>]*alt="[^"]+"/i],
+    ['images with alternative text', /<img\b[^>]*src="\/edgepress-markdown-guide\.png"[^>]*alt="[^"]+"/i],
     ['image-shaped video Markdown syntax documented', (html) => html.includes('field-recording.mp4')],
     ['nested lists with inline formatting', /<li>[\s\S]*?<strong\b[\s\S]*?<ol\b[\s\S]*?<li>/i],
     ['task lists with accessible status names', /markdown-task-status" role="img" aria-label="[^"]+"/i],
@@ -99,19 +100,16 @@ async function markdownFeatureCoverage(root, files, sourceByFile) {
     ['unsafe video URL is rejected', unsafeVideoRejected],
     ['post-list excerpt preserves inline Markdown formatting', /<strong>formatted<\/strong>[\s\S]*?<em>emphasis<\/em>[\s\S]*?<code>code<\/code>/i.test(excerptHtml)]
   ];
-  const guides = files.filter((file) => /markdown-syntax-guide\/index\.html$/i.test(file.replace(/\\/g, '/')));
-  const documents = guides.map((file) => {
-    const html = sourceByFile.get(file) || '';
-    const content = html.match(/<div class="post-content">([\s\S]*?)<\/div>/i)?.[1] || '';
-    const checks = [
-      ...expected.map(([feature, matcher]) => ({ feature, passed: typeof matcher === 'function' ? matcher(content) : matcher.test(content) })),
-      ...videoChecks.map(([feature, passed]) => ({ feature, passed }))
-    ];
-    return { path: relative(root, file).replace(/\\/g, '/'), checks, passed: checks.filter((item) => item.passed).length };
-  });
+  const content = await renderMarkdown(markdownFixture);
+  const checks = [
+    ...expected.map(([feature, matcher]) => ({ feature, passed: typeof matcher === 'function' ? matcher(content) : matcher.test(content) })),
+    ...videoChecks.map(([feature, passed]) => ({ feature, passed }))
+  ];
+  const documents = [{ path: 'Built-in renderer fixture (not published)', checks,
+    passed: checks.filter((item) => item.passed).length }];
   return {
-    status: guides.length && documents.every((document) => document.checks.every((item) => item.passed)) ? 'pass' : 'fail',
-    checks: (expected.length + videoChecks.length) * Math.max(1, guides.length),
+    status: checks.every((item) => item.passed) ? 'pass' : 'fail',
+    checks: checks.length,
     passed: documents.reduce((total, document) => total + document.passed, 0),
     documents
   };
@@ -184,10 +182,7 @@ export async function checkPages(config) {
     pageIds.set(file, new Set([...html.matchAll(/\bid\s*=\s*["']([^"']+)["']/gi)].map((match) => match[1])));
     metrics.htmlBytes += Buffer.byteLength(html);
   }
-  const markdownRendering = await markdownFeatureCoverage(output, files, sourceByFile);
-  if (!markdownRendering.documents.length) {
-    addFinding('error', 'markdown-rendering', 'content/posts', 'The Markdown syntax guide post was not generated.');
-  }
+  const markdownRendering = await markdownFeatureCoverage();
   for (const document of markdownRendering.documents) {
     for (const check of document.checks.filter((item) => !item.passed)) {
       addFinding('error', 'markdown-rendering', document.path, 'Markdown syntax did not render: ' + check.feature + '.');
@@ -395,11 +390,12 @@ export async function checkPages(config) {
     hashedAssets,
     issues,
     scope: [
-      'Accessibility checks inspect generated HTML and CSS. They do not measure color contrast, screen-reader behavior, keyboard interactions in a browser, or dynamic vendor widgets.',
+      'Structural accessibility checks inspect generated HTML and CSS. Browser checks separately sample device emulation, the browser accessibility tree, and real Tab/Shift+Tab/Enter events when Chromium is available.',
       'Page layout is measured with the consent manager hidden. The consent manager has separate component checks and screenshots, so its size does not change the page-content overflow result.',
       'Agent-friendliness checks inspect metadata, structured data, internal links, robots.txt, sitemap.xml, and llms.txt. They do not guarantee crawler indexing or answer quality.',
       'This automated report is not a legal-compliance assessment or a substitute for manual review.',
-      'Screenshots capture generated local pages at desktop and mobile viewports. They do not replace manual keyboard, zoom, contrast, or assistive-technology review.'
+      'Headless phone/tablet profiles and accessibility-tree inspection are simulations, not physical devices or NVDA, Narrator, VoiceOver, or TalkBack. Keyboard sampling does not cover every possible interaction; manual zoom, contrast and assistive-technology review remain necessary.',
+      'Markdown self-checks render a built-in fixture in memory without publishing tutorial articles or requiring a posts directory.'
     ]
   };
   const requestedDirectory = resolve(config.root, 'tools');
@@ -424,6 +420,10 @@ export async function checkPages(config) {
       issues.push({ severity: 'warning', category: 'visual-evidence', page: 'report', message: report.visualEvidence.reason || 'PDF generation failed.' });
     }
   } catch (error) {
+    if (report.browserChecks && report.browserChecks.status !== 'pass' && report.browserChecks.status !== 'fail') {
+      report.browserChecks.status = report.browserChecks.results.length ? 'incomplete' : 'unavailable';
+      report.browserChecks.reason = error.message;
+    }
     report.visualEvidence = { status: 'failed', reason: error.message };
     issues.push({ severity: 'warning', category: 'visual-evidence', page: 'report', message: 'Screenshot or PDF generation failed: ' + error.message });
   }

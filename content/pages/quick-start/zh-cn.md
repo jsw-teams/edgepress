@@ -119,6 +119,10 @@ blocks:
                 edgepress deploy
             - type: text
               text: 兼容性检查会读取 project-compatibility.json 和 wrangler.jsonc 中的 Node.js 基线、Worker 入口和兼容日期。部署前请查看 PDF 报告。
+            - type: text
+              paragraphs:
+                - 第一篇文章尚未创建时，也可以运行 edgepress check。Markdown 检查使用内置的内存样例，无需发布教程文章或创建 posts 目录。Worker 兼容性检查读取 Wrangler 的实际 main 入口。
+                - 安装 Edge、Chrome 或 Chromium 后，报告会包含无窗口的桌面、手机和平板深浅模式模拟、浏览器无障碍树检查，以及 Tab、Shift+Tab 和 Enter 键盘操作抽样。不会启动可见浏览器或桌面屏幕阅读器。模拟不能代替实体设备与辅助技术测试；浏览器检查不可用时会明确标注。
             - type: section
               title: 将源代码上传到 GitHub
               blocks:
