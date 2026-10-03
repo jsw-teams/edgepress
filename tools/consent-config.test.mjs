@@ -37,7 +37,7 @@ test('consent payload follows YAML names, dates, expiry and enabled services; no
     assert.deepEqual(payload.privacy.integrations.map(item=>item.id),['github-comments']);
     assert.equal(payload.privacy.integrations[0].name,'Configured discussion name');
     assert.equal(payload.legacyChoiceFingerprints,undefined);
-    assert.equal(config.browserPlugins.services.filter(service => service.enabled === false).length,1,'A disabled service is retained without loading it');
+    assert.equal(config.browserPlugins.services.filter(service => service.enabled === false).length,settings.plugins.consent.services.filter(service=>service.enabled===false).length,'Disabled services are retained without loading them');
     assert.ok(!Object.hasOwn(payload.privacy.integrations[0], 'category'));
     assert.ok(!Object.hasOwn(payload.ui, 'pluginBackend'));
   } finally {await rm(folder,{recursive:true,force:true});}

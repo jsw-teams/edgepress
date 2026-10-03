@@ -261,3 +261,6 @@ body{background:radial-gradient(ellipse at 88% 2%,#ffe5df 0,transparent 32%),var
 .post-changes { margin: 1rem 0; }
 .post-changes summary { cursor: pointer; font-weight: 600; }
 .post-changes pre { overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Media blocks inherit their page cell width, including mixed-column layouts. */
+.edgepress-oembed{width:100%;min-width:0;margin:0;overflow-wrap:anywhere}.edgepress-oembed [data-oembed-status],.oembed-content{min-width:0;max-width:100%}.edgepress-oembed iframe,.edgepress-oembed img,.edgepress-oembed blockquote{max-width:100%;margin-inline:auto}.edgepress-oembed [data-oembed-load]{min-height:44px}.oembed-caption{white-space:pre-wrap}

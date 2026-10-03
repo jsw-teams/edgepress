@@ -34,19 +34,20 @@ function navigationItems(config, locale, items, currentPath = '') {
     const label = item.labels?.[locale] ?? item.labels?.[config.i18n.defaultLocale] ?? translate(config, locale, item.key);
     const iconName = item.icon || defaultNavigationIcons[item.key];
     const icon = isIconName(iconName) ? renderIcon(iconName, 'navigation-icon') : '';
+    const attributes = item.target === '_blank' ? ' target="_blank" rel="noopener noreferrer"' : '';
     if (item.children?.length) {
-      const choices = [{ path, label }, ...item.children.map(child => ({
+      const choices = [{ path, label, target:item.target }, ...item.children.map(child => ({
         path: child.url === '@home' ? localizedUrl(config, locale, '') : child.url === '@archives' ? localizedUrl(config, locale, 'archives/') :
           child.url === '@feed' ? localizedUrl(config, locale, 'feed.xml') : child.url === '@search' ? localizedUrl(config, locale, 'search/') :
           child.url.startsWith('/') ? localizedUrl(config, locale, child.url) : child.url,
-        label: child.labels?.[locale] ?? child.labels?.[config.i18n.defaultLocale] ?? translate(config, locale, child.key)
+        label: child.labels?.[locale] ?? child.labels?.[config.i18n.defaultLocale] ?? translate(config, locale, child.key), target:child.target
       }))];
       return '<span class="navigation-select" hidden>' + icon + '<select data-navigation-select aria-label="' + escapeHtml(label) + '">' +
         '<option value="" selected disabled hidden>' + escapeHtml(label) + '</option>' +
-        choices.map(choice => '<option value="' + escapeHtml(choice.path) + '">' + escapeHtml(choice.label) + '</option>').join('') +
-        '</select></span><noscript>' + choices.map(choice => '<a href="' + escapeHtml(choice.path) + '">' + escapeHtml(choice.label) + '</a>').join('') + '</noscript>';
+        choices.map(choice => '<option value="' + escapeHtml(choice.path) + '"'+(choice.target==='_blank'?' data-target="_blank"':'')+'>' + escapeHtml(choice.label) + '</option>').join('') +
+        '</select></span><noscript>' + choices.map(choice => '<a href="' + escapeHtml(choice.path) + '"'+(choice.target==='_blank'?' target="_blank" rel="noopener noreferrer"':'')+'>' + escapeHtml(choice.label) + '</a>').join('') + '</noscript>';
     }
-    return '<a href="' + escapeHtml(path) + '">' + icon + escapeHtml(label) + '</a>';
+    return '<a href="' + escapeHtml(path) + '"'+attributes+'>' + icon + escapeHtml(label) + '</a>';
   }).join('');
 }
 

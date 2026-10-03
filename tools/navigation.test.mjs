@@ -10,6 +10,15 @@ import {renderLayout} from '../src/theme.js';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const extensions={filter:async(_key,value)=>value};
+test('navigation and footer keep external URLs and new-tab targets, including dropdown choices',async()=>{
+ const config=await fixture('default');
+ config.site.navigation[0].children.push({key:'share',url:'https://share.js.gripe',target:'_blank',labels:{en:'ishare'}});
+ config.site.footerNavigation=[{key:'share',url:'https://share.js.gripe',target:'_blank',labels:{en:'ishare'}}];
+ const html=await renderLayout(config,extensions,{locale:'zh-CN',urlPath:'/zh-CN/'},'<h1>Fixture</h1>');
+ assert.match(html,/<option value="https:\/\/share.js.gripe" data-target="_blank">ishare/);
+ assert.match(html,/<a href="https:\/\/share.js.gripe" target="_blank" rel="noopener noreferrer">ishare<\/a>/);
+ assert.doesNotMatch(html,/\/zh-CN\/https:/);
+});
 async function fixture(theme){
  const config=await loadConfig(root);
  await loadLanguagePacks(config);

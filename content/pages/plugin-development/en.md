@@ -138,4 +138,27 @@ blocks:
           items:
             - label: ishare
               url: https://github.com/jsw-teams/ishare/blob/main/docs/zh-cn.md
+  - columns: 1
+    cells:
+      - - type: text
+          heading: General social media embeds
+          text: "YouTube, X, Vimeo, TikTok, Reddit, Spotify, SoundCloud, Dailymotion, Flickr, Tumblr, Mastodon, Instagram, Facebook and Bilibili are registered by default. Set enabled: false to remove a service, its blocks and network permissions. oembedEndpoint metadata is cached at build time; the browser still waits for consent and a load click. sourceOrigins validates shared links; embedOrigins permits media hosts; embedScripts contains exact optional vendor script URLs. Instagram and Facebook use official public-content iframes. Private or embed-restricted posts may be unavailable. Replace the Mastodon instance with your actual instance."
+        - type: code
+          title: Mix oEmbed with page elements
+          language: yaml
+          code: |
+            blocks:
+              - columns: 2
+                cells:
+                  - - type: text
+                      heading: Watch with context
+                      text: Describe the media next to its player.
+                  - - type: oembed
+                      integration: youtube
+                      url: https://www.youtube.com/watch?v=jNQXAC9IVRw
+                      title: Shared video
+                      caption: The source remains available through the original link.
+        - type: text
+          heading: Custom oEmbed and navigation
+          text: "Add a flat provider: oembed service in config.yml with disclosures, backendUrl, oembedEndpoint and permitted source/media origins. Public endpoints must not contain secrets; authenticated providers need an external gateway. Pages reference the service id with integration. Navigation and footer links support target: _self or target: _blank, including dropdown choices."
 ---

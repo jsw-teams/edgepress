@@ -166,7 +166,8 @@ function validateSiteConfig(config) {
         if (depth || !item.children.length) throw new Error('Navigation children allow one non-empty level');
         validateNavigation(item.children, field + '.children', depth + 1);
       }
-      for (const key of Object.keys(item)) if (!['key', 'url', 'labels', 'children'].includes(key)) throw new Error('Unsupported ' + field + ' item option: ' + key);
+      for (const key of Object.keys(item)) if (!['key', 'url', 'labels', 'children', 'target'].includes(key)) throw new Error('Unsupported ' + field + ' item option: ' + key);
+      if (item.target !== undefined && !['_self','_blank'].includes(item.target)) throw new Error(field + '.target must be _self or _blank');
       const url = item.url.trim();
       if (!['@home', '@archives', '@feed', '@search'].includes(url)) {
         const safeLocal = url.startsWith('/') && !url.startsWith('//') && !/[\\\x00-\x20]/.test(url) && !/^(?:javascript|data|vbscript):/i.test(url);
@@ -277,11 +278,31 @@ function validateBrowserPlugins(config) {
       safePrivacyUrl = parsed.protocol === 'https:' && !parsed.username && !parsed.password;
     } catch { safePrivacyUrl = false; }
     if (!safePrivacyUrl) throw new Error('Service ' + id + '.privacyUrl must be a safe HTTPS URL');
-    const allowedKeys = new Set(['id', 'enabled', 'provider', 'name', 'purpose', 'dataCategories', 'recipient', 'retention', 'privacyUrl', ...(definition.credential ? [definition.credential] : []), ...(provider === 'external-widget' ? ['moduleUrl', 'placement'] : [])]);
+    const allowedKeys = new Set(['id', 'enabled', 'provider', 'name', 'purpose', 'dataCategories', 'recipient', 'retention', 'privacyUrl', ...(definition.credential ? [definition.credential] : []), ...(provider === 'external-widget' ? ['moduleUrl', 'placement'] : []), ...(provider === 'oembed' ? ['oembedEndpoint','embedTemplate','embedPathPattern','sourceOrigins','embedOrigins','embedScripts'] : [])]);
     for (const key of Object.keys(service)) if (!allowedKeys.has(key)) throw new Error('Unsupported option for service ' + id + ': ' + key);
     if (provider === 'external-widget' || provider === 'external-api' || provider === 'oembed') {
       let valid=false;try {const url=new URL(service.backendUrl);valid=url.protocol==='https:' && !url.username && !url.password && !url.search && !url.hash;}catch{}
       if(!valid)throw new Error('Service '+id+' needs an exact HTTPS backendUrl origin');
+      if(provider === 'oembed') {
+        for(const field of ['sourceOrigins','embedOrigins','embedScripts']) {
+          if(service[field] === undefined)continue;
+          if(!Array.isArray(service[field]) || service[field].length>24)throw new Error('Service '+id+'.'+field+' must be a URL array');
+          for(const value of service[field]) {
+            let safe=false;try{const url=new URL(value);safe=url.protocol==='https:'&&!url.username&&!url.password&&!url.hash&&(field==='embedScripts'?!url.search:url.origin===value);}catch{}
+            if(!safe)throw new Error('Service '+id+'.'+field+' needs exact HTTPS '+(field==='embedScripts'?'script URLs':'origins'));
+          }
+        }
+        if(service.oembedEndpoint !== undefined) {
+          let safe=false;try{const url=new URL(service.oembedEndpoint);safe=url.protocol==='https:'&&!url.username&&!url.password&&!url.hash;}catch{}
+          if(!safe)throw new Error('Service '+id+' needs a public HTTPS oembedEndpoint');
+        }
+        if(service.embedTemplate !== undefined) {
+          let safe=false;try{const url=new URL(service.embedTemplate.replaceAll('{url}','https%3A%2F%2Fexample.com').replaceAll('{path}','/p/example/').replaceAll('{id}','example'));safe=url.protocol==='https:'&&!url.username&&!url.password&&!url.hash&&(service.embedOrigins || [new URL(service.backendUrl).origin]).includes(url.origin);}catch{}
+          if(!safe || service.oembedEndpoint || service.embedScripts?.length)throw new Error('embedTemplate needs an allowed HTTPS iframe origin and cannot use oembedEndpoint or scripts');
+          if(service.embedPathPattern !== undefined){if(typeof service.embedPathPattern!=='string'||service.embedPathPattern.length>200)throw new Error('embedPathPattern must be a short path expression');new RegExp(service.embedPathPattern);}
+          if(service.embedTemplate.includes('{id}')&&!service.embedPathPattern)throw new Error('The {id} template requires embedPathPattern with a capture group');
+        }else if(!service.oembedEndpoint&&(service.sourceOrigins || service.embedOrigins || service.embedScripts))throw new Error('Third-party oEmbed options require oembedEndpoint or embedTemplate');
+      }
       if (provider === 'external-widget') {
         const module = new URL(service.moduleUrl);
         if (module.protocol !== 'https:' || module.username || module.password || module.origin !== new URL(service.backendUrl).origin || !module.pathname.endsWith('.js') || module.hash) throw new Error('Widget moduleUrl must be a same-service HTTPS JavaScript URL');

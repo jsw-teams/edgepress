@@ -122,4 +122,27 @@ blocks:
           items:
             - label: ishare
               url: https://github.com/jsw-teams/ishare/blob/main/docs/zh-cn.md
+  - columns: 1
+    cells:
+      - - type: text
+          heading: 通用社交媒体嵌入
+          text: "默认预置 YouTube、X、Vimeo、TikTok、Reddit、Spotify、SoundCloud、Dailymotion、Flickr、Tumblr、Mastodon、Instagram、Facebook、哔哩哔哩。逐项设 enabled: false 会移除区块、授权条目和网络权限。标准提供方使用 oembedEndpoint，构建阶段缓存元数据；浏览器必须先授权并点击加载。sourceOrigins 指定分享链接域名，embedOrigins 指定播放器与资源域名，embedScripts 是按需加载的完整脚本地址。Instagram 和 Facebook 使用公开内容的官方 iframe，不要求把 Meta 令牌放入前端；私密、禁止嵌入或平台限制的内容仍可能无法显示。Mastodon 需将默认实例替换为实际实例。"
+        - type: code
+          title: oEmbed 与页面元素组合
+          language: yaml
+          code: |
+            blocks:
+              - columns: 2
+                cells:
+                  - - type: text
+                      heading: 视频与说明
+                      text: 在播放器旁介绍内容。
+                  - - type: oembed
+                      integration: youtube
+                      url: https://www.youtube.com/watch?v=jNQXAC9IVRw
+                      title: 分享视频
+                      caption: 保留原链接供直接查看。
+        - type: text
+          heading: 自定义 oEmbed 与导航跳转
+          text: "在 config.yml 新增 provider: oembed 服务，填写授权说明、backendUrl、oembedEndpoint 与分享链接和媒体域名。公开接口不得包含密钥；需凭据的平台使用外部网关。Pages 通过 integration 引用服务 ID。导航和页脚链接含下拉选项均支持 target: _self 或 target: _blank。"
 ---
