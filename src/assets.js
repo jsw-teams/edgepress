@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { copyFile, readdir, readFile, writeFile, mkdir } from 'node:fs/promises';
 import { dirname, extname, relative, resolve, sep } from 'node:path';
 import * as posix from 'node:path/posix';
+import {fileURLToPath} from 'node:url';
 import { mapLimit } from './concurrency.js';
 import {extendConsentPolicy,serializeConsentHeaders} from './consent-csp.js';
 
@@ -91,6 +92,14 @@ export async function collectAssets(config) {
       if (path.split('/').includes('.gitkeep')) continue;
       sources.push({ source, path, sourceName: name });
     }
+  }
+  // Library consumers do not need to copy framework runtime source into their
+  // repositories. Project-owned overrides keep precedence for existing sites.
+  const runtimeRoot=fileURLToPath(new URL('../static/edgepress/',import.meta.url));
+  const supplied=new Set(sources.map(item=>item.path));
+  for(const source of await walk(runtimeRoot)) {
+    const path='edgepress/'+relative(runtimeRoot,source).split(sep).join('/');
+    if(!supplied.has(path))sources.push({source,path,sourceName:'EdgePress runtime'});
   }
 
   const headers = [];
