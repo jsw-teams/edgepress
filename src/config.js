@@ -78,6 +78,7 @@ function validateLocalizedServiceText(value, label, maxLength, locales) {
 }
 
 const integrationProviders = {
+  'oembed': { credential: 'backendUrl', pattern: /^https:\/\/[^\s]+$/ },
   'external-widget': { credential: 'backendUrl', pattern: /^https:\/\/[^\s]+$/ },
   'external-api': { credential: 'backendUrl', pattern: /^https:\/\/[^\s]+$/ },
   'google-tag-manager': { credential: 'containerId', pattern: /^GTM-[A-Z0-9]{4,20}$/i },
@@ -278,7 +279,7 @@ function validateBrowserPlugins(config) {
     if (!safePrivacyUrl) throw new Error('Service ' + id + '.privacyUrl must be a safe HTTPS URL');
     const allowedKeys = new Set(['id', 'enabled', 'provider', 'name', 'purpose', 'dataCategories', 'recipient', 'retention', 'privacyUrl', ...(definition.credential ? [definition.credential] : []), ...(provider === 'external-widget' ? ['moduleUrl', 'placement'] : [])]);
     for (const key of Object.keys(service)) if (!allowedKeys.has(key)) throw new Error('Unsupported option for service ' + id + ': ' + key);
-    if (provider === 'external-widget' || provider === 'external-api') {
+    if (provider === 'external-widget' || provider === 'external-api' || provider === 'oembed') {
       let valid=false;try {const url=new URL(service.backendUrl);valid=url.protocol==='https:' && !url.username && !url.password && !url.search && !url.hash;}catch{}
       if(!valid)throw new Error('Service '+id+' needs an exact HTTPS backendUrl origin');
       if (provider === 'external-widget') {

@@ -187,6 +187,9 @@ export async function renderLayout(config, extensions, page, body) {
   if (/data-edgepress-search(?:\s|=|>)/i.test(filtered) && !/src=["']\/edgepress\/search\.js["']/i.test(filtered)) {
     scripts.push('<script defer src="/edgepress/search.js"></script>');
   }
+  if (/data-edgepress-oembed(?:\s|=|>)/i.test(filtered)) {
+    filtered = filtered.replace(/<\/body\s*>/i, '<script type="module" src="/edgepress/oembed.js"></script></body>');
+  }
   if (/data-edgepress-service(?:\s|=|>)/i.test(filtered) && !/src=["']\/edgepress\/services-consent\.js["']/i.test(filtered)) {
     scripts.push('<script defer src="/edgepress/services-consent.js"></script>');
   }

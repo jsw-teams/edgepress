@@ -24,7 +24,7 @@ export default function consentManager(api) {
       'privacySettings', 'privacyNotice', 'privacyIntro', 'acceptOptional', 'rejectOptional',
       'savePreferences', 'optionalServices', 'noIntegrations', 'privacyPolicy', 'privacyController', 'privacyContact',
       'serviceDataCategories', 'serviceRecipient', 'serviceRetention', 'servicePrivacyDetails', 'servicePrivacyLink', 'consentReload',
-      'closePrivacy', 'reviewDetails', 'essentialStorage'
+      'closePrivacy', 'reviewDetails', 'essentialStorage', 'loadMedia', 'embedUnavailable'
     ].map((key) => [key, translate(config, locale, key)]));
     const services = config.browserPlugins.services.filter(service => service.enabled !== false);
     const privacy = {

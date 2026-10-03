@@ -155,3 +155,6 @@ Run npm run deploy:cloudflare, npm run deploy:vercel, npm run deploy:netlify, np
 All platforms build dist/. CSS and JS are fingerprinted, with one-year immutable cache policies for Cloudflare, Vercel, Netlify and EdgeOne. ESA uses the same assets; set its browser and edge cache rules for hashed CSS/JS while leaving HTML short-lived. See the [deployment guide](content/pages/deployment/en.md) and [ESA build configuration](https://help.aliyun.com/en/edge-security-acceleration/esa/user-guide/build-pages).
 
 Optional API requests use one fixed endpoint: backendUrl itself when it has a path, otherwise /api on its origin. callService(id, action, options) puts the operation in X-Service-Action; context belongs in request headers and payloads in the body. The independent API must implement this contract and allow the required CORS request headers. Third-party vendor integrations retain their vendor-defined protocols.
+
+
+Page blocks support `type: oembed` with an `integration` service ID and share `url`. Register `provider: oembed` under the flat consent services list. Media loads only after current consent and a click, using fixed `/api` metadata requests and an iframe limited to the configured origin. See the [plugin guide](content/pages/plugin-development/en.md) and [ishare](https://github.com/jsw-teams/ishare).

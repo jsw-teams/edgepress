@@ -1,5 +1,6 @@
 import {makeChoice,readChoice,persistChoice} from './choices.js';
 const modules = {
+  'oembed': () => import('../backend/external-api.js'),
   'external-widget': () => import('../backend/external-widget.js'),
   'external-api': () => import('../backend/external-api.js'),
   'google-tag-manager': () => import('../tracking/google-tag-manager.js'),

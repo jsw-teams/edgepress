@@ -1,7 +1,7 @@
 import {readChoice} from './plugins/consent/choices.js';
 export async function callService(id, action, options = {}) {
   const config = JSON.parse(document.getElementById('edgepress-privacy-config')?.textContent || '{}');
-  const service = config.privacy?.integrations?.find(item => item.id === id && item.provider === 'external-api');
+  const service = config.privacy?.integrations?.find(item => item.id === id && ['external-api','oembed'].includes(item.provider));
   if (!service || !readChoice(config)?.allowed.includes(id)) throw new Error('Service requires visitor consent: ' + id);
   const base = new URL(service.backendUrl);
   if (base.protocol !== 'https:' || base.username || base.password) throw new Error('Invalid service URL');

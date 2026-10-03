@@ -408,6 +408,15 @@ async function renderBlock(block, context, depth, index) {
       return '<section class="faq-block"><h2>' + title + '</h2>' + items.map((item) => '<details><summary>' +
         escapeHtml(text(item?.question, 'faq.question', 500)) + '</summary><p>' + escapeHtml(text(item?.answer, 'faq.answer', 4000)) + '</p></details>').join('') + '</section>';
     }
+    case 'oembed': {
+      const service = context.config.browserPlugins.services.find(item => item.id === block.integration);
+      if (!service || service.provider !== 'oembed') throw new Error('oembed requires a registered oembed service');
+      if (service.enabled === false) return '';
+      const address = new URL(safeUrl(block.url, 'oembed.url'));
+      if (address.protocol !== 'https:' || address.origin !== new URL(service.backendUrl).origin || address.username || address.password) throw new Error('oembed URL must use its registered HTTPS service origin');
+      const label = text(block.title || translateValue(context.config, context.locale, service.name), 'oembed.title', 200);
+      return '<figure class="edgepress-oembed" data-edgepress-oembed="' + escapeHtml(service.id) + '" data-oembed-url="' + escapeHtml(address.href) + '"><figcaption>' + escapeHtml(label) + '</figcaption><button type="button" data-oembed-load>' + escapeHtml(translate(context.config, context.locale, 'loadMedia')) + '</button><a href="' + escapeHtml(address.href) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(label) + '</a><span role="status" data-oembed-status></span></figure>';
+    }
     case 'service': {
       const id = text(block.integration, 'service.integration', 64);
       if (context.servicesRendered.has(id)) throw new Error('A page may contain only one block per service');

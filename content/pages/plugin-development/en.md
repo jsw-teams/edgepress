@@ -114,4 +114,28 @@ blocks:
                 cells:
                   - - type: service
                       integration: github-comments
+  - columns: 1
+    cells:
+      - - type: text
+          heading: Shared images and videos
+          text: Register ishare as an oembed service in plugins.consent.services, with its HTTPS backendUrl and complete
+            privacy disclosures. The page keeps a local placeholder until the visitor consents and clicks Load
+            media. Metadata uses fixed /api and request headers; the attributed iframe remains on the configured
+            service origin.
+        - type: code
+          title: Page oEmbed block
+          language: yaml
+          code: |
+            blocks:
+              - columns: 1
+                cells:
+                  - - type: oembed
+                      integration: ishare
+                      url: https://share.js.gripe/s/REPLACE_WITH_REAL_SHARE_ID
+                      title: Shared media
+        - type: link-list
+          title: Service documentation
+          items:
+            - label: ishare
+              url: https://github.com/jsw-teams/ishare/blob/main/docs/zh-cn.md
 ---

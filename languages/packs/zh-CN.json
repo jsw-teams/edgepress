@@ -70,5 +70,7 @@
   "allCategoryPosts": "此分类全部文章",
   "postPinned": "置顶",
   "postUpdated": "更新于",
-  "postChanges": "最近一次变动"
+  "postChanges": "最近一次变动",
+  "loadMedia": "加载媒体",
+  "embedUnavailable": "媒体暂时不可用。"
 }

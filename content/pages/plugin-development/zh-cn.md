@@ -99,4 +99,27 @@ blocks:
                 cells:
                   - - type: service
                       integration: github-comments
+  - columns: 1
+    cells:
+      - - type: text
+          heading: 嵌入分享图片与视频
+          text: "在 plugins.consent.services 注册 provider: oembed 的 ishare 服务，填写实际 HTTPS
+            backendUrl、用途与隐私披露。页面先显示本地占位，访客授权并点击加载媒体才请求服务。元数据使用固定 /api 和 HTTP 请求头传递，保留作者和来源署名的 iframe
+            仅使用配置的服务域名。"
+        - type: code
+          title: 页面 oEmbed 区块
+          language: yaml
+          code: |
+            blocks:
+              - columns: 1
+                cells:
+                  - - type: oembed
+                      integration: ishare
+                      url: https://share.js.gripe/s/REPLACE_WITH_REAL_SHARE_ID
+                      title: 分享媒体
+        - type: link-list
+          title: 服务说明
+          items:
+            - label: ishare
+              url: https://github.com/jsw-teams/ishare/blob/main/docs/zh-cn.md
 ---

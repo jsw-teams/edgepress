@@ -70,5 +70,7 @@
   "allCategoryPosts": "All articles in this category",
   "postPinned": "Pinned",
   "postUpdated": "Updated",
-  "postChanges": "Most recent changes"
+  "postChanges": "Most recent changes",
+  "loadMedia": "Load media",
+  "embedUnavailable": "Media is temporarily unavailable."
 }
