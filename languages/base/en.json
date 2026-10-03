@@ -72,5 +72,10 @@
   "postUpdated": "Updated",
   "postChanges": "Most recent changes",
   "loadMedia": "Load media",
-  "embedUnavailable": "Media is temporarily unavailable."
+  "embedUnavailable": "Media is temporarily unavailable.",
+  "embedNeedsConsent": "This media is provided by {service}. It stays unloaded until you allow this service and request it.",
+  "embedReady": "You have allowed {service}. Select Load media to connect; nothing has loaded yet.",
+  "embedLoading": "Loading media from {service}…",
+  "embedLoaded": "Media from {service} is loaded.",
+  "embedDisabled": "The site has disabled {service}. This media has not been loaded."
 }

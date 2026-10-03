@@ -32,7 +32,8 @@
     "esa.jsonc",
     "tools/services.test.mjs",
     "netlify.toml",
-    "tools/oembed.test.mjs"
+    "tools/oembed.test.mjs",
+    "tools/consent-csp.test.mjs"
   ],
   "repository": {
     "type": "git",
@@ -61,7 +62,7 @@
     "doctor": "node src/cli.js doctor",
     "iterate": "node src/cli.js iterate",
     "security:check": "node src/cli.js security",
-    "test": "node --test tools/writing.test.mjs tools/brand-regression.test.mjs tools/post-list.test.mjs tools/audit.test.mjs tools/navigation.test.mjs tools/revisions.test.mjs tools/publication-time.test.mjs tools/consent-config.test.mjs tools/consent-browser.test.mjs tools/services.test.mjs tools/oembed.test.mjs",
+    "test": "node --test tools/writing.test.mjs tools/brand-regression.test.mjs tools/post-list.test.mjs tools/audit.test.mjs tools/navigation.test.mjs tools/revisions.test.mjs tools/publication-time.test.mjs tools/consent-config.test.mjs tools/consent-browser.test.mjs tools/services.test.mjs tools/oembed.test.mjs tools/consent-csp.test.mjs",
     "icons:sync": "node tools/sync-icons.mjs",
     "deploy:cloudflare": "node src/cli.js deploy cloudflare",
     "deploy:vercel": "node src/cli.js deploy vercel",

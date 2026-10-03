@@ -5,6 +5,7 @@ import {fileURLToPath} from 'node:url';
 import {resolve} from 'node:path';
 import {chromium} from 'playwright';
 import {loadConfig} from '../src/config.js';
+import {loadLanguagePacks} from '../src/i18n.js';
 import {renderBlocks} from '../src/page-blocks.js';
 import consentManager from '../plugins/consent/index.js';
 import {extendConsentPolicy} from '../src/consent-csp.js';
@@ -42,7 +43,7 @@ test('third-party metadata is cached, mixed Pages cells wait for consent, and Yo
   const directory=await mkdtemp(resolve(tmpdir(),'edgepress-oembed-'));
   const config=await loadConfig(root),origin=new URL(config.site.url).origin;
   const youtube=config.browserPlugins.services.find(s=>s.id==='youtube'),x=config.browserPlugins.services.find(s=>s.id==='x-posts');
-  config.browserPlugins.services=[youtube,x];config.resolvedPaths.cache=directory;
+  await loadLanguagePacks(config);config.browserPlugins.services=[youtube,x];config.resolvedPaths.cache=directory;
   const data={version:'1.0',type:'video',width:640,height:360,title:'Video',html:'<iframe src="https://www.youtube.com/embed/jNQXAC9IVRw" onload="window.bad=true"></iframe><script>window.bad=true</script>'};
   let lookups=0;const fetcher=async()=>{lookups++;return new Response(JSON.stringify(data));};
   let browser;
@@ -58,18 +59,19 @@ test('third-party metadata is cached, mixed Pages cells wait for consent, and Yo
     browser=await chromium.launch({headless:true,...(process.platform==='win32'?{channel:'msedge'}:{})});const context=await browser.newContext({viewport:{width:390,height:844}});let vendor=0;
     await context.route('**/*',async route=>{
       const url=new URL(route.request().url());
-      if(url.origin==='https://www.youtube.com'){vendor++;return route.fulfill({contentType:'text/html',body:'Player'});}
+      if(url.origin==='https://www.youtube.com'){assert.equal(route.request().headers().referer,origin+'/');vendor++;return route.fulfill({contentType:'text/html',body:'Player'});}
       if(url.origin==='https://platform.x.com'){vendor++;return route.fulfill({contentType:'text/javascript',body:'globalThis.twttr={widgets:{load(root){root.querySelector("blockquote").dataset.rendered="true"}}};'});}
       assert.equal(url.origin,origin,'No unconfigured origin is contacted');
       if(url.pathname.startsWith('/edgepress/')){try{return route.fulfill({body:await readFile(resolve(root,'static',url.pathname.slice(1))),contentType:url.pathname.endsWith('.js')?'text/javascript':'image/svg+xml'});}catch{return route.fulfill({status:404,body:''});}}
       return route.fulfill({contentType:'text/html',body:filter('<!doctype html><html><head><style>*{box-sizing:border-box}.page-row{display:grid;grid-template-columns:1fr}.page-cell{min-width:0}body{margin:8px}</style></head><body><main>'+blocks+'</main><script type="module" src="/edgepress/oembed.js"></script></body></html>',{config,page:{locale:'en'}})});
     });
-    const page=await context.newPage();await page.goto(origin+'/mixed/');await page.locator('.privacy-panel').waitFor({state:'visible'});assert.equal(vendor,0);
+    const page=await context.newPage();await page.goto(origin+'/mixed/');await page.locator('.privacy-panel').waitFor({state:'visible'});assert.equal(vendor,0);assert.match(await page.locator('[data-edgepress-oembed=youtube] [data-oembed-notice]').innerText(),/YouTube.*unloaded/i);
     await page.locator('input[value=youtube]').check();await page.locator('input[value=x-posts]').check();await page.locator('.privacy-save').click();assert.equal(vendor,0);
-    await page.locator('[data-edgepress-oembed=youtube] [data-oembed-load]').click();await page.locator('iframe').waitFor();
+    await page.locator('[data-edgepress-oembed=youtube] [data-oembed-load]').click();await page.locator('iframe').waitFor();await page.waitForFunction(()=>document.querySelector('[data-edgepress-oembed=youtube] [data-oembed-notice]').textContent.includes('loaded'));
     await page.locator('[data-edgepress-oembed=x-posts] [data-oembed-load]').click();await page.locator('blockquote[data-rendered=true]').waitFor();assert.equal(vendor,2);assert.equal(await page.evaluate(()=>!!window.bad),false);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
     await page.reload();assert.equal(vendor,2);await context.close();
     youtube.enabled=false;x.enabled=false;assert.equal(await renderBlocks([{columns:1,cells:[[{type:'oembed',integration:'youtube',url:'https://www.youtube.com/watch?v=jNQXAC9IVRw'}]]}],{config,locale:'en'}).then(html=>html.includes('data-edgepress-oembed')),false);
+    assert.match(await renderBlocks([{columns:1,cells:[[{type:'oembed',integration:'youtube',url:'https://www.youtube.com/watch?v=jNQXAC9IVRw'}]]}],{config,locale:'en'}),/disabled|turned off/i);
     assert.equal(extendConsentPolicy('/*\n  Content-Security-Policy: default-src \'self\'',config).includes('youtube'),false);
   }finally{if(browser)await browser.close();await rm(directory,{recursive:true,force:true});}
 });

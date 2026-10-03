@@ -412,17 +412,20 @@ async function renderBlock(block, context, depth, index) {
     case 'oembed': {
       const service = context.config.browserPlugins.services.find(item => item.id === block.integration);
       if (!service || service.provider !== 'oembed') throw new Error('oembed requires a registered oembed service');
-      if (service.enabled === false) return '';
       const address = new URL(safeUrl(block.url, 'oembed.url'));
       if (address.protocol !== 'https:' || !sourceOrigins(service).includes(address.origin) || address.username || address.password) throw new Error('oembed URL must use its registered HTTPS service origin');
       const label = text(block.title || translateValue(context.config, context.locale, service.name), 'oembed.title', 200);
+      const provider=translateValue(context.config,context.locale,service.name);
+      const notice=key=>escapeHtml(translate(context.config,context.locale,key).replace('{service}',provider));
+      const link='<a href="'+escapeHtml(address.href)+'" target="_blank" rel="noopener noreferrer">'+escapeHtml(label)+'</a>';
+      if(service.enabled===false)return '<figure class="edgepress-oembed" data-oembed-disabled><figcaption>'+escapeHtml(label)+'</figcaption><p role="status">'+notice('embedDisabled')+'</p>'+link+'</figure>';
       const match=service.embedPathPattern?address.pathname.match(new RegExp(service.embedPathPattern)):null;
       if(service.embedPathPattern&&!match?.[1])throw new Error('oembed URL does not match the configured content path');
       const data=service.embedTemplate?{version:'1.0',type:'rich',title:label,width:640,height:480,html:'<iframe src="'+escapeHtml(service.embedTemplate.replaceAll('{url}',encodeURIComponent(address.href)).replaceAll('{path}',address.pathname).replaceAll('{id}',encodeURIComponent(match?.[1]||'')))+'"></iframe>'}:service.oembedEndpoint?await resolveEmbed(service,address.href,context.config):undefined;
       for(const field of ['width','height'])if(block[field]!==undefined&&(!Number.isInteger(block[field])||block[field]<60||block[field]>4096))throw new Error('oembed '+field+' must be from 60 to 4096');
       const dimensions=(block.width?' data-oembed-width="'+block.width+'"':'')+(block.height?' data-oembed-height="'+block.height+'"':'');
       const caption=block.caption?'<p class="oembed-caption">'+escapeHtml(text(block.caption,'oembed.caption',2000))+'</p>':'';
-      return '<figure class="edgepress-oembed" data-edgepress-oembed="' + escapeHtml(service.id) + '" data-oembed-url="' + escapeHtml(address.href) + '"'+dimensions+'><figcaption>' + escapeHtml(label) + '</figcaption>'+(data!==null?'<button type="button" data-oembed-load>' + escapeHtml(translate(context.config, context.locale, 'loadMedia')) + '</button>':'')+'<a href="' + escapeHtml(address.href) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(label) + '</a><div role="status" data-oembed-status></div>'+caption+(data?'<template data-oembed-data>'+escapeHtml(JSON.stringify(data))+'</template>':'')+'</figure>';
+      return '<figure class="edgepress-oembed" data-edgepress-oembed="' + escapeHtml(service.id) + '" data-oembed-url="' + escapeHtml(address.href) + '"'+dimensions+(data===null?' data-oembed-unavailable="true"':'')+'><figcaption>' + escapeHtml(label) + '</figcaption><p data-oembed-notice role="status">'+notice(data===null?'embedUnavailable':'embedNeedsConsent')+'</p>'+(data!==null?'<button type="button" data-oembed-load>' + escapeHtml(translate(context.config, context.locale, 'loadMedia')) + '</button>':'')+link+'<div data-oembed-status></div>'+caption+(data?'<template data-oembed-data>'+escapeHtml(JSON.stringify(data))+'</template>':'')+'</figure>';
     }
     case 'service': {
       const id = text(block.integration, 'service.integration', 64);

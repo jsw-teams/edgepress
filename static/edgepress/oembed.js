@@ -2,6 +2,14 @@ import {callService} from './services.js';
 import {readChoice} from './plugins/consent/choices.js';
 
 const scripts=new Map();
+function config(){return JSON.parse(document.getElementById('edgepress-privacy-config')?.textContent||'{}');}
+function updateNotice(root,key){
+  const settings=config(),service=settings.privacy?.integrations?.find(item=>item.id===root.dataset.edgepressOembed);
+  if(!service)return;
+  if(!key)key=root.dataset.loaded?'embedLoaded':root.dataset.oembedUnavailable?'embedUnavailable':readChoice(settings)?.allowed.includes(service.id)?'embedReady':'embedNeedsConsent';
+  const name=typeof service.name==='string'?service.name:service.name[settings.siteLanguage]||service.name[settings.defaultLocale]||service.id;
+  const notice=root.querySelector('[data-oembed-notice]');if(notice)notice.textContent=(settings.ui?.[key]||key).replace('{service}',name);
+}
 export function trustedProviderEmbed(data,service,document) {
   if(!data||String(data.version)!=='1.0'||!['rich','video','photo','link'].includes(data.type))throw new Error('Invalid oEmbed metadata');
   const origins=service.embedOrigins || [new URL(service.backendUrl).origin];
@@ -15,7 +23,8 @@ export function trustedProviderEmbed(data,service,document) {
     if(source.nodeType!==1||!tags.has(source.tagName))return;
     const node=document.createElement(source.tagName.toLowerCase());
     if(source.tagName==='IFRAME'){
-      node.src=safe(source.getAttribute('src'));node.title=data.title||'Media';node.loading='lazy';node.referrerPolicy='no-referrer';node.setAttribute('sandbox','allow-scripts allow-same-origin allow-presentation allow-popups');node.allow='fullscreen; picture-in-picture';node.allowFullscreen=true;
+      if(source.hasAttribute('class'))node.className=source.getAttribute('class');
+      node.src=safe(source.getAttribute('src'));node.title=data.title||'Media';node.loading='lazy';node.referrerPolicy='strict-origin-when-cross-origin';node.setAttribute('sandbox','allow-scripts allow-same-origin allow-presentation allow-popups');node.allow='fullscreen; picture-in-picture; encrypted-media';node.allowFullscreen=true;
       const w=Math.max(200,Math.min(4096,Number(data.width)||640)),h=Math.max(60,Math.min(4096,Number(data.height)||480));node.style.cssText='display:block;width:100%;border:0;aspect-ratio:'+w+'/'+h+';height:auto';
     }else{
       if(source.tagName==='A'){
@@ -61,22 +70,24 @@ async function show(root) {
   const dimensions=data=>({...data,...(root.dataset.oembedWidth?{width:Number(root.dataset.oembedWidth)}:{}),...(root.dataset.oembedHeight?{height:Number(root.dataset.oembedHeight)}:{})});
   try{
     if(!readChoice(config)?.allowed.includes(id))throw new Error('Service requires visitor consent: '+id);
+    updateNotice(root,'embedLoading');
     if(integration.oembedEndpoint||integration.embedTemplate){
       const stored=root.querySelector('[data-oembed-data]');if(!stored)throw new Error('Embed unavailable');
       const data=dimensions(JSON.parse(stored.content.textContent)),media=trustedProviderEmbed(data,integration,document);
       root.querySelector('[data-oembed-status]').replaceChildren(media);
-      await loadScripts(integration,media);root.querySelector('[data-oembed-load]')?.remove();root.dataset.loaded='true';return;
+      await loadScripts(integration,media);root.querySelector('[data-oembed-load]')?.remove();root.dataset.loaded='true';updateNotice(root,'embedLoaded');return;
     }
     const response=await callService(id,'oembed',{headers:{'X-Service-Resource':encodeURIComponent(root.dataset.oembedUrl)}});
     if(!response.ok||!/^application\/json(?:;|$)/i.test(response.headers.get('Content-Type')||''))throw new Error('Embed unavailable');
     const data=dimensions(await response.json()),media=trustedEmbed(data,new URL(integration.backendUrl).origin,document);
-    root.querySelector('[data-oembed-load]')?.remove();root.querySelector('[data-oembed-status]').replaceChildren(media);root.dataset.loaded='true';
+    root.querySelector('[data-oembed-load]')?.remove();root.querySelector('[data-oembed-status]').replaceChildren(media);root.dataset.loaded='true';updateNotice(root,'embedLoaded');
   }catch(error){
     if(error.message.startsWith('Service requires visitor consent:'))document.dispatchEvent(new CustomEvent('edgepress:privacy-open'));
-    else{root.dataset.requested='false';root.querySelector('[data-oembed-status]').textContent=config.ui?.embedUnavailable||'Media unavailable';}
+    else{root.dataset.requested='false';root.querySelector('[data-oembed-status]').replaceChildren();updateNotice(root,'embedUnavailable');}
   }finally{delete root.dataset.loading;}
 }
 if(typeof document!=='undefined'){
+  for(const root of document.querySelectorAll('[data-edgepress-oembed]'))updateNotice(root);
   document.addEventListener('click',event=>{const button=event.target.closest('[data-oembed-load]');if(button)void show(button.closest('[data-edgepress-oembed]'));});
-  document.addEventListener('edgepress:service-ready',event=>{for(const root of document.querySelectorAll('[data-edgepress-oembed]'))if(root.dataset.edgepressOembed===event.detail?.id&&root.dataset.requested==='true')void show(root);});
+  document.addEventListener('edgepress:service-ready',event=>{for(const root of document.querySelectorAll('[data-edgepress-oembed]'))if(root.dataset.edgepressOembed===event.detail?.id){updateNotice(root);if(root.dataset.requested==='true')void show(root);}});
 }

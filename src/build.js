@@ -9,6 +9,7 @@ import { plainText } from './markdown.js';
 import { createExtensions } from './plugin-api.js';
 import { collectAssets, rewriteAssetLinks, writeAssets } from './assets.js';
 import { loadLanguagePacks } from './i18n.js';
+import { contentPermissions, extendConsentPolicy, injectConsentPolicy } from './consent-csp.js';
 import { generateBuiltinRoutes } from './generators.js';
 
 const RENDER_CACHE_VERSION = 3;
@@ -180,6 +181,7 @@ async function writeRoutes(routes, stage, assetBundle, extensions, site, config)
     let body = await extensions.filter('route:body', route.body, { route, site, config });
     if (typeof body !== 'string') throw new Error('route:body filters must return a string for ' + route.path);
     body = rewriteAssetLinks(body, assetBundle.urlMap);
+    body = injectConsentPolicy(body, assetBundle.existingHeaders);
     await writeFile(file, body, 'utf8');
   });
 }
@@ -251,6 +253,8 @@ export async function buildSite(root = process.cwd(), options = {}) {
     }
     routes = await extensions.filter('routes:created', routes, { site, config });
     validateRoutes(routes, output, assetBundle);
+    config.contentCsp = contentPermissions(routes);
+    assetBundle.existingHeaders = extendConsentPolicy(assetBundle.existingHeaders, config);
 
     await mkdir(dirname(output), { recursive: true });
     await mkdir(stage, { recursive: false });

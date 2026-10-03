@@ -42,7 +42,7 @@ test('privacy choices survive refresh, pages, locales, cosmetic rebuilds and blo
   }
   const current=structuredClone(config);
   if(cosmetic)current.browserPlugins.services[0].name='Localized new presentation';
-  if(policyChanged)current.browserPlugins.consent.effectiveDate='2026-10-04';
+  if(policyChanged)current.browserPlugins.consent.effectiveDate=new Date(Date.parse(current.browserPlugins.consent.effectiveDate+'T00:00:00Z')+86400000).toISOString().slice(0,10);
   const html=filter('<!doctype html><html><body><main>Article</main></body></html>',{config:current,page:{locale:url.pathname.includes('translated')?'zh-CN':'en'}});
   return route.fulfill({contentType:'text/html',body:html});
  });

@@ -126,7 +126,7 @@ blocks:
     cells:
       - - type: text
           heading: 通用社交媒体嵌入
-          text: "默认预置 YouTube、X、Vimeo、TikTok、Reddit、Spotify、SoundCloud、Dailymotion、Flickr、Tumblr、Mastodon、Instagram、Facebook、哔哩哔哩。逐项设 enabled: false 会移除区块、授权条目和网络权限。标准提供方使用 oembedEndpoint，构建阶段缓存元数据；浏览器必须先授权并点击加载。sourceOrigins 指定分享链接域名，embedOrigins 指定播放器与资源域名，embedScripts 是按需加载的完整脚本地址。Instagram 和 Facebook 使用公开内容的官方 iframe，不要求把 Meta 令牌放入前端；私密、禁止嵌入或平台限制的内容仍可能无法显示。Mastodon 需将默认实例替换为实际实例。"
+          text: "默认预置 YouTube、X、Vimeo、TikTok、Reddit、Spotify、SoundCloud、Dailymotion、Flickr、Tumblr、Mastodon、Instagram、Facebook、哔哩哔哩。逐项设 enabled: false 会移除授权条目和网络权限，区块保留本地未加载说明与原始链接。标准提供方使用 oembedEndpoint，构建阶段缓存元数据；浏览器必须先授权并点击加载。sourceOrigins 指定分享链接域名，embedOrigins 指定播放器与资源域名，embedScripts 是按需加载的完整脚本地址。Instagram 和 Facebook 使用公开内容的官方 iframe，不要求把 Meta 令牌放入前端；私密、禁止嵌入或平台限制的内容仍可能无法显示。Mastodon 需将默认实例替换为实际实例。"
         - type: code
           title: oEmbed 与页面元素组合
           language: yaml
@@ -145,4 +145,7 @@ blocks:
         - type: text
           heading: 自定义 oEmbed 与导航跳转
           text: "在 config.yml 新增 provider: oembed 服务，填写授权说明、backendUrl、oembedEndpoint 与分享链接和媒体域名。公开接口不得包含密钥；需凭据的平台使用外部网关。Pages 通过 integration 引用服务 ID。导航和页脚链接含下拉选项均支持 target: _self 或 target: _blank。"
+        - type: text
+          heading: 按服务配置自动生成 CSP
+          text: "构建会生成 Content-Security-Policy 响应头，并在 HTML 中加入适用于静态托管的同等策略。启用的服务按配置贡献脚本、连接、iframe 和媒体来源；关闭的服务不贡献网络权限。CSP 只限定网络来源，访客仍需同意后才会加载可选服务。自定义服务可增加 csp 指令映射，例如 connect-src: [https://api.example.com]，只接受 HTTPS 来源。本站上传接口等必要权限保留在源 _headers 中；GTM 容器调用额外提供方时需明确配置其域名。"
 ---

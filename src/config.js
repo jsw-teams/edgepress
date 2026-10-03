@@ -4,6 +4,7 @@ import { access, readFile, realpath, stat } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parse as parseYaml } from 'yaml';
+import {validateServiceCsp} from './consent-csp.js';
 
 const defaults = {
   site: {
@@ -256,6 +257,7 @@ function validateBrowserPlugins(config) {
   if (!Array.isArray(plugins.services)) throw new Error('plugins.consent.services must be an array');
   const servicesCount = plugins.services.filter(service => service?.enabled !== false).length;
   for (const service of plugins.services) {
+    validateServiceCsp(service || {});
     if (!service || typeof service !== 'object' || Array.isArray(service)) throw new Error('Each plugins.consent.services item must be an object');
     if (service.enabled !== undefined && typeof service.enabled !== 'boolean') throw new Error('Service enabled must be a boolean');
     const { id, provider, purpose } = service;
@@ -278,7 +280,7 @@ function validateBrowserPlugins(config) {
       safePrivacyUrl = parsed.protocol === 'https:' && !parsed.username && !parsed.password;
     } catch { safePrivacyUrl = false; }
     if (!safePrivacyUrl) throw new Error('Service ' + id + '.privacyUrl must be a safe HTTPS URL');
-    const allowedKeys = new Set(['id', 'enabled', 'provider', 'name', 'purpose', 'dataCategories', 'recipient', 'retention', 'privacyUrl', ...(definition.credential ? [definition.credential] : []), ...(provider === 'external-widget' ? ['moduleUrl', 'placement'] : []), ...(provider === 'oembed' ? ['oembedEndpoint','embedTemplate','embedPathPattern','sourceOrigins','embedOrigins','embedScripts'] : [])]);
+    const allowedKeys = new Set(['id', 'enabled', 'provider', 'name', 'purpose', 'dataCategories', 'recipient', 'retention', 'privacyUrl', 'csp', ...(definition.credential ? [definition.credential] : []), ...(provider === 'external-widget' ? ['moduleUrl', 'placement'] : []), ...(provider === 'oembed' ? ['oembedEndpoint','embedTemplate','embedPathPattern','sourceOrigins','embedOrigins','embedScripts'] : [])]);
     for (const key of Object.keys(service)) if (!allowedKeys.has(key)) throw new Error('Unsupported option for service ' + id + ': ' + key);
     if (provider === 'external-widget' || provider === 'external-api' || provider === 'oembed') {
       let valid=false;try {const url=new URL(service.backendUrl);valid=url.protocol==='https:' && !url.username && !url.password && !url.search && !url.hash;}catch{}
