@@ -59,6 +59,7 @@ export function extendConsentPolicy(headers,config) {
 export function contentPermissions(routes) {
   const result={};
   for(const route of routes) {
+    if(route.contentType && !/^text\/html\b/i.test(route.contentType))continue;
     const html=route.body.replace(/<template\b[^>]*>[\s\S]*?<\/template>/gi,'').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
     for(const match of html.matchAll(/<(img|video|audio|source)\b[^>]*\bsrc\s*=\s*["'](https:\/\/[^"']+)["']/gi)) {
       try {const origin=new URL(match[2]).origin;const name=match[1].toLowerCase()==='img'?'img-src':'media-src';result[name]=[...new Set([...(result[name]||[]),origin])];}catch{}
@@ -67,7 +68,7 @@ export function contentPermissions(routes) {
   return result;
 }
 export function injectConsentPolicy(html,headers) {
-  if (!/<head\b/i.test(html)) return html;
+  if (!/^\s*(?:<!doctype html>\s*)?<html\b/i.test(html) || !/<head\b/i.test(html)) return html;
   // Use the global source policy when provided (e.g. first-party upload endpoints).
   let policy=globalPolicy(headers);
   if (!policy) return html;

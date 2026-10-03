@@ -25,6 +25,8 @@ test('global source policy and content media survive generation without granting
   const html=injectConsentPolicy('<html><head><title>Site</title></head><body></body></html>',headers);
   assert.match(html,/http-equiv="Content-Security-Policy"/);assert.match(html,/https:\/\/uploads.example/);assert.match(html,/https:\/\/pictures.example/);assert.match(html,/https:\/\/video.example/);
   assert.doesNotMatch(html,/frame-ancestors|disabled.example/);assert.match(headers,/frame-ancestors 'none'/);
+  const json=JSON.stringify({example:'<html><head></head><body><img src="https://metadata.example/a"></body></html>'});
+  assert.equal(injectConsentPolicy(json,headers),json);assert.deepEqual(contentPermissions([{body:json,contentType:'application/json'}]),{});
 });
 
 test('HTML CSP enforces configured origins on static platforms without custom response headers',async()=>{
