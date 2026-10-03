@@ -45,10 +45,13 @@ test('large CSP policies obey the 2000-character header limit without intersecti
   const serialized=serializeConsentHeaders(source),policies=serialized.split('\n').filter(line=>/^\s*Content-Security-Policy:/.test(line)).map(line=>line.replace(/^\s*Content-Security-Policy:\s*/,''));
   assert.ok(policies.length>1);assert.ok(serialized.split('\n').every(line=>line.length<=2000));
   const browser=await chromium.launch({headless:true,...(process.platform==='win32'?{channel:'msedge'}:{})});
-  try{const context=await browser.newContext();let blocked=0;
-    await context.route('**/*',route=>{const url=new URL(route.request().url());if(url.origin==='https://site.example')return route.fulfill({contentType:'text/html',headers:{'Content-Security-Policy':policies.join(', ')},body:'<html><head></head><body></body></html>'});if(url.origin==='https://blocked.example')blocked++;return route.fulfill({body:'OK',headers:{'Access-Control-Allow-Origin':'*'}});});
+  try{const context=await browser.newContext();let blocked=0,frames=0;
+    await context.route('**/*',route=>{const url=new URL(route.request().url());if(url.origin==='https://site.example')return route.fulfill({contentType:'text/html',headers:{'Content-Security-Policy':policies.join(', ')},body:'<html><head></head><body></body></html>'});if(url.origin==='https://blocked.example')blocked++;if(url.pathname==='/embed')frames++;return route.fulfill({contentType:url.pathname==='/embed'?'text/html':'text/plain',body:'OK',headers:{'Access-Control-Allow-Origin':'*'}});});
     const page=await context.newPage();await page.goto('https://site.example/');
     const result=await page.evaluate(async origins=>{for(const origin of origins)await fetch(origin+'/api');let rejected=false;try{await fetch('https://blocked.example/api');}catch{rejected=true;}return rejected;},['https://allowed.example',...origins]);
-    assert.equal(result,true);assert.equal(blocked,0);await context.close();
+    assert.equal(result,true);assert.equal(blocked,0);
+    await page.evaluate(origin=>{const frame=document.createElement('iframe');frame.src=origin+'/embed';document.body.append(frame);},origins[0]);await page.frameLocator('iframe').locator('body').waitFor();assert.equal(frames,1);
+    assert.equal(await page.evaluate(()=>new Promise((resolve,reject)=>{const worker=new Worker(URL.createObjectURL(new Blob(['postMessage(42)'],{type:'text/javascript'})));worker.onmessage=event=>{worker.terminate();resolve(event.data);};worker.onerror=()=>reject(new Error('Configured blob Worker was blocked'));})),42);
+    await context.close();
   }finally{await browser.close();}
 });

@@ -95,10 +95,20 @@ export function serializeConsentHeaders(headers) {
       }
       directives.delete('default-src');
     }
+    // child-src only supplies frame/worker fallbacks. Separate policies would
+    // apply those fallbacks again and incorrectly block explicit permissions.
+    const child=directives.get('child-src');
+    if(child){if(!directives.has('frame-src'))directives.set('frame-src',child);if(!directives.has('worker-src'))directives.set('worker-src',child);directives.delete('child-src');}
+    const groups=[];
+    for(const names of [['script-src','script-src-elem','script-src-attr','worker-src'],['style-src','style-src-elem','style-src-attr']]) {
+      const parts=[];
+      for(const name of names){if(directives.has(name)){parts.push(name+' '+directives.get(name).join(' '));directives.delete(name);}}
+      if(parts.length)groups.push(parts.join('; '));
+    }
+    for(const [name,sources] of directives)groups.push(name+' '+sources.join(' '));
     const chunks=[];let chunk='';
-    for(const [name,sources] of directives) {
-      const directive=name+' '+sources.join(' ');
-      if(prefix.length+directive.length>2000)throw new Error('CSP directive '+name+' exceeds the static host line limit; reduce its configured origins.');
+    for(const directive of groups) {
+      if(prefix.length+directive.length>2000)throw new Error('CSP directive group exceeds the static host line limit; reduce its configured origins.');
       if(prefix.length+chunk.length+(chunk?2:0)+directive.length>2000){chunks.push(prefix+chunk);chunk='';}
       chunk+=(chunk?'; ':'')+directive;
     }
