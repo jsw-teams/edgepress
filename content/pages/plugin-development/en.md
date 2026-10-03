@@ -95,16 +95,16 @@ blocks:
   - columns: 1
     cells:
       - - type: text
-          heading: CommentNest
-          text: CommentNest owns comments, styles, identity and stickers. Register an external-widget with backendUrl and
+          heading: iask
+          text: iask owns comments, styles, identity and stickers. Register an external-widget with backendUrl and
             moduleUrl under plugins.consent.services; the host only loads it after opt-in.
         - type: link-list
           title: Install and integrate
           items:
             - label: Installation and EdgePress integration
-              url: https://github.com/jsw-teams/CommentNest/blob/main/docs/edgepress.md
-            - label: CommentNest release notes
-              url: https://github.com/jsw-teams/CommentNest/blob/main/CHANGELOG.md
+              url: https://github.com/jsw-teams/iask/blob/main/docs/edgepress.md
+            - label: iask release notes
+              url: https://github.com/jsw-teams/iask/blob/main/CHANGELOG.md
         - type: code
           title: Optional page discussion block
           language: yaml

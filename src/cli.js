@@ -14,7 +14,7 @@ import { loadLanguagePacks, translate } from './i18n.js';
 import { postTemplate } from './post-template.js';
 import {deploySite} from './deploy.js';
 
-const siteGitignore = ['node_modules/', 'dist/', '.edgepress/', '.wrangler/', '.dev.vars', '.vercel/', '.edgeone/', '.esa/', '.env', '.env.*', '!.env.example', '*.tgz', ''].join('\n');
+const siteGitignore = ['node_modules/', 'dist/', '.edgepress/', '.wrangler/', '.dev.vars', '.vercel/', '.netlify/', '.edgeone/', '.esa/', '.env', '.env.*', '!.env.example', '*.tgz', ''].join('\n');
 const siteReadme = [
   '# My EdgePress site',
   '',
@@ -33,7 +33,7 @@ const siteReadme = [
   '',
   'Push this source repository to GitHub, then connect the repository to Cloudflare Workers Builds. The `build` and `deploy` scripts in `package.json` generate and deploy the static files. Set a unique Worker name in `wrangler.jsonc` first.',
   '',
-  'Authenticate with the chosen platform, then run `edgepress deploy cloudflare`, `edgepress deploy vercel`, `edgepress deploy edgeone -n my-site`, or `edgepress deploy esa --name my-site`.',
+  'Authenticate with the chosen platform, then run `edgepress deploy cloudflare`, `edgepress deploy vercel`, `edgepress deploy edgeone -n my-site`, `edgepress deploy netlify`, or `edgepress deploy esa --name my-site`.',
   '',
   '## Use another static web server',
   '',
@@ -45,7 +45,7 @@ async function initializeProject() {
   const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
   const root = process.cwd();
   const directories = ['content', 'languages', 'plugins', 'static', 'themes'];
-  const files = ['.gitignore', 'README.md', 'config.yml', 'edgepress.config.mjs', 'project-compatibility.json', 'wrangler.jsonc', 'vercel.json', 'edgeone.json', 'esa.jsonc'];
+  const files = ['.gitignore', 'README.md', 'config.yml', 'edgepress.config.mjs', 'project-compatibility.json', 'wrangler.jsonc', 'vercel.json', 'edgeone.json', 'esa.jsonc', 'netlify.toml'];
   const destinations = [...directories, ...files];
   const existing = [];
   for (const relativePath of destinations) {
@@ -84,6 +84,7 @@ async function initializeProject() {
       doctor: 'edgepress doctor',
       deploy: 'edgepress deploy',
       'deploy:cloudflare': 'edgepress deploy cloudflare',
+      'deploy:netlify': 'edgepress deploy netlify',
       'deploy:vercel': 'edgepress deploy vercel',
       'deploy:edgeone': 'edgepress deploy edgeone',
       'deploy:esa': 'edgepress deploy esa'

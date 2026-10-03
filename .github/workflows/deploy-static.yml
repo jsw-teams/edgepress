@@ -4,7 +4,7 @@ on:
     inputs:
       platform:
         type: choice
-        options: [cloudflare, vercel, edgeone, esa]
+        options: [cloudflare, vercel, netlify, edgeone, esa]
         required: true
       project:
         description: EdgeOne or ESA project name
@@ -36,6 +36,8 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
           EDGEONE_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}
           ESA_ACCESS_KEY_ID: ${{ secrets.ESA_ACCESS_KEY_ID }}
           ESA_ACCESS_KEY_SECRET: ${{ secrets.ESA_ACCESS_KEY_SECRET }}
@@ -43,6 +45,7 @@ jobs:
           case "$DEPLOY_PLATFORM" in
             cloudflare) npx --yes wrangler deploy ;;
             vercel) npx --yes vercel deploy --prod --yes --token "$VERCEL_TOKEN" ;;
+            netlify) test -n "$NETLIFY_SITE_ID" && npx --yes netlify-cli deploy --prod --dir dist --site "$NETLIFY_SITE_ID" ;;
             edgeone) test -n "$DEPLOY_PROJECT" && npx --yes edgeone pages deploy dist -n "$DEPLOY_PROJECT" -t "$EDGEONE_API_TOKEN" ;;
             esa) test -n "$DEPLOY_PROJECT" && npx --yes esa-cli deploy --name "$DEPLOY_PROJECT" --assets dist ;;
             *) exit 1 ;;

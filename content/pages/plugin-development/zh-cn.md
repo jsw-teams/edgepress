@@ -81,15 +81,15 @@ blocks:
   - columns: 1
     cells:
       - - type: text
-          heading: CommentNest
+          heading: 我提问
           text: 显示经过验证的 GitHub 身份和头像，可从本地图片、GIF 图集中选择表情包，支持删除自己的评论。读者选中评论后才加载讨论。
         - type: link-list
           title: 安装与接入
           items:
             - label: 安装及 EdgePress 接入说明
-              url: https://github.com/jsw-teams/CommentNest/blob/main/docs/edgepress.md
-            - label: CommentNest 独立更新日志
-              url: https://github.com/jsw-teams/CommentNest/blob/main/CHANGELOG.md
+              url: https://github.com/jsw-teams/iask/blob/main/docs/edgepress.md
+            - label: 我提问 独立更新日志
+              url: https://github.com/jsw-teams/iask/blob/main/CHANGELOG.md
         - type: code
           title: 可选页面评论区块
           language: yaml

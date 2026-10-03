@@ -25,6 +25,7 @@ test('optional API calls use a fixed endpoint and header actions after current s
 });
 
 test('CSP permits only enabled configured service origins and deployment selects native static CLIs',()=>{
+  assert.deepEqual(deploymentCommand('netlify','dist'),['netlify-cli','deploy','--prod','--dir','dist']);
   const header="/*\n  Content-Security-Policy: default-src 'self'; script-src 'self'; connect-src 'none'";
   const services=[{enabled:false,provider:'external-widget',moduleUrl:'https://comments.example/widget.js',backendUrl:'https://comments.example'}];
   assert.equal(extendConsentPolicy(header,{browserPlugins:{services}}),header);

@@ -3,7 +3,8 @@ title: EdgePress website builder
 lang: en
 slug: home
 homepage: true
-description: Build fast, secure websites on Cloudflare Workers with Markdown posts and editable page elements.
+description: Build static websites with Markdown, editable pages and consent-controlled services on five
+  hosting platforms.
 keywords:
   - website builder
   - Cloudflare Workers
@@ -12,13 +13,14 @@ keywords:
 blocks:
   - columns: 1
     cells:
-      -
-        - type: hero
+      - - type: hero
           eyebrow: A project built for the edge
           title: Build a fast website from clear, editable source files.
-          text: EdgePress turns Markdown posts, page layouts, themes, and consent-aware integrations into a static site served by Cloudflare Workers.
+          text: EdgePress turns Markdown articles, page layouts, themes and optional services into static websites for
+            Cloudflare, Vercel, Netlify, Tencent EdgeOne Pages and Alibaba Cloud ESA Pages.
           mascotSrc: /edgepress/brand/home-hero.png
-          mascotAlt: A giant panda and Taiwanese black bear standing together with friendly smiles; the bear has a clear pale V chest marking.
+          mascotAlt: A giant panda and Taiwanese black bear standing together with friendly smiles; the bear has a clear
+            pale V chest marking.
           mascotWidth: 1536
           mascotHeight: 1024
           mascotSizes: "(max-width: 620px) calc(100vw - 64px), 320px"
@@ -36,8 +38,7 @@ blocks:
             - Shared layouts and theme-defined palettes
   - columns: 1
     cells:
-      -
-        - type: feature-grid
+      - - type: feature-grid
           title: A clear place for each part of a site
           items:
             - title: Pages use editable elements
@@ -58,14 +59,14 @@ blocks:
               url: /plugin-development/
   - columns: 2
     cells:
-      -
-        - type: section
+      - - type: section
           title: Learn the project
           tone: soft
           blocks:
             - type: text
               paragraphs:
-                - Start with the project introduction and quick start. The guides cover the feature lifecycle, supported runtimes, and the recommended publishing workflow.
+                - Start with the project introduction and quick start. The guides cover the feature lifecycle,
+                  supported runtimes, and the recommended publishing workflow.
             - type: link-list
               title: Project guides
               items:
@@ -73,15 +74,16 @@ blocks:
                   url: /project-introduction/
                 - label: Quick start
                   url: /quick-start/
-      -
-        - type: section
+      - - type: section
           title: Extend the project
           tone: soft
           blocks:
             - type: text
               paragraphs:
-                - Use theme partials for shared head metadata, navigation, footer, and error-page layout. Page-specific rows and element content stay in localized page files.
-                - Build plugins run in Node. Browser services wait for explicit consent before requesting vendor code.
+                - Use theme partials for shared head metadata, navigation, footer, and error-page layout.
+                  Page-specific rows and element content stay in localized page files.
+                - Build plugins run in Node. Browser services wait for explicit consent before requesting
+                  vendor code.
             - type: link-list
               title: Development guides
               items:
@@ -91,9 +93,54 @@ blocks:
                   url: /plugin-development/
   - columns: 1
     cells:
-      -
-        - type: latest-posts
+      - - type: latest-posts
           title: Latest project updates
           count: 3
           paginate: true
+  - columns: 1
+    cells:
+      - - type: media-text
+          mediaType: image
+          src: /images/previews/edgepress-en.webp
+          alt: Actual local EdgePress website preview.
+          caption: Interface preview captured locally.
+          placement: left
+          title: See what your source becomes
+          text: Posts, navigation, search and language routes publish together. Choose a theme and keep everyday writing
+            in Markdown.
+  - columns: 1
+    cells:
+      - - type: data-table
+          title: Free hosting priority (2026-10-04)
+          headers:
+            - Priority
+            - Platform
+            - Allowance and conditions
+          rows:
+            - - "1"
+              - Cloudflare
+              - Unlimited static requests; 3,000 build minutes/month.
+            - - "2"
+              - Tencent EdgeOne Pages
+              - Currently unlimited website traffic/requests; 500 builds/month. Free-phase limits may change.
+            - - "3"
+              - Vercel Hobby
+              - 100 GB/month and 1 million CDN requests; personal non-commercial use.
+            - - "4"
+              - Netlify Free
+              - 300 shared credits/month. A deploy costs 15; traffic 20/GB; requests 2/10,000. Pauses when
+                exhausted.
+            - - Verify
+              - Alibaba Cloud ESA Pages
+              - Traffic uses the site package. Confirm its quota; 100,000/day functions is not static
+                bandwidth.
+  - columns: 1
+    cells:
+      - - type: link-list
+          title: Deployment and quota sources
+          items:
+            - label: Chinese guide
+              url: https://github.com/jsw-teams/edgepress/blob/main/content/guides/zh-cn.md
+            - label: Official quota sources
+              url: https://github.com/jsw-teams/edgepress/blob/main/content/guides/platforms.md
 ---

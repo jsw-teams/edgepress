@@ -1,0 +1,22 @@
+[
+  {
+    "file": "edgepress-en.webp",
+    "kind": "actual local built website screenshot",
+    "source": "edgepress/dist/",
+    "viewport": {
+      "width": 1200,
+      "height": 820
+    },
+    "date": "2026-10-04"
+  },
+  {
+    "file": "edgepress-zh.webp",
+    "kind": "actual local built website screenshot",
+    "source": "edgepress/dist/zh-CN/",
+    "viewport": {
+      "width": 1200,
+      "height": 820
+    },
+    "date": "2026-10-04"
+  }
+]

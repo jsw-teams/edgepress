@@ -1,9 +1,9 @@
 ---
-title: EdgePress 网站构建器
+title: 边笺 网站构建器
 lang: zh-CN
 slug: home
 homepage: true
-description: 使用 Markdown 文章和可编辑页面元素，在 Cloudflare Workers 上构建快速、安全的网站。
+description: 使用 Markdown、可编辑页面与按需服务，将静态网站部署到五个平台。
 keywords:
   - 网站构建器
   - Cloudflare Workers
@@ -12,11 +12,10 @@ keywords:
 blocks:
   - columns: 1
     cells:
-      -
-        - type: hero
+      - - type: hero
           eyebrow: 为边缘网络构建
           title: 用清晰、可编辑的源文件构建快速网站。
-          text: EdgePress 将 Markdown 文章、页面布局、主题和遵循同意状态的集成构建为由 Cloudflare Workers 提供服务的静态网站。
+          text: 边笺将 Markdown 文章、页面布局、主题与可选服务构建为静态网站，支持 Cloudflare、Vercel、Netlify、腾讯 EdgeOne Pages 和阿里云 ESA Pages。
           mascotSrc: /edgepress/brand/home-hero.png
           mascotAlt: 大熊猫与台湾黑熊友好并肩站立，黑熊胸前的浅色 V 形胸斑清晰可见。
           mascotWidth: 1536
@@ -36,8 +35,7 @@ blocks:
             - 复用布局，配色由主题定义
   - columns: 1
     cells:
-      -
-        - type: feature-grid
+      - - type: feature-grid
           title: 网站各部分各有清晰位置
           items:
             - title: 页面使用可编辑元素
@@ -58,8 +56,7 @@ blocks:
               url: /[launge]/plugin-development/
   - columns: 2
     cells:
-      -
-        - type: section
+      - - type: section
           title: 了解项目
           tone: soft
           blocks:
@@ -73,8 +70,7 @@ blocks:
                   url: /[launge]/project-introduction/
                 - label: 快速入门
                   url: /[launge]/quick-start/
-      -
-        - type: section
+      - - type: section
           title: 扩展项目
           tone: soft
           blocks:
@@ -91,9 +87,51 @@ blocks:
                   url: /[launge]/plugin-development/
   - columns: 1
     cells:
-      -
-        - type: latest-posts
+      - - type: latest-posts
           title: 最新项目动态
           count: 3
           paginate: true
+  - columns: 1
+    cells:
+      - - type: media-text
+          mediaType: image
+          src: /images/previews/edgepress-zh.webp
+          alt: 边笺本地网站界面实拍。
+          caption: 本地构建的界面截图。
+          placement: left
+          title: 看见源文件生成的网站
+          text: 文章、导航、搜索与语言路由一起发布。选择主题，日常写作只需要 Markdown。
+  - columns: 1
+    cells:
+      - - type: data-table
+          title: 免费部署优先级（2026-10-04）
+          headers:
+            - 优先级
+            - 平台
+            - 额度与条件
+          rows:
+            - - "1"
+              - Cloudflare
+              - 静态请求免费不限量；每月 3,000 分钟构建。
+            - - "2"
+              - 腾讯 EdgeOne Pages
+              - 当前网站流量与请求不限量；每月 500 次构建。免费阶段额度可能调整。
+            - - "3"
+              - Vercel Hobby
+              - 每月 100 GB 与 100 万次 CDN 请求；限个人非商业用途。
+            - - "4"
+              - Netlify Free
+              - 每月 300 共享积分；部署 15，流量每 GB 20，请求每万次 2；用尽暂停。
+            - - 待核实
+              - 阿里云 ESA Pages
+              - 流量使用站点套餐额度；每天 10 万次函数额度不是静态流量。
+  - columns: 1
+    cells:
+      - - type: link-list
+          title: 部署说明与额度来源
+          items:
+            - label: 中文说明
+              url: https://github.com/jsw-teams/edgepress/blob/main/content/guides/zh-cn.md
+            - label: 官方额度来源
+              url: https://github.com/jsw-teams/edgepress/blob/main/content/guides/platforms.md
 ---

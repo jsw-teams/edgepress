@@ -136,7 +136,7 @@
       "since": "2026.10.5"
     },
     {
-      "name": "Static deployment for Vercel, EdgeOne Pages and ESA Pages",
+      "name": "Static deployment for Vercel, Netlify, EdgeOne Pages and ESA Pages",
       "stage": "experimental",
       "since": "2026.10.5"
     },

@@ -4,10 +4,11 @@ import {delimiter,dirname,resolve} from 'node:path';
 export function deploymentCommand(platform, output = 'dist', args = []) {
   switch (platform) {
     case 'cloudflare': return ['wrangler', 'deploy', ...args];
+    case 'netlify': return ['netlify-cli', 'deploy', '--prod', '--dir', output, ...args];
     case 'vercel': return ['vercel', 'deploy', '--prod', ...args];
     case 'edgeone': return ['edgeone', 'pages', 'deploy', output, ...args];
     case 'esa': return ['esa-cli', 'deploy', '--assets', output, ...args];
-    default: throw new Error('Platform must be cloudflare, vercel, edgeone, or esa');
+    default: throw new Error('Platform must be cloudflare, netlify, vercel, edgeone, or esa');
   }
 }
 export async function deploySite(platform, output, args) {

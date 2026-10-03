@@ -57,8 +57,10 @@ Read the guides in `content/pages/` before extending themes, page blocks, or plu
 - The website output is static HTML and local JavaScript. Do not introduce website API handlers, service bindings, comment storage or operator Secrets.
 - Register optional external APIs and widgets in config.yml under plugins.consent.services. Every external request waits for explicit service consent and visitor demand.
 - iask owns the complete comment UI, languages, styles, media and backend. Use only generic service slots here.
-- Cloudflare, Vercel, EdgeOne Pages and ESA Pages serve dist/. Preserve hashed CSS/JS URLs and the configured immutable cache policy. HTML and unversioned metadata must remain refreshable.
+- Cloudflare, Vercel, Netlify, EdgeOne Pages and ESA Pages serve dist/. Preserve hashed CSS/JS URLs and the configured immutable cache policy. HTML and unversioned metadata must remain refreshable.
 
 - Optional service configuration is flat: plugins.consent.services. Do not restore preset consent categories, category tags, group toggles or unused category translations. Show each configured service name and localized purpose directly; retain explicit per-service consent and disclosure validation.
 
 - Optional APIs use fixed endpoints and X-Service-Action headers. Do not encode operation names, discussion identifiers or submitted content in API URL paths or queries. Third-party providers follow their native protocols.
+
+- The Chinese official project name is 边笺; the English official name remains EdgePress. Use one localized name in page titles and public copy. Homepage pages do not contain discussion slots.

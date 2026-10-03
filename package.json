@@ -30,7 +30,8 @@
     "vercel.json",
     "edgeone.json",
     "esa.jsonc",
-    "tools/services.test.mjs"
+    "tools/services.test.mjs",
+    "netlify.toml"
   ],
   "repository": {
     "type": "git",
@@ -64,7 +65,8 @@
     "deploy:cloudflare": "node src/cli.js deploy cloudflare",
     "deploy:vercel": "node src/cli.js deploy vercel",
     "deploy:edgeone": "node src/cli.js deploy edgeone",
-    "deploy:esa": "node src/cli.js deploy esa"
+    "deploy:esa": "node src/cli.js deploy esa",
+    "deploy:netlify": "node src/cli.js deploy netlify"
   },
   "dependencies": {
     "marked": "^18.0.13",
