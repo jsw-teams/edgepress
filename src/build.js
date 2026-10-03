@@ -144,6 +144,16 @@ export async function acquireBuildLock(directory) {
   throw new Error('Unable to acquire the project build lock');
 }
 
+async function renameOutput(source, target) {
+  for(let attempt=0;;attempt++) {
+    try{return await rename(source,target);}
+    catch(error){
+      if(process.platform!=='win32'||!['EPERM','EBUSY'].includes(error.code)||attempt>=5)throw error;
+      await new Promise(resolve=>setTimeout(resolve,200*2**attempt));
+    }
+  }
+}
+
 async function commitOutput(stage, output) {
   const backup = output + '.backup-' + randomUUID();
   let movedPrevious = false;
@@ -153,15 +163,15 @@ async function commitOutput(stage, output) {
       if (info.isSymbolicLink() || !info.isDirectory()) {
         throw new Error('Build output must be a real directory: ' + output);
       }
-      await rename(output, backup);
+      await renameOutput(output, backup);
       movedPrevious = true;
     } catch (error) {
       if (error.code !== 'ENOENT') throw error;
     }
-    await rename(stage, output);
+    await renameOutput(stage, output);
   } catch (error) {
     if (movedPrevious) {
-      try { await rename(backup, output); }
+      try { await renameOutput(backup, output); }
       catch (restoreError) {
         throw new Error('Build commit failed and the previous output could not be restored from ' + backup + ': ' + restoreError.message, { cause: error });
       }
