@@ -20,7 +20,7 @@ async function fixture() {
   await writeFile(resolve(root, 'config.yml'), 'site:\n  title: Audit fixture\n  url: https://audit.example.org\n  navigation:\n    - key: front\n      url: "@home"\n      labels: {en: Home}\n    - key: notes\n      url: "@archives"\n      labels: {en: Notes}\nplugins:\n  consent:\n    enabled: false\n    proposedDate: 2026-10-02\n    effectiveDate: 2026-10-02\n');
   await writeFile(resolve(root, 'languages/base/en.json'), await readFile(resolve(project, 'languages/base/en.json')));
   await writeFile(resolve(root, 'project-compatibility.json'), await readFile(resolve(project, 'project-compatibility.json')));
-  await writeFile(resolve(root, 'wrangler.jsonc'), JSON.stringify({ main: 'src/index.js', compatibility_date: '2026-10-01', assets: { directory: 'dist', binding: 'ASSETS', run_worker_first: ['/api/*'] } }));
+  await writeFile(resolve(root, 'wrangler.jsonc'), JSON.stringify({ main: 'src/index.js', compatibility_date: '2026-10-01', assets: { directory: 'dist', binding: 'ASSETS' } }));
   await writeFile(resolve(root, 'src/index.js'), 'export default {fetch(){return new Response("OK")}};');
   await writeFile(resolve(root, 'content/pages/home/en.md'), '---\ntitle: Audit fixture\nlang: en\nhomepage: true\nblocks:\n  - columns: 1\n    cells:\n      - - type: hero\n          title: Audit fixture\n          text: A site with no articles.\n---\n');
   await writeFile(resolve(root, 'themes/fixture/layouts/layout.html'), '<html lang="{{site.language}}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{page.title}}</title><meta name="description" content="{{page.description}}"><link rel="canonical" href="{{page.canonical}}"><link rel="stylesheet" href="{{site.stylesheet}}"><script type="application/ld+json">{{{page.jsonLd}}}</script></head><body><a class="skip-link" href="#main">Skip to content</a><header><nav aria-label="Main navigation">{{{site.primaryNavigationHtml}}}</nav></header><main id="main" tabindex="-1">{{{page.content}}}</main><footer>Fixture footer</footer></body></html>');
@@ -47,7 +47,9 @@ test('doctor reads Wrangler main and reports missing, unsafe or incompatible ent
     assert.equal((await checkCompatibility({ root })).status, 'pass');
     const configFile = resolve(root, 'wrangler.jsonc');
     const config = JSON.parse(await readFile(configFile, 'utf8'));
-    for (const entry of [undefined, 12, 'src/missing.js', project + '/src/worker.js']) {
+    await writeFile(configFile, JSON.stringify({...config,main:undefined}));
+    assert.equal((await checkCompatibility({root})).status,'pass','Assets-only hosting requires no Worker entry');
+    for (const entry of [12, 'src/missing.js', project + '/src/worker.js']) {
       await writeFile(configFile, JSON.stringify({ ...config, main: entry }));
       const report = await checkCompatibility({ root });
       assert.equal(report.status, 'fail');

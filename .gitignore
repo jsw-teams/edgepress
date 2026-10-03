@@ -4,3 +4,11 @@ dist/
 .wrangler/
 .dev.vars
 *.tgz
+
+.vercel/
+.env
+.env.*
+!.env.example
+
+.edgeone/
+.esa/

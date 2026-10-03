@@ -40,14 +40,14 @@ blocks:
                 - - 构建命令行
                   - Node.js 22.12 或更新版本
                   - 稳定
-                - - Worker 运行环境
-                  - 使用 Request、Response 和 Web API 的 Module Worker
+                - - 网站运行环境
+                  - 静态 HTML 与本地浏览器 JavaScript
                   - 稳定
                 - - 静态发布
-                  - 通过 Wrangler 发布 Workers Static Assets
+                  - Cloudflare、Vercel、EdgeOne Pages 和 ESA Pages
                   - 稳定
-                - - Worker 中的 Node.js API
-                  - src/worker.js 不需要 Node.js API
+                - - 网站后端
+                  - 静态发布无需网站后端
                   - 稳定
                 - - 插件 API
                   - 主版本 1
@@ -55,8 +55,8 @@ blocks:
                 - - 页面元素构建器
                   - 有序行、1 至 4 栏、经过验证的元素
                   - 实验性
-                - - 后端转发
-                  - 可选 Service Binding 或 URL 加 Worker 密钥
+                - - 可选外部服务
+                  - config.yml consent 注册与独立 HTTPS 服务
                   - 实验性
             - type: text
               text: 兼容性清单位于 project-compatibility.json。Worker 兼容日期固定在 wrangler.jsonc 中。静态页面服务不需要 nodejs_compat。

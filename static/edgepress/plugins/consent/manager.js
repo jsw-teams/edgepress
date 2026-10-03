@@ -1,6 +1,7 @@
 import {makeChoice,readChoice,persistChoice} from './choices.js';
 const modules = {
-  'commentnest': () => import('../comments/commentnest.js'),
+  'external-widget': () => import('../backend/external-widget.js'),
+  'external-api': () => import('../backend/external-api.js'),
   'google-tag-manager': () => import('../tracking/google-tag-manager.js'),
   'meta-pixel': () => import('../tracking/meta-pixel.js'),
   'cloudflare-web-analytics': () => import('../statistics/cloudflare-web-analytics.js'),
@@ -57,7 +58,6 @@ function initialize(config) {
   const checkboxes = new Map();
 
   for (const integration of integrations) {
-    const category = translate(ui, 'plugin' + capitalize(integration.category || 'statistics'));
     const name = localized(integration.name, locale, defaultLocale) || integration.provider;
     const purpose = localized(integration.purpose, locale, defaultLocale);
     const dataCategories = localized(integration.dataCategories, locale, defaultLocale);
@@ -77,13 +77,10 @@ function initialize(config) {
     toggleText.className = 'privacy-service-toggle-text';
     const title = document.createElement('strong');
     title.textContent = name;
-    const categoryLabel = document.createElement('span');
-    categoryLabel.className = 'privacy-category';
-    categoryLabel.textContent = category;
     const purposeText = document.createElement('span');
     purposeText.className = 'privacy-service-purpose';
     purposeText.textContent = purpose;
-    toggleText.append(title, categoryLabel, purposeText);
+    toggleText.append(title, purposeText);
     toggle.append(checkbox, toggleText);
     const detail = document.createElement('details');
     detail.className = 'privacy-details';
@@ -118,7 +115,7 @@ function initialize(config) {
   if (operator.name || operator.contact) {
     controller.append(document.createTextNode((ui.privacyController || 'Site operator') + ': '));
     if (operator.name) controller.append(document.createTextNode(operator.name));
-    if (operator.name && operator.contact) controller.append(document.createTextNode(' · '));
+    if (operator.name && operator.contact) controller.append(document.createTextNode('; '));
     if (operator.contact) {
       controller.append(document.createTextNode((ui.privacyContact || 'Privacy contact') + ': '));
       appendContact(controller, operator.contact);
@@ -257,10 +254,6 @@ function localized(value, locale, defaultLocale) {
   return value[locale] || value[defaultLocale] || Object.values(value)[0] || '';
 }
 
-function capitalize(value) {
-  return String(value).charAt(0).toUpperCase() + String(value).slice(1);
-}
-
 function makeButton(label, className, iconName) {
   const button = document.createElement('button');
   button.type = 'button';
@@ -283,6 +276,7 @@ function makeIcon(name) {
   return image;
 }
 
+const activeServices = new Map();
 async function activate(allowed) {
   const config = JSON.parse(document.getElementById('edgepress-privacy-config').textContent);
   const permitted = new Set(allowed);
@@ -292,7 +286,11 @@ async function activate(allowed) {
     if (!loader) continue;
     try {
       const provider = await loader();
-      await provider.load(integration);
+      if (!activeServices.has(integration.id)) {
+        const task = provider.load(integration);
+        activeServices.set(integration.id, task);
+        try { await task; } catch (error) {activeServices.delete(integration.id); throw error;}
+      }
     } catch (error) {
       console.error('EdgePress optional integration failed to load:', integration.provider, error);
     }

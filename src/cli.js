@@ -12,8 +12,9 @@ import { checkPages } from './page-check.js';
 import { checkCompatibility, writeIterationPlan } from './maintenance.js';
 import { loadLanguagePacks, translate } from './i18n.js';
 import { postTemplate } from './post-template.js';
+import {deploySite} from './deploy.js';
 
-const siteGitignore = ['node_modules/', 'dist/', '.edgepress/', '.wrangler/', '.dev.vars', '*.tgz', ''].join('\n');
+const siteGitignore = ['node_modules/', 'dist/', '.edgepress/', '.wrangler/', '.dev.vars', '.vercel/', '.edgeone/', '.esa/', '.env', '.env.*', '!.env.example', '*.tgz', ''].join('\n');
 const siteReadme = [
   '# My EdgePress site',
   '',
@@ -28,15 +29,15 @@ const siteReadme = [
   '',
   'Page layouts in `content/pages/` and theme customization are optional for everyday article writing. Choose a shared layout with `npx edgepress theme list` and `npx edgepress theme use <name>` when needed.',
   '',
-  '## Deploy to Cloudflare Workers',
+  '## Deploy a static website',
   '',
-  'Push this source repository to GitHub, then connect the repository to Cloudflare Workers Builds. The `build` and `deploy` scripts in `package.json` generate the static files and deploy the Worker. Set a unique Worker name in `wrangler.jsonc` first.',
+  'Push this source repository to GitHub, then connect the repository to Cloudflare Workers Builds. The `build` and `deploy` scripts in `package.json` generate and deploy the static files. Set a unique Worker name in `wrangler.jsonc` first.',
   '',
-  'For a local deployment, run `npx wrangler login`, then `edgepress deploy`.',
+  'Authenticate with the chosen platform, then run `edgepress deploy cloudflare`, `edgepress deploy vercel`, `edgepress deploy edgeone -n my-site`, or `edgepress deploy esa --name my-site`.',
   '',
   '## Use another static web server',
   '',
-  'Run `edgepress generate` and upload the contents of `dist/` to the server document root. OpenResty and Nginx can serve the generated directories as static files. Worker API routes and service bindings need a Worker or an equivalent server-side route.',
+  'Run `edgepress generate` and upload the contents of `dist/` to the server document root. OpenResty and Nginx can serve the generated directories as static files. Optional backends live in separate projects and are registered under plugins.consent.services in config.yml.',
   ''
 ].join('\n');
 
@@ -44,8 +45,8 @@ async function initializeProject() {
   const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
   const root = process.cwd();
   const directories = ['content', 'languages', 'plugins', 'static', 'themes'];
-  const files = ['.gitignore', 'README.md', 'config.yml', 'edgepress.config.mjs', 'project-compatibility.json', 'wrangler.jsonc'];
-  const destinations = [...directories, ...files, 'src/worker.js'];
+  const files = ['.gitignore', 'README.md', 'config.yml', 'edgepress.config.mjs', 'project-compatibility.json', 'wrangler.jsonc', 'vercel.json', 'edgeone.json', 'esa.jsonc'];
+  const destinations = [...directories, ...files];
   const existing = [];
   for (const relativePath of destinations) {
     try { await access(resolve(root, relativePath)); existing.push(relativePath); }
@@ -81,7 +82,11 @@ async function initializeProject() {
       preview: 'edgepress server',
       check: 'edgepress check',
       doctor: 'edgepress doctor',
-      deploy: 'edgepress deploy'
+      deploy: 'edgepress deploy',
+      'deploy:cloudflare': 'edgepress deploy cloudflare',
+      'deploy:vercel': 'edgepress deploy vercel',
+      'deploy:edgeone': 'edgepress deploy edgeone',
+      'deploy:esa': 'edgepress deploy esa'
     },
     dependencies: {
       ...(existingManifest.dependencies || {}),
@@ -97,23 +102,8 @@ async function initializeProject() {
     else if (file === 'README.md') await writeFile(destination, siteReadme, { flag: 'wx' });
     else await cp(resolve(packageRoot, file), destination, { errorOnExist: true });
   }
-  await mkdir(resolve(root, 'src'), { recursive: true });
-  await cp(resolve(packageRoot, 'src/worker.js'), resolve(root, 'src/worker.js'), { errorOnExist: true });
   await writeFile(resolve(root, 'package.json'), JSON.stringify(projectManifest, null, 2) + '\n', { flag: packageManifestExists ? 'w' : 'wx' });
   console.log('Created an EdgePress site. Next run npm install, then npm run dev. Create an article with npm run new -- "My first article".');
-}
-
-async function runWrangler(command, args = []) {
-  const wrangler = resolve(process.cwd(), 'node_modules/wrangler/bin/wrangler.js');
-  await access(wrangler);
-  await new Promise((resolveExit, reject) => {
-    const child = spawn(process.execPath, [wrangler, command, ...args], { cwd: process.cwd(), env: process.env, stdio: 'inherit' });
-    child.once('error', reject);
-    child.once('exit', (code) => {
-      if (code === 0) resolveExit();
-      else process.exitCode = code ?? 1, resolveExit();
-    });
-  });
 }
 
 async function runSecurityAudit() {
@@ -333,18 +323,15 @@ try {
     ? await loadConfig()
     : null;
   if (command === '--help' || command === '-h' || command === 'help') {
-    console.log('EdgePress commands: init, new, build, generate, server, check, doctor, iterate, theme, secret, security, deploy, clean');
+    console.log('EdgePress commands: init, new, build, generate, server, check, doctor, iterate, theme, security, deploy, clean');
   }
   else if (command === 'build' || command === 'generate') await buildSite();
   else if (command === 'init') await initializeProject();
   else if (command === 'preview' || command === 'dev' || command === 'server') await import('./preview.js');
   else if (command === 'deploy') {
-    if (process.env.WORKERS_CI !== '1') await buildSite();
-    await runWrangler('deploy', args);
-  }
-  else if (command === 'secret') {
-    if (!['put', 'delete', 'list'].includes(args[0])) throw new Error('Usage: edgepress secret put|delete|list [name]');
-    await runWrangler('secret', args);
+    const platform = args[0] && !args[0].startsWith('-') ? args.shift() : 'cloudflare';
+    const built = process.env.WORKERS_CI === '1' ? {output:(await loadConfig()).resolvedPaths.output} : await buildSite();
+    await deploySite(platform, built.output, args);
   }
   else if (command === 'theme') await manageTheme(args, await loadConfig());
   else if (command === 'security') await runSecurityAudit();

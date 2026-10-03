@@ -187,8 +187,8 @@ export async function renderLayout(config, extensions, page, body) {
   if (/data-edgepress-search(?:\s|=|>)/i.test(filtered) && !/src=["']\/edgepress\/search\.js["']/i.test(filtered)) {
     scripts.push('<script defer src="/edgepress/search.js"></script>');
   }
-  if (/data-edgepress-comments(?:\s|=|>)/i.test(filtered) && !/src=["']\/edgepress\/comments\.js["']/i.test(filtered)) {
-    scripts.push('<script defer src="/edgepress/comments-consent.js"></script>');
+  if (/data-edgepress-service(?:\s|=|>)/i.test(filtered) && !/src=["']\/edgepress\/services-consent\.js["']/i.test(filtered)) {
+    scripts.push('<script defer src="/edgepress/services-consent.js"></script>');
   }
   if (!scripts.length) return filtered;
   const integration = scripts.join('');

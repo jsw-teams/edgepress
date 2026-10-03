@@ -40,14 +40,14 @@ blocks:
                 - - Build CLI
                   - Node.js 22.12 or newer
                   - Stable
-                - - Worker runtime
-                  - Module Worker with Request, Response, and Web APIs
+                - - Website runtime
+                  - Static HTML and local browser JavaScript
                   - Stable
                 - - Static publishing
-                  - Workers Static Assets through Wrangler
+                  - Cloudflare, Vercel, EdgeOne Pages and ESA Pages
                   - Stable
-                - - Node.js APIs in Worker
-                  - Not required by src/worker.js
+                - - Website backend
+                  - Not required for static publishing
                   - Stable
                 - - Plugin API
                   - Major version 1
@@ -55,8 +55,8 @@ blocks:
                 - - Page block builder
                   - Ordered rows, 1 to 4 columns, validated elements
                   - Experimental
-                - - Backend forwarding
-                  - Optional Service Binding or URL plus Worker token
+                - - Optional external services
+                  - config.yml consent registry and independent HTTPS endpoints
                   - Experimental
             - type: text
               text: The compatibility manifest is project-compatibility.json. The Worker compatibility date is pinned in wrangler.jsonc. Static page delivery does not require nodejs_compat.

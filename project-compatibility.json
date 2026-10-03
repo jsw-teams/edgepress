@@ -46,11 +46,6 @@
       "since": "2026.9.1"
     },
     {
-      "name": "Service binding and URL/token backend proxy",
-      "stage": "experimental",
-      "since": "2026.9.1"
-    },
-    {
       "name": "Live local preview and theme switching",
       "stage": "experimental",
       "since": "2026.9.1"
@@ -137,6 +132,16 @@
     },
     {
       "name": "CommentNest URL integration and persistent consent with isolated comment UI",
+      "stage": "experimental",
+      "since": "2026.10.5"
+    },
+    {
+      "name": "Static deployment for Vercel, EdgeOne Pages and ESA Pages",
+      "stage": "experimental",
+      "since": "2026.10.5"
+    },
+    {
+      "name": "Consent-registered external APIs and widgets",
       "stage": "experimental",
       "since": "2026.10.5"
     }

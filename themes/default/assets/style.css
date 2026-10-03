@@ -42,7 +42,6 @@ main{flex:1;min-height:0}
 .privacy-manager .privacy-service-toggle-text{grid-column:1;grid-row:1;display:grid;gap:3px;min-width:0;overflow-wrap:anywhere}
 .privacy-manager .privacy-service-toggle-text strong{font-size:.94rem}
 .privacy-manager .privacy-service-purpose{color:var(--muted,#536159);font-size:.86rem;line-height:1.4}
-.privacy-manager .privacy-category{justify-self:start;max-width:100%;padding:1px 7px;border-radius:999px;background:color-mix(in srgb,var(--accent,#315e49) 12%,transparent);color:var(--ink,#1d2824);font-size:.74rem;overflow-wrap:anywhere}
 .privacy-manager .privacy-details{min-width:0;margin:0;border-top:1px solid var(--line,#c7d0c9)}
 .privacy-manager .privacy-details>summary{padding:7px 1px 0;font-size:.86rem;font-weight:700;cursor:pointer}
 .privacy-manager .privacy-details>summary:focus-visible{outline:3px solid var(--accent,#315e49);outline-offset:3px}

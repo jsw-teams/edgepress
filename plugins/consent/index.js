@@ -24,12 +24,9 @@ export default function consentManager(api) {
       'privacySettings', 'privacyNotice', 'privacyIntro', 'acceptOptional', 'rejectOptional',
       'savePreferences', 'optionalServices', 'noIntegrations', 'privacyPolicy', 'privacyController', 'privacyContact',
       'serviceDataCategories', 'serviceRecipient', 'serviceRetention', 'servicePrivacyDetails', 'servicePrivacyLink', 'consentReload',
-      'closePrivacy', 'reviewDetails', 'essentialStorage', 'pluginTracking',
-      'pluginStatistics', 'pluginAdvertising', 'pluginCaptcha', 'pluginComments'
+      'closePrivacy', 'reviewDetails', 'essentialStorage'
     ].map((key) => [key, translate(config, locale, key)]));
-    const services = Object.entries(config.browserPlugins).flatMap(([group, section]) =>
-      group !== 'consent' && section.enabled ? section.services.map(service => ({...service, category:group})) : []
-    );
+    const services = config.browserPlugins.services.filter(service => service.enabled !== false);
     const privacy = {
       ...config.privacy,
       consent: config.browserPlugins.consent,

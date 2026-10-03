@@ -25,11 +25,7 @@ const defaults = {
   },
   browserPlugins: {
     consent: { enabled: true, proposedDate: '', effectiveDate: '', expiresDays: 180 },
-    tracking: { enabled: false, services: [] },
-    statistics: { enabled: false, services: [] },
-    advertising: { enabled: false, services: [] },
-    captcha: { enabled: false, services: [] },
-    comments: { enabled: false, services: [] }
+    services: []
   },
   paths: { content: 'content', static: 'static', theme: 'themes/default', output: 'dist', cache: '.edgepress' },
   permalink: '/:year/:month/:slug/',
@@ -82,16 +78,17 @@ function validateLocalizedServiceText(value, label, maxLength, locales) {
 }
 
 const integrationProviders = {
-  'commentnest': { group: 'comments', credential:'backendUrl', pattern:/^https:\/\/[^\s]+$/ },
-  'google-tag-manager': { group: 'tracking', credential: 'containerId', pattern: /^GTM-[A-Z0-9]{4,20}$/i },
-  'meta-pixel': { group: 'tracking', credential: 'pixelId', pattern: /^[0-9]{6,20}$/ },
-  'cloudflare-web-analytics': { group: 'statistics', credential: 'token', pattern: /^[A-Fa-f0-9-]{20,64}$/ },
-  'google-analytics': { group: 'statistics', credential: 'measurementId', pattern: /^(?:G|GT)-[A-Z0-9]{4,24}$/i },
-  'baidu-tongji': { group: 'statistics', credential: 'siteId', pattern: /^[A-Fa-f0-9]{16,64}$/ },
-  'google-adsense': { group: 'advertising', credential: 'clientId', pattern: /^ca-pub-[0-9]{10,24}$/ },
-  'cloudflare-turnstile': { group: 'captcha', credential: 'siteKey', pattern: /^[A-Za-z0-9_-]{20,128}$/ },
-  'google-recaptcha': { group: 'captcha', credential: 'siteKey', pattern: /^[A-Za-z0-9_-]{20,256}$/ },
-  'hcaptcha': { group: 'captcha', credential: 'siteKey', pattern: /^[A-Za-z0-9_-]{20,256}$/ }
+  'external-widget': { credential: 'backendUrl', pattern: /^https:\/\/[^\s]+$/ },
+  'external-api': { credential: 'backendUrl', pattern: /^https:\/\/[^\s]+$/ },
+  'google-tag-manager': { credential: 'containerId', pattern: /^GTM-[A-Z0-9]{4,20}$/i },
+  'meta-pixel': { credential: 'pixelId', pattern: /^[0-9]{6,20}$/ },
+  'cloudflare-web-analytics': { credential: 'token', pattern: /^[A-Fa-f0-9-]{20,64}$/ },
+  'google-analytics': { credential: 'measurementId', pattern: /^(?:G|GT)-[A-Z0-9]{4,24}$/i },
+  'baidu-tongji': { credential: 'siteId', pattern: /^[A-Fa-f0-9]{16,64}$/ },
+  'google-adsense': { credential: 'clientId', pattern: /^ca-pub-[0-9]{10,24}$/ },
+  'cloudflare-turnstile': { credential: 'siteKey', pattern: /^[A-Za-z0-9_-]{20,128}$/ },
+  'google-recaptcha': { credential: 'siteKey', pattern: /^[A-Za-z0-9_-]{20,256}$/ },
+  'hcaptcha': { credential: 'siteKey', pattern: /^[A-Za-z0-9_-]{20,256}$/ }
 };
 
 async function readSiteYaml(root) {
@@ -219,29 +216,26 @@ function normalizeBrowserPlugins(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('config.yml plugins must be an object');
   for (const key of Object.keys(value)) {
     if (key !== 'consent') {
-      throw new Error('Unsupported plugin configuration group: ' + key + '; place browser services under plugins.consent.' + key);
+      throw new Error('Unsupported plugin configuration group: ' + key + '; place browser services under plugins.consent.services');
     }
   }
   if (value.consent === undefined) return {};
   const input = value.consent;
   if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('plugins.consent must be an object');
   const consent = {};
-  const normalized = {};
-  const groups = ['tracking', 'statistics', 'advertising', 'captcha', 'comments'];
-  for (const [key, section] of Object.entries(input)) {
-    if (groups.includes(key)) normalized[key] = section;
-    else if (['enabled', 'proposedDate', 'effectiveDate', 'expiresDays'].includes(key)) consent[key] = section;
-    else throw new Error('Unsupported plugins.consent option: ' + key);
+  const allowed = ['enabled', 'proposedDate', 'effectiveDate', 'expiresDays', 'services'];
+  for (const [key, option] of Object.entries(input)) {
+    if (!allowed.includes(key)) throw new Error('Unsupported plugins.consent option: ' + key + '; configure individual services in plugins.consent.services');
+    if (key !== 'services') consent[key] = option;
   }
-  normalized.consent = consent;
-  return normalized;
+  return {consent, services:input.services ?? []};
 }
 
 function validateBrowserPlugins(config) {
   const plugins = config.browserPlugins;
-  const allowedGroups = ['consent', 'tracking', 'statistics', 'advertising', 'captcha', 'comments'];
+  const allowedKeys = ['consent', 'services'];
   if (!plugins || typeof plugins !== 'object' || Array.isArray(plugins)) throw new Error('plugins in config.yml must be an object');
-  for (const key of Object.keys(plugins)) if (!allowedGroups.includes(key)) throw new Error('Unsupported plugin configuration group: ' + key);
+  for (const key of Object.keys(plugins)) if (!allowedKeys.includes(key)) throw new Error('Unsupported plugin configuration group: ' + key);
   const consent = plugins.consent;
   if (!consent || typeof consent !== 'object' || Array.isArray(consent) || typeof consent.enabled !== 'boolean' ||
       !isDateOnly(consent.proposedDate) ||
@@ -257,47 +251,44 @@ function validateBrowserPlugins(config) {
     throw new Error('Unsupported plugins.consent option: ' + key);
   }
   const ids = new Set();
-  let servicesCount = 0;
-  for (const group of ['tracking', 'statistics', 'advertising', 'captcha', 'comments']) {
-    const groupPath = 'plugins.consent.' + group;
-    const section = plugins[group];
-    if (!section || typeof section !== 'object' || Array.isArray(section) || typeof section.enabled !== 'boolean' || !Array.isArray(section.services)) {
-      throw new Error(groupPath + ' needs enabled and a services array');
+  if (!Array.isArray(plugins.services)) throw new Error('plugins.consent.services must be an array');
+  const servicesCount = plugins.services.filter(service => service?.enabled !== false).length;
+  for (const service of plugins.services) {
+    if (!service || typeof service !== 'object' || Array.isArray(service)) throw new Error('Each plugins.consent.services item must be an object');
+    if (service.enabled !== undefined && typeof service.enabled !== 'boolean') throw new Error('Service enabled must be a boolean');
+    const { id, provider, purpose } = service;
+    if (typeof id !== 'string' || !/^[a-z][a-z0-9-]{1,63}$/.test(id) || ids.has(id)) throw new Error('Each configured service needs a unique lowercase id');
+    ids.add(id);
+    const definition = integrationProviders[provider];
+    if (!definition) throw new Error('Unsupported service provider: ' + provider);
+    const locales = config.i18n.locales;
+    validateLocalizedServiceText(service.name || provider, 'Service ' + id + '.name', 120, locales);
+    validateLocalizedServiceText(purpose, 'Service ' + id + '.purpose', 500, locales);
+    validateLocalizedServiceText(service.dataCategories, 'Service ' + id + '.dataCategories', 600, locales);
+    validateLocalizedServiceText(service.recipient, 'Service ' + id + '.recipient', 200, locales);
+    validateLocalizedServiceText(service.retention, 'Service ' + id + '.retention', 300, locales);
+    if (typeof service.privacyUrl !== 'string' || service.privacyUrl.length > 2048 || /[\x00-\x20]/.test(service.privacyUrl)) {
+      throw new Error('Service ' + id + '.privacyUrl must be a safe HTTPS URL');
     }
-    for (const key of Object.keys(section)) if (!['enabled', 'services'].includes(key)) throw new Error('Unsupported ' + groupPath + ' option: ' + key);
-    if (section.enabled) servicesCount += section.services.length;
-    for (const service of section.services) {
-      if (!service || typeof service !== 'object' || Array.isArray(service)) throw new Error('Each ' + groupPath + '.services item must be an object');
-      const { id, provider, purpose } = service;
-      if (typeof id !== 'string' || !/^[a-z][a-z0-9-]{1,63}$/.test(id) || ids.has(id)) throw new Error('Each configured service needs a unique lowercase id');
-      ids.add(id);
-      const definition = integrationProviders[provider];
-      if (!definition || definition.group !== group) throw new Error('Unsupported provider for ' + groupPath + ': ' + provider);
-      const locales = config.i18n.locales;
-      validateLocalizedServiceText(service.name || provider, 'Service ' + id + '.name', 120, locales);
-      validateLocalizedServiceText(purpose, 'Service ' + id + '.purpose', 500, locales);
-      validateLocalizedServiceText(service.dataCategories, 'Service ' + id + '.dataCategories', 600, locales);
-      validateLocalizedServiceText(service.recipient, 'Service ' + id + '.recipient', 200, locales);
-      validateLocalizedServiceText(service.retention, 'Service ' + id + '.retention', 300, locales);
-      if (typeof service.privacyUrl !== 'string' || service.privacyUrl.length > 2048 || /[\x00-\x20]/.test(service.privacyUrl)) {
-        throw new Error('Service ' + id + '.privacyUrl must be a safe HTTPS URL');
+    let safePrivacyUrl = false;
+    try {
+      const parsed = new URL(service.privacyUrl);
+      safePrivacyUrl = parsed.protocol === 'https:' && !parsed.username && !parsed.password;
+    } catch { safePrivacyUrl = false; }
+    if (!safePrivacyUrl) throw new Error('Service ' + id + '.privacyUrl must be a safe HTTPS URL');
+    const allowedKeys = new Set(['id', 'enabled', 'provider', 'name', 'purpose', 'dataCategories', 'recipient', 'retention', 'privacyUrl', ...(definition.credential ? [definition.credential] : []), ...(provider === 'external-widget' ? ['moduleUrl', 'placement'] : [])]);
+    for (const key of Object.keys(service)) if (!allowedKeys.has(key)) throw new Error('Unsupported option for service ' + id + ': ' + key);
+    if (provider === 'external-widget' || provider === 'external-api') {
+      let valid=false;try {const url=new URL(service.backendUrl);valid=url.protocol==='https:' && !url.username && !url.password && !url.search && !url.hash;}catch{}
+      if(!valid)throw new Error('Service '+id+' needs an exact HTTPS backendUrl origin');
+      if (provider === 'external-widget') {
+        const module = new URL(service.moduleUrl);
+        if (module.protocol !== 'https:' || module.username || module.password || module.origin !== new URL(service.backendUrl).origin || !module.pathname.endsWith('.js') || module.hash) throw new Error('Widget moduleUrl must be a same-service HTTPS JavaScript URL');
+        if (service.placement !== undefined && service.placement !== 'posts') throw new Error('Widget placement supports posts');
       }
-      let safePrivacyUrl = false;
-      try {
-        const parsed = new URL(service.privacyUrl);
-        safePrivacyUrl = parsed.protocol === 'https:' && !parsed.username && !parsed.password;
-      } catch { safePrivacyUrl = false; }
-      if (!safePrivacyUrl) throw new Error('Service ' + id + '.privacyUrl must be a safe HTTPS URL');
-      const allowedKeys = new Set(['id', 'provider', 'name', 'purpose', 'dataCategories', 'recipient', 'retention', 'privacyUrl', ...(definition.credential ? [definition.credential] : [])]);
-      for (const key of Object.keys(service)) if (!allowedKeys.has(key)) throw new Error('Unsupported option for service ' + id + ': ' + key);
-      if(provider==='commentnest') {
-        let valid=false;try {const url=new URL(service.backendUrl);valid=url.protocol==='https:' && !url.username && !url.password && url.pathname==='/' && !url.search && !url.hash;}catch{}
-        if(!valid)throw new Error('Service '+id+' needs an exact HTTPS backendUrl origin');
-        if(section.services.length>1)throw new Error('Configure one CommentNest backend per site');
-      }
-      const credential = service[definition.credential];
-      if (definition.credential && (typeof credential !== 'string' || !definition.pattern.test(credential))) throw new Error('Service ' + id + ' needs a valid public ' + definition.credential);
     }
+    const credential = service[definition.credential];
+    if (definition.credential && (typeof credential !== 'string' || !definition.pattern.test(credential))) throw new Error('Service ' + id + ' needs a valid public ' + definition.credential);
   }
   if (servicesCount && !consent.enabled) throw new Error('plugins.consent must be enabled when browser services are configured');
   if (servicesCount) {

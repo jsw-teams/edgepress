@@ -53,7 +53,7 @@ test('CLI creates a localized post and refuses to overwrite it', async () => {
   try {
     await writeFile(resolve(root, 'edgepress.config.mjs'), 'export default {i18n:{defaultLocale:"zh-CN",languagePacks:[]}};');
     const settings = parse(await readFile(resolve('config.yml'), 'utf8'));
-    settings.plugins.consent.statistics.services = [];
+    settings.plugins.consent.services = [];
     await writeFile(resolve(root, 'config.yml'), stringify(settings));
     await mkdir(resolve(root, 'languages/base'), { recursive: true });
     await writeFile(resolve(root, 'languages/base/zh-CN.json'), JSON.stringify({ postStarter: '在这里写正文。', postCreated: '已创建 {file}', postNextSteps: '用 Markdown 写正文。', postPreview: 'npm run dev' }));

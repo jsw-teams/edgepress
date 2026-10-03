@@ -4,7 +4,7 @@
 
 The button creates a copy of this repository in your GitHub account and a new Worker in your Cloudflare account. It is for creating a separate site, not updating an existing one. Choose unused destination repository and Worker names during setup. If `edgepress` already exists, choose a different name such as `my-edgepress-site`; to update an existing deployment, use that repository's connected Workers Builds integration instead of clicking the button again.
 
-EdgePress builds static websites for Cloudflare Workers. Write posts in Markdown, compose pages from editable rows and elements, choose a shared theme, and build the site into dist/.
+EdgePress builds static websites for Cloudflare, Vercel, Tencent EdgeOne Pages and Alibaba Cloud ESA Pages. Write posts in Markdown, compose pages from editable rows and elements, choose a shared theme, and build the site into dist/.
 
 ## Quick start
 
@@ -53,7 +53,7 @@ Brand image derivatives can be exported from the saved masters with `tools/gener
 - config.yml: site metadata, navigation, privacy settings, and consent-gated browser services.
 - edgepress.config.mjs: paths, permalink, locales, and trusted build-time plugins.
 - languages/base/ and languages/packs/: interface dictionaries.
-- src/: CLI, builder, Markdown renderer, element renderer, page auditor, and Worker entry.
+- src/: CLI, builder, Markdown renderer, element renderer, page auditor, and platform deployment helpers.
 - dist/: generated output. Never edit generated files by hand.
 
 ## Commands
@@ -63,12 +63,11 @@ Brand image derivatives can be exported from the saved masters with `tools/gener
 - edgepress build and edgepress generate: run the same generator and write static files to dist/ for Cloudflare Workers or static hosting.
 - edgepress server: start live local preview, rebuild on source changes, and refresh the PDF audit report.
 - edgepress check: build, audit page structure, agent-friendliness, and Markdown rendering, simulate device profiles, inspect the browser accessibility tree and sample keyboard navigation, capture screenshots temporarily, and write only the PDF report under tools/.
-- edgepress doctor: inspect runtime and Worker compatibility using the entry configured in Wrangler's `main` field; unreadable or unsafe entries are reported as errors.
+- edgepress doctor: verify static publishing configuration; a pure static project requires no Worker entry or backend bindings.
 - edgepress theme list and edgepress theme use <name>: inspect or select an installed theme.
 - edgepress theme install <npm-package>[@version]: install a theme package from npm without running its install scripts.
 - edgepress theme create <name>: make an empty, accessible HTML theme skeleton with editable partials and a blank stylesheet.
-- edgepress secret put BACKEND_TOKEN: store the backend token in Wrangler.
-- edgepress deploy: build and deploy to Cloudflare Workers.
+- edgepress deploy [cloudflare|vercel|edgeone|esa]: build and deploy static output using the chosen platform CLI.
 - Connect a GitHub repository to Cloudflare Workers Builds to deploy on pushes to main. Set root directory `/`, build command `npm run build`, deploy command `npx wrangler deploy`, and leave build variables empty. See the [Cloudflare build troubleshooting guide](content/pages/quick-start/) if initialization stalls before commands run.
 - edgepress clean: remove generated site and report files.
 - edgepress iterate: create a report-only maintenance plan.
@@ -121,13 +120,11 @@ Navigation `children` turns an item into a native select with localized options 
 
 Use `category: edgepress` or `categories: [blog, uncategorized]` on a `post-list` block. `latest-posts` without an explicit filter inherits `site.archive.categories`. Homepage pagination must use that same category set. To change only the number shown on a project page, edit its block's `count` (1–12); the full category archive remains paginated and available.
 
-## Optional article discussions
+## Optional external services
 
-CommentNest · 评巢 owns the complete comment interface and backend. Configure `provider: commentnest` and `backendUrl` under `plugins.consent.comments`. EdgePress supplies article/page context and loads the service only after opt-in; no comment script, CSS, sticker assets or App credentials belong in the framework. Articles show a discussion area automatically when enabled. Pages add one optional `comments` block.
+The website has no comment backend or comment-specific browser code. Register external-api or external-widget under plugins.consent.services in config.yml. Each service declares its purpose, data, recipient, retention and privacy URL, and waits for explicit visitor consent. Address changes require a new choice. Service API credentials belong only to the separately deployed service.
 
-Deploy your own instance with [Deploy to Cloudflare](https://deploy.workers.cloudflare.com/?url=https://github.com/jsw-teams/CommentNest), then see the [installation and EdgePress guide](https://github.com/jsw-teams/CommentNest/blob/main/docs/edgepress.md) and [independent changelog](https://github.com/jsw-teams/CommentNest/blob/main/CHANGELOG.md).
-
-Saved privacy preferences survive refresh, locale changes and presentation updates, with a small essential-cookie fallback if localStorage is unavailable. Update the configured notice date when the actual processing purpose or data scope changes. New services or backend URLs require another choice.
+CommentNest owns its complete interface, CSS, languages, identity and storage. Register its widget with backendUrl, moduleUrl and placement: posts; pages use a generic service block. See the [independent integration guide](https://github.com/jsw-teams/CommentNest/blob/main/docs/edgepress.md).
 
 ## Publication times and article changes
 
@@ -139,4 +136,14 @@ Set `pinned: true` in the selected article translations to place them first in `
 
 Multiple post lists on the same page share a displayed-article set: an article already shown in a pinned list is omitted from the following recent list, which fills its remaining slots with other articles. Each new page starts a fresh set.
 
-The first production comment format isolates unsupported test Issues and retains them. Later releases preserve established data; an incompatible change requires an explicit migration, retaining and isolating unmigrated records without impersonating their authors. CommentNest release labels use year and month plus update count, such as `202610.2`.
+
+## Static platform deployment
+
+Run npm run deploy:cloudflare, npm run deploy:vercel, npm run deploy:edgeone -- -n my-site, or npm run deploy:esa -- --name my-site. Platform authentication is required. GitHub Actions also provides a manual Deploy static website workflow using repository Secrets.
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fjsw-teams%2Fedgepress)
+[![Deploy with EdgeOne](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Fjsw-teams%2Fedgepress)
+
+All platforms build dist/. CSS and JS are fingerprinted, with one-year immutable cache policies for Cloudflare, Vercel and EdgeOne. ESA uses the same assets; set its browser and edge cache rules for hashed CSS/JS while leaving HTML short-lived. See the [deployment guide](content/pages/deployment/en.md) and [ESA build configuration](https://help.aliyun.com/en/edge-security-acceleration/esa/user-guide/build-pages).
+
+Optional API requests use one fixed endpoint: backendUrl itself when it has a path, otherwise /api on its origin. callService(id, action, options) puts the operation in X-Service-Action; context belongs in request headers and payloads in the body. The independent API must implement this contract and allow the required CORS request headers. Third-party vendor integrations retain their vendor-defined protocols.

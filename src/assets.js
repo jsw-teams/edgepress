@@ -3,6 +3,7 @@ import { copyFile, readdir, readFile, writeFile, mkdir } from 'node:fs/promises'
 import { dirname, extname, relative, resolve, sep } from 'node:path';
 import * as posix from 'node:path/posix';
 import { mapLimit } from './concurrency.js';
+import {extendConsentPolicy} from './consent-csp.js';
 
 async function walk(directory) {
   let entries;
@@ -156,7 +157,7 @@ export async function collectAssets(config) {
   const urlMap = Object.create(null);
   for (const item of items) urlMap['/' + item.path] = '/' + outputByOriginal.get(item.path);
   config.assetManifest = urlMap;
-  return { assets, urlMap, existingHeaders: headerContents.join('\n\n') };
+  return { assets, urlMap, existingHeaders: extendConsentPolicy(headerContents.join('\n\n'),config) };
 }
 
 export async function writeAssets(bundle, output, concurrency = 8) {
@@ -166,10 +167,12 @@ export async function writeAssets(bundle, output, concurrency = 8) {
     if (asset.source) await copyFile(asset.source, target);
     else await writeFile(target, asset.content);
   });
+  // Cloudflare already revalidates unversioned assets by default. A broad cache
+  // rule would be concatenated with exact immutable rules instead of overridden.
   const securityRules = '/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin';
   const immutableRules = bundle.assets
-    .filter((asset) => /\.[a-f0-9]{16}\.(?:css|js)$/i.test(asset.path))
-    .map((asset) => '/' + asset.path + '\n  Cache-Control: public, max-age=31556952, immutable');
+    .filter((asset) => /\.[a-f0-9]{16}\.(?:css|js|json|png|jpe?g|webp|avif|svg|gif|woff2?)$/i.test(asset.path))
+    .map((asset) => '/' + asset.path + '\n  Cache-Control: public, max-age=31536000, immutable');
   const headers = [bundle.existingHeaders.trim(), securityRules, ...immutableRules].filter(Boolean).join('\n\n') + '\n';
   await writeFile(resolve(output, '_headers'), headers, 'utf8');
 }

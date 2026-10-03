@@ -1,4 +1,4 @@
-import {renderCommentsBlock,commentsEnabled,pageCommentThread,hasCommentBlock} from './comment-block.js';
+import {renderPostServices,hasServiceBlock} from './service-block.js';
 import { authorForPost, readingMinutes, filterPostsByCategory, categorySlug, normalizeCategory } from './post-details.js';
 import { plainText, renderMarkdownExcerpt } from './markdown.js';
 import { renderBlocks } from './page-blocks.js';
@@ -278,7 +278,7 @@ export async function generateBuiltinRoutes(site, config, extensions) {
         '<span class="post-reading-time" data-reading-minutes="' + minutes + '">' + escapeHtml(label('postReadingTime').replace('{minutes}', minutes)) + '</span>' +
         (post.updated ? '<span class="post-updated">' + escapeHtml(label('postUpdated')) + ' <time data-local-time data-time-locale="' + escapeHtml(locale) + '" datetime="' + post.updated.toISOString() + '">' + escapeHtml(dateLabel(post.updated, locale, config.site.timeZone)) + '</time></span>' : '') +
         '</div>' + tagsHtml + '</header>' + (post.showChanges && post.changes ? '<details class="post-changes"><summary>' + escapeHtml(label('postChanges')) + '</summary><pre><code>' + escapeHtml(post.changes) + '</code></pre></details>' : '') + renderPostVideo(post.video, locale) + renderedMarkdown.toc + '<div class="post-content">' + renderedMarkdown.html +
-        '</div></article>' + renderCommentsBlock(post, locale, config);
+        '</div></article>' + renderPostServices(post, locale, config);
       const canonicalPath = urlFor(post.path);
       return pageRoute(post.path + 'index.html', post.title, post.description || plainText(post.markdown).slice(0, 160), body,
         locale, config, extensions, {
@@ -411,10 +411,10 @@ export async function generateBuiltinRoutes(site, config, extensions) {
       escapeHtml(translate(config, locale, 'returnHome')) + '</a></p></section>';
     routes.push(await pageRoute(prefix + '403.html', forbiddenTitle, forbiddenText, forbiddenBody, locale, config, extensions, { robots: 'noindex,nofollow' }));
   }
-  const discussions = commentsEnabled(config) ? [
+  const discussions = config.browserPlugins.services.some(service => service.enabled !== false && service.provider === 'external-widget') ? [
     ...site.posts.filter(post => !post.draft).map(post => ({thread:post.bundlePath,title:post.title})),
-    ...site.pages.filter(page => !page.draft && hasCommentBlock(page.blocks)).map(page => ({thread:pageCommentThread(page),title:page.title}))
+    ...site.pages.filter(page => !page.draft && hasServiceBlock(page.blocks)).map(page => ({thread:'page:' + page.bundlePath,title:page.title}))
   ] : [];
-  routes.push(fileRoute('edgepress/comment-threads.json', JSON.stringify([...new Map(discussions.map(item => [item.thread,item])).values()]), 'application/json; charset=utf-8'));
+  routes.push(fileRoute('edgepress/service-contexts.json', JSON.stringify([...new Map(discussions.map(item => [item.thread,item])).values()]), 'application/json; charset=utf-8'));
   return routes;
 }

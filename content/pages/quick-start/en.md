@@ -179,7 +179,7 @@ blocks:
                   code: edgepress generate
                 - type: notice
                   title: Worker-only integrations
-                  text: Static hosting does not run src/worker.js. The built-in /api/ proxy and Cloudflare service bindings require an EdgePress Worker deployment; otherwise configure an equivalent server-side route on your host. Keep backend tokens out of browser settings.
+                  text: All deployments serve static output. Register optional external APIs and widgets under plugins.consent.services in config.yml; each backend manages its own private credentials and security.
                   tone: warning
   - columns: 1
     cells:

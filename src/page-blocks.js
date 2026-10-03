@@ -1,4 +1,4 @@
-import {renderCommentsBlock,commentsEnabled} from './comment-block.js';
+import {renderServiceBlock} from './service-block.js';
 import { renderMarkdownExcerpt } from './markdown.js';
 import { translate, translateValue } from './i18n.js';
 import { isIconName, renderIcon } from './icons.js';
@@ -63,10 +63,9 @@ function imageCandidates(value, label) {
   }).join(', ');
 }
 
-function enabledIntegration(config, id, category) {
-  const section = config.browserPlugins[category];
-  const match = section?.enabled && section.services.find((item) => item.id === id);
-  if (!match) throw new Error('Page block requires a configured ' + category + ' service with id: ' + id);
+function enabledIntegration(config, id) {
+  const match = config.browserPlugins.services.find(item => item.enabled !== false && item.id === id);
+  if (!match) throw new Error('Page block requires a configured service with id: ' + id);
   return match;
 }
 
@@ -79,16 +78,11 @@ function dateOnlyLabel(value, locale) {
 }
 
 function renderPrivacyServices(context) {
-  const configured = Object.entries(context.config.browserPlugins).flatMap(([key, section]) => {
-    if (key === 'consent' || !section.enabled) return [];
-    const label = translate(context.config, context.locale, 'plugin' + key.charAt(0).toUpperCase() + key.slice(1));
-    return section.services.map(service => ({...service, category:label}));
-  });
+  const configured = context.config.browserPlugins.services.filter(service => service.enabled !== false);
   if (!configured.length) {
     return '<p class="privacy-services-empty">' + escapeHtml(text(context.emptyText, 'privacy-services.emptyText', 2000)) + '</p>';
   }
-  return '<ul class="privacy-service-list">' + configured.map((service) => '<li><h3>' + escapeHtml(service.category + ' · ' +
-    translateValue(context.config, context.locale, service.name || service.provider)) + '</h3><p><strong>' +
+  return '<ul class="privacy-service-list">' + configured.map((service) => '<li><h3>' + escapeHtml(translateValue(context.config, context.locale, service.name || service.provider)) + '</h3><p><strong>' +
     escapeHtml(translate(context.config, context.locale, 'servicePurpose')) + ':</strong> ' +
     escapeHtml(translateValue(context.config, context.locale, service.purpose)) + '</p><p><strong>' +
     escapeHtml(translate(context.config, context.locale, 'serviceDataCategories')) + ':</strong> ' +
@@ -414,21 +408,21 @@ async function renderBlock(block, context, depth, index) {
       return '<section class="faq-block"><h2>' + title + '</h2>' + items.map((item) => '<details><summary>' +
         escapeHtml(text(item?.question, 'faq.question', 500)) + '</summary><p>' + escapeHtml(text(item?.answer, 'faq.answer', 4000)) + '</p></details>').join('') + '</section>';
     }
-    case 'comments': {
-      if (!commentsEnabled(context.config)) return '';
-      if (context.commentsRendered) throw new Error('A page may contain only one comments block');
-      context.commentsRendered = true;
-      return renderCommentsBlock(context.document,context.locale,context.config,true);
+    case 'service': {
+      const id = text(block.integration, 'service.integration', 64);
+      if (context.servicesRendered.has(id)) throw new Error('A page may contain only one block per service');
+      context.servicesRendered.add(id);
+      return renderServiceBlock(context.document, context.locale, context.config, id, true);
     }
     case 'post-list':
     case 'latest-posts': return renderLatestPosts(block, context);
     case 'ad-slot': {
-      const integration = enabledIntegration(context.config, block.integration, 'advertising');
+      const integration = enabledIntegration(context.config, block.integration);
       return '<div class="ad-slot" data-edgepress-ad="' + escapeHtml(integration.id) + '" aria-label="' + escapeHtml(text(block.label, 'ad-slot.label', 120)) + '"></div>';
     }
     case 'captcha': {
       if (!captchaProviders.has(block.provider)) throw new Error('captcha.provider must be a supported consent-gated provider');
-      const integration = context.config.browserPlugins.captcha.enabled && context.config.browserPlugins.captcha.services.find((item) => item.provider === block.provider);
+      const integration = context.config.browserPlugins.services.find(item => item.enabled !== false && item.provider === block.provider);
       if (!integration) throw new Error('captcha block needs a configured consent-gated integration: ' + block.provider);
       const siteKey = integration.siteKey;
       return '<div class="captcha-block" data-edgepress-captcha="' + escapeHtml(block.provider) + '" data-sitekey="' + escapeHtml(siteKey) + '" aria-label="' + escapeHtml(text(block.label, 'captcha.label', 120)) + '"></div>';
@@ -449,7 +443,7 @@ async function renderElements(blocks, context, depth = 0) {
 }
 
 export async function renderBlocks(rows, context) {
-  context = {...context, displayedPostBundles:new Set(), commentsRendered:false, blockCount:0};
+  context = {...context, displayedPostBundles:new Set(), servicesRendered:new Set(), blockCount:0};
   if (!Array.isArray(rows) || rows.length > 100) throw new Error('Page layout needs an array of at most 100 rows');
   const rendered = [];
   for (const row of rows) {

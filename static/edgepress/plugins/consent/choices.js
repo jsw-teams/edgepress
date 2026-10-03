@@ -6,7 +6,6 @@ export function choiceSnapshot(privacy, siteOrigin='') {
   const services=(privacy.integrations || []).map(service=>{
     const presentation=new Set(['name','purpose','dataCategories','recipient','retention']);
     const value=Object.fromEntries(Object.entries(service).filter(([key])=>!presentation.has(key)));
-    if(value.provider==='github-comments'){value.provider='commentnest';value.backendUrl=siteOrigin;}
     return value;
   }).sort((a,b)=>String(a.id).localeCompare(String(b.id)));
   return JSON.stringify(stable({controller:privacy.controller,policyUrl:privacy.policyUrl,consent,integrations:services}));

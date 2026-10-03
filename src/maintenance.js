@@ -34,13 +34,13 @@ export async function checkCompatibility(config) {
   } else if (workerDate < manifest.requirements.minimumWorkersDate) {
     issues.push({ severity: 'error', message: 'Workers compatibility_date is older than the supported minimum.' });
   }
-  if (!wrangler.assets || !wrangler.assets.directory || wrangler.assets.binding !== 'ASSETS') {
+  if (!wrangler.assets || !wrangler.assets.directory) {
     issues.push({ severity: 'error', message: 'Configure the ASSETS binding and static assets directory in Wrangler.' });
   }
   const entry = wrangler.main;
-  if (typeof entry !== 'string' || !entry.trim()) {
-    issues.push({ severity: 'error', message: 'Configure a Worker entry in wrangler.jsonc main.' });
-  } else {
+  if (entry !== undefined && (typeof entry !== 'string' || !entry.trim())) {
+    issues.push({severity:'error',message:'The optional Worker entry must be a non-empty string.'});
+  } else if (entry !== undefined) {
     try {
       const realRoot = await realpath(root);
       const workerFile = await realpath(resolve(root, entry));
@@ -59,8 +59,8 @@ export async function checkCompatibility(config) {
     }
   }
   const first = wrangler.assets?.run_worker_first;
-  if (!Array.isArray(first) || !first.includes('/api/*')) {
-    issues.push({ severity: 'warning', message: 'Keep Worker-first routing limited to API paths so static pages bypass script execution.' });
+  if (first === true || (Array.isArray(first) && first.length)) {
+    issues.push({ severity: 'warning', message: 'Static websites should use assets-only hosting; deploy backend services separately.' });
   }
 
   const report = {

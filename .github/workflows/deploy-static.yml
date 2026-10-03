@@ -1,0 +1,49 @@
+name: Deploy static website
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        type: choice
+        options: [cloudflare, vercel, edgeone, esa]
+        required: true
+      project:
+        description: EdgeOne or ESA project name
+        type: string
+        required: false
+permissions:
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: static
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run build
+      - name: Deploy to selected platform
+        env:
+          DEPLOY_PLATFORM: ${{ inputs.platform }}
+          DEPLOY_PROJECT: ${{ inputs.project }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          EDGEONE_API_TOKEN: ${{ secrets.EDGEONE_API_TOKEN }}
+          ESA_ACCESS_KEY_ID: ${{ secrets.ESA_ACCESS_KEY_ID }}
+          ESA_ACCESS_KEY_SECRET: ${{ secrets.ESA_ACCESS_KEY_SECRET }}
+        run: |
+          case "$DEPLOY_PLATFORM" in
+            cloudflare) npx --yes wrangler deploy ;;
+            vercel) npx --yes vercel deploy --prod --yes --token "$VERCEL_TOKEN" ;;
+            edgeone) test -n "$DEPLOY_PROJECT" && npx --yes edgeone pages deploy dist -n "$DEPLOY_PROJECT" -t "$EDGEONE_API_TOKEN" ;;
+            esa) test -n "$DEPLOY_PROJECT" && npx --yes esa-cli deploy --name "$DEPLOY_PROJECT" --assets dist ;;
+            *) exit 1 ;;
+          esac

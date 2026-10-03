@@ -179,7 +179,7 @@ blocks:
                   code: edgepress generate
                 - type: notice
                   title: 仅 Worker 支持的集成
-                  text: 静态托管不会运行 src/worker.js。内置 /api/ 代理和 Cloudflare Service Binding 需要部署 EdgePress Worker；否则需在当前服务器配置等效的服务端路由。不要把后端 Token 写入浏览器设置。
+                  text: 各平台均托管静态产物。可选外部 API 和界面在 config.yml 的 plugins.consent.services 注册，独立后端管理凭据和安全验证。
                   tone: warning
   - columns: 1
     cells:

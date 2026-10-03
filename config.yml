@@ -1,4 +1,3 @@
-# Site owner metadata and shared website components.
 site:
   timeZone: Asia/Taipei
   title: EdgePress
@@ -66,10 +65,10 @@ site:
       - static site generator
     image: https://example.org/edgepress/brand/og-image.png
     robots: index,follow
-  # GEO here means agent SEO: make authoritative project information easy to discover and interpret.
   agentSeo:
     enabled: true
-    summary: A static website builder for Cloudflare Workers, with row-based editable pages, Markdown posts, themes, plugins, and consent-gated integrations.
+    summary: A static website builder for Cloudflare Workers, with row-based editable pages, Markdown posts,
+      themes, plugins, and consent-gated integrations.
     topics:
       - Markdown website builder
       - Cloudflare Workers
@@ -88,126 +87,29 @@ privacy:
 plugins:
   consent:
     enabled: true
-    # Drafting date; set effectiveDate when a revised notice takes effect.
-    proposedDate: "2026-09-26"
-    effectiveDate: "2026-09-26"
+    proposedDate: 2026-09-26
+    effectiveDate: 2026-09-26
     expiresDays: 180
-    tracking:
-      enabled: true
-      services: []
-      # Example:
-      # - id: tag-manager
-      #   provider: google-tag-manager
-      #   name: { en: Google Tag Manager, zh-CN: Google 跟踪代码管理器 }
-      #   purpose: { en: Load campaign tags after consent., zh-CN: 经同意后加载营销标签。 }
-      #   dataCategories: { en: Describe data sent by this container., zh-CN: 填写此容器发送的数据类别。 }
-      #   recipient: { en: Google LLC, zh-CN: Google LLC }
-      #   retention: { en: Configure the retention period., zh-CN: 填写适用的数据保留期限。 }
-      #   privacyUrl: https://policies.google.com/privacy
-      #   containerId: GTM-ABCD123
-      # - id: social-pixel
-      #   provider: meta-pixel
-      #   name: { en: Meta Pixel, zh-CN: Meta Pixel }
-      #   purpose: { en: Measure campaign traffic after consent., zh-CN: 经同意后衡量营销流量。 }
-      #   dataCategories: { en: Describe data sent by this pixel., zh-CN: 填写此像素发送的数据类别。 }
-      #   recipient: { en: Meta Platforms, Inc., zh-CN: Meta Platforms, Inc. }
-      #   retention: { en: Configure the provider's retention period., zh-CN: 填写供应商的数据保留期限。 }
-      #   privacyUrl: https://www.facebook.com/privacy/policy/
-      #   pixelId: "123456789012345"
-    statistics:
-      enabled: true
-      services:
-        - id: cloudflare-web-analytics
-          provider: cloudflare-web-analytics
-          name:
-            en: Cloudflare Web Analytics
-            zh-CN: Cloudflare 网站分析
-          purpose:
-            en: Measure page views and page-load performance after consent.
-            zh-CN: 经访客同意后衡量页面浏览量和页面加载性能。
-          dataCategories:
-            en: Performance timing and page-view metrics; dimensions can include path, referrer, device, browser, operating system, and country. Cloudflare receives the beacon request's source IP and says it discards it at the nearest data center without storing it in core databases or logs.
-            zh-CN: 性能计时和页面浏览指标，维度可能包括页面路径、来源页、设备、浏览器、操作系统和国家或地区。Cloudflare 会在信标请求中接收来源 IP，并表示会在最近的数据中心将其丢弃，不保存到核心数据库或日志中。
-          recipient:
-            en: Cloudflare, Inc.
-            zh-CN: Cloudflare, Inc.
-          retention:
-            en: Unsampled beacon data is kept for 7 days, then aggregated to about 10% for long-term storage. Dashboard history is available for 6 months.
-            zh-CN: 未采样的信标数据保留 7 天，之后会汇总为约 10% 的长期数据。仪表板可查看最近 6 个月的历史记录。
-          privacyUrl: https://developers.cloudflare.com/speed/observatory/rum-beacon/
-          token: "8347d72ba9f84e6783bf441e7832a80e"
-      # Examples use public provider IDs only.
-      # - id: primary-analytics
-      #   provider: google-analytics
-      #   name: { en: Google Analytics, zh-CN: Google Analytics }
-      #   purpose: { en: Measure site visits after consent., zh-CN: 经访客同意后衡量网站访问情况。 }
-      #   dataCategories: { en: Describe the data processed by this property., zh-CN: 填写此媒体资源处理的数据类别。 }
-      #   recipient: { en: Google LLC, zh-CN: Google LLC }
-      #   retention: { en: Configure the provider's retention period., zh-CN: 填写供应商的数据保留期限。 }
-      #   privacyUrl: https://policies.google.com/privacy
-      #   measurementId: G-ABC12345
-      # - id: edge-analytics
-      #   provider: cloudflare-web-analytics
-      #   name: { en: Cloudflare Web Analytics, zh-CN: Cloudflare 网站分析 }
-      #   purpose: { en: Measure site visits after consent., zh-CN: 经访客同意后衡量网站访问情况。 }
-      #   dataCategories: { en: Describe the data processed by this site., zh-CN: 填写此站点处理的数据类别。 }
-      #   recipient: { en: Cloudflare, Inc., zh-CN: Cloudflare, Inc. }
-      #   retention: { en: Configure the retention period., zh-CN: 填写数据保留期限。 }
-      #   privacyUrl: https://developers.cloudflare.com/speed/observatory/rum-beacon/
-      #   token: 01234567-89ab-cdef-0123-456789abcdef
-      # - id: baidu-analytics
-      #   provider: baidu-tongji
-      #   name: { en: Baidu Tongji, zh-CN: 百度统计 }
-      #   purpose: { en: Measure site visits after consent., zh-CN: 经访客同意后衡量网站访问情况。 }
-      #   dataCategories: { en: Describe data sent to this site ID., zh-CN: 填写此站点编号接收的数据类别。 }
-      #   recipient: { en: Baidu, Inc., zh-CN: 百度 }
-      #   retention: { en: Configure the provider's retention period., zh-CN: 填写供应商的数据保留期限。 }
-      #   privacyUrl: https://privacy.baidu.com/policy.html
-      #   siteId: abcdef0123456789abcdef01
-    advertising:
-      enabled: true
-      services: []
-      # Example:
-      # - id: display-ads
-      #   provider: google-adsense
-      #   name: { en: Google AdSense, zh-CN: Google AdSense }
-      #   purpose: { en: Display ads after consent., zh-CN: 经访客同意后展示广告。 }
-      #   dataCategories: { en: Describe the data processed for ad delivery., zh-CN: 填写广告投放处理的数据类别。 }
-      #   recipient: { en: Google LLC, zh-CN: Google LLC }
-      #   retention: { en: Configure the provider's retention period., zh-CN: 填写供应商的数据保留期限。 }
-      #   privacyUrl: https://policies.google.com/privacy
-      #   clientId: ca-pub-1234567890123456
-    captcha:
-      enabled: true
-      services: []
-      # Choose a provider for each CAPTCHA block. Never add its secret key here.
-      # - id: contact-form-check
-      #   provider: cloudflare-turnstile
-      #   name: { en: Cloudflare Turnstile, zh-CN: Cloudflare Turnstile }
-      #   purpose: { en: Reduce automated contact form submissions., zh-CN: 减少联系表单中的自动化提交。 }
-      #   dataCategories: { en: Describe challenge and response data., zh-CN: 填写验证挑战和响应处理的数据类别。 }
-      #   recipient: { en: Cloudflare, Inc., zh-CN: Cloudflare, Inc. }
-      #   retention: { en: Configure the provider's retention period., zh-CN: 填写供应商的数据保留期限。 }
-      #   privacyUrl: https://www.cloudflare.com/privacypolicy/
-      #   siteKey: 0x4AAAAAAABBBBBBBBCCCCCCDDDD
-      # - id: signup-form-check
-      #   provider: google-recaptcha
-      #   name: { en: Google reCAPTCHA, zh-CN: Google reCAPTCHA }
-      #   purpose: { en: Reduce automated signup submissions., zh-CN: 减少注册表单中的自动化提交。 }
-      #   dataCategories: { en: Describe challenge and response data., zh-CN: 填写验证挑战和响应处理的数据类别。 }
-      #   recipient: { en: Google LLC, zh-CN: Google LLC }
-      #   retention: { en: Configure the provider's retention period., zh-CN: 填写供应商的数据保留期限。 }
-      #   privacyUrl: https://policies.google.com/privacy
-      #   siteKey: 6LcAbCdEfGhIjKlMnOpQrStUvWxYz0123456789a
-      # - id: support-form-check
-      #   provider: hcaptcha
-      #   name: { en: hCaptcha, zh-CN: hCaptcha }
-      #   purpose: { en: Reduce automated support requests., zh-CN: 减少自动化的支持请求。 }
-      #   dataCategories: { en: Describe challenge and response data., zh-CN: 填写验证挑战和响应处理的数据类别。 }
-      #   recipient: { en: Intuition Machines, Inc., zh-CN: Intuition Machines, Inc. }
-      #   retention: { en: Configure the provider's retention period., zh-CN: 填写供应商的数据保留期限。 }
-      #   privacyUrl: https://www.hcaptcha.com/privacy
-      #   siteKey: 0123456789abcdefghijklmnopqrstuvwx
-# Add browser services under plugins.consent after filling the real site operator details above.
-# Every configured service needs a privacyUrl linking to the provider's current privacy information.
-# Each service waits for explicit visitor consent before its vendor code loads.
+    services:
+      - id: cloudflare-web-analytics
+        provider: cloudflare-web-analytics
+        name:
+          en: Cloudflare Web Analytics
+          zh-CN: Cloudflare 网站分析
+        purpose:
+          en: Measure visits and page performance to improve this site, only after you opt in.
+          zh-CN: 在你同意后统计访问与页面性能，用于改进本站。
+        dataCategories:
+          en: Performance timing and page-view metrics; dimensions can include path, referrer, device, browser,
+            operating system, and country. Cloudflare receives the beacon request's source IP and says it
+            discards it at the nearest data center without storing it in core databases or logs.
+          zh-CN: 性能计时和页面浏览指标，维度可能包括页面路径、来源页、设备、浏览器、操作系统和国家或地区。Cloudflare 会在信标请求中接收来源 IP，并表示会在最近的数据中心将其丢弃，不保存到核心数据库或日志中。
+        recipient:
+          en: Cloudflare, Inc.
+          zh-CN: Cloudflare, Inc.
+        retention:
+          en: Unsampled beacon data is kept for 7 days, then aggregated to about 10% for long-term storage. Dashboard
+            history is available for 6 months.
+          zh-CN: 未采样的信标数据保留 7 天，之后会汇总为约 10% 的长期数据。仪表板可查看最近 6 个月的历史记录。
+        privacyUrl: https://developers.cloudflare.com/speed/observatory/rum-beacon/
+        token: 8347d72ba9f84e6783bf441e7832a80e

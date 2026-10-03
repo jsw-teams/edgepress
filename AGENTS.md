@@ -32,7 +32,7 @@ EdgePress builds static websites from Markdown and YAML source. Follow these rul
 
 - Store built-in UI text in `languages/base/<locale>.json`; each optional locale has its own `languages/packs/<locale>.json` file and is enabled in `edgepress.config.mjs`.
 - Missing language-pack IDs fall back to the base dictionary. Do not inline translations in config.
-- Build modules under `plugins/` run in Node during the build and are trusted code. Browser plugin settings live in root `config.yml` under `plugins.consent`, with `tracking`, `statistics`, `advertising`, `captcha`, and `comments` nested inside it. Browser integrations must remain behind the explicit consent manager before any vendor request.
+- Build modules under `plugins/` run in Node during the build and are trusted code. Browser plugin settings live in root `config.yml` under `plugins.consent`, with individual entries in `services`. Browser integrations must remain behind the explicit consent manager before any vendor request.
 - Never place CAPTCHA secret keys in generated client configuration. CAPTCHA responses must be verified by a trusted backend.
 
 ## Commands
@@ -40,7 +40,7 @@ EdgePress builds static websites from Markdown and YAML source. Follow these rul
 - `npm ci`: install locked dependencies.
 - `npm link`: expose the CLI when developing from this source checkout.
 - `edgepress build`: generate the website in `dist/`.
-- `edgepress server`: build, run Wrangler locally, watch sources, and refresh the audit report.
+- `edgepress server`: build, preview static assets with Wrangler locally, watch sources, and refresh the audit report.
 - `edgepress check`: build, generate accessibility and agent-friendliness reports, capture screenshots, and write the PDF under `tools/`.
 - `edgepress doctor`: run Worker compatibility checks.
 
@@ -51,3 +51,14 @@ Read the guides in `content/pages/` before extending themes, page blocks, or plu
 - 带 `-Force` 的检查命令（如 `Get-ChildItem -Force`）应与删除、修改、服务启停等操作分成独立工具调用；仅换行或用分号分隔无效。
 - 遇到 `blocked by policy`，先检查完整脚本是否混用了上述命令和参数，不要直接归因于权限不足。
 - 每步执行后核验实际结果；仍被拦截时如实记录命令和错误。
+
+## Static architecture
+
+- The website output is static HTML and local JavaScript. Do not introduce website API handlers, service bindings, comment storage or operator Secrets.
+- Register optional external APIs and widgets in config.yml under plugins.consent.services. Every external request waits for explicit service consent and visitor demand.
+- iask owns the complete comment UI, languages, styles, media and backend. Use only generic service slots here.
+- Cloudflare, Vercel, EdgeOne Pages and ESA Pages serve dist/. Preserve hashed CSS/JS URLs and the configured immutable cache policy. HTML and unversioned metadata must remain refreshable.
+
+- Optional service configuration is flat: plugins.consent.services. Do not restore preset consent categories, category tags, group toggles or unused category translations. Show each configured service name and localized purpose directly; retain explicit per-service consent and disclosure validation.
+
+- Optional APIs use fixed endpoints and X-Service-Action headers. Do not encode operation names, discussion identifiers or submitted content in API URL paths or queries. Third-party providers follow their native protocols.
