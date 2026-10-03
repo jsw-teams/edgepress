@@ -1,5 +1,5 @@
 ---
-title: 边笺 网站构建器
+title: 写文建站 网站构建器
 lang: zh-CN
 slug: home
 homepage: true
@@ -15,7 +15,7 @@ blocks:
       - - type: hero
           eyebrow: 为边缘网络构建
           title: 用清晰、可编辑的源文件构建快速网站。
-          text: 边笺将 Markdown 文章、页面布局、主题与可选服务构建为静态网站，支持 Cloudflare、Vercel、Netlify、腾讯 EdgeOne Pages 和阿里云 ESA Pages。
+          text: 写文建站将 Markdown 文章、页面布局、主题与可选服务构建为静态网站，支持 Cloudflare、Vercel、Netlify、腾讯 EdgeOne Pages 和阿里云 ESA Pages。
           mascotSrc: /edgepress/brand/home-hero.png
           mascotAlt: 大熊猫与台湾黑熊友好并肩站立，黑熊胸前的浅色 V 形胸斑清晰可见。
           mascotWidth: 1536
@@ -96,7 +96,7 @@ blocks:
       - - type: media-text
           mediaType: image
           src: /images/previews/edgepress-zh.webp
-          alt: 边笺本地网站界面实拍。
+          alt: 写文建站本地网站界面实拍。
           caption: 本地构建的界面截图。
           placement: left
           title: 看见源文件生成的网站

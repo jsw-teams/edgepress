@@ -10,7 +10,7 @@ The Cloudflare button creates a copy of this repository in your GitHub account a
 
 EdgePress builds static websites for Cloudflare, Vercel, Netlify, Tencent EdgeOne Pages and Alibaba Cloud ESA Pages.
 
-[中文说明：边笺](content/guides/zh-cn.md) | [Free-tier comparison](content/guides/platforms.md)
+[中文说明：写文建站](content/guides/zh-cn.md) | [Free-tier comparison](content/guides/platforms.md)
 
 ![EdgePress website preview](content/assets/images/previews/edgepress-en.webp)
 

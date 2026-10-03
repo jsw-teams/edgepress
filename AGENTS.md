@@ -63,4 +63,4 @@ Read the guides in `content/pages/` before extending themes, page blocks, or plu
 
 - Optional APIs use fixed endpoints and X-Service-Action headers. Do not encode operation names, discussion identifiers or submitted content in API URL paths or queries. Third-party providers follow their native protocols.
 
-- The Chinese official project name is 边笺; the English official name remains EdgePress. Use one localized name in page titles and public copy. Homepage pages do not contain discussion slots.
+- The Chinese official project name is 写文建站; the English official name remains EdgePress. Use one localized name in page titles and public copy. Homepage pages do not contain discussion slots.

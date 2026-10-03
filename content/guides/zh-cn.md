@@ -1,6 +1,6 @@
-# 边笺
+# 写文建站
 
-边笺把 Markdown 文章和 YAML 页面布局构建为静态网站。英文界面使用官方名称 EdgePress。首页、文章、搜索、多语言切换和本地 JavaScript 交互都随静态产物发布。
+写文建站把 Markdown 文章和 YAML 页面布局构建为静态网站。英文界面使用官方名称 EdgePress。首页、文章、搜索、多语言切换和本地 JavaScript 交互都随静态产物发布。
 
 ![网站界面实拍](../assets/images/previews/edgepress-zh.webp)
 
