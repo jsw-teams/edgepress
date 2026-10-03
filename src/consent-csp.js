@@ -79,3 +79,30 @@ function globalPolicy(headers) {
   let scope='';
   for(const line of headers.split(/\r?\n/)){if(line&&!/^\s/.test(line))scope=line.trim();else if(scope==='/*'&&/^\s*Content-Security-Policy:/i.test(line))return line.replace(/^\s*Content-Security-Policy:\s*/i,'');}
 }
+// Static hosts join repeated header values with commas. CSP treats each value
+// as a separate policy, so first expand default fallbacks, then partition only
+// disjoint directives. Splitting an origin list would incorrectly intersect it.
+export function serializeConsentHeaders(headers) {
+  return headers.replace(/^([ \t]*Content-Security-Policy:[ \t]*)([^\r\n]+)$/gim,(line,prefix,policy)=>{
+    if(line.length<=2000)return line;
+    const directives=new Map(policy.split(';').map(part=>part.trim().split(/\s+/)).filter(parts=>parts[0]).map(([name,...sources])=>[name,sources]));
+    const fallback=directives.get('default-src');
+    if(fallback) {
+      for(const name of ['script-src','style-src','img-src','connect-src','font-src','media-src','frame-src','worker-src','manifest-src','child-src','object-src']) {
+        if(directives.has(name))continue;
+        const inherited=name==='worker-src'?(directives.get('child-src')||directives.get('script-src')||fallback):name==='frame-src'?(directives.get('child-src')||fallback):fallback;
+        directives.set(name,inherited);
+      }
+      directives.delete('default-src');
+    }
+    const chunks=[];let chunk='';
+    for(const [name,sources] of directives) {
+      const directive=name+' '+sources.join(' ');
+      if(prefix.length+directive.length>2000)throw new Error('CSP directive '+name+' exceeds the static host line limit; reduce its configured origins.');
+      if(prefix.length+chunk.length+(chunk?2:0)+directive.length>2000){chunks.push(prefix+chunk);chunk='';}
+      chunk+=(chunk?'; ':'')+directive;
+    }
+    if(chunk)chunks.push(prefix+chunk);
+    return chunks.join('\n');
+  });
+}

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
-import {extendConsentPolicy,injectConsentPolicy,contentPermissions,validateServiceCsp} from '../src/consent-csp.js';
+import {extendConsentPolicy,injectConsentPolicy,contentPermissions,validateServiceCsp,serializeConsentHeaders} from '../src/consent-csp.js';
 
 test('CSP is generated without source headers and removes disabled service permissions',()=>{
   const services=[{provider:'external-widget',backendUrl:'https://comments.example',moduleUrl:'https://comments.example/widget.js'},{provider:'cloudflare-web-analytics'},{enabled:false,provider:'oembed',backendUrl:'https://disabled.example',embedOrigins:['https://disabled-media.example']}];
@@ -35,5 +35,20 @@ test('HTML CSP enforces configured origins on static platforms without custom re
     const page=await context.newPage();await page.goto('https://site.example/');
     const result=await page.evaluate(async()=>{let rejected=false;await fetch('https://allowed.example/api');try{await fetch('https://blocked.example/api');}catch{rejected=true;}return rejected;});
     assert.equal(result,true);assert.equal(allowed,1);assert.equal(blocked,0);await context.close();
+  }finally{await browser.close();}
+});
+
+test('large CSP policies obey the 2000-character header limit without intersecting allowed origin lists',async()=>{
+  const origins=Array.from({length:24},(_,i)=>'https://media-'+i+'.provider.example');
+  const source=extendConsentPolicy('',{browserPlugins:{services:[{provider:'oembed',backendUrl:'https://allowed.example',embedOrigins:origins}]}});
+  assert.ok(source.split('\n').some(line=>line.length>2000));
+  const serialized=serializeConsentHeaders(source),policies=serialized.split('\n').filter(line=>/^\s*Content-Security-Policy:/.test(line)).map(line=>line.replace(/^\s*Content-Security-Policy:\s*/,''));
+  assert.ok(policies.length>1);assert.ok(serialized.split('\n').every(line=>line.length<=2000));
+  const browser=await chromium.launch({headless:true,...(process.platform==='win32'?{channel:'msedge'}:{})});
+  try{const context=await browser.newContext();let blocked=0;
+    await context.route('**/*',route=>{const url=new URL(route.request().url());if(url.origin==='https://site.example')return route.fulfill({contentType:'text/html',headers:{'Content-Security-Policy':policies.join(', ')},body:'<html><head></head><body></body></html>'});if(url.origin==='https://blocked.example')blocked++;return route.fulfill({body:'OK',headers:{'Access-Control-Allow-Origin':'*'}});});
+    const page=await context.newPage();await page.goto('https://site.example/');
+    const result=await page.evaluate(async origins=>{for(const origin of origins)await fetch(origin+'/api');let rejected=false;try{await fetch('https://blocked.example/api');}catch{rejected=true;}return rejected;},['https://allowed.example',...origins]);
+    assert.equal(result,true);assert.equal(blocked,0);await context.close();
   }finally{await browser.close();}
 });

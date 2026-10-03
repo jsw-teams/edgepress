@@ -3,7 +3,7 @@ import { copyFile, readdir, readFile, writeFile, mkdir } from 'node:fs/promises'
 import { dirname, extname, relative, resolve, sep } from 'node:path';
 import * as posix from 'node:path/posix';
 import { mapLimit } from './concurrency.js';
-import {extendConsentPolicy} from './consent-csp.js';
+import {extendConsentPolicy,serializeConsentHeaders} from './consent-csp.js';
 
 async function walk(directory) {
   let entries;
@@ -174,7 +174,7 @@ export async function writeAssets(bundle, output, concurrency = 8) {
     .filter((asset) => /\.[a-f0-9]{16}\.(?:css|js|json|png|jpe?g|webp|avif|svg|gif|woff2?)$/i.test(asset.path))
     .map((asset) => '/' + asset.path + '\n  Cache-Control: public, max-age=31536000, immutable');
   const headers = [bundle.existingHeaders.trim(), securityRules, ...immutableRules].filter(Boolean).join('\n\n') + '\n';
-  await writeFile(resolve(output, '_headers'), headers, 'utf8');
+  await writeFile(resolve(output, '_headers'), serializeConsentHeaders(headers), 'utf8');
 }
 
 export function rewriteAssetLinks(html, urlMap) {
