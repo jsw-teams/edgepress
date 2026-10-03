@@ -7,7 +7,7 @@ function updateNotice(root,key){
   const settings=config(),service=settings.privacy?.integrations?.find(item=>item.id===root.dataset.edgepressOembed);
   if(!service)return;
   if(!key)key=root.dataset.loaded?'embedLoaded':root.dataset.oembedUnavailable?'embedUnavailable':readChoice(settings)?.allowed.includes(service.id)?'embedReady':'embedNeedsConsent';
-  const name=typeof service.name==='string'?service.name:service.name[settings.siteLanguage]||service.name[settings.defaultLocale]||service.id;
+  const name=typeof service.name==='string'?service.name:service.name?.[settings.siteLanguage]||service.name?.[settings.defaultLocale]||service.id;
   const notice=root.querySelector('[data-oembed-notice]');if(notice)notice.textContent=(settings.ui?.[key]||key).replace('{service}',name);
 }
 export function trustedProviderEmbed(data,service,document) {
@@ -41,7 +41,8 @@ export function trustedProviderEmbed(data,service,document) {
 }
 async function loadScripts(service,root) {
   for(const address of service.embedScripts || []) {
-    if(!scripts.has(address)||!globalThis.twttr?.widgets?.load)scripts.set(address,new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=address;script.async=true;script.referrerPolicy='no-referrer';script.onload=resolve;script.onerror=()=>{scripts.delete(address);script.remove();reject(new Error('Embed script unavailable'));};document.body.append(script);}));
+    const reusable=/^https:\/\/platform\.(?:x|twitter)\.com\/widgets\.js$/.test(address);
+    if(!scripts.has(address)||!reusable)scripts.set(address,new Promise((resolve,reject)=>{const script=document.createElement('script');script.src=address;script.async=true;script.referrerPolicy='no-referrer';script.onload=resolve;script.onerror=()=>{scripts.delete(address);script.remove();reject(new Error('Embed script unavailable'));};document.body.append(script);}));
     await scripts.get(address);
   }
   globalThis.twttr?.widgets?.load(root);

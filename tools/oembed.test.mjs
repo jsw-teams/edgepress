@@ -39,11 +39,11 @@ test('oEmbed pages validate origins, need consent and a click, and strip unsafe 
   }finally{await browser.close();}
 });
 
-test('third-party metadata is cached, mixed Pages cells wait for consent, and YouTube/X render on demand',async()=>{
+test('third-party metadata is cached, mixed Pages cells wait for consent, and YouTube/X/TikTok render repeatedly on demand',async()=>{
   const directory=await mkdtemp(resolve(tmpdir(),'edgepress-oembed-'));
   const config=await loadConfig(root),origin=new URL(config.site.url).origin;
-  const youtube=config.browserPlugins.services.find(s=>s.id==='youtube'),x=config.browserPlugins.services.find(s=>s.id==='x-posts');
-  await loadLanguagePacks(config);config.browserPlugins.services=[youtube,x];config.resolvedPaths.cache=directory;
+  const youtube=config.browserPlugins.services.find(s=>s.id==='youtube'),x=config.browserPlugins.services.find(s=>s.id==='x-posts'),tiktok=config.browserPlugins.services.find(s=>s.id==='tiktok');
+  await loadLanguagePacks(config);config.browserPlugins.services=[youtube,x,tiktok];config.resolvedPaths.cache=directory;
   const data={version:'1.0',type:'video',width:640,height:360,title:'Video',html:'<iframe src="https://www.youtube.com/embed/jNQXAC9IVRw" onload="window.bad=true"></iframe><script>window.bad=true</script>'};
   let lookups=0;const fetcher=async()=>{lookups++;return new Response(JSON.stringify(data));};
   let browser;
@@ -51,8 +51,8 @@ test('third-party metadata is cached, mixed Pages cells wait for consent, and Yo
     await resolveEmbed(youtube,'https://www.youtube.com/watch?v=jNQXAC9IVRw',config,fetcher);
     assert.equal((await resolveEmbed(youtube,'https://www.youtube.com/watch?v=jNQXAC9IVRw',config,fetcher)).type,'video');assert.equal(lookups,1);
     const tweet={version:'1.0',type:'rich',width:550,height:null,html:'<blockquote class="twitter-tweet"><p>Shared text</p><a href="https://x.com/user/status/123">Original</a></blockquote><script src="https://evil.example/a.js"></script>'};
-    const oldFetch=globalThis.fetch;globalThis.fetch=async()=>new Response(JSON.stringify(tweet));
-    let blocks;try{blocks=await renderBlocks([{columns:2,cells:[[{type:'text',heading:'Context',text:'Text beside media'},{type:'oembed',integration:'x-posts',url:'https://x.com/user/status/123'}],[{type:'oembed',integration:'youtube',url:'https://www.youtube.com/watch?v=jNQXAC9IVRw',caption:'Video description'}]]}],{config,locale:'en'});}finally{globalThis.fetch=oldFetch;}
+    const oldFetch=globalThis.fetch;globalThis.fetch=async address=>new Response(JSON.stringify(String(address).includes('tiktok')?{version:'1.0',type:'rich',width:325,height:700,html:'<blockquote class="tiktok-embed" data-video-id="123"><section>Video</section></blockquote>'}:tweet));
+    let blocks;try{blocks=await renderBlocks([{columns:2,cells:[[{type:'text',heading:'Context',text:'Text beside media'},{type:'oembed',integration:'x-posts',url:'https://x.com/user/status/123'},{type:'oembed',integration:'tiktok',url:'https://www.tiktok.com/@user/video/123'},{type:'oembed',integration:'tiktok',url:'https://www.tiktok.com/@user/video/124'}],[{type:'oembed',integration:'youtube',url:'https://www.youtube.com/watch?v=jNQXAC9IVRw',caption:'Video description'}]]}],{config,locale:'en'});}finally{globalThis.fetch=oldFetch;}
     assert.match(blocks,/data-oembed-data/);assert.doesNotMatch(blocks,/<iframe|<script/);assert.match(blocks,/Video description/);
     assert.doesNotMatch(sanitizeEmbed(data,youtube).html,/onload|script/);
     let filter;consentManager({registerFilter:(_n,fn)=>filter=fn});
@@ -60,16 +60,18 @@ test('third-party metadata is cached, mixed Pages cells wait for consent, and Yo
     await context.route('**/*',async route=>{
       const url=new URL(route.request().url());
       if(url.origin==='https://www.youtube.com'){assert.equal(route.request().headers().referer,origin+'/');vendor++;return route.fulfill({contentType:'text/html',body:'Player'});}
+      if(url.origin==='https://www.tiktok.com'){vendor++;return route.fulfill({contentType:'text/javascript',body:'document.querySelectorAll("blockquote.tiktok-embed").forEach(block=>block.dataset.tiktokRendered="true");'});}
       if(url.origin==='https://platform.x.com'){vendor++;return route.fulfill({contentType:'text/javascript',body:'globalThis.twttr={widgets:{load(root){root.querySelector("blockquote").dataset.rendered="true"}}};'});}
       assert.equal(url.origin,origin,'No unconfigured origin is contacted');
       if(url.pathname.startsWith('/edgepress/')){try{return route.fulfill({body:await readFile(resolve(root,'static',url.pathname.slice(1))),contentType:url.pathname.endsWith('.js')?'text/javascript':'image/svg+xml'});}catch{return route.fulfill({status:404,body:''});}}
       return route.fulfill({contentType:'text/html',body:filter('<!doctype html><html><head><style>*{box-sizing:border-box}.page-row{display:grid;grid-template-columns:1fr}.page-cell{min-width:0}body{margin:8px}</style></head><body><main>'+blocks+'</main><script type="module" src="/edgepress/oembed.js"></script></body></html>',{config,page:{locale:'en'}})});
     });
     const page=await context.newPage();await page.goto(origin+'/mixed/');await page.locator('.privacy-panel').waitFor({state:'visible'});assert.equal(vendor,0);assert.match(await page.locator('[data-edgepress-oembed=youtube] [data-oembed-notice]').innerText(),/YouTube.*unloaded/i);
-    await page.locator('input[value=youtube]').check();await page.locator('input[value=x-posts]').check();await page.locator('.privacy-save').click();assert.equal(vendor,0);
+    await page.locator('input[value=youtube]').check();await page.locator('input[value=x-posts]').check();await page.locator('input[value=tiktok]').check();await page.locator('.privacy-save').click();assert.equal(vendor,0);
     await page.locator('[data-edgepress-oembed=youtube] [data-oembed-load]').click();await page.locator('iframe').waitFor();await page.waitForFunction(()=>document.querySelector('[data-edgepress-oembed=youtube] [data-oembed-notice]').textContent.includes('loaded'));
     await page.locator('[data-edgepress-oembed=x-posts] [data-oembed-load]').click();await page.locator('blockquote[data-rendered=true]').waitFor();assert.equal(vendor,2);assert.equal(await page.evaluate(()=>!!window.bad),false);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
-    await page.reload();assert.equal(vendor,2);await context.close();
+    await page.locator('[data-edgepress-oembed=tiktok] [data-oembed-load]').nth(0).click();await page.locator('blockquote[data-tiktok-rendered=true]').nth(0).waitFor();await page.locator('[data-edgepress-oembed=tiktok] [data-oembed-load]').click();await page.locator('blockquote[data-tiktok-rendered=true]').nth(1).waitFor();assert.equal(vendor,4);
+    await page.reload();assert.equal(vendor,4);await context.close();
     youtube.enabled=false;x.enabled=false;assert.equal(await renderBlocks([{columns:1,cells:[[{type:'oembed',integration:'youtube',url:'https://www.youtube.com/watch?v=jNQXAC9IVRw'}]]}],{config,locale:'en'}).then(html=>html.includes('data-edgepress-oembed')),false);
     assert.match(await renderBlocks([{columns:1,cells:[[{type:'oembed',integration:'youtube',url:'https://www.youtube.com/watch?v=jNQXAC9IVRw'}]]}],{config,locale:'en'}),/disabled|turned off/i);
     assert.equal(extendConsentPolicy('/*\n  Content-Security-Policy: default-src \'self\'',config).includes('youtube'),false);
