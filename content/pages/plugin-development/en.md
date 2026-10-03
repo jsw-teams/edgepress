@@ -104,15 +104,15 @@ blocks:
   - columns: 1
     cells:
       - - type: text
-          heading: RepoRelay
-          text: Verified GitHub identity and avatars, a local image/GIF sticker gallery, and deletion of your own comments. Discussions load only after you opt in.
+          heading: CommentNest
+          text: CommentNest owns comments, styles, identity and stickers. Configure provider commentnest and your backendUrl in the consent service; the host only loads it after opt-in.
         - type: link-list
           title: Install and integrate
           items:
             - label: Installation and EdgePress integration
-              url: https://github.com/jsw-teams/RepoRelay/blob/main/docs/edgepress.md
-            - label: RepoRelay release notes
-              url: https://github.com/jsw-teams/RepoRelay/blob/main/CHANGELOG.md
+              url: https://github.com/jsw-teams/CommentNest/blob/main/docs/edgepress.md
+            - label: CommentNest release notes
+              url: https://github.com/jsw-teams/CommentNest/blob/main/CHANGELOG.md
         - type: code
           title: Optional page discussion block
           language: yaml

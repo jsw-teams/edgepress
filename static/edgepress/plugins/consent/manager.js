@@ -1,5 +1,6 @@
+import {makeChoice,readChoice,persistChoice} from './choices.js';
 const modules = {
-  'github-comments': () => import('../comments/github-comments.js'),
+  'commentnest': () => import('../comments/commentnest.js'),
   'google-tag-manager': () => import('../tracking/google-tag-manager.js'),
   'meta-pixel': () => import('../tracking/meta-pixel.js'),
   'cloudflare-web-analytics': () => import('../statistics/cloudflare-web-analytics.js'),
@@ -11,7 +12,6 @@ const modules = {
   'hcaptcha': () => import('../captcha/hcaptcha.js')
 };
 
-const storageKey = 'edgepress-privacy-selection';
 const configElement = document.getElementById('edgepress-privacy-config');
 if (configElement) {
   try { initialize(JSON.parse(configElement.textContent)); }
@@ -281,41 +281,6 @@ function makeIcon(name) {
   image.setAttribute('aria-hidden', 'true');
   image.decoding = 'async';
   return image;
-}
-
-function makeChoice(config, allowed) {
-  const privacy = config.privacy || {};
-  const consent = privacy.consent || {};
-  const expiresAt = Date.now() + consent.expiresDays * 86400000;
-  const fingerprint = config.choiceFingerprint || JSON.stringify({ controller: privacy.controller, policyUrl: privacy.policyUrl, consent, integrations: privacy.integrations });
-  return {
-    proposedDate: consent.proposedDate || '',
-    effectiveDate: consent.effectiveDate || '',
-    fingerprint,
-    expiresAt,
-    allowed: [...new Set(allowed)]
-  };
-}
-
-function readChoice(config) {
-  try {
-    const saved = JSON.parse(localStorage.getItem(storageKey));
-    const privacy = config.privacy || {};
-    const consent = privacy.consent || {};
-    const fingerprint = config.choiceFingerprint || JSON.stringify({ controller: privacy.controller, policyUrl: privacy.policyUrl, consent, integrations: privacy.integrations });
-    if (!saved || saved.proposedDate !== (consent.proposedDate || '') || saved.effectiveDate !== (consent.effectiveDate || '') ||
-        saved.fingerprint !== fingerprint || saved.expiresAt <= Date.now() || !Array.isArray(saved.allowed)) {
-      localStorage.removeItem(storageKey);
-      return null;
-    }
-    const validIds = new Set((privacy.integrations || []).map((item) => item.id));
-    saved.allowed = saved.allowed.filter((id) => validIds.has(id));
-    return saved;
-  } catch { return null; }
-}
-
-function persistChoice(choice) {
-  try { localStorage.setItem(storageKey, JSON.stringify(choice)); } catch { /* Session choice still applies in memory. */ }
 }
 
 async function activate(allowed) {

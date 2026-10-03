@@ -13,7 +13,7 @@ import {renderBlocks} from '../src/page-blocks.js';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const source=parse(await readFile(resolve(root,'config.yml'),'utf8'));
-source.plugins.consent.comments={enabled:true,services:[{id:'github-comments',provider:'github-comments',name:'GitHub comments',purpose:'Read discussions.',dataCategories:'Identity and comments.',recipient:'GitHub',retention:'Until removed.',privacyUrl:'https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement'}]};
+source.plugins.consent.comments={enabled:true,services:[{id:'github-comments',provider:'commentnest',backendUrl:'https://comments.example.com',name:'GitHub comments',purpose:'Read discussions.',dataCategories:'Identity and comments.',recipient:'GitHub',retention:'Until removed.',privacyUrl:'https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement'}]};
 
 test('consent payload follows YAML names, dates, expiry and enabled groups; no old fingerprints survive',async()=>{
   const folder=await mkdtemp(resolve(tmpdir(),'reporelay-consent-'));

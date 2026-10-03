@@ -1,5 +1,3 @@
-import { handleCommentRequest } from '@jsw-teams/reporelay';
-export { CommentCoordinator } from '@jsw-teams/reporelay';
 const MAX_BACKEND_BODY_BYTES = 1_000_000;
 
 const json = (data, status = 200, headers = {}) => Response.json(data, {

@@ -123,11 +123,11 @@ Use `category: edgepress` or `categories: [blog, uncategorized]` on a `post-list
 
 ## Optional article discussions
 
-RepoRelay connects published article discussions to GitHub Issues through a self-hosted GitHub App. Configure `plugins.consent.comments.enabled: true` and a service with `provider: github-comments`, and enable the consent plugin. Comments load only after the reader selects the service. Unselected comments load no discussion module, API, session request or GitHub request.
+CommentNest · 评巢 owns the complete comment interface and backend. Configure `provider: commentnest` and `backendUrl` under `plugins.consent.comments`. EdgePress supplies article/page context and loads the service only after opt-in; no comment script, CSS, sticker assets or App credentials belong in the framework. Articles show a discussion area automatically when enabled. Pages add one optional `comments` block.
 
-Articles show the enabled discussion area automatically. Pages opt in with a `comments` block; disabled sites render neither area nor module. GitHub avatars, a local sticker gallery, uploads and deletion of your own comments are supported. Extend `content/assets/edgepress/stickers/packs.json` with your own licensed image/GIF packs. See the separate [installation and EdgePress integration guide](https://github.com/jsw-teams/RepoRelay/blob/main/docs/edgepress.md) and [RepoRelay changelog](https://github.com/jsw-teams/RepoRelay/blob/main/CHANGELOG.md).
+Deploy your own instance with [Deploy to Cloudflare](https://deploy.workers.cloudflare.com/?url=https://github.com/jsw-teams/CommentNest), then see the [installation and EdgePress guide](https://github.com/jsw-teams/CommentNest/blob/main/docs/edgepress.md) and [independent changelog](https://github.com/jsw-teams/CommentNest/blob/main/CHANGELOG.md).
 
-Add the `REPORELAY_THREADS` Durable Object binding for the exported `CommentCoordinator` and its SQLite migration to your Worker configuration. The [RepoRelay Worker example](https://github.com/jsw-teams/RepoRelay/tree/main/examples/comments) includes the complete configuration. Set repository, site origin, App ID and Client ID as variables; store the App private key and Client Secret as Worker Secrets. Installation identity and signing keys are managed automatically. Preserve the Durable Object storage across deployments. Each origin and repository combination has an independent discussion scope. Multiple owned sites can use one App with an exact callback registered for each site; other operators register their own Apps.
+Saved privacy preferences survive refresh, locale changes and presentation updates, with a small essential-cookie fallback if localStorage is unavailable. Update the configured notice date when the actual processing purpose or data scope changes. New services or backend URLs require another choice.
 
 ## Publication times and article changes
 
@@ -139,4 +139,4 @@ Set `pinned: true` in the selected article translations to place them first in `
 
 Multiple post lists on the same page share a displayed-article set: an article already shown in a pinned list is omitted from the following recent list, which fills its remaining slots with other articles. Each new page starts a fresh set.
 
-The first production comment format isolates unsupported test Issues and retains them. Later releases preserve established data; an incompatible change requires an explicit migration, retaining and isolating unmigrated records without impersonating their authors. RepoRelay release labels use year and month plus update count, such as `202610.2`.
+The first production comment format isolates unsupported test Issues and retains them. Later releases preserve established data; an incompatible change requires an explicit migration, retaining and isolating unmigrated records without impersonating their authors. CommentNest release labels use year and month plus update count, such as `202610.2`.

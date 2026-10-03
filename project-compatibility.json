@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "frameworkVersion": "2026.10.3",
+  "frameworkVersion": "2026.10.5",
   "requirements": {
     "nodeMajor": 22,
     "nodeMinimumVersion": "22.12.0",
@@ -134,6 +134,11 @@
       "name": "Consent-gated RepoRelay GitHub App comments, pinned posts, local times and automatic content revisions",
       "stage": "experimental",
       "since": "2026.10.3"
+    },
+    {
+      "name": "CommentNest URL integration and persistent consent with isolated comment UI",
+      "stage": "experimental",
+      "since": "2026.10.5"
     }
   ],
   "releaseHistory": [
@@ -196,6 +201,12 @@
       "date": "2026-09-27",
       "request": 10,
       "notes": "Keep consent choices across locale changes and migrate existing records; add localized page-block links; make article tags clear; load search only where needed; redraw icons and simplify privacy wording."
+    },
+    {
+      "version": "2026.10.5",
+      "date": "2026-10-03",
+      "request": 5,
+      "notes": "Move all comment frontend assets and backend implementation to CommentNest; keep only a consent-gated backend URL adapter. Preserve privacy choices across refresh and presentation changes, including blocked local storage fallback."
     }
   ]
 }

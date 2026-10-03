@@ -189,7 +189,6 @@ export async function renderLayout(config, extensions, page, body) {
   }
   if (/data-edgepress-comments(?:\s|=|>)/i.test(filtered) && !/src=["']\/edgepress\/comments\.js["']/i.test(filtered)) {
     scripts.push('<script defer src="/edgepress/comments-consent.js"></script>');
-    filtered = filtered.replace(/<\/head\s*>/i, '<link rel="stylesheet" href="/edgepress/comments.css"></head>');
   }
   if (!scripts.length) return filtered;
   const integration = scripts.join('');

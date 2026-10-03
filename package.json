@@ -1,6 +1,6 @@
 {
   "name": "edgepress",
-  "version": "2026.10.4",
+  "version": "2026.10.5",
   "description": "A static website builder for Cloudflare Workers with editable pages, Markdown posts, local search, themes, and consent-gated integrations.",
   "type": "module",
   "bin": {
@@ -26,7 +26,7 @@
     "tools/revisions.test.mjs",
     "tools/publication-time.test.mjs",
     "tools/consent-config.test.mjs",
-    "tools/comments-browser.test.mjs"
+    "tools/consent-browser.test.mjs"
   ],
   "repository": {
     "type": "git",
@@ -55,14 +55,13 @@
     "doctor": "node src/cli.js doctor",
     "iterate": "node src/cli.js iterate",
     "security:check": "node src/cli.js security",
-    "test": "node --test tools/writing.test.mjs tools/brand-regression.test.mjs tools/post-list.test.mjs tools/audit.test.mjs tools/navigation.test.mjs tools/revisions.test.mjs tools/publication-time.test.mjs tools/consent-config.test.mjs tools/comments-browser.test.mjs",
+    "test": "node --test tools/writing.test.mjs tools/brand-regression.test.mjs tools/post-list.test.mjs tools/audit.test.mjs tools/navigation.test.mjs tools/revisions.test.mjs tools/publication-time.test.mjs tools/consent-config.test.mjs tools/consent-browser.test.mjs",
     "icons:sync": "node tools/sync-icons.mjs"
   },
   "dependencies": {
     "marked": "^18.0.13",
     "sanitize-html": "^2.17.7",
-    "yaml": "^2.9.1",
-    "@jsw-teams/reporelay": "https://codeload.github.com/jsw-teams/RepoRelay/tar.gz/2a567bdc73ce37d7bf2b57bad7171717c2776c63"
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
     "playwright": "^1.63.0",

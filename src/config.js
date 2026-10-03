@@ -82,7 +82,7 @@ function validateLocalizedServiceText(value, label, maxLength, locales) {
 }
 
 const integrationProviders = {
-  'github-comments': { group: 'comments' },
+  'commentnest': { group: 'comments', credential:'backendUrl', pattern:/^https:\/\/[^\s]+$/ },
   'google-tag-manager': { group: 'tracking', credential: 'containerId', pattern: /^GTM-[A-Z0-9]{4,20}$/i },
   'meta-pixel': { group: 'tracking', credential: 'pixelId', pattern: /^[0-9]{6,20}$/ },
   'cloudflare-web-analytics': { group: 'statistics', credential: 'token', pattern: /^[A-Fa-f0-9-]{20,64}$/ },
@@ -290,6 +290,11 @@ function validateBrowserPlugins(config) {
       if (!safePrivacyUrl) throw new Error('Service ' + id + '.privacyUrl must be a safe HTTPS URL');
       const allowedKeys = new Set(['id', 'provider', 'name', 'purpose', 'dataCategories', 'recipient', 'retention', 'privacyUrl', ...(definition.credential ? [definition.credential] : [])]);
       for (const key of Object.keys(service)) if (!allowedKeys.has(key)) throw new Error('Unsupported option for service ' + id + ': ' + key);
+      if(provider==='commentnest') {
+        let valid=false;try {const url=new URL(service.backendUrl);valid=url.protocol==='https:' && !url.username && !url.password && url.pathname==='/' && !url.search && !url.hash;}catch{}
+        if(!valid)throw new Error('Service '+id+' needs an exact HTTPS backendUrl origin');
+        if(section.services.length>1)throw new Error('Configure one CommentNest backend per site');
+      }
       const credential = service[definition.credential];
       if (definition.credential && (typeof credential !== 'string' || !definition.pattern.test(credential))) throw new Error('Service ' + id + ' needs a valid public ' + definition.credential);
     }

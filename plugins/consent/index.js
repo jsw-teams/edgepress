@@ -1,3 +1,5 @@
+import {createHash} from 'node:crypto';
+import {choiceSnapshot} from '../../static/edgepress/plugins/consent/choices.js';
 function translate(config, locale, key) {
   const base = config.i18n.translationsByLocale?.[config.i18n.defaultLocale];
   const selected = config.i18n.translationsByLocale?.[locale];
@@ -34,15 +36,16 @@ export default function consentManager(api) {
       integrations: services
     };
     if (privacy.policyUrl.startsWith('/')) privacy.policyUrl = localizedUrl(config, locale, privacy.policyUrl);
-    const choiceFingerprint = JSON.stringify({
+    const snapshot = choiceSnapshot({
       controller: config.privacy.controller,
       policyUrl: config.privacy.policyUrl,
       consent: config.browserPlugins.consent,
       integrations: services
-    });
-    const payload = safeJson({ privacy, ui, siteLanguage: locale, defaultLocale: config.i18n.defaultLocale, choiceFingerprint });
+    },config.site.url);
+    const choiceFingerprint=createHash('sha256').update(snapshot).digest('hex');
+    const payload = safeJson({ privacy, ui, siteOrigin:config.site.url,siteLanguage: locale, defaultLocale: config.i18n.defaultLocale, choiceFingerprint,choiceSnapshot:snapshot });
     const integration = '<script type="application/json" id="edgepress-privacy-config">' + payload + '</script>' +
-      '<script src="/edgepress/plugins/consent/manager.js" defer></script>';
+      '<script type="module" src="/edgepress/plugins/consent/manager.js"></script>';
     return html.replace(/<\/body\s*>/i, integration + '</body>');
   });
 }
