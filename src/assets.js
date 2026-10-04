@@ -101,6 +101,13 @@ export async function collectAssets(config) {
     const path='edgepress/'+relative(runtimeRoot,source).split(sep).join('/');
     if(!supplied.has(path))sources.push({source,path,sourceName:'EdgePress runtime'});
   }
+  // Built-in navigation and page icons live with the package's content assets,
+  // not its browser scripts. Include only this library, not example-site media.
+  const iconsRoot=fileURLToPath(new URL('../content/assets/edgepress/icons/',import.meta.url));
+  for(const source of await walk(iconsRoot)) {
+    const path='edgepress/icons/'+relative(iconsRoot,source).split(sep).join('/');
+    if(!supplied.has(path))sources.push({source,path,sourceName:'EdgePress icons'});
+  }
 
   const headers = [];
   const assetSources = [];

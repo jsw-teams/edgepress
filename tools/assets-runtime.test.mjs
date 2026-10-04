@@ -13,6 +13,7 @@ test('a dependency-based site receives hashed core runtime and can retain explic
     const config=await loadConfig(fileURLToPath(new URL('../',import.meta.url)));
     config.resolvedPaths.static=resolve(directory,'static');config.resolvedPaths.content=resolve(directory,'content');config.resolvedPaths.theme=resolve(directory,'theme');
     const bundle=await collectAssets(config),paths=new Set(bundle.assets.map(item=>'/'+item.path));
+    for(const icon of ['home','shield-check','github'])assert.ok(paths.has('/edgepress/icons/'+icon+'.svg'),'Missing built-in icon: '+icon);
     for(const path of ['/edgepress/language-select.js','/edgepress/navigation-select.js','/edgepress/plugins/consent/manager.js','/edgepress/plugins/consent/choices.js','/edgepress/oembed.js']){assert.match(bundle.urlMap[path],/\.[a-f0-9]{16}\.js$/);assert.ok(paths.has(bundle.urlMap[path]));}
     const oembed=bundle.assets.find(item=>'/'+item.path===bundle.urlMap['/edgepress/oembed.js']).content.toString();
     assert.match(oembed,/services\.[a-f0-9]{16}\.js/);assert.match(oembed,/choices\.[a-f0-9]{16}\.js/);
