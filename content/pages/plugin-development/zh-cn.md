@@ -126,7 +126,7 @@ blocks:
     cells:
       - - type: text
           heading: 通用社交媒体嵌入
-          text: "默认预置 YouTube、X、Vimeo、TikTok、Reddit、Spotify、SoundCloud、Dailymotion、Flickr、Tumblr、Mastodon、Instagram、Facebook、哔哩哔哩。逐项设 enabled: false 会移除授权条目和网络权限，区块保留本地未加载说明与原始链接。标准提供方使用 oembedEndpoint，构建阶段缓存元数据；浏览器必须先授权并点击加载。sourceOrigins 指定分享链接域名，embedOrigins 指定播放器与资源域名，embedScripts 是按需加载的完整脚本地址。Instagram 和 Facebook 使用公开内容的官方 iframe，不要求把 Meta 令牌放入前端；私密、禁止嵌入或平台限制的内容仍可能无法显示。Mastodon 需将默认实例替换为实际实例。"
+          text: "通用媒体预设仅保留 YouTube 和 X；share.js.gripe 不启用任何通用平台。自定义平台可按需在 config.yml 注册。逐项设 enabled: false 会移除授权条目和网络权限，区块保留本地未加载说明与原始链接。标准提供方使用 oembedEndpoint，构建阶段缓存元数据；浏览器必须先授权并点击加载。sourceOrigins 指定分享链接域名，embedOrigins 指定播放器与资源域名，embedScripts 是按需加载的完整脚本地址。Instagram 和 Facebook 使用公开内容的官方 iframe，不要求把 Meta 令牌放入前端；私密、禁止嵌入或平台限制的内容仍可能无法显示。Mastodon 需将默认实例替换为实际实例。"
         - type: code
           title: oEmbed 与页面元素组合
           language: yaml

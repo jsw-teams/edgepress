@@ -142,7 +142,7 @@ blocks:
     cells:
       - - type: text
           heading: General social media embeds
-          text: "YouTube, X, Vimeo, TikTok, Reddit, Spotify, SoundCloud, Dailymotion, Flickr, Tumblr, Mastodon, Instagram, Facebook and Bilibili are registered by default. Set enabled: false to remove its consent entry and network permissions; its block retains a local disabled notice and the original link. oembedEndpoint metadata is cached at build time; the browser still waits for consent and a load click. sourceOrigins validates shared links; embedOrigins permits media hosts; embedScripts contains exact optional vendor script URLs. Instagram and Facebook use official public-content iframes. Private or embed-restricted posts may be unavailable. Replace the Mastodon instance with your actual instance."
+          text: "Only YouTube and X are registered as general media presets; share.js.gripe enables none. Register custom services in config.yml as needed. Set enabled: false to remove its consent entry and network permissions; its block retains a local disabled notice and the original link. oembedEndpoint metadata is cached at build time; the browser still waits for consent and a load click. sourceOrigins validates shared links; embedOrigins permits media hosts; embedScripts contains exact optional vendor script URLs. Instagram and Facebook use official public-content iframes. Private or embed-restricted posts may be unavailable. Replace the Mastodon instance with your actual instance."
         - type: code
           title: Mix oEmbed with page elements
           language: yaml
