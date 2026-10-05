@@ -180,7 +180,7 @@ export async function renderLayout(config, extensions, page, body) {
   if (typeof filtered !== 'string') throw new Error('html:afterLayout filters must return a string');
   if(/\b(?:post-content|image-block|media-text|data-edgepress-oembed)\b/.test(filtered)){
     const keys=['openImage','closeImage','zoomIn','zoomOut','resetZoom','saveOriginal','retryMedia','loading','imageUnavailable'];
-    const labels=Object.fromEntries(keys.map(key=>[key,translate(config,locale,'imageViewer'+key[0].toUpperCase()+key.slice(1))]));
+    const labels=Object.fromEntries(keys.map(key=>[key,translate(config,locale,'imageViewer'+key[0].toUpperCase()+key.slice(1))]).filter(([key,value])=>value!=='imageViewer'+key[0].toUpperCase()+key.slice(1)));
     filtered=filtered.replace('</head>','<link rel="stylesheet" href="/edgepress/image-viewer.css"></head>').replace('</body>','<script id="edgepress-image-viewer-config" type="application/json">'+JSON.stringify(labels).replace(/</g,'\\u003c')+'</script><script type="module" src="/edgepress/image-viewer.js"></script></body>');
   }
   const scripts = [];
