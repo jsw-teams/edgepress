@@ -18,5 +18,16 @@
       "height": 820
     },
     "date": "2026-10-04"
+  },
+  {
+    "file": "edgepress-revisions-en.png",
+    "kind": "actual before-and-after image comparison from a locally built article",
+    "source": "web/signal.js.gripe/dist/2026/10/signal-vol-1/; current cover supplied by the operator",
+    "viewport": {
+      "width": 1200,
+      "height": 1000
+    },
+    "date": "2026-10-06",
+    "consent": "All optional services rejected before capture"
   }
 ]
