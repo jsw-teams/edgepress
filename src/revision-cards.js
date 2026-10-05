@@ -13,14 +13,15 @@ export function changedPassages(diff){
  }
  finish();return groups.filter(group=>group.before.trim()||group.after.trim());
 }
-export async function renderRevisionCards(diff,label){
+export async function renderRevisionCards(diff,label,images){
  const groups=changedPassages(diff);if(!groups.length)return '';
  const cards=[];
  for(const group of groups){
   const sides=[];
   for(const side of ['before','after'])if(group[side].trim()){
    const key=side==='before'?(group.after.trim()?'postChangeBefore':'postChangeRemoved'):(group.before.trim()?'postChangeAfter':'postChangeAdded');
-   const content=(await renderMarkdown(group[side],{allowImages:false,allowVideo:false})).replace(/<h[1-6]\b[^>]*>/g,'<p class="post-change-heading">').replace(/<\/h[1-6]>/g,'</p>');
+   const known=new Set(Object.values(images?.[side]||{}));
+   const content=(await renderMarkdown(group[side],{allowImages:!!images,allowVideo:false,...(images?{imageResolver:href=>images[side]?.[href]||(known.has(href)?href:null)}:{})})).replace(/<h[1-6]\b[^>]*>/g,'<p class="post-change-heading">').replace(/<\/h[1-6]>/g,'</p>');
    sides.push('<div class="post-change-side post-change-'+side+'"><p class="post-change-label">'+escape(label(key))+'</p><div class="post-change-content">'+content+'</div></div>');
   }
   cards.push('<div class="post-change-passage">'+sides.join('')+'</div>');

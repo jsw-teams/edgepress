@@ -2,8 +2,8 @@ import {readFile} from 'node:fs/promises';
 import {imageSize} from 'image-size';
 import {mapLimit} from './concurrency.js';
 export async function collectImageDimensions(assets){
- const result=new Map();await mapLimit(assets.filter(item=>item.source&&/\.(?:png|jpe?g|gif|webp|avif|svg)$/i.test(item.path)),8,async item=>{
-  try{let {width,height,orientation}=imageSize(await readFile(item.source));if([5,6,7,8].includes(orientation))[width,height]=[height,width];if(width>0&&height>0)result.set('/'+item.path,{width,height});}catch{}
+ const result=new Map();await mapLimit(assets.filter(item=>/\.(?:png|jpe?g|gif|webp|avif|svg)$/i.test(item.path)),8,async item=>{
+  try{let {width,height,orientation}=imageSize(item.content??await readFile(item.source));if([5,6,7,8].includes(orientation))[width,height]=[height,width];if(width>0&&height>0)result.set('/'+item.path,{width,height});}catch{}
  });return result;
 }
 export function reserveImageDimensions(html,dimensions,path,origin){

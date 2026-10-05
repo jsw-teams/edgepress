@@ -82,6 +82,7 @@ function markdownRenderer(options) {
         escapeHtml(description) + '</a></video>' + caption + '</figure>';
     }
     if (options.allowImages === false) return '<span>' + escapeHtml(token.text || '') + '</span>';
+    if(options.imageResolver){const href=options.imageResolver(token.href);if(!href)return '<span>'+escapeHtml(token.text||'')+'</span>';return renderImage({...token,href});}
     return renderImage(token);
   };
   return renderer;
@@ -105,7 +106,10 @@ export async function renderMarkdown(source, options = {}) {
     return '<span class="markdown-task-status" role="img" aria-label="' +
       safeLabel + '">' + (checked ? '✓' : '□') + '</span>';
   });
-  return sanitizeHtml(html, sanitizeOptions);
+  return sanitizeHtml(html, options.imageResolver?{...sanitizeOptions,transformTags:{...sanitizeOptions.transformTags,img:(_tag,attributes)=>{
+    const src=options.imageResolver(attributes.src);
+    return src?{tagName:'img',attribs:{src,alt:attributes.alt||'',loading:'lazy'}}:{tagName:'span',attribs:{},text:attributes.alt||''};
+  }}}:sanitizeOptions);
 }
 
 export async function renderMarkdownExcerpt(source, options = {}) {

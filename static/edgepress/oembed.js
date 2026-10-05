@@ -67,7 +67,7 @@ async function show(root) {
   if(root.dataset.loading||root.dataset.loaded)return;
   const id=root.dataset.edgepressOembed,config=JSON.parse(document.getElementById('edgepress-privacy-config')?.textContent||'{}');
   const integration=config.privacy?.integrations?.find(service=>service.id===id&&service.provider==='oembed');if(!integration)return;
-  root.dataset.requested='true';root.dataset.loading='true';
+  root.dataset.requested='true';root.dataset.loading='true';root.setAttribute('aria-busy','true');
   const dimensions=data=>({...data,...(root.dataset.oembedWidth?{width:Number(root.dataset.oembedWidth)}:{}),...(root.dataset.oembedHeight?{height:Number(root.dataset.oembedHeight)}:{})});
   try{
     if(!readChoice(config)?.allowed.includes(id))throw new Error('Service requires visitor consent: '+id);
@@ -85,10 +85,25 @@ async function show(root) {
   }catch(error){
     if(error.message.startsWith('Service requires visitor consent:'))document.dispatchEvent(new CustomEvent('edgepress:privacy-open'));
     else{root.dataset.requested='false';root.querySelector('[data-oembed-status]').replaceChildren();updateNotice(root,'embedUnavailable');}
-  }finally{delete root.dataset.loading;}
+  }finally{delete root.dataset.loading;root.setAttribute('aria-busy','false');}
 }
 if(typeof document!=='undefined'){
-  for(const root of document.querySelectorAll('[data-edgepress-oembed]'))updateNotice(root);
+  const roots=[...document.querySelectorAll('[data-edgepress-oembed]')],visible=new WeakSet();
+  function frameTheme(frame){
+    const style=getComputedStyle(document.documentElement),colors=Object.fromEntries(['--accent','--ink','--muted','--line','--paper','--surface'].map(key=>[key,style.getPropertyValue(key).trim()]).filter(([,value])=>value));
+    frame.contentWindow?.postMessage({type:'edgepress:embed-theme',colors},new URL(frame.src).origin);
+  }
+  document.addEventListener('edgepress:theme-change',()=>{for(const root of roots)for(const frame of root.querySelectorAll('iframe[data-theme-ready]'))frameTheme(frame);});
+  new MutationObserver(()=>{for(const root of roots)for(const frame of root.querySelectorAll('iframe[data-theme-ready]'))frameTheme(frame);}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','class','style']});
+  globalThis.matchMedia?.('(prefers-color-scheme:dark)').addEventListener('change',()=>{for(const root of roots)for(const frame of root.querySelectorAll('iframe[data-theme-ready]'))frameTheme(frame);});
+  globalThis.addEventListener('message',event=>{
+    const frame=roots.flatMap(root=>[...root.querySelectorAll('iframe')]).find(frame=>frame.contentWindow===event.source&&new URL(frame.src).origin===event.origin);if(!frame)return;
+    if(event.data?.type==='edgepress:embed-ready'){frame.dataset.themeReady='true';frameTheme(frame);}
+    if(event.data?.type==='edgepress:embed-size'&&Number.isFinite(event.data.height)&&event.data.height>=120&&event.data.height<=4096){frame.style.height=Math.ceil(event.data.height)+'px';frame.style.aspectRatio='auto';}
+  });
+  function loadAllowed(root){updateNotice(root);if(!root.dataset.oembedUnavailable&&readChoice(config())?.allowed.includes(root.dataset.edgepressOembed)&&(visible.has(root)||root.dataset.requested==='true'))void show(root);}
+  const observer=typeof IntersectionObserver==='function'?new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){visible.add(entry.target);loadAllowed(entry.target);}else visible.delete(entry.target);},{rootMargin:'200px'}):null;
+  for(const root of roots){updateNotice(root);if(observer)observer.observe(root);else{visible.add(root);loadAllowed(root);}}
   document.addEventListener('click',event=>{const button=event.target.closest('[data-oembed-load]');if(button)void show(button.closest('[data-edgepress-oembed]'));});
-  document.addEventListener('edgepress:service-ready',event=>{for(const root of document.querySelectorAll('[data-edgepress-oembed]'))if(root.dataset.edgepressOembed===event.detail?.id){updateNotice(root);if(root.dataset.requested==='true')void show(root);}});
+  document.addEventListener('edgepress:service-ready',event=>{for(const root of roots)if(root.dataset.edgepressOembed===event.detail?.id)loadAllowed(root);});
 }

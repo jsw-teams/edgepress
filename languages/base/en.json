@@ -74,7 +74,7 @@
   "loadMedia": "Load media",
   "embedUnavailable": "Media is temporarily unavailable.",
   "embedNeedsConsent": "This media is provided by {service}. It stays unloaded until you allow this service and request it.",
-  "embedReady": "You have allowed {service}. Select Load media to connect; nothing has loaded yet.",
+  "embedReady": "You have allowed {service}. Media loads automatically when it comes into view.",
   "embedLoading": "Loading media from {service}…",
   "embedLoaded": "Media from {service} is loaded.",
   "embedDisabled": "The site has disabled {service}. This media has not been loaded.",

@@ -182,7 +182,7 @@ export async function readDocuments(config) {
     const date = normalizeDate(metadata.date, bundleName, kind, file, config.site?.timeZone);
     const calendar = metadata.date == null ? (bundleName.match(/^(\d{4}-\d{2}-\d{2})-/)?.[1] || '1970-01-01') : publicationCalendar(metadata.date,date,config.site?.timeZone);
     if (metadata.showChanges !== undefined && typeof metadata.showChanges !== 'boolean') throw new Error('showChanges must be a boolean in ' + file);
-    const revision = kind === 'posts' ? await readPostRevision(file, source, metadata.showChanges === true) : {updated:null,changes:''};
+    const revision = kind === 'posts' ? await readPostRevision(file, source, metadata.showChanges !== false, resolve(root,'assets')) : {updated:null,changes:''};
     let path;
     if (kind === 'posts') {
       path = config.permalink
@@ -200,7 +200,8 @@ export async function readDocuments(config) {
     return {
       kind, file, relativePath, bundlePath, title, slug, date, locale,
       dateOnly: metadata.date == null || /^\d{4}-\d{2}-\d{2}$/.test(String(metadata.date)),
-      updated: revision.updated, changes: revision.changes, showChanges: metadata.showChanges === true,
+      updated: revision.updated, changes: revision.changes, showChanges: metadata.showChanges !== false,
+      revisionImages: revision.revisionImages, revisionAssets: revision.revisionAssets??[],
       author: kind === 'posts' ? normalizeAuthor(metadata.author, file) : '',
       authorAvatar: safeAvatar(metadata.authorAvatar ?? (typeof metadata.author === 'object' && metadata.author !== null ? metadata.author.avatar : undefined), 'author avatar in ' + file),
       category: normalizeCategory(metadata.category),

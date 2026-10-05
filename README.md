@@ -12,7 +12,7 @@ EdgePress builds static websites for Cloudflare, Vercel, Netlify, Tencent EdgeOn
 
 Content images open a zoomable, closable viewer. The [media-viewer component](https://github.com/jsw-teams/media-viewer) is bundled locally; original images load on click when an original URL is provided.
 
-Enable `showChanges: true` in an article's front matter to explain the latest edit. Readers see formatted **Previously / Now** passages and clear additions or removals, with responsive cards that inherit the theme palette. Git remains a build-time source of history; patch markers and repository metadata are not published in the change view.
+The builder automatically explains the latest article edit. Readers see formatted **Previously / Now** passages, actual before-and-after local pictures, and clear additions or removals in responsive cards that inherit the theme palette. Changed pictures receive hashed snapshots from Git, so replacing or removing the original file does not break the comparison. Set `showChanges: false` to hide the panel for an article.
 
 ![An article update rendered as readable before-and-after cards](content/assets/images/previews/edgepress-revisions-en.png)
 
@@ -146,7 +146,9 @@ iask owns its complete interface, CSS, languages, identity and storage. Register
 
 Set `site.timeZone` in `config.yml`, default `Asia/Taipei`. The CLI writes complete publication timestamps with that zone’s offset and names the folder using its calendar date. Timestamps without an offset are interpreted in that configured zone; an explicit offset is respected. No build-host timezone is used. Readers see complete times in their current zone. Date-only articles retain their calendar date in displayed text, HTML, search and structured data, without a fabricated midnight. Ambiguous or nonexistent daylight-saving times need an explicit offset.
 
-An article shows the latest content update time from Git history. Only title and Markdown body changes count; metadata edits do not. Add `showChanges: true` to its front matter to display the actual latest content diff in an expandable panel. This is disabled by default and requires no hand-written revision note. Build from a full Git checkout (`fetch-depth: 0` in GitHub Actions); unavailable history produces no invented update. The latest 20 file commits are inspected.
+An article shows its latest content update and an expandable comparison automatically from Git history. Title, body, cover changes and replacements of referenced local image bytes count; unrelated metadata edits do not. Set `showChanges: false` to opt out. No hand-written revision note is needed. Build from a full Git checkout (`fetch-depth: 0` in GitHub Actions); unavailable history produces no invented update. The latest 20 commits affecting the article and its current local pictures are inspected. Only images involved in the latest change are snapshotted, deduplicated by content hash and cached for a year; drafts are excluded. Missing historical bytes retain their caption without requesting a broken URL. Remote image origins are not contacted to reconstruct history.
+
+Visible oEmbed blocks load automatically after the visitor saves consent for the corresponding service. Previously authorized blocks load on return as they approach the viewport. Denied or unselected services make no browser requests; the local loading controls and status cards follow the website theme.
 
 Set `pinned: true` in the selected article translations to place them first in `post-list`. Category and locale selection happen before pinning and limiting. Feeds, archives and `latest-posts` remain chronological.
 

@@ -1,4 +1,5 @@
-import { readFile, realpath } from 'node:fs/promises';
+import { readFile, realpath, stat } from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 
 const MAX_LANGUAGE_FILE_BYTES = 64 * 1024;
@@ -39,9 +40,16 @@ async function loadDictionary(root, directory, locale, label) {
 export async function loadLanguagePacks(config) {
   const baseLocale = config.i18n.defaultLocale;
   const translationsByLocale = Object.create(null);
-  translationsByLocale[baseLocale] = await loadDictionary(config.root, 'languages/base', baseLocale, 'Base');
+  const builtinRoot=fileURLToPath(new URL('../',import.meta.url)),english=await loadDictionary(builtinRoot,'languages/base','en','Built-in');
+  async function defaults(locale){
+    if(locale==='en')return english;
+    const file=resolve(builtinRoot,'languages/packs',locale+'.json');
+    const exists=await stat(file).then(()=>true,error=>{if(error.code==='ENOENT')return false;throw error;});
+    return exists?{...english,...await loadDictionary(builtinRoot,'languages/packs',locale,'Built-in')}:english;
+  }
+  translationsByLocale[baseLocale] = {...await defaults(baseLocale),...await loadDictionary(config.root, 'languages/base', baseLocale, 'Base')};
   for (const locale of config.i18n.languagePacks) {
-    translationsByLocale[locale] = await loadDictionary(config.root, 'languages/packs', locale, 'Language pack');
+    translationsByLocale[locale] = {...await defaults(locale),...await loadDictionary(config.root, 'languages/packs', locale, 'Language pack')};
   }
   config.i18n.translationsByLocale = translationsByLocale;
   return translationsByLocale;

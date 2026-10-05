@@ -11,7 +11,7 @@ import { collectAssets, rewriteAssetLinks, writeAssets } from './assets.js';
 import { loadLanguagePacks } from './i18n.js';
 import { contentPermissions, extendConsentPolicy, injectConsentPolicy } from './consent-csp.js';
 import { generateBuiltinRoutes } from './generators.js';
-import {reserveImageDimensions} from './image-dimensions.js';
+import {reserveImageDimensions,collectImageDimensions} from './image-dimensions.js';
 
 const RENDER_CACHE_VERSION = 3;
 const MARKDOWN_SECURITY_POLICY_VERSION = 5;
@@ -243,6 +243,9 @@ export async function buildSite(root = process.cwd(), options = {}) {
 
     const now = new Date();
     const visible = documents.filter((document) => !document.draft && publishedByLocalDate(document, now));
+    const revisionAssets=new Map(visible.flatMap(document=>document.revisionAssets??[]).map(asset=>[asset.path,asset]));
+    assetBundle.assets.push(...revisionAssets.values());
+    for(const [path,size] of await collectImageDimensions([...revisionAssets.values()]))assetBundle.imageDimensions.set(path,size);
     let site = {
       config,
       posts: sortPostsNewest(visible.filter((document) => document.kind === 'posts')),
