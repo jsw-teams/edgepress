@@ -5,6 +5,7 @@ import * as posix from 'node:path/posix';
 import {fileURLToPath} from 'node:url';
 import { mapLimit } from './concurrency.js';
 import {extendConsentPolicy,serializeConsentHeaders} from './consent-csp.js';
+import {imageViewerAssets} from './media-assets.js';
 
 async function walk(directory) {
   let entries;
@@ -97,6 +98,7 @@ export async function collectAssets(config) {
   // repositories. Project-owned overrides keep precedence for existing sites.
   const runtimeRoot=fileURLToPath(new URL('../static/edgepress/',import.meta.url));
   const supplied=new Set(sources.map(item=>item.path));
+  for(const item of await imageViewerAssets())if(!supplied.has(item.path))sources.push(item);
   for(const source of await walk(runtimeRoot)) {
     const path='edgepress/'+relative(runtimeRoot,source).split(sep).join('/');
     if(!supplied.has(path))sources.push({source,path,sourceName:'EdgePress runtime'});
@@ -119,7 +121,7 @@ export async function collectAssets(config) {
     mapLimit(headers, config.concurrency, async (item) => (await readFile(item.source)).toString('utf8')),
     mapLimit(assetSources, config.concurrency, async (item) => ({
       ...item,
-      content: isCodeAsset(item.path) ? await readFile(item.source) : null
+      content: isCodeAsset(item.path) ? item.content??await readFile(item.source) : null
     }))
   ]);
   const originals = new Map();

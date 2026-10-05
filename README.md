@@ -10,6 +10,8 @@ The Cloudflare button creates a copy of this repository in your GitHub account a
 
 EdgePress builds static websites for Cloudflare, Vercel, Netlify, Tencent EdgeOne Pages and Alibaba Cloud ESA Pages.
 
+Content images open a zoomable, closable viewer. The [media-viewer component](https://github.com/jsw-teams/media-viewer) is bundled locally; original images load on click when an original URL is provided.
+
 [中文说明：写文建站](content/guides/zh-cn.md) | [Free-tier comparison](content/guides/platforms.md)
 
 ![EdgePress website preview](content/assets/images/previews/edgepress-en.webp)

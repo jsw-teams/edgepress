@@ -77,5 +77,14 @@
   "embedReady": "You have allowed {service}. Select Load media to connect; nothing has loaded yet.",
   "embedLoading": "Loading media from {service}…",
   "embedLoaded": "Media from {service} is loaded.",
-  "embedDisabled": "The site has disabled {service}. This media has not been loaded."
+  "embedDisabled": "The site has disabled {service}. This media has not been loaded.",
+  "imageViewerOpenImage": "Enlarge image",
+  "imageViewerCloseImage": "Close image",
+  "imageViewerZoomIn": "Zoom in",
+  "imageViewerZoomOut": "Zoom out",
+  "imageViewerResetZoom": "Reset zoom",
+  "imageViewerSaveOriginal": "Save original",
+  "imageViewerRetryMedia": "Retry loading",
+  "imageViewerLoading": "Loading…",
+  "imageViewerImageUnavailable": "This image is unavailable."
 }

@@ -17,7 +17,7 @@ const sanitizeOptions = {
   allowedAttributes: {
     a: ['href', 'target', 'rel'],
     code: ['class'],
-    img: ['src', 'alt', 'title', 'width', 'height', 'loading'],
+    img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'data-original'],
     li: ['value'],
     ol: ['start'],
     source: ['src', 'type'],
@@ -31,6 +31,7 @@ const sanitizeOptions = {
   allowProtocolRelative: false,
   nonTextTags: ['script', 'style', 'textarea', 'option', 'xmp'],
   transformTags: {
+    img: (_tagName,attributes)=>{if(attributes['data-original']){try{attributes['data-original']=safeVideoHref(attributes['data-original']);}catch{delete attributes['data-original'];}}return {tagName:'img',attribs:attributes};},
     a: (_tagName, attributes) => ({
       tagName: 'a',
       attribs: { ...attributes, rel: 'noopener noreferrer' }

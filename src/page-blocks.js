@@ -144,7 +144,8 @@ function renderMediaText(block, context) {
   if (!['left', 'right'].includes(placement)) throw new Error('media-text.placement must be left or right');
   let media;
   if (mediaType === 'image') {
-    media = '<img src="' + src + '" alt="' + alt + '" loading="lazy" decoding="async">';
+    const original=block.originalSrc?' data-original="'+escapeHtml(safeUrl(block.originalSrc,'media-text.originalSrc'))+'"':'';
+    media = '<img src="' + src + '"'+original+' alt="' + alt + '" loading="lazy" decoding="async">';
   } else {
     if (!alt.trim()) throw new Error('media-text.alt must describe the video');
     const videoSrc = escapeHtml(safeUrl(block.src, 'media-text.src'));
@@ -387,7 +388,8 @@ async function renderBlock(block, context, depth, index) {
       const src = safeUrl(block.src, 'image.src');
       const alt = text(block.alt, 'image.alt', 500);
       const caption = text(block.caption, 'image.caption', 500, true);
-      return '<figure class="image-block"><img src="' + escapeHtml(src) + '" alt="' + escapeHtml(alt) + '" loading="lazy" decoding="async">' +
+      const original=block.originalSrc?' data-original="'+escapeHtml(safeUrl(block.originalSrc,'image.originalSrc'))+'"':'';
+      return '<figure class="image-block"><img src="' + escapeHtml(src) + '"'+original+' alt="' + escapeHtml(alt) + '" loading="lazy" decoding="async">' +
         (caption ? '<figcaption>' + escapeHtml(caption) + '</figcaption>' : '') + '</figure>';
     }
     case 'quote': {

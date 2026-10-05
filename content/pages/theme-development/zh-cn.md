@@ -148,4 +148,10 @@ blocks:
             - type: text
               paragraphs:
                 - "在文章前置数据加入 category: edgepress；省略分类时默认未分类。标签仅在文章页展示，移除 tag 筛选和标签归档。site.archive.categories 控制主见闻栏目；首页分页时使用相同分类。"
+  - columns: 1
+    cells:
+      - - type: text
+          heading: 图片细节查看
+          text: 文章图片和 Pages 的 image、media-text 图片块支持点击全屏放大。原图地址与展示图不同时，Pages 图片块可填写 originalSrc，Markdown HTML 图片可填写 data-original，链接到图片文件的图片也可直接放大；点击查看时才加载原图。工具栏支持缩放、保存与关闭，关闭后回到原位置。品牌图片和普通导航链接保留原用途，可选服务中的图片仍需要访客授权，并遵循 CSP。
+
 ---

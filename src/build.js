@@ -13,7 +13,7 @@ import { contentPermissions, extendConsentPolicy, injectConsentPolicy } from './
 import { generateBuiltinRoutes } from './generators.js';
 
 const RENDER_CACHE_VERSION = 3;
-const MARKDOWN_SECURITY_POLICY_VERSION = 4;
+const MARKDOWN_SECURITY_POLICY_VERSION = 5;
 
 async function readCache(file) {
   try {

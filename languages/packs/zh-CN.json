@@ -77,5 +77,14 @@
   "embedReady": "你已同意 {service}。点击“加载媒体”才会连接平台，当前尚未加载。",
   "embedLoading": "正在加载 {service} 媒体…",
   "embedLoaded": "已加载 {service} 媒体。",
-  "embedDisabled": "本站已关闭 {service} 服务，此媒体未加载。"
+  "embedDisabled": "本站已关闭 {service} 服务，此媒体未加载。",
+  "imageViewerOpenImage": "放大图片",
+  "imageViewerCloseImage": "关闭图片",
+  "imageViewerZoomIn": "放大",
+  "imageViewerZoomOut": "缩小",
+  "imageViewerResetZoom": "重置缩放",
+  "imageViewerSaveOriginal": "保存原图",
+  "imageViewerRetryMedia": "重新加载",
+  "imageViewerLoading": "加载中…",
+  "imageViewerImageUnavailable": "图片已删除或暂时无法加载。"
 }

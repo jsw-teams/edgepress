@@ -66,3 +66,5 @@ Read the guides in `content/pages/` before extending themes, page blocks, or plu
 - The Chinese official project name is 写文建站; the English official name remains EdgePress. Use one localized name in page titles and public copy. Homepage pages do not contain discussion slots.
 
 - Generic media-platform consent presets are limited to X and YouTube. Operator share.js.gripe enables none. Preserve custom oEmbed support without enabling other platforms as defaults. Dependency-based sites must receive package browser runtime and built-in navigation icons without copying framework source.
+
+- Article, image-block and media-text pictures use the shared media-viewer lightbox. Do not distinguish pictures by provider or attach the viewer to navigation icons or branding. Default to the displayed resource; explicit originalSrc/data-original or an image-file link supplies the original only on click. Preserve consent-gated embeds, meaningful navigation links, CSP, focus restoration and close behavior. Bundle the image-only component locally with immutable hashes; do not copy its implementation or ship video dependencies into the image runtime.

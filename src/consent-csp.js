@@ -64,6 +64,7 @@ export function contentPermissions(routes) {
     for(const match of html.matchAll(/<(img|video|audio|source)\b[^>]*\bsrc\s*=\s*["'](https:\/\/[^"']+)["']/gi)) {
       try {const origin=new URL(match[2]).origin;const name=match[1].toLowerCase()==='img'?'img-src':'media-src';result[name]=[...new Set([...(result[name]||[]),origin])];}catch{}
     }
+    for(const match of html.matchAll(/<img\b[^>]*\bdata-original\s*=\s*["'](https:\/\/[^"']+)["']/gi)){try{const origin=new URL(match[1]).origin;result['img-src']=[...new Set([...(result['img-src']||[]),origin])];}catch{}}
   }
   return result;
 }

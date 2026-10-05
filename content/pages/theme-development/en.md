@@ -148,4 +148,10 @@ blocks:
             - type: text
               paragraphs:
                 - "Set category: edgepress in article front matter. Omitted categories default to uncategorized. Tags are displayed on individual articles; tag filters and tag archives are removed. Set site.archive.categories for the main journal and match those categories when paginating a latest-posts homepage."
+  - columns: 1
+    cells:
+      - - type: text
+          heading: Image details
+          text: Article images and Pages image/media-text blocks open a closable full-screen viewer on click. Use originalSrc in a Pages image block, or data-original on a Markdown HTML img, when its original URL differs from the displayed preview. Originals load only when opened; image-file links are also supported. Branding and ordinary navigation images are unchanged. Optional-service images still wait for consent, and their CSP remains enforced.
+
 ---

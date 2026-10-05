@@ -178,6 +178,11 @@ export async function renderLayout(config, extensions, page, body) {
   const html = '<!doctype html>' + rendered;
   let filtered = await extensions.filter('html:afterLayout', html, context);
   if (typeof filtered !== 'string') throw new Error('html:afterLayout filters must return a string');
+  if(/\b(?:post-content|image-block|media-text|data-edgepress-oembed)\b/.test(filtered)){
+    const keys=['openImage','closeImage','zoomIn','zoomOut','resetZoom','saveOriginal','retryMedia','loading','imageUnavailable'];
+    const labels=Object.fromEntries(keys.map(key=>[key,translate(config,locale,'imageViewer'+key[0].toUpperCase()+key.slice(1))]));
+    filtered=filtered.replace('</head>','<link rel="stylesheet" href="/edgepress/image-viewer.css"></head>').replace('</body>','<script id="edgepress-image-viewer-config" type="application/json">'+JSON.stringify(labels).replace(/</g,'\\u003c')+'</script><script type="module" src="/edgepress/image-viewer.js"></script></body>');
+  }
   const scripts = [];
   if (filtered.includes('data-local-time')) scripts.push('<script defer src="/edgepress/local-time.js"></script>');
   if (filtered.includes('data-navigation-select')) scripts.push('<script defer src="/edgepress/navigation-select.js"></script>');
