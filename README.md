@@ -12,6 +12,10 @@ EdgePress builds static websites for Cloudflare, Vercel, Netlify, Tencent EdgeOn
 
 Content images open a zoomable, closable viewer. The [media-viewer component](https://github.com/jsw-teams/media-viewer) is bundled locally; original images load on click when an original URL is provided.
 
+Enable `showChanges: true` in an article's front matter to explain the latest edit. Readers see formatted **Previously / Now** passages and clear additions or removals, with responsive cards that inherit the theme palette. Git remains a build-time source of history; patch markers and repository metadata are not published in the change view.
+
+![An article update rendered as readable before-and-after cards](content/assets/images/previews/edgepress-revisions-en.png)
+
 [中文说明：写文建站](content/guides/zh-cn.md) | [Free-tier comparison](content/guides/platforms.md)
 
 ![EdgePress website preview](content/assets/images/previews/edgepress-en.webp)

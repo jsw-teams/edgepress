@@ -85,5 +85,9 @@
   "imageViewerSaveOriginal": "Save original",
   "imageViewerRetryMedia": "Retry loading",
   "imageViewerLoading": "Loading…",
-  "imageViewerImageUnavailable": "This image is unavailable."
+  "imageViewerImageUnavailable": "This image is unavailable.",
+  "postChangeBefore": "Previously",
+  "postChangeAfter": "Now",
+  "postChangeAdded": "Added",
+  "postChangeRemoved": "Removed"
 }

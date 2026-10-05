@@ -4,6 +4,10 @@
 
 ![网站界面实拍](../assets/images/previews/edgepress-zh.webp)
 
+文章前置数据设置 `showChanges: true` 后，读者可展开最近一次内容调整。界面按“修改前／修改后”“新增／移除”展示实际文字，支持 Markdown 排版，窄屏自动纵向排列，颜色跟随主题。构建时读取 Git 历史，页面不展示提交编号、文件路径或补丁符号。
+
+![文章变动卡片的真实组件预览](../assets/images/previews/edgepress-revisions-en.png)
+
 ## 本地开始
 
 需要 Node.js 22.12 或更新版本。在新目录中执行：

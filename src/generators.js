@@ -1,4 +1,5 @@
 import {renderPostServices,hasServiceBlock} from './service-block.js';
+import {renderRevisionCards} from './revision-cards.js';
 import { authorForPost, readingMinutes, filterPostsByCategory, categorySlug, normalizeCategory } from './post-details.js';
 import { plainText, renderMarkdownExcerpt } from './markdown.js';
 import { renderBlocks } from './page-blocks.js';
@@ -277,7 +278,7 @@ export async function generateBuiltinRoutes(site, config, extensions) {
         '<time data-local-time data-time-locale="' + escapeHtml(post.locale || locale) + '" data-date-only="' + (post.dateOnly === true) + '" datetime="' + (post.dateOnly ? post.date.toISOString().slice(0,10) : post.date.toISOString()) + '">' + escapeHtml(dateLabel(post.date, post.locale || locale, post.dateOnly ? 'UTC' : config.site.timeZone, post.dateOnly)) + '</time>' +
         '<span class="post-reading-time" data-reading-minutes="' + minutes + '">' + escapeHtml(label('postReadingTime').replace('{minutes}', minutes)) + '</span>' +
         (post.updated ? '<span class="post-updated">' + escapeHtml(label('postUpdated')) + ' <time data-local-time data-time-locale="' + escapeHtml(locale) + '" datetime="' + post.updated.toISOString() + '">' + escapeHtml(dateLabel(post.updated, locale, config.site.timeZone, false)) + '</time></span>' : '') +
-        '</div>' + tagsHtml + '</header>' + (post.showChanges && post.changes ? '<details class="post-changes"><summary>' + escapeHtml(label('postChanges')) + '</summary><pre><code>' + escapeHtml(post.changes) + '</code></pre></details>' : '') + renderPostVideo(post.video, locale) + renderedMarkdown.toc + '<div class="post-content">' + renderedMarkdown.html +
+        '</div>' + tagsHtml + '</header>' + (post.showChanges && post.changes ? await renderRevisionCards(post.changes,label) : '') + renderPostVideo(post.video, locale) + renderedMarkdown.toc + '<div class="post-content">' + renderedMarkdown.html +
         '</div></article>' + renderPostServices(post, locale, config);
       const canonicalPath = urlFor(post.path);
       return pageRoute(post.path + 'index.html', post.title, post.description || plainText(post.markdown).slice(0, 160), body,

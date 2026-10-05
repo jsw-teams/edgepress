@@ -258,9 +258,18 @@ body{background:radial-gradient(ellipse at 88% 2%,#ffe5df 0,transparent 32%),var
 .post-tags { display: flex; align-items: center; flex-wrap: wrap; gap: .45rem; margin-block: 1rem 1.5rem; }
 .post-tag { display: inline-block; max-width: 100%; overflow-wrap: anywhere; border: 1px solid currentColor; border-radius: 1rem; padding: .15rem .6rem; font-size: .85em; }
 
-.post-changes { margin: 1rem 0; }
-.post-changes summary { cursor: pointer; font-weight: 600; }
-.post-changes pre { overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.post-changes{margin:1.5rem 0;border:1px solid var(--line);border-radius:12px;overflow:hidden;color:var(--ink)}
+.post-changes summary{cursor:pointer;font-weight:650;padding:1rem;min-height:44px;background:var(--surface,var(--panel,var(--paper,transparent)))}
+.post-changes summary:focus-visible{outline:3px solid var(--accent);outline-offset:-3px}
+.post-changes-list{display:grid;gap:1rem;padding:1rem}
+.post-change-passage{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:1rem}
+.post-change-side{min-width:0;padding:1rem;border:1px solid var(--line);border-radius:10px;background:var(--surface,var(--panel,var(--paper,transparent)))}
+.post-change-after{border-inline-start:4px solid var(--accent);background:color-mix(in srgb,var(--accent) 7%,transparent)}
+.post-change-label{font-weight:650;margin:0 0 .75rem;font-size:.9rem;color:var(--muted,var(--ink))}
+.post-change-content{overflow-wrap:anywhere;font-size:.95rem;line-height:1.7}
+.post-change-content>:first-child{margin-top:0}.post-change-content>:last-child{margin-bottom:0}
+.post-change-heading{font-weight:650;font-size:1.1rem;margin:.5rem 0}
+.post-change-content img{max-width:100%;height:auto}.post-change-content pre{overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
 
 /* Media blocks inherit their page cell width, including mixed-column layouts. */
 .edgepress-oembed{width:100%;min-width:0;margin:0;overflow-wrap:anywhere}.edgepress-oembed [data-oembed-status],.oembed-content{min-width:0;max-width:100%}.edgepress-oembed iframe,.edgepress-oembed img,.edgepress-oembed blockquote{max-width:100%;margin-inline:auto}.edgepress-oembed [data-oembed-load]{min-height:44px}.oembed-caption{white-space:pre-wrap}

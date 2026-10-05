@@ -85,5 +85,9 @@
   "imageViewerSaveOriginal": "保存原图",
   "imageViewerRetryMedia": "重新加载",
   "imageViewerLoading": "加载中…",
-  "imageViewerImageUnavailable": "图片已删除或暂时无法加载。"
+  "imageViewerImageUnavailable": "图片已删除或暂时无法加载。",
+  "postChangeBefore": "修改前",
+  "postChangeAfter": "修改后",
+  "postChangeAdded": "新增内容",
+  "postChangeRemoved": "移除内容"
 }

@@ -1,7 +1,7 @@
 {
   "name": "edgepress",
   "version": "2026.10.5",
-  "description": "A static website builder for Cloudflare Workers with editable pages, Markdown posts, local search, themes, and consent-gated integrations.",
+  "description": "Static websites from Markdown and editable pages, with themes, consent-controlled embeds and readable article updates.",
   "type": "module",
   "bin": {
     "edgepress": "src/cli.js"
@@ -75,7 +75,7 @@
     "deploy:netlify": "node src/cli.js deploy netlify"
   },
   "dependencies": {
-    "@jsw-teams/media-viewer": "https://codeload.github.com/jsw-teams/media-viewer/tar.gz/830888c2d78f8bc8af946aa11b83ddb67f7b1d01",
+    "@jsw-teams/media-viewer": "https://codeload.github.com/jsw-teams/media-viewer/tar.gz/6267631b91a02521f558e5122c286ac6336c8210",
     "esbuild": "^0.28.2",
     "image-size": "^2.0.4",
     "marked": "^18.0.13",
