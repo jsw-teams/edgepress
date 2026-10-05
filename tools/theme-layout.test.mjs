@@ -35,7 +35,7 @@ test('theme layouts keep navigation, portrait media, columns and floating contro
           caption: 'No crop and no horizontal overflow.', placement: 'right', title: 'Media with text', text: 'A complete argument stays alongside the illustration.' }]] }
       ];
       const content = await renderBlocks(blocks, { config, locale: 'en', site: { posts: [], pages: [] }, isHomepage: true });
-      const controls = '<div class="post-toc-widget"><button class="post-toc-toggle">Contents</button></div>' +
+      const controls = '<div class="post-toc-widget"><button class="post-toc-toggle">Contents</button><div class="post-toc-panel" hidden><ol><li><a href="#main">Section</a></li></ol></div></div>' +
         '<form class="local-search-form"><div class="local-search-controls"><input type="search" aria-label="Search"><button>Search</button></div></form>';
       const html = await renderLayout(config, extensions, { title: 'Fixture', locale: 'en', urlPath: '/' }, '<article class="page-builder">' + content + controls + '</article>');
       const context = await browser.newContext();
@@ -75,6 +75,7 @@ test('theme layouts keep navigation, portrait media, columns and floating contro
         const copyCell = await page.locator('.code-widget').locator('..').boundingBox();
         assert(Math.abs(copy.x-copyCell.x) < 1, label + ': code inset');
         assert(!overlaps(await page.locator('.post-toc-toggle').boundingBox(), await page.locator('.privacy-settings-button').boundingBox()), label + ': controls overlap');
+        assert.equal(await page.locator('.post-toc-panel ol').evaluate(list => getComputedStyle(list).listStyleType), 'none', label + ': numbered TOC');
         assert(await page.locator('input[type="search"]').evaluate(input => {
           const style = getComputedStyle(input);
           const luminance = value => { const rgb = value.match(/[\d.]+/g).slice(0,3).map(Number).map(x=>{x/=255;return x<=.04045?x/12.92:((x+.055)/1.055)**2.4;}); return rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722; };

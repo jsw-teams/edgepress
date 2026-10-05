@@ -196,7 +196,7 @@ main,.page-builder,.page-builder-row,.page-builder-cell,.post,.post-content,.pos
 .post-toc-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .post-toc-heading h2{margin:0;font-size:1rem;letter-spacing:0}
 .post-toc-close{display:grid;place-items:center;width:40px;height:40px;flex:none;border:1px solid var(--line);border-radius:50%;background:var(--paper);color:var(--ink);font:inherit;font-size:1.35rem;line-height:1;cursor:pointer}
-.post-toc-panel ol{margin:0;padding-inline-start:1.25rem}
+.post-toc-panel ol{margin:0;padding-inline-start:0;list-style:none}
 .post-toc-panel li{padding:3px 0;overflow-wrap:anywhere}
 .post-toc-panel .post-toc-level-3{padding-inline-start:1rem}
 .post-toc-panel .post-toc-level-4,.post-toc-panel .post-toc-level-5,.post-toc-panel .post-toc-level-6{padding-inline-start:2rem}
