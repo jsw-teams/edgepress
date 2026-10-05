@@ -19,6 +19,7 @@ test('article updates show safe readable before/after passages rather than Git p
  assert.doesNotMatch(html,/@@|diff --git|unchanged|<script|javascript:|bad\(\)/);
  assert.equal(await renderRevisionCards('@@ -1 +1 @@\n unchanged',key=>labels[key]),'');
  assert.doesNotMatch(await renderRevisionCards('-# Old heading\n+# New heading',key=>labels[key]),/<h[1-6][ >]/);
+ const pictures=await renderRevisionCards('-![Old cover](/removed.svg)\n+![New cover](/new.webp)',key=>labels[key]);assert.match(pictures,/Old cover/);assert.match(pictures,/New cover/);assert.doesNotMatch(pictures,/<img|removed.svg|new.webp/);
 });
 test('revision cards wrap on narrow screens, follow each theme and support keyboard disclosure',async()=>{
  const browser=await chromium.launch({headless:true,...(process.platform==='win32'?{channel:'msedge'}:{})});

@@ -10,9 +10,17 @@ import {renderBlocks} from '../src/page-blocks.js';
 import consentManager from '../plugins/consent/index.js';
 import {extendConsentPolicy} from '../src/consent-csp.js';
 import {resolveEmbed,sanitizeEmbed} from '../src/oembed.js';
+import {readDocuments} from '../src/content.js';
+import {generateBuiltinRoutes} from '../src/generators.js';
+import {createExtensions} from '../src/plugin-api.js';
 import {mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 const root=fileURLToPath(new URL('../',import.meta.url));
+test('posts use the same consent-controlled oEmbed blocks as Pages',async()=>{
+ const config=await loadConfig(root);await loadLanguagePacks(config);const service='https://ishare.example';config.browserPlugins.services=[{id:'ishare',provider:'oembed',backendUrl:service,enabled:true,name:'ishare',purpose:'Load the shared post.',dataCategories:'Requested media and IP address.',recipient:'ishare',retention:'Until deletion.',privacyUrl:service+'/privacy/'}];
+ const document=(await readDocuments(config)).find(item=>item.kind==='posts'&&item.locale==='en');assert.ok(document);const post={...document,html:'<p>A seaside field note.</p>',embeds:[{integration:'ishare',url:service+'/s/'+'a'.repeat(32),title:'Seaside post'}]};
+ const routes=await generateBuiltinRoutes({posts:[post],pages:[]},config,await createExtensions(config));const page=routes.find(route=>route.path===post.path+'index.html');assert.ok(page);assert.match(page.body,/A seaside field note/);assert.match(page.body,/data-edgepress-oembed="ishare"/);assert.doesNotMatch(page.body,/<iframe/);
+});
 test('oEmbed pages validate origins, need consent and a click, and strip unsafe vendor HTML',async()=>{
   const config=await loadConfig(root),origin=new URL(config.site.url).origin,service='https://share.js.gripe';
   config.browserPlugins.services=[{id:'ishare',provider:'oembed',backendUrl:service,enabled:true,name:'ishare',purpose:'Load shared images and videos.',dataCategories:'IP address and requested media.',recipient:'ishare',retention:'Until publisher deletion.',privacyUrl:service+'/privacy.html'}];

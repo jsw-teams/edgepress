@@ -279,7 +279,7 @@ export async function generateBuiltinRoutes(site, config, extensions) {
         '<span class="post-reading-time" data-reading-minutes="' + minutes + '">' + escapeHtml(label('postReadingTime').replace('{minutes}', minutes)) + '</span>' +
         (post.updated ? '<span class="post-updated">' + escapeHtml(label('postUpdated')) + ' <time data-local-time data-time-locale="' + escapeHtml(locale) + '" datetime="' + post.updated.toISOString() + '">' + escapeHtml(dateLabel(post.updated, locale, config.site.timeZone, false)) + '</time></span>' : '') +
         '</div>' + tagsHtml + '</header>' + (post.showChanges && post.changes ? await renderRevisionCards(post.changes,label) : '') + renderPostVideo(post.video, locale) + renderedMarkdown.toc + '<div class="post-content">' + renderedMarkdown.html +
-        '</div></article>' + renderPostServices(post, locale, config);
+        (post.embeds?.length?await renderBlocks([{columns:1,cells:[post.embeds.map(embed=>({...embed,type:'oembed'}))]}],{config,locale,site,document:post}):'')+'</div></article>' + renderPostServices(post, locale, config);
       const canonicalPath = urlFor(post.path);
       return pageRoute(post.path + 'index.html', post.title, post.description || plainText(post.markdown).slice(0, 160), body,
         locale, config, extensions, {

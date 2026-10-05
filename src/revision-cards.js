@@ -20,7 +20,7 @@ export async function renderRevisionCards(diff,label){
   const sides=[];
   for(const side of ['before','after'])if(group[side].trim()){
    const key=side==='before'?(group.after.trim()?'postChangeBefore':'postChangeRemoved'):(group.before.trim()?'postChangeAfter':'postChangeAdded');
-   const content=(await renderMarkdown(group[side],{allowVideo:false})).replace(/<h[1-6]\b[^>]*>/g,'<p class="post-change-heading">').replace(/<\/h[1-6]>/g,'</p>');
+   const content=(await renderMarkdown(group[side],{allowImages:false,allowVideo:false})).replace(/<h[1-6]\b[^>]*>/g,'<p class="post-change-heading">').replace(/<\/h[1-6]>/g,'</p>');
    sides.push('<div class="post-change-side post-change-'+side+'"><p class="post-change-label">'+escape(label(key))+'</p><div class="post-change-content">'+content+'</div></div>');
   }
   cards.push('<div class="post-change-passage">'+sides.join('')+'</div>');

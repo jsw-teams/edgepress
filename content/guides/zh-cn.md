@@ -8,6 +8,8 @@
 
 ![文章变动卡片的真实组件预览](../assets/images/previews/edgepress-revisions-en.png)
 
+文章也可以在 Markdown 正文下方插入 oEmbed 图文分享。在前置数据设置 `embeds`，每项填写配置文件中的 `integration` 服务名、帖子 `url` 和说明 `title`。对应服务须在 `config.yml` 启用；访客授权并点击加载后才请求内容。变动卡片用图片说明展示媒体调整，不重新加载已经移除的旧图片。
+
 ## 本地开始
 
 需要 Node.js 22.12 或更新版本。以下命令安装已发布的 npm 版本；最新 GitHub 改动可通过 README 的仓库模板部署，或克隆本仓库后在根目录运行 `npm ci`、`npm run dev`。在新目录中安装 npm 版本：
