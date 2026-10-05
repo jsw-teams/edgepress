@@ -119,7 +119,7 @@ async function renderLatestPosts(block, context) {
     const excerpt = await renderMarkdownExcerpt(post.description || post.markdown, context.config.markdown);
     return '<article class="post-card" lang="' + escapeHtml(post.locale) + '"><h3><a href="' + escapeHtml('/' + post.path.split('/').filter(Boolean).join('/') + (post.path.endsWith('/') ? '/' : '')) + '">' +
       escapeHtml(post.title) + '</a></h3>' + (block.type === 'post-list' && post.pinned ? '<span class="post-pinned">' + escapeHtml(translate(context.config, context.locale, 'postPinned')) + '</span>' : '') + '<p class="meta"><time data-local-time data-time-locale="' + escapeHtml(post.locale || context.locale) + '" data-date-only="' + (post.dateOnly === true) + '" datetime="' + (post.dateOnly ? post.date.toISOString().slice(0,10) : post.date.toISOString()) + '">' + escapeHtml(dateLabel(post.date, context.locale, post.dateOnly ? 'UTC' : context.config.site.timeZone)) +
-      '</time>' + (post.author ? ' · ' + authorLabel(post) : '') + '</p><div class="post-excerpt" lang="' + escapeHtml(post.locale) + '">' + excerpt + '</div></article>';
+      '</time>' + (post.author ? ' ' + authorLabel(post) : '') + '</p><div class="post-excerpt" lang="' + escapeHtml(post.locale) + '">' + excerpt + '</div></article>';
   }))).join('');
   const pagination = paginate && context.latestPostsPagination?.totalPages > 1
     ? '<nav class="pagination latest-posts-pagination" aria-label="' + escapeHtml(translate(context.config, context.locale, 'pagination')) + '">' +
