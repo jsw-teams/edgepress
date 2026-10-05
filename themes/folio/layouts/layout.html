@@ -1,0 +1,15 @@
+<html lang="{{site.language}}">
+<head>
+  {{> head}}
+</head>
+<body class="theme-folio">
+  <a class="skip-link" href="#main">{{site.skipToContent}}</a>
+  <div class="site-shell">
+    {{> header}}
+    <main id="main" class="site-main">{{{page.content}}}</main>
+    {{> footer}}
+  </div>
+  <script defer src="/edgepress/language-select.js"></script>
+  <script defer src="/folio/navigation.js"></script>
+</body>
+</html>
