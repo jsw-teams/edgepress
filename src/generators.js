@@ -25,8 +25,8 @@ function urlFor(path) {
   return '/' + parts.join('/') + (String(path).endsWith('/') && parts.length ? '/' : '');
 }
 
-function dateLabel(date, language, timeZone = 'UTC') {
-  return new Intl.DateTimeFormat(language, { dateStyle: 'long', timeZone }).format(date);
+function dateLabel(date, language, timeZone = 'UTC', dateOnly = true) {
+  return new Intl.DateTimeFormat(language, dateOnly?{dateStyle:'long',timeZone}:{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',timeZoneName:'short',timeZone}).format(date);
 }
 
 function fileRoute(path, body, contentType = 'text/html; charset=utf-8') {
@@ -128,7 +128,7 @@ async function renderPostCard(post, locale, config, showLanguage = false) {
   const summary = await renderMarkdownExcerpt(post.description || post.markdown, config.markdown);
   const postLanguage = showLanguage && post.locale !== locale ? translate(config, post.locale, 'languageName') : '';
   return '<article class="post-card" lang="' + escapeHtml(post.locale) + '"><h2><a href="' + escapeHtml(urlFor(post.path)) + '">' + escapeHtml(post.title) + '</a></h2>' +
-    '<p class="meta"><time data-local-time data-time-locale="' + escapeHtml(post.locale || locale) + '" data-date-only="' + (post.dateOnly === true) + '" datetime="' + (post.dateOnly ? post.date.toISOString().slice(0,10) : post.date.toISOString()) + '">' + escapeHtml(dateLabel(post.date, post.locale, post.dateOnly ? 'UTC' : config.site.timeZone)) + '</time>' +
+    '<p class="meta"><time data-local-time data-time-locale="' + escapeHtml(post.locale || locale) + '" data-date-only="' + (post.dateOnly === true) + '" datetime="' + (post.dateOnly ? post.date.toISOString().slice(0,10) : post.date.toISOString()) + '">' + escapeHtml(dateLabel(post.date, post.locale || locale, post.dateOnly ? 'UTC' : config.site.timeZone, post.dateOnly)) + '</time>' +
     (postLanguage ? ' <span class="post-language" lang="' + escapeHtml(post.locale) + '">' + escapeHtml(postLanguage) + '</span>' : '') +
     (post.author ? ' ' + renderPostAuthor(post, locale, config) : '') + '</p><div class="post-excerpt" lang="' + escapeHtml(post.locale) + '">' +
     summary + '</div></article>';
@@ -274,9 +274,9 @@ export async function generateBuiltinRoutes(site, config, extensions) {
       const tagsHtml = post.tags.length ? '<div class="post-tags" role="group" aria-label="' + escapeHtml(label('tags')) + '"><span class="post-tags-label">' +
         escapeHtml(label('tags')) + ':</span>' + post.tags.map(tag => '<span class="post-tag">' + escapeHtml(tag) + '</span>').join('') + '</div>' : '';
       const body = '<article class="post"><header><h1>' + escapeHtml(post.title) + '</h1><div class="meta post-byline">' + authorHtml +
-        '<time data-local-time data-time-locale="' + escapeHtml(post.locale || locale) + '" data-date-only="' + (post.dateOnly === true) + '" datetime="' + (post.dateOnly ? post.date.toISOString().slice(0,10) : post.date.toISOString()) + '">' + escapeHtml(dateLabel(post.date, locale, post.dateOnly ? 'UTC' : config.site.timeZone)) + '</time>' +
+        '<time data-local-time data-time-locale="' + escapeHtml(post.locale || locale) + '" data-date-only="' + (post.dateOnly === true) + '" datetime="' + (post.dateOnly ? post.date.toISOString().slice(0,10) : post.date.toISOString()) + '">' + escapeHtml(dateLabel(post.date, post.locale || locale, post.dateOnly ? 'UTC' : config.site.timeZone, post.dateOnly)) + '</time>' +
         '<span class="post-reading-time" data-reading-minutes="' + minutes + '">' + escapeHtml(label('postReadingTime').replace('{minutes}', minutes)) + '</span>' +
-        (post.updated ? '<span class="post-updated">' + escapeHtml(label('postUpdated')) + ' <time data-local-time data-time-locale="' + escapeHtml(locale) + '" datetime="' + post.updated.toISOString() + '">' + escapeHtml(dateLabel(post.updated, locale, config.site.timeZone)) + '</time></span>' : '') +
+        (post.updated ? '<span class="post-updated">' + escapeHtml(label('postUpdated')) + ' <time data-local-time data-time-locale="' + escapeHtml(locale) + '" datetime="' + post.updated.toISOString() + '">' + escapeHtml(dateLabel(post.updated, locale, config.site.timeZone, false)) + '</time></span>' : '') +
         '</div>' + tagsHtml + '</header>' + (post.showChanges && post.changes ? '<details class="post-changes"><summary>' + escapeHtml(label('postChanges')) + '</summary><pre><code>' + escapeHtml(post.changes) + '</code></pre></details>' : '') + renderPostVideo(post.video, locale) + renderedMarkdown.toc + '<div class="post-content">' + renderedMarkdown.html +
         '</div></article>' + renderPostServices(post, locale, config);
       const canonicalPath = urlFor(post.path);

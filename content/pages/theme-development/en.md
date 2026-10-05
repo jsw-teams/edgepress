@@ -153,5 +153,7 @@ blocks:
       - - type: text
           heading: Image details
           text: Article images and Pages image/media-text blocks open a closable full-screen viewer on click. Use originalSrc in a Pages image block, or data-original on a Markdown HTML img, when its original URL differs from the displayed preview. Originals load only when opened; image-file links are also supported. Branding and ordinary navigation images are unchanged. Optional-service images still wait for consent, and their CSP remains enforced.
+        - type: text
+          text: Local published images receive their intrinsic width and height during build, preserving their aspect ratio before loading. Explicit dimensions remain authoritative. Supply dimensions for remote pictures because the builder does not request them.
 
 ---

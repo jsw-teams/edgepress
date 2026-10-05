@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import { mapLimit } from './concurrency.js';
 import {extendConsentPolicy,serializeConsentHeaders} from './consent-csp.js';
 import {imageViewerAssets} from './media-assets.js';
+import {collectImageDimensions} from './image-dimensions.js';
 
 async function walk(directory) {
   let entries;
@@ -175,7 +176,7 @@ export async function collectAssets(config) {
   const urlMap = Object.create(null);
   for (const item of items) urlMap['/' + item.path] = '/' + outputByOriginal.get(item.path);
   config.assetManifest = urlMap;
-  return { assets, urlMap, existingHeaders: extendConsentPolicy(headerContents.join('\n\n'),config) };
+  return { assets, urlMap, imageDimensions:await collectImageDimensions(assets), existingHeaders: extendConsentPolicy(headerContents.join('\n\n'),config) };
 }
 
 export async function writeAssets(bundle, output, concurrency = 8) {

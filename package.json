@@ -36,7 +36,8 @@
     "tools/consent-csp.test.mjs",
     "tools/assets-runtime.test.mjs",
     "tools/theme-layout.test.mjs",
-    "tools/image-viewer.test.mjs"
+    "tools/image-viewer.test.mjs",
+    "tools/image-dimensions.test.mjs"
   ],
   "repository": {
     "type": "git",
@@ -65,7 +66,7 @@
     "doctor": "node src/cli.js doctor",
     "iterate": "node src/cli.js iterate",
     "security:check": "node src/cli.js security",
-    "test": "node --test tools/writing.test.mjs tools/brand-regression.test.mjs tools/post-list.test.mjs tools/audit.test.mjs tools/navigation.test.mjs tools/revisions.test.mjs tools/publication-time.test.mjs tools/consent-config.test.mjs tools/consent-browser.test.mjs tools/services.test.mjs tools/oembed.test.mjs tools/consent-csp.test.mjs tools/assets-runtime.test.mjs tools/theme-layout.test.mjs tools/image-viewer.test.mjs",
+    "test": "node --test tools/writing.test.mjs tools/brand-regression.test.mjs tools/post-list.test.mjs tools/audit.test.mjs tools/navigation.test.mjs tools/revisions.test.mjs tools/publication-time.test.mjs tools/consent-config.test.mjs tools/consent-browser.test.mjs tools/services.test.mjs tools/oembed.test.mjs tools/consent-csp.test.mjs tools/assets-runtime.test.mjs tools/theme-layout.test.mjs tools/image-viewer.test.mjs tools/image-dimensions.test.mjs",
     "icons:sync": "node tools/sync-icons.mjs",
     "deploy:cloudflare": "node src/cli.js deploy cloudflare",
     "deploy:vercel": "node src/cli.js deploy vercel",
@@ -74,8 +75,9 @@
     "deploy:netlify": "node src/cli.js deploy netlify"
   },
   "dependencies": {
-    "@jsw-teams/media-viewer": "https://codeload.github.com/jsw-teams/media-viewer/tar.gz/5a27e804fcd40ca0618f5fe958e37a323b28969a",
+    "@jsw-teams/media-viewer": "https://codeload.github.com/jsw-teams/media-viewer/tar.gz/42fde6316fd09d18b4fd0530a6a58808562c5966",
     "esbuild": "^0.28.2",
+    "image-size": "^2.0.4",
     "marked": "^18.0.13",
     "sanitize-html": "^2.17.7",
     "yaml": "^2.9.1"

@@ -70,8 +70,8 @@ function enabledIntegration(config, id) {
   return match;
 }
 
-function dateLabel(date, locale, timeZone = 'UTC') {
-  return new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeZone }).format(date);
+function dateLabel(date, locale, timeZone = 'UTC', dateOnly = true) {
+  return new Intl.DateTimeFormat(locale, dateOnly?{dateStyle:'long',timeZone}:{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',timeZoneName:'short',timeZone}).format(date);
 }
 
 function dateOnlyLabel(value, locale) {
@@ -118,7 +118,7 @@ async function renderLatestPosts(block, context) {
   const cards = (await Promise.all(displayed.map(async (post) => {
     const excerpt = await renderMarkdownExcerpt(post.description || post.markdown, context.config.markdown);
     return '<article class="post-card" lang="' + escapeHtml(post.locale) + '"><h3><a href="' + escapeHtml('/' + post.path.split('/').filter(Boolean).join('/') + (post.path.endsWith('/') ? '/' : '')) + '">' +
-      escapeHtml(post.title) + '</a></h3>' + (block.type === 'post-list' && post.pinned ? '<span class="post-pinned">' + escapeHtml(translate(context.config, context.locale, 'postPinned')) + '</span>' : '') + '<p class="meta"><time data-local-time data-time-locale="' + escapeHtml(post.locale || context.locale) + '" data-date-only="' + (post.dateOnly === true) + '" datetime="' + (post.dateOnly ? post.date.toISOString().slice(0,10) : post.date.toISOString()) + '">' + escapeHtml(dateLabel(post.date, context.locale, post.dateOnly ? 'UTC' : context.config.site.timeZone)) +
+      escapeHtml(post.title) + '</a></h3>' + (block.type === 'post-list' && post.pinned ? '<span class="post-pinned">' + escapeHtml(translate(context.config, context.locale, 'postPinned')) + '</span>' : '') + '<p class="meta"><time data-local-time data-time-locale="' + escapeHtml(post.locale || context.locale) + '" data-date-only="' + (post.dateOnly === true) + '" datetime="' + (post.dateOnly ? post.date.toISOString().slice(0,10) : post.date.toISOString()) + '">' + escapeHtml(dateLabel(post.date, post.locale || context.locale, post.dateOnly ? 'UTC' : context.config.site.timeZone, post.dateOnly)) +
       '</time>' + (post.author ? ' ' + authorLabel(post) : '') + '</p><div class="post-excerpt" lang="' + escapeHtml(post.locale) + '">' + excerpt + '</div></article>';
   }))).join('');
   const pagination = paginate && context.latestPostsPagination?.totalPages > 1
