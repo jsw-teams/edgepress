@@ -1,6 +1,6 @@
 import {mountImage} from './image-viewer-lib.js';
 import {readChoice} from './plugins/consent/choices.js';
-const root=document.querySelector('main'),mounted=new Map(),selector='.post-content img, .image-block img, .media-text img, [data-edgepress-oembed] img';
+const root=document.querySelector('main'),mounted=new Map(),selector='.post-content img, .image-block img, .media-text-block img, [data-edgepress-oembed] img';
 const labels=JSON.parse(document.getElementById('edgepress-image-viewer-config')?.textContent||'{}');
 function permitted(image){
  if(!image.getAttribute('src')||image.closest('[hidden],template'))return false;
