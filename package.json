@@ -74,7 +74,7 @@
     "deploy:netlify": "node src/cli.js deploy netlify"
   },
   "dependencies": {
-    "@jsw-teams/media-viewer": "https://codeload.github.com/jsw-teams/media-viewer/tar.gz/d9f167ca2bc1f7159b1fba030b138adac0f9e342",
+    "@jsw-teams/media-viewer": "https://codeload.github.com/jsw-teams/media-viewer/tar.gz/5a27e804fcd40ca0618f5fe958e37a323b28969a",
     "esbuild": "^0.28.2",
     "marked": "^18.0.13",
     "sanitize-html": "^2.17.7",
