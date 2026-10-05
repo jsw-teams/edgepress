@@ -12,7 +12,13 @@ function articleText(source) {
   const match = source.replace(/^\uFEFF/, '').match(/^---\r?\n([\s\S]*?)\r?\n(?:---|\.\.\.)\r?\n([\s\S]*)$/);
   if (!match) return source.replace(/\r\n/g, '\n').trim();
   const metadata = parse(match[1]);
-  return '# ' + String(metadata?.title || '') + '\n\n' + (typeof metadata?.image==='string'?'![Cover]('+metadata.image+')\n\n':'') + match[2].replace(/\r\n/g, '\n').trim();
+  const body=match[2].replace(/\r\n/g, '\n').trim();
+  // A post may expose the same cover in front matter and in its Markdown body.
+  // Include the synthetic cover only when the body does not already reference it;
+  // otherwise one edit produces two identical before/after passages.
+  const image=typeof metadata?.image==='string' && !body.includes(']('+metadata.image+')')
+    ? '![Cover]('+metadata.image+')\n\n' : '';
+  return '# ' + String(metadata?.title || '') + '\n\n' + image + body;
 }
 async function difference(before, after) {
   const folder = await mkdtemp(join(tmpdir(), 'edgepress-revision-'));
