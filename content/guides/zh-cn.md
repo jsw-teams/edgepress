@@ -10,7 +10,7 @@
 
 ## 本地开始
 
-需要 Node.js 22.12 或更新版本。在新目录中执行：
+需要 Node.js 22.12 或更新版本。以下命令安装已发布的 npm 版本；最新 GitHub 改动可通过 README 的仓库模板部署，或克隆本仓库后在根目录运行 `npm ci`、`npm run dev`。在新目录中安装 npm 版本：
 
 ```sh
 npm install edgepress

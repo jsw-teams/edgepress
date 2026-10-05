@@ -24,7 +24,7 @@ Buttons open repository setup. Cloudflare, Vercel, Netlify and EdgeOne support r
 
 ## Quick start
 
-Install EdgePress from npm and initialize a new project directory:
+The commands below install the published npm release and initialize a new project directory. For the latest GitHub changes, use the deployment buttons or clone this repository, then run `npm ci` and `npm run dev` from its root:
 
     mkdir my-edgepress-site
     cd my-edgepress-site
