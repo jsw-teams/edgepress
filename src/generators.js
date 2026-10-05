@@ -129,8 +129,8 @@ async function renderPostCard(post, locale, config, showLanguage = false) {
   const postLanguage = showLanguage && post.locale !== locale ? translate(config, post.locale, 'languageName') : '';
   return '<article class="post-card" lang="' + escapeHtml(post.locale) + '"><h2><a href="' + escapeHtml(urlFor(post.path)) + '">' + escapeHtml(post.title) + '</a></h2>' +
     '<p class="meta"><time data-local-time data-time-locale="' + escapeHtml(post.locale || locale) + '" data-date-only="' + (post.dateOnly === true) + '" datetime="' + (post.dateOnly ? post.date.toISOString().slice(0,10) : post.date.toISOString()) + '">' + escapeHtml(dateLabel(post.date, post.locale, post.dateOnly ? 'UTC' : config.site.timeZone)) + '</time>' +
-    (postLanguage ? ' · <span class="post-language" lang="' + escapeHtml(post.locale) + '">' + escapeHtml(postLanguage) + '</span>' : '') +
-    (post.author ? ' · ' + renderPostAuthor(post, locale, config) : '') + '</p><div class="post-excerpt" lang="' + escapeHtml(post.locale) + '">' +
+    (postLanguage ? ' <span class="post-language" lang="' + escapeHtml(post.locale) + '">' + escapeHtml(postLanguage) + '</span>' : '') +
+    (post.author ? ' ' + renderPostAuthor(post, locale, config) : '') + '</p><div class="post-excerpt" lang="' + escapeHtml(post.locale) + '">' +
     summary + '</div></article>';
 }
 
@@ -318,7 +318,7 @@ export async function generateBuiltinRoutes(site, config, extensions) {
       const archiveBody = '<section><h1>' + escapeHtml(label('archives')) + '</h1>' +
         (cards.length ? '<div class="post-list archive-post-list">' + cards.join('') + '</div>' : '<p>' + escapeHtml(label('noPosts')) + '</p>') + pagination + '</section>';
       routes.push(await pageRoute(prefix + (pageNumber === 1 ? 'archives/index.html' : 'archives/page/' + pageNumber + '/index.html'),
-        pageNumber === 1 ? label('archives') : label('archives') + ' · ' + pageNumber, label('allPosts'), archiveBody, locale, config, extensions,
+        pageNumber === 1 ? label('archives') : label('archives') + ' ' + pageNumber, label('allPosts'), archiveBody, locale, config, extensions,
         { urlPath: localizedUrl(config, locale, archiveUrl) }));
       allPagePaths.add(localizedUrl(config, locale, archiveUrl));
     }

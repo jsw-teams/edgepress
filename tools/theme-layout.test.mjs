@@ -56,6 +56,7 @@ test('theme layouts keep navigation, portrait media, columns and floating contro
         await page.locator('.privacy-settings-button').waitFor();
         const label = `${theme} ${width} ${colorScheme}`;
         assert.equal(await page.locator('main h1').count(), 1, label);
+        if (theme === 'folio') assert(await page.locator('.brand-description').evaluate(p => { const style=getComputedStyle(p); return style.display !== 'none' && style.whiteSpace !== 'nowrap' && p.scrollWidth <= p.clientWidth + 1 && p.scrollHeight <= p.clientHeight + 1; }), label + ': clipped masthead description');
         assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), label + ': overflow');
         const brand = await page.locator('.brand').boundingBox();
         const locale = await page.locator('.locale-nav').boundingBox();
