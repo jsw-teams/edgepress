@@ -25,3 +25,5 @@ Record a real project and hold its visible results. For EdgePress, show `edgepre
 For embedded posts, show the link being added to article `embeds`, save the actual Markdown file, and display the resulting post after consent. A dialog containing links alone does not demonstrate website integration.
 
 The development checkout includes Monaco. A browser recording can import `workbench`, supply `editorRoot: resolve(packageRoot, 'node_modules/monaco-editor')`, and navigate to `https://edgepress-demo.test/workbench/` within its intercepted context. The browser uses that recording-only hostname while the helper forwards built pages to the real loopback server.
+
+The builder generates the exact Content-Length of each static MP4/WebM from its file metadata, alongside the immutable policy for hashed files. This keeps native seeking available on the deployed assets without moving recordings into an application backend.

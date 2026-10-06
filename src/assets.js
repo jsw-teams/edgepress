@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { copyFile, readdir, readFile, writeFile, mkdir } from 'node:fs/promises';
+import { copyFile, readdir, readFile, writeFile, mkdir, stat } from 'node:fs/promises';
 import { dirname, extname, relative, resolve, sep } from 'node:path';
 import * as posix from 'node:path/posix';
 import {fileURLToPath} from 'node:url';
@@ -192,7 +192,11 @@ export async function writeAssets(bundle, output, concurrency = 8) {
   const immutableRules = bundle.assets
     .filter((asset) => /\.[a-f0-9]{16}\.(?:css|js|json|png|jpe?g|webp|avif|svg|gif|mp4|webm|woff2?)$/i.test(asset.path))
     .map((asset) => '/' + asset.path + '\n  Cache-Control: public, max-age=31536000, immutable');
-  const headers = [bundle.existingHeaders.trim(), securityRules, ...immutableRules].filter(Boolean).join('\n\n') + '\n';
+  const mediaRules = await Promise.all(bundle.assets.filter(asset=>/\.(mp4|webm)$/i.test(asset.path)).map(async asset=>{
+    const {size}=await stat(resolve(output,...asset.path.split('/')));
+    return '/'+asset.path+'\n  Content-Length: '+size;
+  }));
+  const headers = [bundle.existingHeaders.trim(), securityRules, ...immutableRules, ...mediaRules].filter(Boolean).join('\n\n') + '\n';
   await writeFile(resolve(output, '_headers'), serializeConsentHeaders(headers), 'utf8');
 }
 
