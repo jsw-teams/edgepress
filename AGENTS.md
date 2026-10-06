@@ -71,3 +71,5 @@ Read the guides in `content/pages/` before extending themes, page blocks, or plu
 
 - Reserve published local image dimensions during build; never fetch remote images to determine size. Keep the media viewport stable before player initialization and while switching attachments. Date/time placeholders must reserve the complete localized timestamp.
 - Media controls use the locally bundled Lucide SVGs. Keep at least 44 px controls and keyboard focus inside the open image dialog; close restores focus to its trigger. Remove unused controls and translation keys.
+
+- Product recordings use manual playback and an accessible seek bar, retaining the chosen playhead without autoplay. Record the real standalone CLI and editor, then edgepress server and homepage-to-article navigation. Reusable recording tools belong in tools; temporary frames/manifests belong in ignored tools/.recordings rather than .edgepress. Do not record deployment as a substitute for local preview.

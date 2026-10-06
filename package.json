@@ -39,7 +39,8 @@
     "tools/image-viewer.test.mjs",
     "tools/image-dimensions.test.mjs",
     "tools/project-demo.test.mjs",
-    "tools/fixtures/recording.mp4"
+    "tools/fixtures/recording.mp4",
+    "tools/demo-workbench.mjs"
   ],
   "repository": {
     "type": "git",
@@ -85,7 +86,8 @@
     "yaml": "^2.9.1"
   },
   "devDependencies": {
-    "lucide-static": "1.50.0",
+    "lucide-static": "1.52.0",
+    "monaco-editor": "0.57.0",
     "playwright": "^1.63.0",
     "wrangler": "^4.144.0"
   }

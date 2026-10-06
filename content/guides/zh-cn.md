@@ -53,6 +53,10 @@ README 提供五个平台的部署按钮。Cloudflare、Vercel、Netlify 和 Edg
 
 ## 看看生成的网站
 
-![写作源内容、发布后的文章与对应项目指南](../assets/images/previews/edgepress-workflow-zh.6700126621f0fa08.gif)
+![创建你好世界、编辑正文、运行 edgepress server，从首页点击进入文章](../assets/images/previews/edgepress-workflow-zh.1686f8f692798d27.gif)
 
 示例展示由写文建站生成的实际页面。可用静态封面搭配按需加载 GIF，提供观看、暂停和重播，见[演示配置](product-demos.md)。
+
+## 项目演示与图标
+
+演示通过 `edgepress new post '你好世界'` 新建文章，在代码编辑器修改后运行 `edgepress server`，从首页点击进入文章。录制工作台位于 `tools/demo-workbench.mjs`，临时录制内容放在忽略的 `tools/.recordings/`。网站演示由访客手动播放，支持拖动进度和键盘操作，保留暂停位置。导航与页面图标使用本地打包的 Lucide 1.52，并保留许可证。

@@ -180,6 +180,8 @@ The integration must be an enabled oEmbed service in `config.yml`. Article updat
 
 ## See the publishing experience
 
-![Markdown source, rendered article and project-specific guides on JS.GRIPE](content/assets/images/previews/edgepress-workflow-en.4d2733f12766462f.gif)
+![Create Hello world, edit Markdown, run edgepress server and open the article from the homepage](content/assets/images/previews/edgepress-workflow-en.fe29878792753608.gif)
 
 Real static website output demonstrates what the builder produces. Product recordings can use a poster with explicit Watch, Pause and Replay controls; see [the block configuration](content/guides/product-demos.md).
+
+Project recordings use manual play/pause and a seekable progress bar, with theme colors and keyboard support. The reproducible CLI/editor workbench lives in [tools/demo-workbench.mjs](tools/demo-workbench.mjs); see [the recording guide](content/guides/product-demos.md). Built-in navigation and page icons come from the pinned Lucide 1.52 library, bundled locally with its license.
