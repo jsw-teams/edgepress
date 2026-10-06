@@ -37,7 +37,8 @@
     "tools/assets-runtime.test.mjs",
     "tools/theme-layout.test.mjs",
     "tools/image-viewer.test.mjs",
-    "tools/image-dimensions.test.mjs"
+    "tools/image-dimensions.test.mjs",
+    "tools/project-demo.test.mjs"
   ],
   "repository": {
     "type": "git",
