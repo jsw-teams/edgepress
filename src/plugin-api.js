@@ -3,6 +3,35 @@ import { realpath } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { renderMarkdown } from './markdown.js';
 
+function serviceName(service, locale, fallback = 'Embedded media') {
+  if (typeof service?.name === 'string') return service.name;
+  return service?.name?.[locale] || service?.name?.en || fallback;
+}
+
+function inlineEmbedResolver(services, locale, translations) {
+  const configured = Array.isArray(services) ? services : [];
+  return (href, alt) => {
+    const match = String(alt || '').trim().match(/^embed(?::([a-z0-9_-]+))?$/i);
+    if (!match) return null;
+    let address;
+    try { address = new URL(href); } catch { return null; }
+    const service = configured.find(item => item?.provider === 'oembed' && item.enabled !== false &&
+      (!match[1] || item.id === match[1]) && (item.sourceOrigins || [new URL(item.backendUrl).origin]).includes(address.origin));
+    if (!service) return null;
+    const ui = translations || {};
+    return {
+      service: service.id,
+      url: address.href,
+      label: serviceName(service, locale),
+      notice: String(ui.embedNeedsConsent || 'Allow {service} to load this media.').replace('{service}', serviceName(service, locale)),
+      loadLabel: ui.loadMedia || 'Load media',
+      openLabel: ui.openSource || 'Open source',
+      width: 640,
+      height: 480
+    };
+  };
+}
+
 export async function createExtensions(config) {
   const filters = new Map();
   const generators = new Map();
@@ -15,7 +44,12 @@ export async function createExtensions(config) {
       taskLabels: {
         complete: selected?.markdownTaskComplete ?? base?.markdownTaskComplete ?? 'Task complete',
         incomplete: selected?.markdownTaskIncomplete ?? base?.markdownTaskIncomplete ?? 'Task incomplete'
-      }
+      },
+      embedResolver: inlineEmbedResolver(
+        context.config.browserPlugins?.services,
+        locale,
+        selected || base
+      )
     });
   }, cacheable: true }]]);
 

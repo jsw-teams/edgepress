@@ -167,7 +167,13 @@ Optional API requests use one fixed endpoint: backendUrl itself when it has a pa
 
 Page blocks support `type: oembed` with an `integration` service ID and share `url`. Register `provider: oembed` under the flat consent services list. Media loads only after current consent and a click. ishare uses fixed `/api` metadata requests; public third-party oEmbed metadata is cached at build time. Fourteen common media services are enabled in `config.yml`, each with its own visitor choice and `enabled` switch. Add a custom `oembedEndpoint`, source/media origins and optional vendor scripts. Navigation and footer links support `_self` and `_blank` targets. See the [plugin guide](content/pages/plugin-development/en.md) and [ishare](https://github.com/jsw-teams/ishare).
 
-Posts can append the same consent-controlled embeds below their Markdown body:
+Posts can place the same consent-controlled embeds directly in Markdown with image-shaped syntax. Use `embed` to match a registered service by URL origin, or `embed:service-id` to select one explicitly:
+
+```md
+![embed:ishare](https://ishare.js.gripe/s/0123456789abcdef0123456789abcdef)
+```
+
+The builder emits a reserved themed placeholder, and the browser requests metadata only after the visitor grants that service consent and the embed approaches the viewport. The body remains the source of truth; no front-matter entry is needed. Posts may also append the same blocks below their Markdown body when a layout needs explicit dimensions:
 
 ```yaml
 embeds:

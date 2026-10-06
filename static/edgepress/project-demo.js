@@ -3,12 +3,12 @@ for (const root of document.querySelectorAll('[data-project-demo]')) {
   const video=root.querySelector('video'),frame=root.querySelector('.project-demo-media');
   const button=root.querySelector('button'),status=root.querySelector('[role=status]');
   const seek=root.querySelector('[data-demo-seek]'),time=root.querySelector('[data-demo-time]');
-  let requested=false,loaded=false,failed=false;
+  let requested=false,loaded=false,failed=false,dragging=false;
   const stamp=value=>Math.floor((Number(value)||0)/60)+':'+String(Math.floor((Number(value)||0)%60)).padStart(2,'0');
   function progress(){
     const duration=Number.isFinite(video.duration)?video.duration:0;
     if(time)time.textContent=stamp(video.currentTime)+' / '+stamp(duration);
-    if(seek){seek.disabled=!duration;seek.max=String(duration||1);seek.value=String(video.currentTime);seek.setAttribute('aria-valuetext',stamp(video.currentTime)+' / '+stamp(duration));}
+    if(seek){seek.disabled=!duration;seek.max=String(duration||1);if(!dragging)seek.value=String(video.currentTime);seek.setAttribute('aria-valuetext',stamp(video.currentTime)+' / '+stamp(duration));}
   }
   function controls(){
     const label=requested?root.dataset.pause:video.ended?root.dataset.replay:video.currentTime>0?root.dataset.resume:root.dataset.play;
@@ -30,7 +30,12 @@ for (const root of document.querySelectorAll('[data-project-demo]')) {
     if(failed){failed=false;loaded=false;}
     void play();
   });
-  seek?.addEventListener('input',()=>{prepare();if(Number.isFinite(video.duration)){video.currentTime=Number(seek.value);reveal();progress();controls();}});
+  const commitSeek=()=>{if(Number.isFinite(video.duration)){video.currentTime=Math.max(0,Math.min(video.duration,Number(seek.value)||0));reveal();}dragging=false;progress();controls();};
+  seek?.addEventListener('pointerdown',event=>{dragging=true;prepare();seek.setPointerCapture?.(event.pointerId);});
+  seek?.addEventListener('input',()=>{prepare();if(Number.isFinite(video.duration)){video.currentTime=Number(seek.value);reveal();progress();}});
+  seek?.addEventListener('change',commitSeek);
+  seek?.addEventListener('pointerup',commitSeek);
+  seek?.addEventListener('pointercancel',()=>{dragging=false;progress();});
   video.addEventListener('loadedmetadata',progress);
   video.addEventListener('durationchange',progress);
   video.addEventListener('timeupdate',progress);

@@ -21,6 +21,13 @@ test('posts use the same consent-controlled oEmbed blocks as Pages',async()=>{
  const document=(await readDocuments(config)).find(item=>item.kind==='posts'&&item.locale==='en');assert.ok(document);const post={...document,html:'<p>A seaside field note.</p>',embeds:[{integration:'ishare',url:service+'/s/'+'a'.repeat(32),title:'Seaside post'}]};
  const routes=await generateBuiltinRoutes({posts:[post],pages:[]},config,await createExtensions(config));const page=routes.find(route=>route.path===post.path+'index.html');assert.ok(page);assert.match(page.body,/A seaside field note/);assert.match(page.body,/data-edgepress-oembed="ishare"/);assert.doesNotMatch(page.body,/<iframe/);
 });
+test('Markdown image-shaped embed syntax keeps the post body as the source of truth',async()=>{
+ const config=await loadConfig(root);await loadLanguagePacks(config);config.browserPlugins.services=[{id:'ishare',provider:'oembed',backendUrl:'https://ishare.example',sourceOrigins:['https://ishare.example'],enabled:true,name:'ishare'}];
+ const extensions=await createExtensions(config),renderer=extensions.renderer('.md');
+ const html=await renderer.render('Before\n\n![embed:ishare](https://ishare.example/s/'+'a'.repeat(32)+')\n\nAfter',{config,document:{locale:'en'}});
+ assert.match(html,/data-edgepress-oembed="ishare"/);assert.match(html,/data-oembed-inline="true"/);assert.match(html,/data-oembed-placeholder/);assert.doesNotMatch(html,/<iframe/);
+ const ordinary=await renderer.render('![A photo](https://ishare.example/photo.jpg)',{config,document:{locale:'en'}});assert.match(ordinary,/<img/);assert.doesNotMatch(ordinary,/data-edgepress-oembed/);
+});
 test('oEmbed automatically loads visible content after consent and on return, and strips unsafe vendor HTML',async()=>{
   const config=await loadConfig(root),origin=new URL(config.site.url).origin,service='https://share.js.gripe';
   config.browserPlugins.services=[{id:'ishare',provider:'oembed',backendUrl:service,enabled:true,name:'ishare',purpose:'Load shared images and videos.',dataCategories:'IP address and requested media.',recipient:'ishare',retention:'Until publisher deletion.',privacyUrl:service+'/privacy.html'}];

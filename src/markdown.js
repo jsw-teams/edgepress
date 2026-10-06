@@ -7,7 +7,7 @@ const allowedTags = [
   'div', 'dl', 'dt', 'em', 'figcaption', 'figure', 'footer', 'h1', 'h2',
   'h3', 'h4', 'h5', 'h6', 'header', 'hr', 'i', 'img', 'kbd', 'li', 'main',
   'mark', 'nav', 'ol', 'p', 'pre', 'q', 'rp', 'rt', 'rtc', 'ruby', 's',
-  'samp', 'section', 'small', 'source', 'span', 'strong', 'sub', 'summary', 'sup',
+  'samp', 'section', 'small', 'source', 'span', 'strong', 'sub', 'summary', 'sup', 'button',
   'table', 'tbody', 'td', 'tfoot', 'th', 'thead', 'time', 'track', 'tr', 'u', 'ul',
   'var', 'video', 'wbr'
 ];
@@ -16,8 +16,11 @@ const sanitizeOptions = {
   allowedTags,
   allowedAttributes: {
     a: ['href', 'target', 'rel'],
+    button: ['type', 'data-oembed-load'],
     code: ['class'],
     img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'data-original'],
+    figure: ['class', 'data-edgepress-oembed', 'data-oembed-url', 'data-oembed-width', 'data-oembed-height', 'data-oembed-inline'],
+    div: ['class', 'data-oembed-status', 'data-oembed-placeholder', 'aria-hidden'],
     li: ['value'],
     ol: ['start'],
     source: ['src', 'type'],
@@ -66,10 +69,26 @@ function escapeHtml(value) {
   })[char]);
 }
 
+function inlineEmbedMarkup(embed) {
+  const url = escapeHtml(embed.url);
+  const service = escapeHtml(embed.service);
+  const label = escapeHtml(embed.label || embed.service);
+  const width = Number.isFinite(embed.width) && embed.width > 0 ? Math.min(4096, embed.width) : 640;
+  const height = Number.isFinite(embed.height) && embed.height > 0 ? Math.min(4096, embed.height) : 480;
+  return '<figure class="edgepress-oembed edgepress-oembed-inline" data-edgepress-oembed="' + service + '" data-oembed-url="' + url +
+    '" data-oembed-inline="true" data-oembed-width="' + width + '" data-oembed-height="' + height + '">' +
+    '<figcaption>' + label + '</figcaption><p data-oembed-notice role="status">' + escapeHtml(embed.notice || 'Media is ready when you allow this service.') + '</p>' +
+    '<button type="button" data-oembed-load>' + escapeHtml(embed.loadLabel || 'Load media') + '</button>' +
+    '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(embed.openLabel || 'Open source') + '</a>' +
+    '<div data-oembed-status><div class="oembed-placeholder" data-oembed-placeholder aria-hidden="true"></div></div></figure>';
+}
+
 function markdownRenderer(options) {
   const renderer = new marked.Renderer();
   const renderImage = renderer.image.bind(renderer);
   renderer.image = (token) => {
+    const inlineEmbed = options.embedResolver?.(token.href, token.text, token.title);
+    if (inlineEmbed) return inlineEmbedMarkup(inlineEmbed);
     const mimeType = videoMimeType(token.href);
     if (mimeType) {
       const description = String(token.text ?? '').trim();

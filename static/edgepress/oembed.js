@@ -67,7 +67,7 @@ async function show(root) {
   if(root.dataset.loading||root.dataset.loaded)return;
   const id=root.dataset.edgepressOembed,config=JSON.parse(document.getElementById('edgepress-privacy-config')?.textContent||'{}');
   const integration=config.privacy?.integrations?.find(service=>service.id===id&&service.provider==='oembed');if(!integration)return;
-  root.dataset.requested='true';root.dataset.loading='true';root.setAttribute('aria-busy','true');
+  root.dataset.requested='true';root.dataset.loading='true';root.setAttribute('aria-busy','true');root.classList.add('is-loading');
   const dimensions=data=>({...data,...(root.dataset.oembedWidth?{width:Number(root.dataset.oembedWidth)}:{}),...(root.dataset.oembedHeight?{height:Number(root.dataset.oembedHeight)}:{})});
   try{
     if(!readChoice(config)?.allowed.includes(id))throw new Error('Service requires visitor consent: '+id);
@@ -85,10 +85,11 @@ async function show(root) {
   }catch(error){
     if(error.message.startsWith('Service requires visitor consent:'))document.dispatchEvent(new CustomEvent('edgepress:privacy-open'));
     else{root.dataset.requested='false';root.querySelector('[data-oembed-status]').replaceChildren();updateNotice(root,'embedUnavailable');}
-  }finally{delete root.dataset.loading;root.setAttribute('aria-busy','false');}
+  }finally{delete root.dataset.loading;root.classList.remove('is-loading');root.setAttribute('aria-busy','false');}
 }
 if(typeof document!=='undefined'){
   const roots=[...document.querySelectorAll('[data-edgepress-oembed]')],visible=new WeakSet();
+  for(const root of roots){const width=Number(root.dataset.oembedWidth)||640,height=Number(root.dataset.oembedHeight)||480;root.style.setProperty('--oembed-ratio',width+'/'+height);}
   function frameTheme(frame){
     const style=getComputedStyle(document.documentElement),colors=Object.fromEntries(['--accent','--ink','--muted','--line','--paper','--surface'].map(key=>[key,style.getPropertyValue(key).trim()]).filter(([,value])=>value));
     frame.contentWindow?.postMessage({type:'edgepress:embed-theme',colors},new URL(frame.src).origin);
