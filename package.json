@@ -1,6 +1,6 @@
 {
   "name": "edgepress",
-  "version": "2026.10.5",
+  "version": "2026.10.6",
   "description": "Static websites from Markdown and editable pages, with themes, consent-controlled embeds and readable article updates.",
   "type": "module",
   "bin": {
@@ -66,7 +66,7 @@
     "doctor": "node src/cli.js doctor",
     "iterate": "node src/cli.js iterate",
     "security:check": "node src/cli.js security",
-    "test": "node --test tools/writing.test.mjs tools/brand-regression.test.mjs tools/post-list.test.mjs tools/audit.test.mjs tools/navigation.test.mjs tools/revisions.test.mjs tools/publication-time.test.mjs tools/consent-config.test.mjs tools/consent-browser.test.mjs tools/services.test.mjs tools/oembed.test.mjs tools/consent-csp.test.mjs tools/assets-runtime.test.mjs tools/theme-layout.test.mjs tools/image-viewer.test.mjs tools/image-dimensions.test.mjs",
+    "test": "node --test tools/writing.test.mjs tools/brand-regression.test.mjs tools/post-list.test.mjs tools/audit.test.mjs tools/navigation.test.mjs tools/revisions.test.mjs tools/publication-time.test.mjs tools/consent-config.test.mjs tools/consent-browser.test.mjs tools/services.test.mjs tools/oembed.test.mjs tools/consent-csp.test.mjs tools/assets-runtime.test.mjs tools/theme-layout.test.mjs tools/image-viewer.test.mjs tools/image-dimensions.test.mjs tools/project-demo.test.mjs",
     "icons:sync": "node tools/sync-icons.mjs",
     "deploy:cloudflare": "node src/cli.js deploy cloudflare",
     "deploy:vercel": "node src/cli.js deploy vercel",

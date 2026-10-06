@@ -178,6 +178,7 @@ export async function renderLayout(config, extensions, page, body) {
   const html = '<!doctype html>' + rendered;
   let filtered = await extensions.filter('html:afterLayout', html, context);
   if (typeof filtered !== 'string') throw new Error('html:afterLayout filters must return a string');
+  if (filtered.includes('data-project-demo')) scripts.push('<script defer src="/edgepress/project-demo.js"></script>');
   if(/\b(?:post-content|image-block|media-text|data-edgepress-oembed)\b/.test(filtered)){
     const keys=['openImage','closeImage','zoomIn','zoomOut','saveOriginal','retryMedia','loading','imageUnavailable'];
     const labels=Object.fromEntries(keys.map(key=>[key,translate(config,locale,'imageViewer'+key[0].toUpperCase()+key.slice(1))]).filter(([key,value])=>value!=='imageViewer'+key[0].toUpperCase()+key.slice(1)));

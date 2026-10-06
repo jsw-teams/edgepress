@@ -3,6 +3,7 @@ import {readChoice} from './plugins/consent/choices.js';
 const root=document.querySelector('main'),mounted=new Map(),selector='.post-content img, .post-change-content img, .image-block img, .media-text-block img, [data-edgepress-oembed] img';
 const labels=JSON.parse(document.getElementById('edgepress-image-viewer-config')?.textContent||'{}');
 function permitted(image){
+ if(image.closest('[data-project-demo]'))return false;
  if(!image.getAttribute('src')||image.closest('[hidden],template'))return false;
  const host=image.closest('[data-edgepress-oembed],[data-edgepress-service]');if(!host)return true;
  const privacy=JSON.parse(document.getElementById('edgepress-privacy-config')?.textContent||'{}'),id=host.dataset.edgepressOembed||host.dataset.edgepressService;

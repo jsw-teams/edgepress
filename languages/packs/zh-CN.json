@@ -89,5 +89,9 @@
   "postChangeBefore": "修改前",
   "postChangeAfter": "修改后",
   "postChangeAdded": "新增内容",
-  "postChangeRemoved": "移除内容"
+  "postChangeRemoved": "移除内容",
+  "demoPlay": "观看操作演示",
+  "demoPause": "暂停演示",
+  "demoReplay": "从头重播",
+  "demoError": "演示暂时无法加载，请重试。"
 }

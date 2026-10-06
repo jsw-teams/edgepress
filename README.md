@@ -177,3 +177,9 @@ embeds:
 ```
 
 The integration must be an enabled oEmbed service in `config.yml`. Article update cards describe changed media by their captions, so they do not reload old or deleted image files.
+
+## See the publishing experience
+
+![Markdown source, rendered article and project-specific guides on JS.GRIPE](content/assets/images/previews/edgepress-workflow-en.d1c5c8a8955630d4.gif)
+
+Real static website output demonstrates what the builder produces. Product recordings can use a poster with explicit Watch, Pause and Replay controls; see [the block configuration](content/guides/product-demos.md).

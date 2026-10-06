@@ -89,5 +89,9 @@
   "postChangeBefore": "Previously",
   "postChangeAfter": "Now",
   "postChangeAdded": "Added",
-  "postChangeRemoved": "Removed"
+  "postChangeRemoved": "Removed",
+  "demoPlay": "Watch the walkthrough",
+  "demoPause": "Pause the walkthrough",
+  "demoReplay": "Replay from the start",
+  "demoError": "The walkthrough could not load. Please try again."
 }

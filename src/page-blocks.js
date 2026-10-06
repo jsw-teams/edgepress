@@ -146,6 +146,13 @@ function renderMediaText(block, context) {
   if (mediaType === 'image') {
     const original=block.originalSrc?' data-original="'+escapeHtml(safeUrl(block.originalSrc,'media-text.originalSrc'))+'"':'';
     media = '<img src="' + src + '"'+original+' alt="' + alt + '" loading="lazy" decoding="async">';
+    if (block.animationSrc) {
+      const animation = safeUrl(block.animationSrc, 'media-text.animationSrc');
+      if (!animation.startsWith('/') || !/\.gif$/i.test(animation)) throw new Error('media-text.animationSrc must be a local GIF');
+      const duration = block.animationDuration;
+      if (!Number.isInteger(duration) || duration < 1000 || duration > 120000) throw new Error('media-text.animationDuration must be milliseconds from 1000 to 120000');
+      media = '<div class="project-demo" data-project-demo data-animation="' + escapeHtml(animation) + '" data-duration="' + duration + '" data-play="' + escapeHtml(translate(context.config, context.locale, 'demoPlay')) + '" data-pause="' + escapeHtml(translate(context.config, context.locale, 'demoPause')) + '" data-replay="' + escapeHtml(translate(context.config, context.locale, 'demoReplay')) + '" data-error="' + escapeHtml(translate(context.config, context.locale, 'demoError')) + '">' + media + '<canvas hidden aria-hidden="true"></canvas><button type="button" data-demo-toggle aria-label="' + escapeHtml(translate(context.config, context.locale, 'demoPlay') + ': ' + (block.title||block.alt)) + '">' + escapeHtml(translate(context.config, context.locale, 'demoPlay')) + '</button><span class="project-demo-status" role="status"></span></div>';
+    }
   } else {
     if (!alt.trim()) throw new Error('media-text.alt must describe the video');
     const videoSrc = escapeHtml(safeUrl(block.src, 'media-text.src'));

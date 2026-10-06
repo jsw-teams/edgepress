@@ -50,3 +50,9 @@ README 提供五个平台的部署按钮。Cloudflare、Vercel、Netlify 和 Edg
 评论使用独立的 [我提问](https://github.com/jsw-teams/iask/blob/main/docs/zh-CN.md)，网站只提供通用服务插槽。首页不放评论插槽；需要讨论的页面可增加 `type: service` 和 `integration: github-comments`。文章由构建器生成讨论上下文。服务端密钥只存放在独立服务平台。
 
 接口使用固定 URL 和 HTTP 请求头传递操作与上下文。CSS、JavaScript 及依赖使用内容哈希名称，缓存一年；HTML 和未版本化元数据保持可更新。ESA 需在控制台配置对应缓存规则。布局支持响应式、键盘操作、可见焦点、语义结构和多语言，新增内容仍需填写有意义的图片替代文本。
+
+## 看看生成的网站
+
+![写作源内容、发布后的文章与对应项目指南](../assets/images/previews/edgepress-workflow-zh.2ff86fba5cd2e1ee.gif)
+
+示例展示由写文建站生成的实际页面。可用静态封面搭配按需加载 GIF，提供观看、暂停和重播，见[演示配置](product-demos.md)。
