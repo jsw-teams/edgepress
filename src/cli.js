@@ -25,7 +25,7 @@ const siteReadme = [
   '    npm install',
   '    npm run dev',
   '',
-  'Create an article with `npm run new -- "My first article"`. Open the printed file path and write Markdown below the second `---` line. The command fills the title, date, and language. Run `npm run dev` to preview and `npm run build` before publishing.',
+  'Create an article with `npm run new -- post "My first article"`. Open the printed file path and write Markdown below the second `---` line. The command fills the title, date, and language. Run `npm run dev` to preview and `npm run build` before publishing.',
   '',
   'Page layouts in `content/pages/` and theme customization are optional for everyday article writing. Choose a shared layout with `npx edgepress theme list` and `npx edgepress theme use <name>` when needed.',
   '',
@@ -104,7 +104,7 @@ async function initializeProject() {
     else await cp(resolve(packageRoot, file), destination, { errorOnExist: true });
   }
   await writeFile(resolve(root, 'package.json'), JSON.stringify(projectManifest, null, 2) + '\n', { flag: packageManifestExists ? 'w' : 'wx' });
-  console.log('Created an EdgePress site. Next run npm install, then npm run dev. Create an article with npm run new -- "My first article".');
+  console.log('Created an EdgePress site. Next run npm install, then npm run dev. Create an article with npm run new -- post "My first article".');
 }
 
 async function runSecurityAudit() {
@@ -242,7 +242,7 @@ async function manageTheme(args, config) {
 }
 
 async function createPost(title, config) {
-  if (!title) throw new Error('Usage: edgepress new "Post title"');
+  if (!title) throw new Error('Usage: edgepress new post "Post title"');
   const releaseLock = await acquireBuildLock(config.resolvedPaths.cache);
   try {
     if (title.length > 160 || /[\x00-\x1f\x7f]/.test(title)) throw new Error('Post title must be one line of at most 160 characters.');
@@ -336,7 +336,7 @@ try {
   }
   else if (command === 'theme') await manageTheme(args, await loadConfig());
   else if (command === 'security') await runSecurityAudit();
-  else if (command === 'new') await createPost(args.join(' ').trim(), config);
+  else if (command === 'new') await createPost((args[0] === 'post' ? args.slice(1) : args).join(' ').trim(), config);
   else if (command === 'clean') await clean(config);
   else if (command === 'check') {
     await buildSite(config.root);

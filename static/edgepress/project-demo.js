@@ -1,28 +1,41 @@
-// Recordings are loaded only on demand. Pausing freezes the current GIF frame.
+// Native media keeps the playhead and streams an immutable, progressive file.
 for (const root of document.querySelectorAll('[data-project-demo]')) {
- const image=root.querySelector('img'),canvas=root.querySelector('canvas'),button=root.querySelector('button'),status=root.querySelector('[role=status]');
- const poster=image.getAttribute('src'),title=button.getAttribute('aria-label').slice(root.dataset.play.length+2);
- let bytes=null,controller=null,timer=null,playing=false,url=null,alive=true;
- function label(text){button.textContent=text;button.setAttribute('aria-label',text+': '+title);}
- function freeze(){
-  clearTimeout(timer);playing=false;
-  if(image.complete&&image.naturalWidth){canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;canvas.getContext('2d').drawImage(image,0,0);canvas.hidden=false;image.hidden=true;}
-  label(root.dataset.replay);
- }
- button.addEventListener('click',async()=>{
-  if(playing){freeze();return;}
-  button.disabled=true;status.textContent='';
-  try{
-   if(!bytes){controller=new AbortController();const response=await fetch(root.dataset.animation,{signal:controller.signal});if(!response.ok)throw new Error('Recording unavailable');bytes=await response.blob();}
-   if(!alive)return;
-   // Retire a previous URL only after its image renderer has detached from it.
-   const previous=url;image.src=poster;await image.decode();if(previous)URL.revokeObjectURL(previous);
-   url=URL.createObjectURL(bytes);image.src=url;await image.decode();
-   if(!alive)return;
-   canvas.hidden=true;image.hidden=false;playing=true;label(root.dataset.pause);timer=setTimeout(freeze,Number(root.dataset.duration));
-  }catch(error){if(alive&&error.name!=='AbortError'){image.src=poster;image.hidden=false;canvas.hidden=true;status.textContent=root.dataset.error;label(root.dataset.play);}}
-  finally{if(alive)button.disabled=false;}
- });
- document.addEventListener('visibilitychange',()=>{if(document.hidden&&playing)freeze();});
- window.addEventListener('pagehide',()=>{alive=false;controller?.abort();clearTimeout(timer);image.removeAttribute('src');if(url)URL.revokeObjectURL(url);},{once:true});
+  const video=root.querySelector('video'),frame=root.querySelector('.project-demo-media');
+  const button=root.querySelector('button'),status=root.querySelector('[role=status]');
+  let visible=false,manualPause=false,requested=false,loaded=false,failed=false;
+  function controls(){
+    const label=requested?root.dataset.pause:video.ended?root.dataset.replay:video.currentTime>0?root.dataset.resume:root.dataset.play;
+    button.textContent=label;button.setAttribute('aria-label',label+': '+video.getAttribute('aria-label'));
+    button.setAttribute('aria-pressed',String(requested));
+  }
+  function prepare(){
+    if(loaded)return;loaded=true;
+    video.preload=navigator.connection?.saveData?'metadata':'auto';
+    video.src=root.dataset.animation;video.load();
+  }
+  function pause(){requested=false;video.pause();status.textContent='';controls();}
+  async function play(){
+    if(document.hidden||manualPause||video.ended||failed)return;
+    prepare();requested=true;controls();if(video.readyState<2)status.textContent=root.dataset.loading;
+    try{await video.play();if(!visible||document.hidden||manualPause)pause();}
+    catch(error){requested=false;controls();status.textContent='';if(!['AbortError','NotAllowedError'].includes(error.name)){failed=true;status.textContent=root.dataset.error;}}
+  }
+  button.addEventListener('click',()=>{
+    if(requested){manualPause=true;pause();return;}
+    if(video.ended)video.currentTime=0;
+    if(failed){failed=false;loaded=false;}
+    manualPause=false;visible=true;void play();
+  });
+  video.addEventListener('loadeddata',()=>{frame.classList.add('is-ready');video.hidden=false;});
+  video.addEventListener('playing',()=>{status.textContent='';controls();});
+  video.addEventListener('waiting',()=>{if(requested)status.textContent=root.dataset.loading;});
+  video.addEventListener('ended',()=>{manualPause=true;pause();});
+  video.addEventListener('error',()=>{failed=true;pause();status.textContent=root.dataset.error;});
+  const nearby=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){prepare();nearby.unobserve(frame);}},{rootMargin:'350px'});
+  nearby.observe(frame);
+  const viewing=new IntersectionObserver(entries=>{for(const entry of entries){visible=entry.isIntersecting&&entry.intersectionRatio>=.35;if(visible)void play();else pause();}},{threshold:[0,.35]});
+  viewing.observe(frame);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();else if(visible)void play();});
+  window.addEventListener('pagehide',pause);
+  window.addEventListener('pageshow',()=>{if(visible)void play();});
 }

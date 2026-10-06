@@ -47,7 +47,7 @@ blocks:
               items:
                 - title: 新建文章
                   text: 命令会输出新文件的路径，不会覆盖已有文章。
-                  command: npm run new -- "我的第一篇文章"
+                  command: npm run new -- post "我的第一篇文章"
                 - title: 写 Markdown 正文
                   text: 替换示例段落。使用
                 - title: 预览并发布
@@ -76,7 +76,7 @@ blocks:
               items:
                 - title: 创建文章
                   text: 文章使用 Markdown，保存在 content/posts/<post-id>/en.md 或 zh-cn.md 等本地化文件中。
-                  command: edgepress new "A project update"
+                  command: edgepress new post "A project update"
                 - title: 创建页面目录
                   text: 新建 content/pages/<page-id>/en.md。每种已配置语言都有一个小写语言文件名。
                 - title: 设置语言

@@ -23,7 +23,7 @@ npm install
 npm run dev
 ```
 
-运行 `npm run new -- "我的第一篇文章"`，打开命令输出的文件，在第二个 `---` 后撰写 Markdown。文章放在 `content/posts/<文章目录>/`；页面放在 `content/pages/<页面目录>/`，内容全部写入前置数据的 `blocks`，正文留空。页面先声明栏数，再定义各栏元素。图片放在 `content/assets/`，例如 `content/assets/images/photo.webp` 对应公开地址 `/images/photo.webp`。
+运行 `npm run new -- post "我的第一篇文章"`，打开命令输出的文件，在第二个 `---` 后撰写 Markdown。文章放在 `content/posts/<文章目录>/`；页面放在 `content/pages/<页面目录>/`，内容全部写入前置数据的 `blocks`，正文留空。页面先声明栏数，再定义各栏元素。图片放在 `content/assets/`，例如 `content/assets/images/photo.webp` 对应公开地址 `/images/photo.webp`。
 
 发布前在 `config.yml` 填写真实站点 URL、名称、隐私责任人和联系方式；在 `edgepress.config.mjs` 选择主题、路由及语言包。不要编辑生成的 `dist/`。
 
@@ -53,6 +53,6 @@ README 提供五个平台的部署按钮。Cloudflare、Vercel、Netlify 和 Edg
 
 ## 看看生成的网站
 
-![写作源内容、发布后的文章与对应项目指南](../assets/images/previews/edgepress-workflow-zh.2ff86fba5cd2e1ee.gif)
+![写作源内容、发布后的文章与对应项目指南](../assets/images/previews/edgepress-workflow-zh.6700126621f0fa08.gif)
 
 示例展示由写文建站生成的实际页面。可用静态封面搭配按需加载 GIF，提供观看、暂停和重播，见[演示配置](product-demos.md)。

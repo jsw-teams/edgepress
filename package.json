@@ -38,7 +38,8 @@
     "tools/theme-layout.test.mjs",
     "tools/image-viewer.test.mjs",
     "tools/image-dimensions.test.mjs",
-    "tools/project-demo.test.mjs"
+    "tools/project-demo.test.mjs",
+    "tools/fixtures/recording.mp4"
   ],
   "repository": {
     "type": "git",

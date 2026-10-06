@@ -47,7 +47,7 @@ blocks:
               items:
                 - title: Create an article
                   text: The command prints the new Markdown file path and never overwrites an existing post.
-                  command: npm run new -- "My first article"
+                  command: npm run new -- post "My first article"
                 - title: Write in Markdown
                   text: Replace the starter paragraph. Use
                 - title: Preview and publish
@@ -76,7 +76,7 @@ blocks:
               items:
                 - title: Create an article
                   text: Posts use Markdown and are written in content/posts/<post-id>/en.md or a localized file such as zh-cn.md.
-                  command: edgepress new "A project update"
+                  command: edgepress new post "A project update"
                 - title: Create a page folder
                   text: Add content/pages/<page-id>/en.md. Each configured locale gets its own lowercase locale filename.
                 - title: Set the language

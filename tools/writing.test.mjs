@@ -58,15 +58,16 @@ test('CLI creates a localized post and refuses to overwrite it', async () => {
     await mkdir(resolve(root, 'languages/base'), { recursive: true });
     await writeFile(resolve(root, 'languages/base/zh-CN.json'), JSON.stringify({ postStarter: '在这里写正文。', postCreated: '已创建 {file}', postNextSteps: '用 Markdown 写正文。', postPreview: 'npm run dev' }));
     const cli = resolve('src/cli.js');
-    const first = spawnSync(process.execPath, [cli, 'new', '我的第一篇文章'], { cwd: root, encoding: 'utf8' });
+    const first = spawnSync(process.execPath, [cli, 'new', 'post', '我的第一篇文章'], { cwd: root, encoding: 'utf8' });
     assert.equal(first.status, 0, first.stderr);
     assert.match(first.stdout, /已创建/);
     const match = first.stdout.match(/content[^\r\n]+\.md/);
     const file = resolve(root, match[0]);
     const before = await readFile(file, 'utf8');
     assert.match(before, /在这里写正文。/);
+    assert.equal(parse(before.split('---')[1]).title, '我的第一篇文章');
     assert.doesNotMatch(before, /# 我的第一篇文章/);
-    const second = spawnSync(process.execPath, [cli, 'new', '我的第一篇文章'], { cwd: root, encoding: 'utf8' });
+    const second = spawnSync(process.execPath, [cli, 'new', 'post', '我的第一篇文章'], { cwd: root, encoding: 'utf8' });
     assert.equal(second.status, 1);
     assert.match(second.stderr, /already exists/);
     assert.equal(await readFile(file, 'utf8'), before);

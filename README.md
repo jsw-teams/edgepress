@@ -39,11 +39,11 @@ Run `edgepress init` in a new project directory to scaffold a site pinned to the
 
 ## Everyday writing
 
-After the one-time site setup, create an article with `npm run new -- "My first article"`. Open the printed file path and write Markdown below the second `---` line. The command fills the title, date, and language; the theme supplies the page title, article list, contents, search, and feed.
+After the one-time site setup, create an article with `npm run new -- post "My first article"`. Open the printed file path and write Markdown below the second `---` line. The command fills the title, date, and language; the theme supplies the page title, article list, contents, search, and feed.
 
 Use `##` for sections, lists, links, and fenced code blocks as needed. Put article images in `content/assets/images/` and link to `/images/filename.png`. Run `npm run dev` while writing, then `npm run build` before publishing through your existing deployment workflow. Page layouts and theme development are optional for everyday writing.
 
-日常发文：运行 `npm run new -- "我的第一篇文章"`，打开输出的文件，在第二个 `---` 后写 Markdown 正文。标题、日期和语言自动填写。运行 `npm run dev` 预览，发布前运行 `npm run build`。页面布局和主题开发可以在需要调整设计时再了解。
+日常发文：运行 `npm run new -- post "我的第一篇文章"`，打开输出的文件，在第二个 `---` 后写 Markdown 正文。标题、日期和语言自动填写。运行 `npm run dev` 预览，发布前运行 `npm run build`。页面布局和主题开发可以在需要调整设计时再了解。
 
 ## Page editing
 
@@ -75,7 +75,7 @@ Brand image derivatives can be exported from the saved masters with `tools/gener
 ## Commands
 
 - edgepress init: scaffold a new site in a project directory.
-- edgepress new "Article title": create a Markdown post.
+- edgepress new post "Article title": create a Markdown post.
 - edgepress build and edgepress generate: run the same generator and write static files to dist/ for Cloudflare Workers or static hosting.
 - edgepress server: start live local preview, rebuild on source changes, and refresh the PDF audit report.
 - edgepress check: build, audit page structure, agent-friendliness, and Markdown rendering, simulate device profiles, inspect the browser accessibility tree and sample keyboard navigation, capture screenshots temporarily, and write only the PDF report under tools/.
@@ -180,6 +180,6 @@ The integration must be an enabled oEmbed service in `config.yml`. Article updat
 
 ## See the publishing experience
 
-![Markdown source, rendered article and project-specific guides on JS.GRIPE](content/assets/images/previews/edgepress-workflow-en.d1c5c8a8955630d4.gif)
+![Markdown source, rendered article and project-specific guides on JS.GRIPE](content/assets/images/previews/edgepress-workflow-en.4d2733f12766462f.gif)
 
 Real static website output demonstrates what the builder produces. Product recordings can use a poster with explicit Watch, Pause and Replay controls; see [the block configuration](content/guides/product-demos.md).
