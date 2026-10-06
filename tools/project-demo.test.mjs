@@ -3,6 +3,15 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
 import {renderBlocks} from '../src/page-blocks.js';
+import {loadConfig} from '../src/config.js';
+import {loadLanguagePacks} from '../src/i18n.js';
+import {renderLayout} from '../src/theme.js';
+
+test('the complete theme initializes and includes the recording runtime',async()=>{
+ const config=await loadConfig(process.cwd());await loadLanguagePacks(config);
+ const html=await renderLayout(config,{filter:async(_key,value)=>value},{title:'Demo',locale:'en',urlPath:'/demo/'},'<main data-project-demo></main>');
+ assert.match(html,/src="\/edgepress\/project-demo\.js"/);
+});
 
 test('recording blocks reject foreign GIFs and unbounded durations',async()=>{
  const config={site:{},i18n:{defaultLocale:'en',translationsByLocale:{en:{demoPlay:'Watch',demoPause:'Pause',demoReplay:'Replay',demoError:'Unavailable'}}}};
