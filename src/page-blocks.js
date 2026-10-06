@@ -322,7 +322,7 @@ async function renderBlock(block, context, depth, index) {
       const rows = list(block.rows, 'data-table.rows', 1, 100);
       const title = text(block.title, 'data-table.title', 200);
       for (const row of rows) if (!Array.isArray(row) || row.length !== headers.length) throw new Error('Each data-table row must match the number of headers');
-      return '<div class="table-widget"><table><caption>' + escapeHtml(title) + '</caption><thead><tr>' + headers.map((item) =>
+      return '<div class="table-widget" tabindex="0" role="region" aria-label="'+escapeHtml(title)+'"><table><caption>' + escapeHtml(title) + '</caption><thead><tr>' + headers.map((item) =>
         '<th scope="col">' + escapeHtml(text(item, 'data-table header', 200)) + '</th>').join('') + '</tr></thead><tbody>' +
         rows.map((row) => '<tr>' + row.map((cell) => '<td>' + escapeHtml(text(cell, 'data-table cell', 1000)) + '</td>').join('') + '</tr>').join('') +
         '</tbody></table></div>';
