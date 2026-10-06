@@ -190,7 +190,7 @@ export async function writeAssets(bundle, output, concurrency = 8) {
   // rule would be concatenated with exact immutable rules instead of overridden.
   const securityRules = '/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin';
   const immutableRules = bundle.assets
-    .filter((asset) => /\.[a-f0-9]{16}\.(?:css|js|json|png|jpe?g|webp|avif|svg|gif|woff2?)$/i.test(asset.path))
+    .filter((asset) => /\.[a-f0-9]{16}\.(?:css|js|json|png|jpe?g|webp|avif|svg|gif|mp4|webm|woff2?)$/i.test(asset.path))
     .map((asset) => '/' + asset.path + '\n  Cache-Control: public, max-age=31536000, immutable');
   const headers = [bundle.existingHeaders.trim(), securityRules, ...immutableRules].filter(Boolean).join('\n\n') + '\n';
   await writeFile(resolve(output, '_headers'), serializeConsentHeaders(headers), 'utf8');
