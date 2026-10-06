@@ -280,7 +280,7 @@ function validateBrowserPlugins(config) {
       safePrivacyUrl = parsed.protocol === 'https:' && !parsed.username && !parsed.password;
     } catch { safePrivacyUrl = false; }
     if (!safePrivacyUrl) throw new Error('Service ' + id + '.privacyUrl must be a safe HTTPS URL');
-    const allowedKeys = new Set(['id', 'enabled', 'provider', 'name', 'purpose', 'dataCategories', 'recipient', 'retention', 'privacyUrl', 'csp', ...(definition.credential ? [definition.credential] : []), ...(provider === 'external-widget' ? ['moduleUrl', 'placement'] : []), ...(provider === 'oembed' ? ['oembedEndpoint','embedTemplate','embedPathPattern','sourceOrigins','embedOrigins','embedScripts'] : [])]);
+    const allowedKeys = new Set(['id', 'enabled', 'provider', 'name', 'purpose', 'dataCategories', 'recipient', 'retention', 'privacyUrl', 'csp', ...(definition.credential ? [definition.credential] : []), ...(provider === 'external-widget' ? ['moduleUrl', 'placement'] : []), ...(provider === 'oembed' ? ['runtimeApi','oembedEndpoint','embedTemplate','embedPathPattern','sourceOrigins','embedOrigins','embedScripts'] : [])]);
     for (const key of Object.keys(service)) if (!allowedKeys.has(key)) throw new Error('Unsupported option for service ' + id + ': ' + key);
     if (provider === 'external-widget' || provider === 'external-api' || provider === 'oembed') {
       let valid=false;try {const url=new URL(service.backendUrl);valid=url.protocol==='https:' && !url.username && !url.password && !url.search && !url.hash;}catch{}
@@ -303,7 +303,7 @@ function validateBrowserPlugins(config) {
           if(!safe || service.oembedEndpoint || service.embedScripts?.length)throw new Error('embedTemplate needs an allowed HTTPS iframe origin and cannot use oembedEndpoint or scripts');
           if(service.embedPathPattern !== undefined){if(typeof service.embedPathPattern!=='string'||service.embedPathPattern.length>200)throw new Error('embedPathPattern must be a short path expression');new RegExp(service.embedPathPattern);}
           if(service.embedTemplate.includes('{id}')&&!service.embedPathPattern)throw new Error('The {id} template requires embedPathPattern with a capture group');
-        }else if(!service.oembedEndpoint&&(service.sourceOrigins || service.embedOrigins || service.embedScripts))throw new Error('Third-party oEmbed options require oembedEndpoint or embedTemplate');
+      }else if(!service.oembedEndpoint&&!service.embedTemplate&&!service.runtimeApi&&(service.sourceOrigins || service.embedOrigins || service.embedScripts))throw new Error('Third-party oEmbed options require oembedEndpoint, embedTemplate or runtimeApi');
       }
       if (provider === 'external-widget') {
         const module = new URL(service.moduleUrl);
