@@ -194,7 +194,7 @@ export async function writeAssets(bundle, output, concurrency = 8) {
     .map((asset) => '/' + asset.path + '\n  Cache-Control: public, max-age=31536000, immutable');
   const mediaRules = await Promise.all(bundle.assets.filter(asset=>/\.(mp4|webm)$/i.test(asset.path)).map(async asset=>{
     const {size}=await stat(resolve(output,...asset.path.split('/')));
-    return '/'+asset.path+'\n  Content-Length: '+size;
+    return '/'+asset.path+'\n  Content-Length: '+size+'\n  Accept-Ranges: bytes';
   }));
   const headers = [bundle.existingHeaders.trim(), securityRules, ...immutableRules, ...mediaRules].filter(Boolean).join('\n\n') + '\n';
   await writeFile(resolve(output, '_headers'), serializeConsentHeaders(headers), 'utf8');
