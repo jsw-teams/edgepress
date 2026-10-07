@@ -76,3 +76,11 @@ export function localizedUrl(config, locale, path) {
   const suffix = String(path ?? '').replace(/^\/+/, '');
   return prefix + '/' + suffix;
 }
+
+
+export function localizedContentUrl(config, locale, value, label = 'Content URL') {
+  const url=String(value),token=/^\/(?:\[launge\]|%5blaunge%5d)(?=\/|$)/i;
+  if(!url.startsWith('/'))return url;
+  if(/\[launge\]|%5blaunge%5d/i.test(url)&&!token.test(url))throw new Error(label+' may use [launge] only as the first site-path segment');
+  return token.test(url)?localePrefix(config,locale)+(url.replace(token,'')||'/'):url;
+}

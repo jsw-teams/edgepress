@@ -103,7 +103,7 @@ blocks:
                 - Edit site title, description, canonical URL, agent SEO, site navigation, footer text, and privacy controller details in config.yml. Theme colors live in theme CSS.
                 - Change the selected theme with edgepress theme list and edgepress theme use <theme-name>. Theme paths are stored in edgepress.config.mjs.
                 - Install a theme package with edgepress theme install <npm-package> or start with a blank theme using edgepress theme create <name>.
-                - edgepress server starts a local Wrangler server, watches source files, rebuilds changed pages, reloads the browser, and refreshes tools/page-check.pdf. Screenshots are embedded in the PDF and temporary files are removed after generation.
+                - edgepress server starts a local Wrangler server, watches source files, rebuilds changed pages, reloads the browser, and refreshes tools/reports/page-check.pdf. Screenshots are embedded in the PDF and temporary files are removed after generation.
             - type: code
               title: Build, inspect, and deploy
               language: sh

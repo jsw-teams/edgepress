@@ -1,8 +1,9 @@
-import { access, lstat, mkdir, readFile, readdir, realpath } from 'node:fs/promises';
-import { extname, isAbsolute, relative, resolve, sep } from 'node:path';
+import { access, lstat, readFile, readdir } from 'node:fs/promises';
+import { extname, relative, resolve, sep } from 'node:path';
 import { addVisualEvidence } from './report-visuals.js';
 import { renderMarkdown, renderMarkdownExcerpt } from './markdown.js';
 import { markdownFixture } from './markdown-fixture.js';
+import {reportDirectory} from './report-path.js';
 
 async function htmlFiles(directory) {
   let entries;
@@ -113,11 +114,6 @@ export async function markdownFeatureCoverage() {
     passed: documents.reduce((total, document) => total + document.passed, 0),
     documents
   };
-}
-
-function isInside(root, path) {
-  const rel = relative(root, path);
-  return rel !== '..' && !rel.startsWith('..' + sep) && !isAbsolute(rel);
 }
 
 async function resolveLocalLink(output, pageFile, href) {
@@ -293,6 +289,8 @@ export async function checkPages(config) {
       try { managerScript = await readFile(managerAsset, 'utf8'); }
       catch { /* The missing manager is reported below. */ }
     }
+    const choiceAsset = all.find(file => /edgepress[\\/]plugins[\\/]consent[\\/]choices\.[a-f0-9]{16}\.js$/i.test(file));
+    const choicesScript = choiceAsset ? await readFile(choiceAsset, 'utf8') : '';
     const htmlWithConsent = files.filter((file) => {
       const html = sourceByFile.get(file) || '';
       return html.includes('edgepress-privacy-config') && /\/edgepress\/plugins\/consent\/manager\.[a-f0-9]{16}\.js/i.test(html);
@@ -304,7 +302,7 @@ export async function checkPages(config) {
       managerScript.includes('serviceRetention') && managerScript.includes('servicePrivacyDetails') &&
       managerScript.includes('integration.privacyUrl'));
     consentCheck('stored choices are tied to proposed and effective dates',
-      managerScript.includes('proposedDate: consent.proposedDate') && managerScript.includes('effectiveDate: consent.effectiveDate'));
+      managerScript.includes('makeChoice(') && /proposedDate:\s*consent\.proposedDate/.test(choicesScript) && /effectiveDate:\s*consent\.effectiveDate/.test(choicesScript));
     consentCheck('new visitors start with every optional service off', managerScript.includes('checkbox.checked = false'));
     consentCheck('accept and reject controls share the same component styling',
       /\.privacy-manager \.privacy-panel \.privacy-accept\s*,\s*\.privacy-manager \.privacy-panel \.privacy-reject\s*\{[^}]*background:[^}]*\}/.test(styles));
@@ -398,15 +396,7 @@ export async function checkPages(config) {
       'Markdown self-checks render a built-in fixture in memory without publishing tutorial articles or requiring a posts directory.'
     ]
   };
-  const requestedDirectory = resolve(config.root, 'tools');
-  await mkdir(requestedDirectory, { recursive: true });
-  const directoryInfo = await lstat(requestedDirectory);
-  if (directoryInfo.isSymbolicLink() || !directoryInfo.isDirectory()) {
-    throw new Error('Page-check report directory must be a real directory: ' + requestedDirectory);
-  }
-  const root = await realpath(config.root);
-  const directory = await realpath(requestedDirectory);
-  if (!isInside(root, directory)) throw new Error('Page-check report directory must stay inside the project root');
+  const directory = await reportDirectory(config.root);
   const pdfPath = resolve(directory, 'page-check.pdf');
   try {
     const info = await lstat(pdfPath);

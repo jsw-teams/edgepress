@@ -1,4 +1,5 @@
-import { marked } from 'marked';
+import { marked, Marked } from 'marked';
+import {parseEmbed} from './embed.js';
 import sanitizeHtml from 'sanitize-html';
 
 const allowedTags = [
@@ -9,7 +10,7 @@ const allowedTags = [
   'mark', 'nav', 'ol', 'p', 'pre', 'q', 'rp', 'rt', 'rtc', 'ruby', 's',
   'samp', 'section', 'small', 'source', 'span', 'strong', 'sub', 'summary', 'sup', 'button',
   'table', 'tbody', 'td', 'tfoot', 'th', 'thead', 'time', 'track', 'tr', 'u', 'ul',
-  'var', 'video', 'wbr'
+  'template', 'var', 'video', 'wbr'
 ];
 
 const sanitizeOptions = {
@@ -19,8 +20,10 @@ const sanitizeOptions = {
     button: ['type', 'data-oembed-load'],
     code: ['class'],
     img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'data-original'],
-    figure: ['class', 'data-edgepress-oembed', 'data-oembed-url', 'data-oembed-width', 'data-oembed-height', 'data-oembed-inline'],
+    figure: ['class', 'data-edgepress-oembed', 'data-oembed-url', 'data-oembed-width', 'data-oembed-height', 'data-oembed-disabled', 'data-oembed-unavailable'],
     div: ['class', 'data-oembed-status', 'data-oembed-placeholder', 'aria-hidden'],
+    p: ['data-oembed-notice', 'class', 'role'],
+    template: ['data-oembed-data'],
     li: ['value'],
     ol: ['start'],
     source: ['src', 'type'],
@@ -69,26 +72,12 @@ function escapeHtml(value) {
   })[char]);
 }
 
-function inlineEmbedMarkup(embed) {
-  const url = escapeHtml(embed.url);
-  const service = escapeHtml(embed.service);
-  const label = escapeHtml(embed.label || embed.service);
-  const width = Number.isFinite(embed.width) && embed.width > 0 ? Math.min(4096, embed.width) : 640;
-  const height = Number.isFinite(embed.height) && embed.height > 0 ? Math.min(4096, embed.height) : 480;
-  return '<figure class="edgepress-oembed edgepress-oembed-inline" data-edgepress-oembed="' + service + '" data-oembed-url="' + url +
-    '" data-oembed-inline="true" data-oembed-width="' + width + '" data-oembed-height="' + height + '">' +
-    '<figcaption>' + label + '</figcaption><p data-oembed-notice role="status">' + escapeHtml(embed.notice || 'Media is ready when you allow this service.') + '</p>' +
-    '<button type="button" data-oembed-load>' + escapeHtml(embed.loadLabel || 'Load media') + '</button>' +
-    '<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(embed.openLabel || 'Open source') + '</a>' +
-    '<div data-oembed-status><div class="oembed-placeholder" data-oembed-placeholder aria-hidden="true"></div></div></figure>';
-}
-
 function markdownRenderer(options) {
   const renderer = new marked.Renderer();
-  const renderImage = renderer.image.bind(renderer);
-  renderer.image = (token) => {
-    const inlineEmbed = options.embedResolver?.(token.href, token.text, token.title);
-    if (inlineEmbed) return inlineEmbedMarkup(inlineEmbed);
+  const renderLink=renderer.link;
+  renderer.link=function(token){return renderLink.call(this,{...token,href:options.linkResolver?options.linkResolver(token.href):token.href});};
+  const renderImage = renderer.image;
+  renderer.image = function(token) {
     const mimeType = videoMimeType(token.href);
     if (mimeType) {
       const description = String(token.text ?? '').trim();
@@ -101,18 +90,26 @@ function markdownRenderer(options) {
         escapeHtml(description) + '</a></video>' + caption + '</figure>';
     }
     if (options.allowImages === false) return '<span>' + escapeHtml(token.text || '') + '</span>';
-    if(options.imageResolver){const href=options.imageResolver(token.href);if(!href)return '<span>'+escapeHtml(token.text||'')+'</span>';return renderImage({...token,href});}
-    return renderImage(token);
+    if(options.imageResolver){const href=options.imageResolver(token.href);if(!href)return '<span>'+escapeHtml(token.text||'')+'</span>';return renderImage.call(this,{...token,href});}
+    return renderImage.call(this,token);
   };
   return renderer;
 }
 
+const embedSyntax = {name:'embed',level:'block',
+  start:source=>{const offset=source.search(/\n {0,3}!embed\[/);return offset<0?undefined:offset+1;},
+  tokenizer:source=>{const embed=parseEmbed(source);return embed?{type:'embed',...embed}:undefined;},
+  renderer:()=>''
+};
+
 export async function renderMarkdown(source, options = {}) {
-  let html = await marked.parse(source, {
-    gfm: options.gfm !== false,
-    breaks: options.breaks === true,
-    renderer: markdownRenderer(options)
+  const parser = new Marked({gfm: options.gfm !== false, breaks: options.breaks === true, renderer: markdownRenderer(options)});
+  if (options.embedRenderer) parser.use({
+    async: true,
+    extensions: [{...embedSyntax, renderer: token => token.html}],
+    walkTokens: async token => { if (token.type === 'embed') token.html = await options.embedRenderer(token); }
   });
+  let html = await parser.parse(source);
   // GFM task markers become named static status icons. They remain readable to
   // assistive technology without exposing disabled, unlabeled form controls.
   html = html.replace(/<input\b([^>]*)>/gi, (_match, attributes) => {
@@ -133,14 +130,14 @@ export async function renderMarkdown(source, options = {}) {
 
 export async function renderMarkdownExcerpt(source, options = {}) {
   const markdown = String(source ?? '');
-  const tokens = marked.lexer(markdown, { gfm: options.gfm !== false });
+  const tokens = new Marked({gfm:options.gfm!==false}).use({extensions:[{...embedSyntax}]}).lexer(markdown);
   const paragraph = tokens.find((token) => token.type === 'paragraph');
   if (!paragraph) return '<p>' + escapeHtml(plainText(markdown).slice(0, 220)) + '</p>';
   return renderMarkdown(paragraph.raw, { ...options, allowImages: false, allowVideo: false });
 }
 
 export function plainText(source) {
-  const html = marked.parse(String(source ?? ''), { gfm: true });
+  const html = new Marked({gfm:true}).use({extensions:[{...embedSyntax}]}).parse(String(source ?? ''));
   const namedEntities = {
     amp: '&', apos: "'", copy: '©', gt: '>', hellip: '…', ldquo: '“', lsquo: '‘',
     lt: '<', mdash: '—', nbsp: ' ', ndash: '–', quot: '"', rdquo: '”', rsquo: '’'

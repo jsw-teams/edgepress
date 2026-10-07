@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import {reportDirectory} from './report-path.js';
 import {publicationTimestamp} from './publication-time.js';
 import { access, cp, lstat, mkdir, mkdtemp, open, readFile, readdir, realpath, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve, sep } from 'node:path';
@@ -289,8 +290,8 @@ async function clean(config) {
         if (error.code !== 'ENOENT') throw error;
       }
     }
-    const toolsDirectory = resolve(config.root, 'tools');
-    try {
+    const toolsDirectory = await reportDirectory(config.root, false);
+    if (toolsDirectory) try {
       const info = await lstat(toolsDirectory);
       if (info.isSymbolicLink() || !info.isDirectory()) throw new Error('Refusing to clean reports through an unsafe tools path: ' + toolsDirectory);
       await rm(resolve(toolsDirectory, 'page-check.pdf'), { force: true });
@@ -342,7 +343,7 @@ try {
     await buildSite(config.root);
     const pageReport = await checkPages(config);
     const compatibilityReport = await checkCompatibility(config);
-    await showReport('Page check', pageReport, resolve(config.root, 'tools/page-check.pdf'));
+    await showReport('Page check', pageReport, resolve(config.root, 'tools/reports/page-check.pdf'));
     showStatus('Compatibility check', compatibilityReport);
     if (pageReport.errors || compatibilityReport.issues.some((issue) => issue.severity === 'error')) process.exitCode = 1;
   } else if (command === 'doctor') {

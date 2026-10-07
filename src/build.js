@@ -30,8 +30,9 @@ async function readCache(file) {
 
 async function markdownRuntimeVersion(root) {
   const lockPath = resolve(root, 'package-lock.json');
-  const rendererSource = await readFile(new URL('./markdown.js', import.meta.url));
-  const implementation = createHash('sha256').update(rendererSource).digest('hex');
+  const rendererSources=await Promise.all(['markdown.js','embed.js','oembed.js','plugin-api.js','i18n.js'].map(file=>readFile(new URL('./'+file,import.meta.url))));
+  const digest=createHash('sha256');for(const source of rendererSources)digest.update(source);
+  const implementation=digest.digest('hex');
   try {
     const lock = JSON.parse(await readFile(lockPath, 'utf8'));
     const marked = lock.packages?.['node_modules/marked']?.version;

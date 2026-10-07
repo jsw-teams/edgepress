@@ -18,29 +18,14 @@
     "project-compatibility.json",
     "wrangler.jsonc",
     "README.md",
-    "tools/writing.test.mjs",
-    "tools/brand-regression.test.mjs",
-    "tools/post-list.test.mjs",
-    "tools/audit.test.mjs",
-    "tools/navigation.test.mjs",
-    "tools/revisions.test.mjs",
-    "tools/publication-time.test.mjs",
-    "tools/consent-config.test.mjs",
-    "tools/consent-browser.test.mjs",
     "vercel.json",
     "edgeone.json",
     "esa.jsonc",
-    "tools/services.test.mjs",
     "netlify.toml",
-    "tools/oembed.test.mjs",
-    "tools/consent-csp.test.mjs",
-    "tools/assets-runtime.test.mjs",
-    "tools/theme-layout.test.mjs",
-    "tools/image-viewer.test.mjs",
-    "tools/image-dimensions.test.mjs",
-    "tools/project-demo.test.mjs",
-    "tools/fixtures/recording.mp4",
-    "tools/demo-workbench.mjs"
+    "tests",
+    "tools/assets",
+    "tools/recordings",
+    "tools/verification"
   ],
   "repository": {
     "type": "git",
@@ -69,13 +54,14 @@
     "doctor": "node src/cli.js doctor",
     "iterate": "node src/cli.js iterate",
     "security:check": "node src/cli.js security",
-    "test": "node --test tools/writing.test.mjs tools/brand-regression.test.mjs tools/post-list.test.mjs tools/audit.test.mjs tools/navigation.test.mjs tools/revisions.test.mjs tools/publication-time.test.mjs tools/consent-config.test.mjs tools/consent-browser.test.mjs tools/services.test.mjs tools/oembed.test.mjs tools/consent-csp.test.mjs tools/assets-runtime.test.mjs tools/theme-layout.test.mjs tools/image-viewer.test.mjs tools/image-dimensions.test.mjs tools/project-demo.test.mjs",
-    "icons:sync": "node tools/sync-icons.mjs",
+    "test": "node --test --test-concurrency=2 tests/*.test.mjs",
+    "icons:sync": "node tools/assets/sync-icons.mjs",
     "deploy:cloudflare": "node src/cli.js deploy cloudflare",
     "deploy:vercel": "node src/cli.js deploy vercel",
     "deploy:edgeone": "node src/cli.js deploy edgeone",
     "deploy:esa": "node src/cli.js deploy esa",
-    "deploy:netlify": "node src/cli.js deploy netlify"
+    "deploy:netlify": "node src/cli.js deploy netlify",
+    "fonts:sync": "node tools/assets/sync-fonts.mjs"
   },
   "dependencies": {
     "@jsw-teams/media-viewer": "https://codeload.github.com/jsw-teams/media-viewer/tar.gz/158ca15",
@@ -87,7 +73,6 @@
   },
   "devDependencies": {
     "lucide-static": "1.52.0",
-    "monaco-editor": "0.57.0",
     "playwright": "^1.63.0",
     "wrangler": "^4.144.0"
   }

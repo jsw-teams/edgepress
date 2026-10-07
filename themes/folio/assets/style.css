@@ -19,7 +19,7 @@
   --radius-card:3px;
   --content-width:1440px;
   --shadow:none;
-  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+  font-family:var(--edgepress-font-sans);
   font-synthesis:none;
   text-rendering:optimizeLegibility;
   -webkit-font-smoothing:antialiased;
@@ -121,8 +121,8 @@ h3{font-size:clamp(1.2rem,2.1vw,1.55rem)}
 .text-widget p:last-child{margin-bottom:0}
 .content-heading{margin:1.6em 0 .5em}
 .display-text{font-size:clamp(2rem,6vw,4.5rem);line-height:1.04;letter-spacing:-.06em}
-.display-text--serif{font-family:Georgia,"Times New Roman",serif;font-weight:500}
-.display-text--mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:-.07em}
+.display-text--serif{font-family:var(--edgepress-font-serif);font-weight:500}
+.display-text--mono{font-family:var(--edgepress-font-mono);letter-spacing:-.07em}
 .display-text--accent{color:var(--accent)}
 .display-text--outline{-webkit-text-stroke:1px currentColor;color:transparent}
 .feature-section{margin:18px 0 0}
@@ -146,7 +146,7 @@ h3{font-size:clamp(1.2rem,2.1vw,1.55rem)}
 .steps-widget li::before{display:block;margin-bottom:11px;color:var(--accent);font-size:.8rem;font-weight:700;letter-spacing:.1em;content:counter(step,decimal-leading-zero)}
 .code-widget{min-width:0;margin:18px 0}
 .code-widget figcaption{margin:0 0 8px;font-size:.9rem;font-weight:650}
-pre,.code-widget pre,.steps-widget pre{max-width:100%;overflow:auto;overscroll-behavior-inline:contain;padding:18px;border:1px solid var(--line);border-radius:18px;background:#1d1d1f;color:#f5f5f7;font: .9rem/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}
+pre,.code-widget pre,.steps-widget pre{max-width:100%;overflow:auto;overscroll-behavior-inline:contain;padding:18px;border:1px solid var(--line);border-radius:18px;background:#1d1d1f;color:#f5f5f7;font: .9rem/1.65 var(--edgepress-font-mono);white-space:pre-wrap;overflow-wrap:anywhere}
 pre code{font:inherit;white-space:inherit}
 .table-widget{max-width:100%;margin:18px 0;overflow-x:auto;border:1px solid var(--line);border-radius:18px;background:var(--surface)}
 .table-widget table{width:100%;min-width:560px;border-collapse:collapse}
@@ -260,10 +260,10 @@ html[lang^="zh"] .post-content{max-width:42em}
 .code-copy-block{max-width:100%;margin:1.25em 0;overflow:hidden;border:1px solid var(--line);border-radius:18px;background:#1d1d1f}
 .code-copy-block pre{margin:0;border:0;border-radius:0}
 .code-copy-toolbar{display:flex;justify-content:flex-end;padding:8px 10px;background:#262629}
-.code-copy-button{min-height:38px;padding:6px 13px;border:1px solid rgba(255,255,255,.35);border-radius:999px;background:transparent;color:#fff;font:600 .86rem/1.3 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:pointer}
+.code-copy-button{min-height:38px;padding:6px 13px;border:1px solid rgba(255,255,255,.35);border-radius:999px;background:transparent;color:#fff;font:600 .86rem/1.3 var(--edgepress-font-sans);cursor:pointer}
 .code-copy-button:hover{background:#3a3a3c}
 .code-copy-status{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-.post-toc-widget{position:fixed;inset-inline-end:max(16px,env(safe-area-inset-right));inset-block-end:calc(max(16px,env(safe-area-inset-bottom)) + 56px);z-index:950;max-width:calc(100vw - 32px);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.post-toc-widget{position:fixed;inset-inline-end:max(16px,env(safe-area-inset-right));inset-block-end:calc(max(16px,env(safe-area-inset-bottom)) + 56px);z-index:950;max-width:calc(100vw - 32px);color:var(--ink);font:14px/1.5 var(--edgepress-font-sans)}
 .post-toc-widget[hidden]{display:none}
 .post-toc-toggle{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:9px 15px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font:inherit;font-weight:650;box-shadow:var(--shadow);cursor:pointer}
 .post-toc-toggle .icon-library{width:18px;height:18px;flex:none}
@@ -282,7 +282,7 @@ html[lang^="zh"] .post-content{max-width:42em}
 .footer-navigation{display:flex;align-items:center;flex-wrap:wrap;gap:5px 20px}
 .footer-navigation a{min-height:40px;font-size:.84rem}
 .site-header--hidden,.brand--hidden,.primary-navigation--hidden,.locale-nav--hidden,.site-footer--hidden,.footer-copy--hidden,.footer-navigation--hidden{display:none!important}
-.privacy-manager{position:fixed;inset-inline-end:max(16px,env(safe-area-inset-right));inset-block-end:max(16px,env(safe-area-inset-bottom));z-index:1000;display:grid;align-content:end;gap:8px;box-sizing:border-box;width:min(30rem,calc(100vw - 32px));max-height:calc(100dvh - 32px);color:var(--ink);font:13px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;pointer-events:none;isolation:isolate}
+.privacy-manager{position:fixed;inset-inline-end:max(16px,env(safe-area-inset-right));inset-block-end:max(16px,env(safe-area-inset-bottom));z-index:1000;display:grid;align-content:end;gap:8px;box-sizing:border-box;width:min(30rem,calc(100vw - 32px));max-height:calc(100dvh - 32px);color:var(--ink);font:13px/1.5 var(--edgepress-font-sans);pointer-events:none;isolation:isolate}
 .privacy-manager *{box-sizing:border-box}
 .privacy-manager>*{min-width:0;pointer-events:auto}
 .privacy-manager .privacy-settings-button,.privacy-manager .privacy-panel button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:0;min-height:46px;max-width:100%;padding:9px 15px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font:inherit;font-weight:650;line-height:1.25;text-align:center;overflow-wrap:anywhere;cursor:pointer}
@@ -428,7 +428,7 @@ html[lang^="zh"] .post-content{max-width:42em}
 
 
 /* Folio: a reading spread, with Lumen's shared component geometry. */
-:root{--serif:"Iowan Old Style","Palatino Linotype","Noto Serif CJK SC","Songti SC","STSong","SimSun",Georgia,serif}
+:root{--serif:var(--edgepress-font-serif)}
 @media(prefers-color-scheme:dark){:root{--button-bg:#e6dec1;--button-hover:#f5eacd;--accent:#e6dec1;--accent-hover:#fff1c9;--accent-soft:#34342b}}
 .site-header{position:relative;background:var(--canvas);backdrop-filter:none;-webkit-backdrop-filter:none}
 .header-inner{grid-template-columns:auto minmax(0,1fr) auto auto;gap:28px;width:min(calc(100% - 96px),var(--content-width));min-height:76px}

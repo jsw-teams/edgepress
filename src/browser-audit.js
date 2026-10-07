@@ -72,9 +72,15 @@ export async function auditBrowser(send, profile) {
       unnamed.length ? unnamed.map(node => role(node)).join(', ') : '');
 
     await send('Emulation.setFocusEmulationEnabled', { enabled: true });
-    const focus = () => evaluate(send, () => {
+    const focus = () => evaluate(send, async () => {
       const element = document.activeElement;
       if (!element || element === document.body || element === document.documentElement) return null;
+      // Native Tab can start a smooth scroll; observe its result without scrolling for it.
+      await new Promise(resolve=>{
+        const started=performance.now();
+        const visible=()=>{const box=element.getBoundingClientRect();if((box.bottom>0&&box.top<innerHeight&&box.right>0&&box.left<innerWidth)||performance.now()-started>1500)return resolve();requestAnimationFrame(visible);};
+        visible();
+      });
       const { elements, before, visual } = window.__edgepressKeyboardAudit;
       const style = getComputedStyle(element), box = element.getBoundingClientRect();
       const transparent = value => value === 'transparent' || /rgba\([^)]*,\s*0\)$/.test(value);

@@ -103,7 +103,7 @@ blocks:
                 - 在 config.yml 中编辑站点标题、简介、规范 URL、agent SEO、导航、页脚文字和隐私运营者信息。主题配色保存在各自主题的 CSS 中。
                 - 使用 edgepress theme list 查看主题，使用 edgepress theme use <主题名称> 切换主题。主题路径保存在 edgepress.config.mjs 中。
                 - 使用 edgepress theme install <npm-package> 安装主题包，或使用 edgepress theme create <名称> 创建空白主题。
-                - edgepress server 会启动本地 Wrangler 服务、监视源文件、重新构建变更页面、刷新浏览器，并更新 tools/page-check.pdf。截图会嵌入 PDF，生成后会清理临时文件。
+                - edgepress server 会启动本地 Wrangler 服务、监视源文件、重新构建变更页面、刷新浏览器，并更新 tools/reports/page-check.pdf。截图会嵌入 PDF，生成后会清理临时文件。
             - type: code
               title: 构建、检查和部署
               language: sh

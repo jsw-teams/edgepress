@@ -29,5 +29,21 @@
     },
     "date": "2026-10-06",
     "consent": "All optional services rejected before capture"
+  },
+  {
+    "file": "edgepress-workflow-en.90f4650b21013786.gif",
+    "kind": "FFmpeg recording of an isolated WSL2 desktop; real terminal, editor and Chromium; preview startup wait shortened; isolated service fixtures",
+    "source": "web/js.gripe/tools/recordings/capture-project-demos.mjs",
+    "date": "2026-10-07",
+    "duration": 25240,
+    "bytes": 723577
+  },
+  {
+    "file": "edgepress-workflow-zh.41f1e0a685f47267.gif",
+    "kind": "FFmpeg recording of an isolated WSL2 desktop; real terminal, editor and Chromium; preview startup wait shortened; isolated service fixtures",
+    "source": "web/js.gripe/tools/recordings/capture-project-demos.mjs",
+    "date": "2026-10-07",
+    "duration": 23960,
+    "bytes": 717704
   }
 ]

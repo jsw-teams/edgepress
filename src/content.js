@@ -175,7 +175,7 @@ export async function readDocuments(config) {
       throw new Error('Page body must be empty; move content into page blocks: ' + file);
     }
     if (metadata.pinned !== undefined && typeof metadata.pinned !== 'boolean') throw new Error('pinned must be a boolean in ' + file);
-    if(metadata.embeds!==undefined&&(kind!=='posts'||!Array.isArray(metadata.embeds)||metadata.embeds.length>20))throw new Error('embeds must be an array of at most 20 oEmbed entries on a post: '+file);
+    if (metadata.embeds !== undefined) throw new Error('Use !embed[service](URL) in the content instead of front-matter embeds: ' + file);
     const rawSlug = metadata.slug ?? (kind === 'posts' ? fallbackName : fallbackSlug);
     const normalizedPagePath = kind === 'pages' && metadata.homepage !== true ? normalizePagePath(rawSlug, file) : '';
     const slug = slugify(String(rawSlug).split('/').pop());
@@ -206,7 +206,6 @@ export async function readDocuments(config) {
       authorAvatar: safeAvatar(metadata.authorAvatar ?? (typeof metadata.author === 'object' && metadata.author !== null ? metadata.author.avatar : undefined), 'author avatar in ' + file),
       category: normalizeCategory(metadata.category),
       pinned: kind === 'posts' && metadata.pinned === true,
-      embeds: kind==='posts' ? metadata.embeds??[] : [],
       readingMinutes: kind === 'posts' ? readingMinutes(markdown) : 0,
       videoId: (kind === 'posts' ? 'post-' : 'page-') + slugify(bundlePath + '-' + locale.toLowerCase()),
       video: kind === 'posts' ? normalizeVideo(metadata.video, file) : null,

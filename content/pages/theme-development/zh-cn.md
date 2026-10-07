@@ -156,4 +156,19 @@ blocks:
         - type: text
           text: 构建时会自动给本地发布图片添加实际宽高，在加载前保留其比例；已设置的宽高会保留。远程图片请自行填写尺寸，构建器不会请求远程图片。
 
+  - columns: 1
+    cells:
+      - - type: text
+          heading: 本地多语言字体
+          text: 内置主题随站点打包 Noto Sans、Noto Serif 和简繁中文可变字体，不请求字体 CDN。WOFF2 按 Unicode 字符范围分片，只加载当前页面使用的字形；繁体语言优先使用繁体字形。界面、文章、Pages 和代码中的中文均可使用本地字形，不要求访客安装中文字体。
+        - type: code
+          title: 自定义主题使用统一字体变量
+          language: css
+          code: |
+            :root { font-family: var(--edgepress-font-sans); }
+            h1, h2 { font-family: var(--edgepress-font-serif); }
+            pre, code { font-family: var(--edgepress-font-mono); }
+        - type: text
+          text: 字体覆盖拉丁字母、希腊字母、西里尔字母及常用简繁中文，并非完整 Unicode。增加阿拉伯语等其他文字系统的语言包时，应同时加入对应 Noto 字体与 unicode-range；保持同源加载、OFL 许可证和内容哈希。fonts:sync 仅维护字体资源，普通构建无需下载字体。
+
 ---

@@ -10,6 +10,8 @@ The Cloudflare button creates a copy of this repository in your GitHub account a
 
 EdgePress builds static websites for Cloudflare, Vercel, Netlify, Tencent EdgeOne Pages and Alibaba Cloud ESA Pages.
 
+Built-in themes include local Noto fonts for English and simplified/traditional Chinese. Unicode subsets load on demand, with no font CDN or requirement to install Chinese fonts. Custom themes can use the shared font variables described in the [theme guide](content/pages/theme-development/en.md).
+
 Content images open a zoomable, closable viewer. The [media-viewer component](https://github.com/jsw-teams/media-viewer) is bundled locally; original images load on click when an original URL is provided.
 
 The builder automatically explains the latest article edit. Readers see formatted **Previously / Now** passages, actual before-and-after local pictures, and clear additions or removals in responsive cards that inherit the theme palette. Changed pictures receive hashed snapshots from Git, so replacing or removing the original file does not break the comparison. Set `showChanges: false` to hide the panel for an article.
@@ -60,7 +62,7 @@ Put images and other page media in content/assets/, preserving their public URL 
 
 The shared project identity uses a giant panda and Taiwanese black bear. All content media and saved masters live in `content/assets/`. UI icons use 28 licensed Lucide SVGs, with the pinned source version and license in `content/assets/edgepress/icons/`.
 
-Brand image derivatives can be exported from the saved masters with `tools/generate-brand-assets.py` and Pillow. Keep generated UI icons separate: install dependencies and run `npm run icons:sync`. Verify assets with `python tools/verify-brand-assets.py .` and `node tools/verify-brand.mjs .`.
+Brand image derivatives can be exported from the saved masters with `tools/assets/generate-brand-assets.py` and Pillow. Keep generated UI icons separate: install dependencies and run `npm run icons:sync`. Verify assets with `python tools/verification/verify-brand-assets.py .` and `node tools/verification/verify-brand.mjs .`.
 
 - content/posts/<post-id>/: Markdown articles with one file per locale.
 - content/pages/<page-id>/: page layouts and all page element content.
@@ -89,7 +91,7 @@ Brand image derivatives can be exported from the saved masters with `tools/gener
 - edgepress iterate: create a report-only maintenance plan.
 - edgepress security: check dependency advisories.
 
-The only persisted page-audit report is the accessible PDF at tools/page-check.pdf. Desktop and mobile screenshots are embedded in the PDF and removed from temporary storage afterward. Automated checks do not replace manual accessibility or legal review.
+The only persisted page-audit report is the accessible PDF at tools/reports/page-check.pdf. Desktop and mobile screenshots are embedded in the PDF and removed from temporary storage afterward. Automated checks do not replace manual accessibility or legal review.
 
 `edgepress check` supports page-only sites, an absent `content/posts/` directory, and ordinary articles without a tutorial slug. Markdown self-checks render a built-in fixture in memory and never add articles to your site. Actual generated pages still receive structural and resource-link checks.
 
@@ -165,29 +167,29 @@ All platforms build dist/. CSS and JS are fingerprinted, with one-year immutable
 Optional API requests use one fixed endpoint: backendUrl itself when it has a path, otherwise /api on its origin. callService(id, action, options) puts the operation in X-Service-Action; context belongs in request headers and payloads in the body. The independent API must implement this contract and allow the required CORS request headers. Third-party vendor integrations retain their vendor-defined protocols.
 
 
-Page blocks support `type: oembed` with an `integration` service ID and share `url`. Register `provider: oembed` under the flat consent services list. Media loads only after current consent and a click. ishare uses fixed `/api` metadata requests; public third-party oEmbed metadata is cached at build time. Fourteen common media services are enabled in `config.yml`, each with its own visitor choice and `enabled` switch. Add a custom `oembedEndpoint`, source/media origins and optional vendor scripts. Navigation and footer links support `_self` and `_blank` targets. See the [plugin guide](content/pages/plugin-development/en.md) and [ishare](https://github.com/jsw-teams/ishare).
+Articles use a standalone `!embed[youtube](https://www.youtube.com/watch?v=jNQXAC9IVRw)` line in their Markdown body. Pages use the same line in a `type: text` block’s `text` field. Register the service under `plugins.consent.services` with `provider: oembed`, privacy disclosures and permitted origins. Embeds remain inert until current consent; nearby authorized media then loads automatically. Public oEmbed metadata is cached at build time. See the [plugin guide](content/pages/plugin-development/en.md).
 
-Posts can place the same consent-controlled embeds directly in Markdown with image-shaped syntax. Use `embed` to match a registered service by URL origin, or `embed:service-id` to select one explicitly:
+Posts use standalone embed lines in their Markdown body. Specify the configured service ID:
 
 ```md
-![embed:ishare](https://ishare.js.gripe/s/0123456789abcdef0123456789abcdef)
+!embed[ishare](https://ishare.js.gripe/s/0123456789abcdef0123456789abcdef)
 ```
 
-The builder emits a reserved themed placeholder, and the browser requests metadata only after the visitor grants that service consent and the embed approaches the viewport. The body remains the source of truth; no front-matter entry is needed. Posts may also append the same blocks below their Markdown body when a layout needs explicit dimensions:
+The builder reserves a themed placeholder. After the visitor grants consent, visible embeds load on demand. Pages use the same syntax in a text block; article front matter contains no embed list.
 
 ```yaml
-embeds:
-  - integration: ishare
-    url: https://ishare.example/s/post-id
-    title: Shared field note
+- type: text
+  text: "!embed[youtube](https://www.youtube.com/watch?v=jNQXAC9IVRw)"
 ```
 
 The integration must be an enabled oEmbed service in `config.yml`. Article update cards describe changed media by their captions, so they do not reload old or deleted image files.
 
 ## See the publishing experience
 
-![Create Hello world, edit Markdown, run edgepress server and open the article from the homepage](content/assets/images/previews/edgepress-workflow-en.fe29878792753608.gif)
+![Create An afternoon by the water, edit Markdown, run edgepress server and open the article from the homepage](content/assets/images/previews/edgepress-workflow-en.90f4650b21013786.gif)
 
 Real static website output demonstrates what the builder produces. Product recordings can use a poster with explicit Watch, Pause and Replay controls; see [the block configuration](content/guides/product-demos.md).
 
-Project recordings use manual play/pause and a seekable progress bar, with theme colors and keyboard support. The reproducible CLI/editor workbench lives in [tools/demo-workbench.mjs](tools/demo-workbench.mjs); see [the recording guide](content/guides/product-demos.md). Built-in navigation and page icons come from the pinned Lucide 1.52 library, bundled locally with its license.
+Project recordings use manual play/pause and a seekable progress bar, with theme colors and keyboard support. The reproducible CLI/editor workbench lives in [tools/recordings/demo-workbench.mjs](tools/recordings/demo-workbench.mjs); see [the recording guide](content/guides/product-demos.md). Built-in navigation and page icons come from the pinned Lucide 1.52 library, bundled locally with its license.
+
+Development files: tests/ contains regression tests and fixtures; tools/assets/ maintains source assets; tools/recordings/ contains desktop capture workflows; tools/verification/ contains browser audits; tools/reports/ holds generated evidence. Run npm test and npm run check after changes.

@@ -1,7 +1,7 @@
 import {renderServiceBlock} from './service-block.js';
-import {sourceOrigins,resolveEmbed} from './oembed.js';
+import {renderEmbed, renderPageText} from './embed.js';
 import { renderMarkdownExcerpt } from './markdown.js';
-import { translate, translateValue } from './i18n.js';
+import { localizedContentUrl, translate, translateValue } from './i18n.js';
 import { isIconName, renderIcon } from './icons.js';
 import { postsForLocale } from './content.js';
 import { categoryFilter, filterPostsByCategory, categorySlug, sortPinnedPosts } from './post-details.js';
@@ -33,16 +33,7 @@ function safeUrl(value, label) {
 }
 
 function localizedSiteUrl(value, label, context) {
-  const url = safeUrl(value, label);
-  if (!url.startsWith('/')) return url;
-  const localeToken = /^\/\[launge\](?=\/|$)/i;
-  if (/\[launge\]/i.test(url) && !localeToken.test(url)) {
-    throw new Error(label + ' may use [launge] only as the first site-path segment');
-  }
-  if (!localeToken.test(url)) return url;
-  const suffix = url.replace(localeToken, '');
-  const prefix = context.locale === context.config.i18n.defaultLocale ? '' : '/' + context.locale;
-  return prefix + (suffix || '/');
+  return localizedContentUrl(context.config,context.locale,safeUrl(value,label),label);
 }
 
 function list(value, label, min = 1, max = 50) {
@@ -116,7 +107,7 @@ async function renderLatestPosts(block, context) {
   const authorLabel = (post) => post.author ? '<span class="post-author">' + escapeHtml(translate(context.config, context.locale, 'postAuthor')
     .replace('{author}', post.author)) + '</span>' : '';
   const cards = (await Promise.all(displayed.map(async (post) => {
-    const excerpt = await renderMarkdownExcerpt(post.description || post.markdown, context.config.markdown);
+    const excerpt = await renderMarkdownExcerpt(post.description || post.markdown, {...context.config.markdown,linkResolver:value=>localizedContentUrl(context.config,post.locale,value)});
     return '<article class="post-card" lang="' + escapeHtml(post.locale) + '"><h3><a href="' + escapeHtml('/' + post.path.split('/').filter(Boolean).join('/') + (post.path.endsWith('/') ? '/' : '')) + '">' +
       escapeHtml(post.title) + '</a></h3>' + (block.type === 'post-list' && post.pinned ? '<span class="post-pinned">' + escapeHtml(translate(context.config, context.locale, 'postPinned')) + '</span>' : '') + '<p class="meta"><time data-local-time data-time-locale="' + escapeHtml(post.locale || context.locale) + '" data-date-only="' + (post.dateOnly === true) + '" datetime="' + (post.dateOnly ? post.date.toISOString().slice(0,10) : post.date.toISOString()) + '">' + escapeHtml(dateLabel(post.date, post.locale || context.locale, post.dateOnly ? 'UTC' : context.config.site.timeZone, post.dateOnly)) +
       '</time>' + (post.author ? ' ' + authorLabel(post) : '') + '</p><div class="post-excerpt" lang="' + escapeHtml(post.locale) + '">' + excerpt + '</div></article>';
@@ -274,7 +265,7 @@ async function renderBlock(block, context, depth, index) {
       let paragraphs = block.paragraphs;
       if (paragraphs === undefined && typeof block.text === 'string') paragraphs = block.text.split(/\n\s*\n/).filter(Boolean);
       if (!Array.isArray(paragraphs) || paragraphs.length < 1 || paragraphs.length > 30) throw new Error('text needs a text value or 1 to 30 paragraphs');
-      return '<div class="text-widget">' + paragraphs.map((paragraph) => '<p>' + escapeHtml(text(paragraph, 'text paragraph', 4000)) + '</p>').join('') + '</div>';
+      return '<div class="text-widget">' + (await Promise.all(paragraphs.map(paragraph => renderPageText(text(paragraph, 'text paragraph', 4000), context)))).join('') + '</div>';
     }
     case 'media-text': return renderMediaText(block, context);
     case 'display-text': {
@@ -417,24 +408,7 @@ async function renderBlock(block, context, depth, index) {
       return '<section class="faq-block"><h2>' + title + '</h2>' + items.map((item) => '<details><summary>' +
         escapeHtml(text(item?.question, 'faq.question', 500)) + '</summary><p>' + escapeHtml(text(item?.answer, 'faq.answer', 4000)) + '</p></details>').join('') + '</section>';
     }
-    case 'oembed': {
-      const service = context.config.browserPlugins.services.find(item => item.id === block.integration);
-      if (!service || service.provider !== 'oembed') throw new Error('oembed requires a registered oembed service');
-      const address = new URL(safeUrl(block.url, 'oembed.url'));
-      if (address.protocol !== 'https:' || !sourceOrigins(service).includes(address.origin) || address.username || address.password) throw new Error('oembed URL must use its registered HTTPS service origin');
-      const label = text(block.title || translateValue(context.config, context.locale, service.name), 'oembed.title', 200);
-      const provider=translateValue(context.config,context.locale,service.name);
-      const notice=key=>escapeHtml(translate(context.config,context.locale,key).replace('{service}',provider));
-      const link='<a href="'+escapeHtml(address.href)+'" target="_blank" rel="noopener noreferrer">'+escapeHtml(label)+'</a>';
-      if(service.enabled===false)return '<figure class="edgepress-oembed" data-oembed-disabled><figcaption>'+escapeHtml(label)+'</figcaption><p role="status">'+notice('embedDisabled')+'</p>'+link+'</figure>';
-      const match=service.embedPathPattern?address.pathname.match(new RegExp(service.embedPathPattern)):null;
-      if(service.embedPathPattern&&!match?.[1])throw new Error('oembed URL does not match the configured content path');
-      const data=service.embedTemplate?{version:'1.0',type:'rich',title:label,width:640,height:480,html:'<iframe src="'+escapeHtml(service.embedTemplate.replaceAll('{url}',encodeURIComponent(address.href)).replaceAll('{path}',address.pathname).replaceAll('{id}',encodeURIComponent(match?.[1]||'')))+'"></iframe>'}:service.oembedEndpoint?await resolveEmbed(service,address.href,context.config):undefined;
-      for(const field of ['width','height'])if(block[field]!==undefined&&(!Number.isInteger(block[field])||block[field]<60||block[field]>4096))throw new Error('oembed '+field+' must be from 60 to 4096');
-      const dimensions=(block.width?' data-oembed-width="'+block.width+'"':'')+(block.height?' data-oembed-height="'+block.height+'"':'');
-      const caption=block.caption?'<p class="oembed-caption">'+escapeHtml(text(block.caption,'oembed.caption',2000))+'</p>':'';
-      return '<figure class="edgepress-oembed" data-edgepress-oembed="' + escapeHtml(service.id) + '" data-oembed-url="' + escapeHtml(address.href) + '"'+dimensions+(data===null?' data-oembed-unavailable="true"':'')+'><figcaption>' + escapeHtml(label) + '</figcaption><p data-oembed-notice role="status">'+notice(data===null?'embedUnavailable':'embedNeedsConsent')+'</p>'+(data!==null?'<button type="button" data-oembed-load>' + escapeHtml(translate(context.config, context.locale, 'loadMedia')) + '</button>':'')+link+'<div data-oembed-status><div class="oembed-placeholder" data-oembed-placeholder aria-hidden="true"></div></div>'+caption+(data?'<template data-oembed-data>'+escapeHtml(JSON.stringify(data))+'</template>':'')+'</figure>';
-    }
+    case 'oembed': return renderEmbed(block, context);
     case 'service': {
       const id = text(block.integration, 'service.integration', 64);
       if (context.servicesRendered.has(id)) throw new Error('A page may contain only one block per service');

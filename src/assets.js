@@ -189,9 +189,22 @@ export async function writeAssets(bundle, output, concurrency = 8) {
   // Cloudflare already revalidates unversioned assets by default. A broad cache
   // rule would be concatenated with exact immutable rules instead of overridden.
   const securityRules = '/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin';
+  // Unicode fonts contain hundreds of subsets. Static hosts accept 100 header
+  // rules, so group a directory only when every WOFF2 file in it is hashed.
+  const fontsByDirectory = new Map();
+  for (const asset of bundle.assets.filter(asset => asset.path.endsWith('.woff2'))) {
+    const directory = posix.dirname(asset.path);
+    if (!fontsByDirectory.has(directory)) fontsByDirectory.set(directory, []);
+    fontsByDirectory.get(directory).push(asset.path);
+  }
+  const fontDirectories = new Set([...fontsByDirectory].filter(([, paths]) =>
+    paths.length > 1 && paths.every(path => /\.[a-f0-9]{16}\.woff2$/.test(path))
+  ).map(([directory]) => directory));
   const immutableRules = bundle.assets
     .filter((asset) => /\.[a-f0-9]{16}\.(?:css|js|json|png|jpe?g|webp|avif|svg|gif|mp4|webm|woff2?)$/i.test(asset.path))
+    .filter(asset => !asset.path.endsWith('.woff2') || !fontDirectories.has(posix.dirname(asset.path)))
     .map((asset) => '/' + asset.path + '\n  Cache-Control: public, max-age=31536000, immutable');
+  for (const directory of fontDirectories) immutableRules.push('/' + (directory === '.' ? '' : directory + '/') + '*.woff2\n  Cache-Control: public, max-age=31536000, immutable');
   const mediaRules = await Promise.all(bundle.assets.filter(asset=>/\.(mp4|webm)$/i.test(asset.path)).map(async asset=>{
     const {size}=await stat(resolve(output,...asset.path.split('/')));
     return '/'+asset.path+'\n  Content-Length: '+size+'\n  Accept-Ranges: bytes';

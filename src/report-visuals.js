@@ -1,3 +1,4 @@
+import {reportDirectory} from './report-path.js';
 import { createHash } from 'node:crypto';
 import { access, lstat, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
@@ -65,7 +66,9 @@ function withTimeout(promise, timeoutMs, message) {
 async function startHeadlessBrowser(executable, profile) {
   const port = await freePort();
   const child = spawn(executable, [
-    '--headless=new', '--mute-audio', '--disable-notifications', '--disable-gpu', '--no-sandbox', '--no-first-run', '--no-default-browser-check',
+    '--headless=new', '--mute-audio', '--disable-notifications',
+    '--disable-sync', '--disable-features=msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion',
+    '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', '--disable-gpu', '--no-sandbox', '--no-first-run', '--no-default-browser-check',
     '--disable-background-networking', '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost, EXCLUDE 127.0.0.1',
     '--remote-debugging-port=' + port, '--remote-allow-origins=*', '--user-data-dir=' + profile, 'about:blank'
   ], { stdio: 'ignore', windowsHide: true });
@@ -127,6 +130,7 @@ async function startHeadlessBrowser(executable, profile) {
         ? [{ name: 'prefers-color-scheme', value: viewport.colorScheme }] : [] });
     };
     const navigate = async (url) => {
+      await send('Page.bringToFront');
       const loaded = waitFor('Page.loadEventFired');
       const result = await send('Page.navigate', { url });
       if (result.errorText) throw new Error('Could not load screenshot page: ' + result.errorText);
@@ -417,9 +421,7 @@ function siteAddress(relativeFile) {
 }
 
 export async function addVisualEvidence(config, report) {
-  const root = resolve(config.root, 'tools');
-  const directoryInfo = await lstat(root);
-  if (directoryInfo.isSymbolicLink() || !directoryInfo.isDirectory()) throw new Error('Report directory must be a real directory');
+  const root = await reportDirectory(config.root);
   const browser = await browserPath();
   report.browserChecks = { status: 'unavailable', physicalDevices: 'not tested', screenReaders: 'not tested',
     method: 'Headless Chromium device emulation, accessibility tree and CDP keyboard input', keyboardSampleLimit: 12, results: [] };
@@ -500,6 +502,7 @@ export async function addVisualEvidence(config, report) {
     }
     reportServer = await startReportServer(config.resolvedPaths.output, evidenceDirectory, htmlPath);
     browserSession = await startHeadlessBrowser(browser, profile);
+    let reviewed=0;
     for (const relativeFile of available) {
       for (const device of deviceProfiles) for (const colorScheme of ['light', 'dark']) {
         const emulation = { ...device, colorScheme };
@@ -512,12 +515,14 @@ export async function addVisualEvidence(config, report) {
             message: device.name + '/' + colorScheme + ': ' + check.name + (check.detail ? ' (' + check.detail + ')' : '') + '.' });
         }
       }
+      reviewed+=1;if(reviewed%25===0||reviewed===available.length)console.log('Browser checks: '+reviewed+'/'+available.length+' pages');
     }
     report.browserChecks.status = report.browserChecks.results.every(result => result.status === 'pass') ? 'pass' : 'fail';
     if (!report.browserChecks.results.length) {
       report.browserChecks.status = 'unavailable';
       report.browserChecks.reason = 'No generated pages were available for browser checks.';
     }
+    let captured=0;
     for (const screenshot of screenshots) {
       const viewport = screenshot.viewport === 'mobile' ? mobile : desktop;
       await browserSession.setViewport(viewport);
@@ -567,6 +572,7 @@ export async function addVisualEvidence(config, report) {
         report.issues.push({ severity: 'error', category: 'responsive-layout', page: screenshot.page,
           message: 'Page content width is ' + dimensions.pageDocumentWidth + ' CSS pixels for a ' + dimensions.viewportWidth + ' pixel viewport; consent UI is measured separately.' });
       }
+      captured+=1;if(captured%50===0||captured===screenshots.length)console.log('Report screenshots: '+captured+'/'+screenshots.length);
     }
     if (report.consentUi?.visualChecks) {
       const visualChecks = report.consentUi.visualChecks;
@@ -582,7 +588,7 @@ export async function addVisualEvidence(config, report) {
       if (findings.some((item) => item.severity === 'error')) document.status = 'fail';
       else if (findings.length) document.status = 'warning';
     }
-    report.visualEvidence = { status: 'complete', pdf: 'tools/page-check.pdf', screenshots: screenshots.filter((item) => item.viewportWidth).map((item) => ({
+    report.visualEvidence = { status: 'complete', pdf: 'tools/reports/page-check.pdf', screenshots: screenshots.filter((item) => item.viewportWidth).map((item) => ({
       page: item.page, type: item.type, capture: item.capture, title: item.title, viewport: item.viewport, width: item.width, height: item.height,
       viewportWidth: item.viewportWidth, documentWidth: item.documentWidth,
       consentWidth: item.consentWidth, consentHeight: item.consentHeight, consentWithinViewport: item.consentWithinViewport,
@@ -592,7 +598,7 @@ export async function addVisualEvidence(config, report) {
     const reportAccessibility = checkReportReadingStructure(initialHtml);
     report.visualEvidence.reportAccessibility = reportAccessibility;
     for (const check of reportAccessibility.results.filter((item) => !item.passed)) {
-      report.issues.push({ severity: 'error', category: 'report-accessibility', page: 'tools/page-check.pdf',
+      report.issues.push({ severity: 'error', category: 'report-accessibility', page: 'tools/reports/page-check.pdf',
         message: 'Report reading requirement failed: ' + check.name + '.' });
     }
     report.errors = report.issues.filter((item) => item.severity === 'error').length;

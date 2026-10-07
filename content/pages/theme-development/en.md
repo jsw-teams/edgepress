@@ -156,4 +156,19 @@ blocks:
         - type: text
           text: Local published images receive their intrinsic width and height during build, preserving their aspect ratio before loading. Explicit dimensions remain authoritative. Supply dimensions for remote pictures because the builder does not request them.
 
+  - columns: 1
+    cells:
+      - - type: text
+          heading: Local multilingual fonts
+          text: Built-in themes ship Noto Sans, Noto Serif and variable simplified/traditional Chinese fonts with the site, without a font CDN. Unicode-range WOFF2 subsets load only the glyphs used on the page. Traditional locales prefer traditional letterforms. UI, articles, Pages and Chinese code text use bundled glyphs without requiring visitors to install Chinese fonts.
+        - type: code
+          title: Use shared font variables in custom themes
+          language: css
+          code: |
+            :root { font-family: var(--edgepress-font-sans); }
+            h1, h2 { font-family: var(--edgepress-font-serif); }
+            pre, code { font-family: var(--edgepress-font-mono); }
+        - type: text
+          text: Coverage includes Latin, Greek, Cyrillic and common simplified/traditional Chinese, rather than all Unicode. Language packs using other scripts, such as Arabic, also need the corresponding Noto font and unicode-range. Keep fonts same-origin, licensed and content-hashed. fonts:sync maintains font assets; ordinary builds need no font downloads.
+
 ---

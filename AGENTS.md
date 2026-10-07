@@ -73,3 +73,7 @@ Read the guides in `content/pages/` before extending themes, page blocks, or plu
 - Media controls use the locally bundled Lucide SVGs. Keep at least 44 px controls and keyboard focus inside the open image dialog; close restores focus to its trigger. Remove unused controls and translation keys.
 
 - Product recordings use manual playback and an accessible seek bar, retaining the chosen playhead without autoplay. Record the real standalone CLI and editor, then edgepress server and homepage-to-article navigation. Reusable recording tools belong in tools; temporary frames/manifests belong in ignored tools/.recordings rather than .edgepress. Do not record deployment as a substitute for local preview.
+
+- Keep regression tests and media fixtures under tests/. Group asset maintenance, recording and browser verification scripts under tools/assets/, tools/recordings/ and tools/verification/. Only current generated evidence belongs under tools/reports/; edgepress check generates tools/reports/page-check.pdf. Archive replaced evidence outside the checkout.
+- Product captures use a private VM desktop with real terminal, editor and browser. Do not automate or capture host input. Unset inherited Wayland/WSLg display variables and force guest X11 display :99. Use mature FFmpeg/Playwright/xdotool tools; no manual frame capture loop or web terminal simulation.
+- Embed content uses standalone !embed[service](URL) lines in article Markdown and Pages text blocks, with the same validation and consent renderer. Do not restore article front-matter embeds.

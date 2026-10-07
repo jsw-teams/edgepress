@@ -8,7 +8,7 @@
 
 ![文章变动卡片的真实组件预览](../assets/images/previews/edgepress-revisions-en.png)
 
-文章正文可以直接使用接近图片语法的 oEmbed：`![embed:ishare](https://ishare.js.gripe/s/0123456789abcdef0123456789abcdef)`。`embed` 会按链接域名匹配服务，`embed:服务 ID` 可以明确指定服务。构建器会先输出固定比例的主题占位符，正文就是唯一来源，不需要在前置数据重复编辑。对应服务须在 `config.yml` 启用；访客保存授权后，内容接近可视区域才加载，未授权时不会请求第三方。文章也可以在前置数据设置 `embeds` 以获得明确尺寸；提示、按钮和外框随页面主题配色。
+文章正文使用独立一行的 `!embed[ishare](https://ishare.js.gripe/s/0123456789abcdef0123456789abcdef)`；YouTube 示例为 `!embed[youtube](https://www.youtube.com/watch?v=jNQXAC9IVRw)`。Pages 的 text 区块也使用相同语法，普通文字继续转义，不需要在文章属性添加 embeds。服务在 config.yml 注册并逐项披露；构建器保留主题占位区，访客同意后才按可见区域加载。
 
 历史对比需要完整 Git 历史，GitHub Actions 使用 `fetch-depth: 0`。缺少历史时不编造变动；缺少图片历史文件时保留说明，不请求失效地址。不会为重建历史主动访问外部图片地址，也不会发布草稿的图片快照。
 
@@ -53,10 +53,10 @@ README 提供五个平台的部署按钮。Cloudflare、Vercel、Netlify 和 Edg
 
 ## 看看生成的网站
 
-![创建你好世界、编辑正文、运行 edgepress server，从首页点击进入文章](../assets/images/previews/edgepress-workflow-zh.1686f8f692798d27.gif)
+![创建海边的下午、编辑正文、运行 edgepress server，从首页点击进入文章](../assets/images/previews/edgepress-workflow-zh.41f1e0a685f47267.gif)
 
-示例展示由写文建站生成的实际页面。可用静态封面搭配按需加载 GIF，提供观看、暂停和重播，见[演示配置](product-demos.md)。
+示例展示由写文建站生成的实际页面。网站使用静态封面搭配按需加载 MP4，提供观看、暂停、定位和重播；GIF 用于项目文档，见[演示配置](product-demos.md)。
 
 ## 项目演示与图标
 
-演示通过 `edgepress new post '你好世界'` 新建文章，在代码编辑器修改后运行 `edgepress server`，从首页点击进入文章。录制工作台位于 `tools/demo-workbench.mjs`，临时录制内容放在忽略的 `tools/.recordings/`。网站演示由访客手动播放，支持拖动进度和键盘操作，保留暂停位置。导航与页面图标使用本地打包的 Lucide 1.52，并保留许可证。
+演示通过 `edgepress new post '海边的下午'` 新建文章，在代码编辑器修改后运行 `edgepress server`，从首页点击进入文章。录制工作台位于 `tools/recordings/demo-workbench.mjs`，临时录制内容放在忽略的 `tools/.recordings/`。网站演示由访客手动播放，支持拖动进度和键盘操作，保留暂停位置。导航与页面图标使用本地打包的 Lucide 1.52，并保留许可证。

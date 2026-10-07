@@ -1,0 +1,14 @@
+@import url('./fonts/faces.css');
+
+/* Each face has a unicode-range: only characters present on a page load fonts. */
+:root{
+  --edgepress-font-fallback:'Noto Sans SC Variable','Noto Sans TC Variable';
+  --edgepress-font-sans:'Noto Sans Variable',var(--edgepress-font-fallback),sans-serif;
+  --edgepress-font-serif:'Noto Serif Variable',var(--edgepress-font-fallback),serif;
+  --edgepress-font-mono:ui-monospace,SFMono-Regular,Consolas,var(--edgepress-font-fallback),'Noto Sans Variable',monospace;
+}
+:root:lang(zh-Hant),:root:lang(zh-TW),:root:lang(zh-HK),:root:lang(zh-MO){
+  --edgepress-font-fallback:'Noto Sans TC Variable','Noto Sans SC Variable';
+}
+/* The shared viewer's status font also needs local translated glyphs. */
+:root .image-lightbox-status{font-family:var(--edgepress-font-sans)}

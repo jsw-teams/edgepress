@@ -3,12 +3,13 @@ for (const root of document.querySelectorAll('[data-project-demo]')) {
   const video=root.querySelector('video'),frame=root.querySelector('.project-demo-media');
   const button=root.querySelector('button'),status=root.querySelector('[role=status]');
   const seek=root.querySelector('[data-demo-seek]'),time=root.querySelector('[data-demo-time]');
-  let requested=false,loaded=false,failed=false,dragging=false;
+  let requested=false,loaded=false,failed=false,dragging=false,gesture=null;
   const stamp=value=>Math.floor((Number(value)||0)/60)+':'+String(Math.floor((Number(value)||0)%60)).padStart(2,'0');
   function progress(){
     const duration=Number.isFinite(video.duration)?video.duration:0;
-    if(time)time.textContent=stamp(video.currentTime)+' / '+stamp(duration);
-    if(seek){seek.disabled=!duration;seek.max=String(duration||1);if(!dragging)seek.value=String(video.currentTime);seek.setAttribute('aria-valuetext',stamp(video.currentTime)+' / '+stamp(duration));}
+    const position=dragging&&seek?Number(seek.value):video.currentTime;
+    if(time)time.textContent=stamp(position)+' / '+stamp(duration);
+    if(seek){seek.disabled=!duration;seek.max=String(duration||1);if(!dragging)seek.value=String(video.currentTime);seek.setAttribute('aria-valuetext',stamp(position)+' / '+stamp(duration));}
   }
   function controls(){
     const label=requested?root.dataset.pause:video.ended?root.dataset.replay:video.currentTime>0?root.dataset.resume:root.dataset.play;
@@ -30,12 +31,42 @@ for (const root of document.querySelectorAll('[data-project-demo]')) {
     if(failed){failed=false;loaded=false;}
     void play();
   });
-  const commitSeek=()=>{if(Number.isFinite(video.duration)){video.currentTime=Math.max(0,Math.min(video.duration,Number(seek.value)||0));reveal();}dragging=false;progress();controls();};
-  seek?.addEventListener('pointerdown',event=>{dragging=true;prepare();seek.setPointerCapture?.(event.pointerId);});
-  seek?.addEventListener('input',()=>{prepare();if(Number.isFinite(video.duration)){video.currentTime=Number(seek.value);reveal();progress();}});
-  seek?.addEventListener('change',commitSeek);
-  seek?.addEventListener('pointerup',commitSeek);
-  seek?.addEventListener('pointercancel',()=>{dragging=false;progress();});
+  const commitSeek=()=>{if(Number.isFinite(video.duration)&&video.duration>0){video.currentTime=Math.max(0,Math.min(video.duration,Number(seek.value)||0));reveal();}dragging=false;progress();controls();};
+  const previewSeek=event=>{
+    const bounds=seek.getBoundingClientRect(),inset=10;
+    seek.value=String(Math.max(0,Math.min(1,(event.clientX-bounds.left-inset)/(bounds.width-2*inset)))*video.duration);
+    progress();
+  };
+  seek?.addEventListener('pointerdown',event=>{
+    if(event.button!==0||!Number.isFinite(video.duration)||video.duration<=0)return;
+    const bounds=seek.getBoundingClientRect();
+    // The range's layout height includes spacing; that spacing is not a seek.
+    if(event.pointerType==='mouse'&&Math.abs(event.clientY-bounds.top-bounds.height/2)>10){event.preventDefault();return;}
+    event.preventDefault();
+    gesture={id:event.pointerId,x:event.clientX,y:event.clientY,touch:event.pointerType!=='mouse',moved:false};
+    dragging=true;
+    if(!gesture.touch){seek.focus({preventScroll:true});seek.setPointerCapture(event.pointerId);previewSeek(event);}
+  });
+  seek?.addEventListener('pointermove',event=>{
+    if(!gesture||event.pointerId!==gesture.id)return;
+    const dx=Math.abs(event.clientX-gesture.x),dy=Math.abs(event.clientY-gesture.y);
+    if(gesture.touch&&!gesture.moved){
+      if(dy>8&&dy>dx){gesture=null;dragging=false;progress();return;}
+      if(dx<8||dx<=dy)return;
+      gesture.moved=true;seek.setPointerCapture(event.pointerId);
+    }
+    previewSeek(event);
+  });
+  seek?.addEventListener('pointerup',event=>{
+    if(!gesture||event.pointerId!==gesture.id)return;
+    const shouldCommit=!gesture.touch||gesture.moved;
+    gesture=null;
+    if(shouldCommit){previewSeek(event);commitSeek();}else{dragging=false;progress();}
+  });
+  const cancelSeek=()=>{gesture=null;dragging=false;progress();};
+  seek?.addEventListener('pointercancel',cancelSeek);
+  seek?.addEventListener('lostpointercapture',()=>{if(gesture)cancelSeek();});
+  seek?.addEventListener('input',()=>{if(!gesture)commitSeek();});
   video.addEventListener('loadedmetadata',progress);
   video.addEventListener('durationchange',progress);
   video.addEventListener('timeupdate',progress);
