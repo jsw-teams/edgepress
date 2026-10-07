@@ -3,6 +3,7 @@ import { realpath } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 import { renderMarkdown } from './markdown.js';
 import {renderEmbed} from './embed.js';
+import {renderDocument} from './document.js';
 import {localizedContentUrl} from './i18n.js';
 
 export async function createExtensions(config) {
@@ -19,7 +20,8 @@ export async function createExtensions(config) {
         complete: selected?.markdownTaskComplete ?? base?.markdownTaskComplete ?? 'Task complete',
         incomplete: selected?.markdownTaskIncomplete ?? base?.markdownTaskIncomplete ?? 'Task incomplete'
       },
-      embedRenderer: block => renderEmbed(block, {config: context.config, locale})
+      embedRenderer: block => renderEmbed(block, {config: context.config, locale}),
+      documentRenderer: block => renderDocument(block, {config: context.config, locale})
     });
   }, cacheable: true }]]);
 

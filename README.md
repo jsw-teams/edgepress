@@ -1,5 +1,9 @@
 # EdgePress
 
+Document previews use the browser-only `document-viewer` package: PDF, DOC/DOCX, PPT/PPTX and XLS/XLSX render inside the page on explicit preview. Articles accept `!document[Report](/documents/report.docx)`; Pages support `type: document`. Remote direct-file URLs require a configured consent service and CORS. Legacy PPT uses a project-owned, watermark-free basic renderer with documented fidelity limits. See the theme-development guide.
+
+The dependency is pinned to a full commit in the public [document-viewer repository](https://github.com/jsw-teams/document-viewer). Cloud `npm ci` needs no sibling checkout, bundled source snapshot or Office conversion software. Publish and validate document-viewer first, then update the dependency URL and lockfile here. Sites can consume the resulting pinned EdgePress commit without copying either implementation.
+
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/jsw-teams/edgepress)
 [![Deploy to EdgeOne Pages](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Fjsw-teams%2Fedgepress&build-command=npm%20run%20build&install-command=npm%20ci&output-directory=dist)
 [![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fjsw-teams%2Fedgepress)

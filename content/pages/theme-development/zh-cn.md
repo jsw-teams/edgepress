@@ -6,6 +6,24 @@ description: 使用共享 HTML 局部模板、CSS 配色、页面元素布局和
 blocks:
   - columns: 1
     cells:
+      - - type: text
+          text: "文档通过纯浏览器 document-viewer 按需预览，支持 PDF、DOC/DOCX、PPT/PPTX 和 XLS/XLSX。云端构建无需安装 Office 或 LibreOffice。旧版 PPT 使用本项目自写、无水印的基础解析和渲染器，暂不支持动画、图表及部分复杂绘图效果。预览不保证 Office 排版完全一致，不执行宏，也不加载文档内外部资源。"
+        - type: code
+          title: 文档区块
+          language: yaml
+          code: |
+            - type: document
+              title: 年度报告
+              src: /documents/report.docx
+            - type: document
+              title: 分享的工作表
+              src: https://files.example/download/123
+              format: xlsx
+              service: documents
+        - type: text
+          text: "本地文档放在 content/assets/documents/。文章和 Pages 文本区块支持独立一行的 !document[年度报告](/documents/report.docx)。无扩展名的分享下载地址使用 !document[分享报告](https://files.example/download/123){format=pdf service=documents}。远程文档须在 plugins.consent.services 注册 external-api 服务并填写隐私披露，等待当前访客同意后才请求。地址必须返回文件原始字节且允许 CORS；分享页面解析、身份验证和访问权限由外部服务负责，不新增站点代理。"
+  - columns: 1
+    cells:
       -
         - type: hero
           eyebrow: 主题指南

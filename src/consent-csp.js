@@ -61,6 +61,10 @@ export function contentPermissions(routes) {
   for(const route of routes) {
     if(route.contentType && !/^text\/html\b/i.test(route.contentType))continue;
     const html=route.body.replace(/<template\b[^>]*>[\s\S]*?<\/template>/gi,'').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
+    if (/data-edgepress-document(?:\s|=|>)/i.test(html)) {
+      result['script-src'] = ["'wasm-unsafe-eval'"];
+      result['font-src'] = ['blob:'];
+    }
     for(const match of html.matchAll(/<(img|video|audio|source)\b[^>]*\bsrc\s*=\s*["'](https:\/\/[^"']+)["']/gi)) {
       try {const origin=new URL(match[2]).origin;const name=match[1].toLowerCase()==='img'?'img-src':'media-src';result[name]=[...new Set([...(result[name]||[]),origin])];}catch{}
     }

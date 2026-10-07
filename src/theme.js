@@ -186,6 +186,13 @@ export async function renderLayout(config, extensions, page, body) {
     filtered=filtered.replace('</head>','<link rel="stylesheet" href="/edgepress/image-viewer.css"></head>').replace('</body>','<script id="edgepress-image-viewer-config" type="application/json">'+JSON.stringify(labels).replace(/</g,'\\u003c')+'</script><script type="module" src="/edgepress/image-viewer.js"></script></body>');
   }
   const scripts = [];
+  if (/data-edgepress-document(?:\s|=|>)/i.test(filtered)) {
+    const keys = ['preview', 'close', 'download', 'loading', 'error', 'previous', 'next', 'page', 'sheet', 'limited', 'pptLimited'];
+    const labels = Object.fromEntries(keys.map(key => [key, translate(config, locale, 'documentViewer' + key[0].toUpperCase() + key.slice(1))]));
+    filtered = filtered.replace(/<\/head\s*>/i, '<link rel="stylesheet" href="/edgepress/document-viewer/styles.css"></head>');
+    scripts.push('<script id="edgepress-document-viewer-config" type="application/json">' + JSON.stringify(labels).replace(/</g, '\\u003c') + '</script><script type="module" src="/edgepress/document-viewer.js"></script>');
+    if (filtered.includes('data-document-service')) scripts.push('<script defer src="/edgepress/services-consent.js"></script>');
+  }
   if (filtered.includes('data-project-demo')) scripts.push('<script defer src="/edgepress/project-demo.js"></script>');
   if (filtered.includes('data-local-time')) scripts.push('<script defer src="/edgepress/local-time.js"></script>');
   if (filtered.includes('data-navigation-select')) scripts.push('<script defer src="/edgepress/navigation-select.js"></script>');

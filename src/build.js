@@ -30,7 +30,7 @@ async function readCache(file) {
 
 async function markdownRuntimeVersion(root) {
   const lockPath = resolve(root, 'package-lock.json');
-  const rendererSources=await Promise.all(['markdown.js','embed.js','oembed.js','plugin-api.js','i18n.js'].map(file=>readFile(new URL('./'+file,import.meta.url))));
+  const rendererSources=await Promise.all(['markdown.js','embed.js','document.js','oembed.js','plugin-api.js','i18n.js'].map(file=>readFile(new URL('./'+file,import.meta.url))));
   const digest=createHash('sha256');for(const source of rendererSources)digest.update(source);
   const implementation=digest.digest('hex');
   try {
@@ -213,10 +213,10 @@ export async function buildSite(root = process.cwd(), options = {}) {
   try {
     await loadLanguagePacks(config);
     const extensions = await createExtensions(config);
-    const assetBundle = await collectAssets(config);
     const sourceDocuments = await readDocuments(config);
     const loadedDocuments = await extensions.filter('content:loaded', sourceDocuments, { config });
     if (!Array.isArray(loadedDocuments)) throw new Error('content:loaded filters must return an array');
+    const assetBundle = await collectAssets(config, { documentViewer: loadedDocuments.some(document => /!document\[|"type":"document"/.test(JSON.stringify(document))) });
 
     const cacheFile = resolve(config.resolvedPaths.cache, 'render-cache.json');
     const oldCache = await readCache(cacheFile);
@@ -231,7 +231,7 @@ export async function buildSite(root = process.cwd(), options = {}) {
       }
       const signature = createHash('sha256')
         .update(document.markdown + '\n' + JSON.stringify(config.markdown) + '\n' + document.locale + '\n' +
-          MARKDOWN_SECURITY_POLICY_VERSION + '\n' + runtimeVersion)
+          MARKDOWN_SECURITY_POLICY_VERSION + '\n' + runtimeVersion + '\n' + JSON.stringify(config.browserPlugins) + '\n' + config.site.url)
         .digest('hex');
       let html = renderer.cacheable ? oldCache[signature] : undefined;
       if (html === undefined) html = await renderer.render(document.markdown, { config, document });

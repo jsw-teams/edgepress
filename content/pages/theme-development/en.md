@@ -81,6 +81,8 @@ blocks:
                   - Large editorial, serif, outline, mono, or accent typography
                 - - media-text
                   - Image or captioned video paired with editable text
+                - - document
+                  - On-demand PDF, Word, PowerPoint and spreadsheet preview
                 - - link-list, list, steps, code, data-table, notice
                   - Navigation, instructions, code samples, facts, and callouts
                 - - feature-grid, quote, cta, faq, latest-posts
@@ -91,6 +93,24 @@ blocks:
               title: Video captions
               text: media-text video entries require a WebVTT captions source, language tag, and track label. Videos use native controls and preload none. A third-party video embed should remain behind an explicit consent integration.
               tone: warning
+  - columns: 1
+    cells:
+      - - type: text
+          text: "Documents use the browser-only document-viewer library. PDF, DOC/DOCX, PPT/PPTX and XLS/XLSX render on demand without cloud conversion software. Legacy PPT uses a project-owned, watermark-free basic parser and renderer; animations, charts and some complex drawing features are unsupported. Office layouts are approximate; macros and external document resources are blocked."
+        - type: code
+          title: Document block
+          language: yaml
+          code: |
+            - type: document
+              title: Annual report
+              src: /documents/report.docx
+            - type: document
+              title: Shared spreadsheet
+              src: https://files.example/download/123
+              format: xlsx
+              service: documents
+        - type: text
+          text: "Put local files under content/assets/documents/. Articles and Pages text blocks accept standalone !document[Annual report](/documents/report.docx) lines. Extensionless URLs use !document[Shared report](https://files.example/download/123){format=pdf service=documents}. Remote direct-file URLs must match an external-api service registered in plugins.consent.services, with complete privacy disclosures and current visitor consent. File origins must allow CORS. Share-page metadata and authentication stay in the caller's external integration; no site-owned proxy is introduced."
   - columns: 1
     cells:
       -

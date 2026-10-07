@@ -1,5 +1,12 @@
 # Repository development instructions
 
+## Cloud synchronization and document previews
+
+- Before editing or pushing, fetch origin and inspect incoming commits. Preserve local-only changes in a backup outside the checkout before resolving conflicts. Fast-forward clean checkouts; never force-push or overwrite another contributor's work.
+- Keep document preview code in the canonical document-viewer repository. Pin a published full GitHub commit and synchronize package-lock.json; do not copy the engine or rely on sibling checkouts or conversion software.
+- Document previews load only after a preview click. External document URLs require current per-service consent and CORS. Preserve script-disabled isolation, local workers, immutable dependency hashes and the documented legacy PPT limitations.
+- Run document regression tests and a build before pushing. Browser document tests use isolated Playwright Chromium with extensions disabled, never the user's system Edge or Chrome.
+
 EdgePress builds static websites from Markdown and YAML source. Follow these rules when changing the project.
 
 ## Source files

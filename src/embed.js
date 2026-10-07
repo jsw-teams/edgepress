@@ -1,5 +1,6 @@
 import {sourceOrigins, resolveEmbed} from './oembed.js';
 import {translate, translateValue} from './i18n.js';
+import {parseDocument, renderDocument} from './document.js';
 
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 
@@ -45,6 +46,8 @@ export async function renderPageText(source, context) {
   let paragraph = [];
   const flush = () => { if (paragraph.length) output.push('<p>' + escapeHtml(paragraph.join('\n')) + '</p>'); paragraph = []; };
   for (const line of lines) {
+    const document = parseDocument(line);
+    if (document) { flush(); output.push(renderDocument(document, context)); continue; }
     const embed = parseEmbed(line);
     if (embed) { flush(); output.push(await renderEmbed(embed, context)); }
     else if (!line.trim()) flush();

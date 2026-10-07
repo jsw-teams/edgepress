@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import { mapLimit } from './concurrency.js';
 import {extendConsentPolicy,serializeConsentHeaders} from './consent-csp.js';
 import {imageViewerAssets} from './media-assets.js';
+import {documentViewerAssets} from '@jsw-teams/document-viewer/assets';
 import {collectImageDimensions} from './image-dimensions.js';
 
 async function walk(directory) {
@@ -23,14 +24,14 @@ async function walk(directory) {
 
 function isCodeAsset(path) {
   const extension = extname(path).toLowerCase();
-  return extension === '.css' || extension === '.js';
+  return extension === '.css' || extension === '.js' || extension === '.mjs';
 }
 
 function referencedPaths(path, content, known) {
   if (!isCodeAsset(path)) return [];
   const text = content.toString('utf8');
-  const expression = extname(path).toLowerCase() === '.js'
-    ? /\b(?:from\s*|import\s*(?:\(\s*)?)['"]([^'"]+)['"]/g
+  const expression = ['.js', '.mjs'].includes(extname(path).toLowerCase())
+    ? /\b(?:from\s*|import\s*(?:\(\s*)?|new\s+URL\s*\(\s*)['"]([^'"]+)['"]/g
     : /(?:@import\s+(?:url\()?\s*|url\(\s*)['"]?([^'")\s;]+)['"]?\s*\)?/gi;
   const refs = [];
   for (const match of text.matchAll(expression)) {
@@ -66,8 +67,8 @@ function rewriteCodeReferences(item, text, outputByOriginal) {
     return rewritten + tail;
   };
 
-  if (extension === '.js') {
-    const expression = /(\b(?:from\s*|import\s*(?:\(\s*)?))(['"])([^'"]+)\2/g;
+  if (extension === '.js' || extension === '.mjs') {
+    const expression = /(\b(?:from\s*|import\s*(?:\(\s*)?|new\s+URL\s*\(\s*))(['"])([^'"]+)\2/g;
     return text.replace(expression, (match, prefix, quote, specifier) => {
       const rewritten = rewriteSpecifier(specifier);
       return rewritten === null ? match : prefix + quote + rewritten + quote;
@@ -81,7 +82,7 @@ function rewriteCodeReferences(item, text, outputByOriginal) {
   });
 }
 
-export async function collectAssets(config) {
+export async function collectAssets(config, { documentViewer = false } = {}) {
   const sources = [];
   const directories = [
     { root: config.resolvedPaths.static, name: 'static' },
@@ -99,6 +100,7 @@ export async function collectAssets(config) {
   // repositories. Project-owned overrides keep precedence for existing sites.
   const runtimeRoot=fileURLToPath(new URL('../static/edgepress/',import.meta.url));
   const supplied=new Set(sources.map(item=>item.path));
+  if (documentViewer) for (const item of await documentViewerAssets('edgepress/document-viewer')) if (!supplied.has(item.path)) sources.push(item);
   for(const item of await imageViewerAssets())if(!supplied.has(item.path))sources.push(item);
   for(const source of await walk(runtimeRoot)) {
     const path='edgepress/'+relative(runtimeRoot,source).split(sep).join('/');
@@ -201,10 +203,12 @@ export async function writeAssets(bundle, output, concurrency = 8) {
     paths.length > 1 && paths.every(path => /\.[a-f0-9]{16}\.woff2$/.test(path))
   ).map(([directory]) => directory));
   const immutableRules = bundle.assets
-    .filter((asset) => /\.[a-f0-9]{16}\.(?:css|js|json|png|jpe?g|webp|avif|svg|gif|mp4|webm|woff2?)$/i.test(asset.path))
+    .filter((asset) => /\.[a-f0-9]{16}\.(?:css|m?js|json|png|jpe?g|webp|avif|svg|gif|mp4|webm|woff2?)$/i.test(asset.path))
     .filter(asset => !asset.path.endsWith('.woff2') || !fontDirectories.has(posix.dirname(asset.path)))
     .map((asset) => '/' + asset.path + '\n  Cache-Control: public, max-age=31536000, immutable');
   for (const directory of fontDirectories) immutableRules.push('/' + (directory === '.' ? '' : directory + '/') + '*.woff2\n  Cache-Control: public, max-age=31536000, immutable');
+  const documentDirectories = new Set(bundle.assets.map(asset => asset.path.match(/^(.*\/pdf-assets\.[a-f0-9]{16})\//)?.[1]).filter(Boolean));
+  for (const directory of documentDirectories) immutableRules.push('/' + directory + '/*\n  Cache-Control: public, max-age=31536000, immutable');
   const mediaRules = await Promise.all(bundle.assets.filter(asset=>/\.(mp4|webm)$/i.test(asset.path)).map(async asset=>{
     const {size}=await stat(resolve(output,...asset.path.split('/')));
     return '/'+asset.path+'\n  Content-Length: '+size+'\n  Accept-Ranges: bytes';

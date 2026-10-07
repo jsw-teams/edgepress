@@ -1,5 +1,6 @@
 import { marked, Marked } from 'marked';
 import {parseEmbed} from './embed.js';
+import {parseDocument} from './document.js';
 import sanitizeHtml from 'sanitize-html';
 
 const allowedTags = [
@@ -17,11 +18,11 @@ const sanitizeOptions = {
   allowedTags,
   allowedAttributes: {
     a: ['href', 'target', 'rel'],
-    button: ['type', 'data-oembed-load'],
+    button: ['type', 'data-oembed-load', 'data-service-consent-settings'],
     code: ['class'],
     img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'data-original'],
-    figure: ['class', 'data-edgepress-oembed', 'data-oembed-url', 'data-oembed-width', 'data-oembed-height', 'data-oembed-disabled', 'data-oembed-unavailable'],
-    div: ['class', 'data-oembed-status', 'data-oembed-placeholder', 'aria-hidden'],
+    figure: ['class', 'data-edgepress-oembed', 'data-oembed-url', 'data-oembed-width', 'data-oembed-height', 'data-oembed-disabled', 'data-oembed-unavailable', 'data-edgepress-document', 'data-document-src', 'data-document-title', 'data-document-format', 'data-document-preview', 'data-document-service'],
+    div: ['class', 'data-oembed-status', 'data-oembed-placeholder', 'aria-hidden', 'data-document-mount'],
     p: ['data-oembed-notice', 'class', 'role'],
     template: ['data-oembed-data'],
     li: ['value'],
@@ -102,8 +103,15 @@ const embedSyntax = {name:'embed',level:'block',
   renderer:()=>''
 };
 
+const documentSyntax = { name: 'document', level: 'block',
+  start: source => { const offset = source.search(/\n {0,3}!document\[/); return offset < 0 ? undefined : offset + 1; },
+  tokenizer: source => { const parsed = parseDocument(source); return parsed ? { type: 'document', ...parsed } : undefined; },
+  renderer: token => '<p>' + escapeHtml(token.title) + '</p>'
+};
+
 export async function renderMarkdown(source, options = {}) {
   const parser = new Marked({gfm: options.gfm !== false, breaks: options.breaks === true, renderer: markdownRenderer(options)});
+  parser.use({ extensions: [{ ...documentSyntax, renderer: token => options.documentRenderer ? options.documentRenderer(token) : documentSyntax.renderer(token) }] });
   if (options.embedRenderer) parser.use({
     async: true,
     extensions: [{...embedSyntax, renderer: token => token.html}],
@@ -130,14 +138,14 @@ export async function renderMarkdown(source, options = {}) {
 
 export async function renderMarkdownExcerpt(source, options = {}) {
   const markdown = String(source ?? '');
-  const tokens = new Marked({gfm:options.gfm!==false}).use({extensions:[{...embedSyntax}]}).lexer(markdown);
+  const tokens = new Marked({gfm:options.gfm!==false}).use({extensions:[{...embedSyntax}, {...documentSyntax}]}).lexer(markdown);
   const paragraph = tokens.find((token) => token.type === 'paragraph');
   if (!paragraph) return '<p>' + escapeHtml(plainText(markdown).slice(0, 220)) + '</p>';
   return renderMarkdown(paragraph.raw, { ...options, allowImages: false, allowVideo: false });
 }
 
 export function plainText(source) {
-  const html = new Marked({gfm:true}).use({extensions:[{...embedSyntax}]}).parse(String(source ?? ''));
+  const html = new Marked({gfm:true}).use({extensions:[{...embedSyntax}, {...documentSyntax}]}).parse(String(source ?? ''));
   const namedEntities = {
     amp: '&', apos: "'", copy: '©', gt: '>', hellip: '…', ldquo: '“', lsquo: '‘',
     lt: '<', mdash: '—', nbsp: ' ', ndash: '–', quot: '"', rdquo: '”', rsquo: '’'
