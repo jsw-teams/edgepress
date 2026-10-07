@@ -26,7 +26,7 @@ test('Edge reports no unnamed form fields or unsized lazy images in responsive p
       const context=await browser.newContext({viewport:{width,height:900}});
       await context.route('**/*',async route=>{
         const url=new URL(route.request().url());assert.equal(url.origin,config.site.url);
-        if(url.pathname==='/')return route.fulfill({contentType:'text/html',body:html});
+        if(url.pathname==='/')return route.fulfill({contentType:'text/html',body:html,headers:{'Content-Security-Policy':"default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self'; font-src 'self'; connect-src 'self'; media-src 'self'; worker-src 'self' blob:"}});
         // Delay decoding: layout and the browser audit must succeed before bytes arrive.
         if(url.pathname==='/preview.svg')return;
         const path=url.pathname==='/style.css'?resolve(root,'themes/default/assets/style.css'):resolve(root,'static','.'+url.pathname);
@@ -36,7 +36,7 @@ test('Edge reports no unnamed form fields or unsized lazy images in responsive p
       });
       const page=await context.newPage(),cdp=await context.newCDPSession(page),issues=[];
       cdp.on('Audits.issueAdded',({issue})=>{
-        if(issue.code==='LazyLoadImageIssue'||issue.details.genericIssueDetails?.errorType==='FormEmptyIdAndNameAttributesForInputError')issues.push(issue);
+        if(issue.code==='ContentSecurityPolicyIssue'||issue.code==='LazyLoadImageIssue'||issue.details.genericIssueDetails?.errorType==='FormEmptyIdAndNameAttributesForInputError')issues.push(issue);
       });
       await cdp.send('Audits.enable');await page.goto(config.site.url,{waitUntil:'domcontentloaded'});
       await page.locator('.privacy-panel').waitFor({state:'visible'});

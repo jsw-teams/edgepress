@@ -11,16 +11,7 @@ export function reserveImageDimensions(html,dimensions,path,origin){
   const value=name=>tag.match(new RegExp('\\s'+name+'\\s*=\\s*["\']([^"\']+)["\']','i'))?.[1],src=value('src');if(!src)return tag;
   let url,key;try{url=new URL(src,new URL('/'+path,origin));key=decodeURI(url.pathname);}catch{return tag;}
   if(url.origin!==new URL(origin).origin)return tag;const size=dimensions.get(key);if(!size)return tag;
-  const w=Number(value('width')),h=Number(value('height'));
-  const width=w>0?w:Math.max(1,Math.round(h>0?h*size.width/size.height:size.width));
-  const height=h>0?h:Math.max(1,Math.round(w>0?w*size.height/size.width:size.height));
-  tag=tag.replace(/\s*\/?>$/,end=>(value('width')?'':' width="'+width+'"')+(value('height')?'':' height="'+height+'"')+end);
-  // Edge's lazy-image audit needs an authored ratio when responsive CSS sets height:auto.
-  // Use the reserved dimensions, and preserve ratios supplied by the author.
-  if(value('loading')?.toLowerCase()==='lazy'&&!/(?:^|;)\s*aspect-ratio\s*:/i.test(value('style')||'')){
-   const ratio='aspect-ratio:'+width+' / '+height;
-   tag=/\sstyle\s*=/i.test(tag)?tag.replace(/(\sstyle\s*=\s*)(["'])(.*?)\2/i,(_m,prefix,quote,style)=>prefix+quote+style+';'+ratio+quote):tag.replace(/\s*\/?>$/,end=>' style="'+ratio+'"'+end);
-  }
-  return tag;
+  const w=Number(value('width')),h=Number(value('height'));if(w>0&&h>0)return tag;
+  return tag.replace(/\s*\/?>$/,end=>(value('width')?'':' width="'+Math.max(1,Math.round(h>0?h*size.width/size.height:size.width))+'"')+(value('height')?'':' height="'+Math.max(1,Math.round(w>0?w*size.height/size.width:size.height))+'"')+end);
  });
 }

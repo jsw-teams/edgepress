@@ -1,0 +1,4 @@
+/* Responsive height:auto needs an explicit ratio for Edge's lazy-image audit.
+   Read the build's reserved dimensions without introducing inline styles.
+   Browsers without typed attr() retain the width/height attribute fallback. */
+img[loading="lazy"][width][height]{aspect-ratio:attr(width type(<number>)) / attr(height type(<number>))}
