@@ -27,14 +27,14 @@ export async function renderEmbed(block, {config, locale}) {
   for (const field of ['width', 'height']) {
     if (block[field] !== undefined && (!Number.isInteger(block[field]) || block[field] < 60 || block[field] > 4096)) throw new Error('Embed ' + field + ' must be from 60 to 4096');
   }
-  if (service.enabled === false) return '<figure class="edgepress-oembed" data-oembed-disabled><figcaption>' + escapeHtml(label) + '</figcaption><p role="status">' + notice('embedDisabled') + '</p>' + link + '</figure>';
+  if (service.enabled === false) return '<figure class="edgepress-oembed" data-oembed-disabled><figcaption>' + link + '</figcaption><p role="status">' + notice('embedDisabled') + '</p></figure>';
   const data = service.embedTemplate ? {version:'1.0', type:'rich', title:label, width:640, height:480, html:'<iframe src="' + escapeHtml(service.embedTemplate.replaceAll('{url}', encodeURIComponent(address.href)).replaceAll('{path}', address.pathname).replaceAll('{id}', encodeURIComponent(match?.[1] || ''))) + '"></iframe>'} :
     service.oembedEndpoint ? await resolveEmbed(service, address.href, config) : undefined;
   const dimensions = ' data-oembed-width="' + (block.width || data?.width || 640) + '" data-oembed-height="' + (block.height || data?.height || 480) + '"';
   const caption = block.caption ? '<p class="oembed-caption">' + escapeHtml(block.caption) + '</p>' : '';
   return '<figure class="edgepress-oembed" data-edgepress-oembed="' + escapeHtml(service.id) + '" data-oembed-url="' + escapeHtml(address.href) + '"' + dimensions +
-    (data === null ? ' data-oembed-unavailable="true"' : '') + '><figcaption>' + escapeHtml(label) + '</figcaption><p data-oembed-notice role="status">' + notice(data === null ? 'embedUnavailable' : 'embedNeedsConsent') + '</p>' +
-    (data !== null ? '<button type="button" data-oembed-load>' + escapeHtml(translate(config, locale, 'loadMedia')) + '</button>' : '') + link +
+    (data === null ? ' data-oembed-unavailable="true"' : '') + '><figcaption>' + link + '</figcaption><p data-oembed-notice role="status">' + notice(data === null ? 'embedUnavailable' : 'embedNeedsConsent') + '</p>' +
+    (data !== null ? '<button type="button" data-oembed-load>' + escapeHtml(translate(config, locale, 'loadMedia')) + '</button>' : '') +
     '<div data-oembed-status><div class="oembed-placeholder" data-oembed-placeholder aria-hidden="true"></div></div>' + caption +
     (data ? '<template data-oembed-data>' + escapeHtml(JSON.stringify(data)) + '</template>' : '') + '</figure>';
 }

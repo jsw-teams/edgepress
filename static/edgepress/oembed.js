@@ -2,19 +2,27 @@ import {callService} from './services.js';
 import {readChoice} from './plugins/consent/choices.js';
 
 const scripts=new Map();
+function reservePhotoDimensions(image,data){
+  const width=Number(data.width),height=Number(data.height);
+  if(Number.isFinite(width)&&Number.isFinite(height)&&width>0&&height>0&&width<=100000&&height<=100000){
+    image.width=Math.max(1,Math.round(width));image.height=Math.max(1,Math.round(height));
+    image.style.aspectRatio=String(image.width)+' / '+image.height;
+  }else{image.style.aspectRatio='4 / 3';image.style.objectFit='contain';}
+  return image;
+}
 function config(){return JSON.parse(document.getElementById('edgepress-privacy-config')?.textContent||'{}');}
 function updateNotice(root,key){
   const settings=config(),service=settings.privacy?.integrations?.find(item=>item.id===root.dataset.edgepressOembed);
   if(!service)return;
   if(!key)key=root.dataset.loaded?'embedLoaded':root.dataset.oembedUnavailable?'embedUnavailable':readChoice(settings)?.allowed.includes(service.id)?'embedReady':'embedNeedsConsent';
   const name=typeof service.name==='string'?service.name:service.name?.[settings.siteLanguage]||service.name?.[settings.defaultLocale]||service.id;
-  const notice=root.querySelector('[data-oembed-notice]');if(notice)notice.textContent=(settings.ui?.[key]||key).replace('{service}',name);
+  const notice=root.querySelector('[data-oembed-notice]');if(notice){notice.hidden=key==='embedLoaded';notice.textContent=(settings.ui?.[key]||key).replace('{service}',name);}
 }
 export function trustedProviderEmbed(data,service,document) {
   if(!data||String(data.version)!=='1.0'||!['rich','video','photo','link'].includes(data.type))throw new Error('Invalid oEmbed metadata');
   const origins=service.embedOrigins || [new URL(service.backendUrl).origin];
   const safe=value=>{const url=new URL(value);if(url.protocol!=='https:'||!origins.includes(url.origin)||url.username||url.password)throw new Error('Untrusted embed origin');return url.href;};
-  if(data.type==='photo'){const img=document.createElement('img');img.src=safe(data.url);img.alt=data.title||'';img.loading='lazy';img.style.cssText='max-width:100%;height:auto';return img;}
+  if(data.type==='photo'){const img=document.createElement('img');img.src=safe(data.url);img.alt=data.title||'';img.loading='lazy';img.style.cssText='width:100%;max-width:100%;height:auto';return reservePhotoDimensions(img,data);}
   const container=document.createElement('div');container.className='oembed-content';
   const template=document.createElement('template');template.innerHTML=data.html||'';
   const tags=new Set(['IFRAME','BLOCKQUOTE','DIV','SECTION','A','P','SPAN','BR','STRONG','EM']);
@@ -52,7 +60,7 @@ export function trustedEmbed(data,origin,document) {
   if(!data||String(data.version)!=='1.0'||!['rich','video','photo'].includes(data.type))throw new Error('Invalid oEmbed metadata');
   const safe=value=>{const url=new URL(value);if(url.protocol!=='https:'||url.origin!==origin||url.username||url.password)throw new Error('Untrusted embed origin');return url.href;};
   if(data.type==='photo'){
-    const image=document.createElement('img');image.src=safe(data.url);image.alt=typeof data.title==='string'?data.title.slice(0,500):'';image.loading='lazy';image.style.cssText='display:block;max-width:100%;height:auto;';return image;
+    const image=document.createElement('img');image.src=safe(data.url);image.alt=typeof data.title==='string'?data.title.slice(0,500):'';image.loading='lazy';image.style.cssText='display:block;width:100%;max-width:100%;height:auto;';return reservePhotoDimensions(image,data);
   }
   if(typeof data.html!=='string'||data.html.length>32768)throw new Error('Invalid embed HTML');
   const template=document.createElement('template');template.innerHTML=data.html;

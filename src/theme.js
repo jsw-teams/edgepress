@@ -18,14 +18,14 @@ function escapeHtml(value) {
   })[char]);
 }
 
-function navigationItems(config, locale, items, currentPath = '') {
+function navigationItems(config, locale, items, currentPath = '', scope = 'primary') {
   const values = items.length ? items : [
     { key: 'home', url: '@home' },
     { key: 'archives', url: '@archives' },
     { key: 'search', url: '@search' },
     { key: 'feed', url: '@feed' }
   ];
-  return values.map((item) => {
+  return values.map((item, index) => {
     const path = item.url === '@home' ? localizedUrl(config, locale, '') :
       item.url === '@archives' ? localizedUrl(config, locale, 'archives/') :
         item.url === '@feed' ? localizedUrl(config, locale, 'feed.xml') :
@@ -42,7 +42,7 @@ function navigationItems(config, locale, items, currentPath = '') {
           child.url.startsWith('/') ? localizedUrl(config, locale, child.url) : child.url,
         label: child.labels?.[locale] ?? child.labels?.[config.i18n.defaultLocale] ?? translate(config, locale, child.key), target:child.target
       }))];
-      return '<span class="navigation-select" hidden>' + icon + '<select data-navigation-select aria-label="' + escapeHtml(label) + '">' +
+      return '<span class="navigation-select" hidden>' + icon + '<select name="edgepress-navigation-' + scope + '-' + index + '" data-navigation-select aria-label="' + escapeHtml(label) + '">' +
         '<option value="" selected disabled hidden>' + escapeHtml(label) + '</option>' +
         choices.map(choice => '<option value="' + escapeHtml(choice.path) + '"'+(choice.target==='_blank'?' data-target="_blank"':'')+'>' + escapeHtml(choice.label) + '</option>').join('') +
         '</select></span><noscript>' + choices.map(choice => '<a href="' + escapeHtml(choice.path) + '"'+(choice.target==='_blank'?' target="_blank" rel="noopener noreferrer"':'')+'>' + escapeHtml(choice.label) + '</a>').join('') + '</noscript>';
@@ -145,7 +145,7 @@ export async function renderLayout(config, extensions, page, body) {
       footerCopyClass: componentClass(Boolean(config.site.footer), 'footer-copy'),
       footerNavigationClass: componentClass(config.site.components.footerNavigation && config.site.footerNavigation.length, 'footer-navigation'),
       primaryNavigationHtml: navigationItems(config, locale, config.site.navigation, page.urlPath || localizedUrl(config, locale, '')),
-      footerNavigationHtml: navigationItems(config, locale, config.site.footerNavigation),
+      footerNavigationHtml: navigationItems(config, locale, config.site.footerNavigation, '', 'footer'),
       localeLinksHtml,
       stylesheet,
       homePath: localizedUrl(config, locale, ''),

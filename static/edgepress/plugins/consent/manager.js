@@ -71,6 +71,7 @@ function initialize(config) {
     toggle.className = 'privacy-service-toggle';
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
+    checkbox.name = 'edgepress-consent-' + integration.id;
     checkbox.value = integration.id;
     checkbox.setAttribute('role', 'switch');
     checkbox.checked = false;
