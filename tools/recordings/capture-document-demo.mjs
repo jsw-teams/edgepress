@@ -39,7 +39,7 @@ const browser = await chromium.connectOverCDP('http://127.0.0.1:9222');
 const pause = milliseconds => new Promise(done => setTimeout(done, milliseconds));
 const entries = [];
 try {
-  for (const locale of ['en', 'zh-SG', 'zh-TW']) {
+  for (const locale of (process.env.RECORDING_LOCALES || 'en,zh-SG,zh-TW').split(',')) {
     const rows = [...files.keys()].map(name => ({ columns: 1, cells: [[{ type: 'document', title: name, src: '/documents/doc-views/' + name }]] }));
     const body = '<h1>doc-views</h1>' + await renderBlocks(rows, { config, locale });
     const html = rewriteAssetLinks(await renderLayout(config, extensions, { title: 'doc-views', locale, urlPath: '/document-demo/' }, body), bundle.urlMap);
@@ -75,7 +75,21 @@ try {
         await pointAt(page, preview); await pause(300); await preview.click();
         await block.locator('iframe').waitFor();
         const frame = block.frameLocator('iframe');
-        if (index === 1) await frame.getByText('Document preview page one', { exact: true }).waitFor();
+        if (index === 1) {
+          await frame.getByText('Document preview page one', { exact: true }).waitFor();
+          const painted = await frame.locator('.pdf-page img').evaluate(image => {
+            const canvas = document.createElement('canvas');
+            canvas.width = image.naturalWidth;
+            canvas.height = image.naturalHeight;
+            canvas.getContext('2d').drawImage(image, 0, 0);
+            const pixels = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+            let ink = 0;
+            for (let offset = 0; offset < pixels.length; offset += 4) if (pixels[offset] < 128 && pixels[offset + 3]) ink++;
+            return { ink, width: canvas.width, height: canvas.height };
+          });
+          console.log('PDF canvas: ' + JSON.stringify(painted));
+          assert.ok(painted.ink > 100, 'The recorded PDF must paint visible content');
+        }
         if (index === 2) await frame.getByText('First slide: 中文', { exact: true }).waitFor();
         if (index === 3) await frame.getByText('PowerPoint preview 中文', { exact: true }).waitFor();
         if (index === 4) await frame.getByText('Revenue', { exact: true }).waitFor();
