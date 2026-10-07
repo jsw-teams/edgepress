@@ -43,7 +43,7 @@ try {
       const file = original.replace(/\.woff2$/, '.' + sha256.slice(0, 16) + '.woff2');
       assets.set(file, bytes);
       files.push({file, sha256, bytes: bytes.length});
-      css = css.replaceAll('./files/' + original, './' + file);
+      css = css.replaceAll('./files/' + original, '/edgepress/fonts/' + file);
     }
     stylesheet += css + '\n';
     const license = id + '-OFL.txt';

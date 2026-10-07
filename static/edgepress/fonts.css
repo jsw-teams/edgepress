@@ -1,4 +1,4 @@
-@import url('./fonts/faces.css');
+@import url('/edgepress/fonts/faces.css');
 
 /* Each face has a unicode-range: only characters present on a page load fonts. */
 :root{
