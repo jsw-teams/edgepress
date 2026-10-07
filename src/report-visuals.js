@@ -134,7 +134,13 @@ async function startHeadlessBrowser(executable, profile) {
       const loaded = waitFor('Page.loadEventFired');
       const result = await send('Page.navigate', { url });
       if (result.errorText) throw new Error('Could not load screenshot page: ' + result.errorText);
-      await withTimeout(loaded, 20000, 'Screenshot page load timed out');
+      try { await withTimeout(loaded, 20000, 'Screenshot page load timed out: ' + url); }
+      catch (error) {
+        // Chromium can omit loadEventFired after navigation to an already loaded URL.
+        const state=await send('Runtime.evaluate',{expression:'JSON.stringify({url:location.href,state:document.readyState})',returnByValue:true});
+        const document=JSON.parse(state.result.value||'{}');
+        if(document.url!==url||document.state!=='complete')throw error;
+      }
       await send('Runtime.evaluate', { expression: 'new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 150)))', awaitPromise: true });
     };
     const screenshot = async ({ hideConsent = false, clipSelector = '' } = {}) => {
@@ -437,6 +443,10 @@ export async function addVisualEvidence(config, report) {
   const pdfPath = resolve(root, 'page-check.pdf');
   let reportServer;
   let browserSession;
+  const browserSessions=[];
+  const runInBrowsers=async(items,task)=>Promise.all(browserSessions.map(async(session,worker)=>{
+    for(let index=worker;index<items.length;index+=browserSessions.length)await task(session,items[index],index);
+  }));
   try {
     await mkdir(evidenceDirectory, { recursive: true });
     const evidenceInfo = await lstat(evidenceDirectory);
@@ -501,21 +511,30 @@ export async function addVisualEvidence(config, report) {
       }
     }
     reportServer = await startReportServer(config.resolvedPaths.output, evidenceDirectory, htmlPath);
-    browserSession = await startHeadlessBrowser(browser, profile);
+    for(let worker=0;worker<Math.min(3,available.length||1);worker++){
+      const browserProfile=resolve(profile,'browser-'+worker);await mkdir(browserProfile);
+      browserSessions.push(await startHeadlessBrowser(browser,browserProfile));
+    }
+    browserSession=browserSessions[0];
     let reviewed=0;
-    for (const relativeFile of available) {
+    const pageResults=new Array(available.length);
+    await runInBrowsers(available,async(browserSession,relativeFile,index)=>{
+      const results=[];
       for (const device of deviceProfiles) for (const colorScheme of ['light', 'dark']) {
         const emulation = { ...device, colorScheme };
         await browserSession.setViewport(emulation);
         await browserSession.navigate('http://127.0.0.1:' + reportServer.port + siteAddress(relativeFile));
         const result = { page: relativeFile, profile: device.name, colorScheme, ...await browserSession.audit(emulation) };
-        report.browserChecks.results.push(result);
-        for (const check of result.checks.filter(item => !item.passed)) {
-          report.issues.push({ severity: 'error', category: 'browser-' + check.group, page: relativeFile,
-            message: device.name + '/' + colorScheme + ': ' + check.name + (check.detail ? ' (' + check.detail + ')' : '') + '.' });
-        }
+        results.push(result);
       }
+      pageResults[index]=results;
+      report.browserChecks.results=pageResults.filter(Boolean).flat();
       reviewed+=1;if(reviewed%25===0||reviewed===available.length)console.log('Browser checks: '+reviewed+'/'+available.length+' pages');
+    });
+    report.browserChecks.results=pageResults.flat();
+    for(const result of report.browserChecks.results)for(const check of result.checks.filter(item=>!item.passed)){
+      report.issues.push({severity:'error',category:'browser-'+check.group,page:result.page,
+        message:result.profile+'/'+result.colorScheme+': '+check.name+(check.detail?' ('+check.detail+')':'')+'.'});
     }
     report.browserChecks.status = report.browserChecks.results.every(result => result.status === 'pass') ? 'pass' : 'fail';
     if (!report.browserChecks.results.length) {
@@ -523,7 +542,7 @@ export async function addVisualEvidence(config, report) {
       report.browserChecks.reason = 'No generated pages were available for browser checks.';
     }
     let captured=0;
-    for (const screenshot of screenshots) {
+    await runInBrowsers(screenshots,async(browserSession,screenshot)=>{
       const viewport = screenshot.viewport === 'mobile' ? mobile : desktop;
       await browserSession.setViewport(viewport);
       await browserSession.navigate('http://127.0.0.1:' + reportServer.port + siteAddress(screenshot.page));
@@ -555,7 +574,7 @@ export async function addVisualEvidence(config, report) {
       if (!image) {
         report.issues.push({ severity: 'error', category: screenshot.capture === 'consent' ? 'consent-ui' : 'visual-evidence',
           page: screenshot.page, message: 'The requested screenshot area was not present in the browser.' });
-        continue;
+        return;
       }
       await writeFile(screenshot.target, image);
       const imageInfo = await lstat(screenshot.target);
@@ -573,7 +592,7 @@ export async function addVisualEvidence(config, report) {
           message: 'Page content width is ' + dimensions.pageDocumentWidth + ' CSS pixels for a ' + dimensions.viewportWidth + ' pixel viewport; consent UI is measured separately.' });
       }
       captured+=1;if(captured%50===0||captured===screenshots.length)console.log('Report screenshots: '+captured+'/'+screenshots.length);
-    }
+    });
     if (report.consentUi?.visualChecks) {
       const visualChecks = report.consentUi.visualChecks;
       report.consentUi.checks += visualChecks.length;
@@ -616,7 +635,7 @@ export async function addVisualEvidence(config, report) {
     await writeFile(pdfPath, pdf);
     return report.visualEvidence;
   } finally {
-    if (browserSession) await browserSession.close();
+    await Promise.allSettled(browserSessions.map(session=>session.close()));
     if (reportServer) await new Promise((resolveClose) => reportServer.server.close(resolveClose));
     await rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 250 });
   }
