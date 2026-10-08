@@ -59,6 +59,9 @@ try {
     await first.scrollIntoViewIfNeeded();
     await record(page, 'doc-views-' + locale.toLowerCase(), async () => {
       await pause(2500);
+      const zoom = first.getByRole('button', { name: locale === 'en' ? 'Zoom in' : '放大', exact: true });
+      await pointAt(page, zoom); await zoom.click(); await pause(1000);
+      await first.getByRole('button', { name: locale === 'en' ? 'Fit width' : locale === 'zh-SG' ? '适合宽度' : '符合寬度', exact: true }).click(); await pause(600);
       await pointAt(page, first.locator('.document-viewer button').nth(1));
       await first.locator('.document-viewer button').nth(1).click();
       for (const index of [1, 2, 3, 4, 5, 6]) {
@@ -99,7 +102,14 @@ try {
           await frame.getByText('Agenda', { exact: true }).waitFor();
           await pause(2200);
         }
-        if (index === 5) { const summary = block.getByRole('tab', { name: 'Summary', exact: true }); await pointAt(page, summary); await summary.click(); await frame.getByText('Metric', { exact: true }).waitFor(); await pause(2200); }
+        if (index === 5) {
+          const address = block.locator('.document-viewer-formula input');
+          await pointAt(page, address); await address.fill('A90'); await address.press('Enter');
+          const cell = frame.locator('[data-row="89"][data-column="0"]');
+          await cell.waitFor(); await pointAt(page, cell); await cell.click(); await pause(1800);
+          const summary = block.getByRole('tab', { name: 'Summary', exact: true });
+          await pointAt(page, summary); await summary.click(); await frame.getByText('Metric', { exact: true }).waitFor(); await pause(2200);
+        }
         const close = block.locator('.document-viewer button').nth(1);
         await pointAt(page, close); await close.click(); await pause(400);
       }

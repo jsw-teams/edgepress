@@ -193,7 +193,7 @@ export async function renderLayout(config, extensions, page, body) {
     if (filtered.includes('data-media-service')) scripts.push('<script defer src="/edgepress/services-consent.js"></script>');
   }
   if (/data-edgepress-document(?:\s|=|>)/i.test(filtered)) {
-    const keys = ['preview', 'close', 'loading', 'error', 'page', 'sheet', 'limited'];
+    const keys = ['preview', 'close', 'loading', 'error', 'page', 'sheet'];
     const labels = Object.fromEntries(keys.map(key => [key, translate(config, locale, 'documentViewer' + key[0].toUpperCase() + key.slice(1))]));
     filtered = filtered.replace(/<\/head\s*>/i, '<link rel="stylesheet" href="/edgepress/document-viewer/styles.css"></head>');
     scripts.push('<script id="edgepress-document-viewer-config" type="application/json">' + JSON.stringify(labels).replace(/</g, '\\u003c') + '</script><script type="module" src="/edgepress/document-viewer.js"></script>');

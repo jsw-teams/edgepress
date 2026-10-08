@@ -5,7 +5,6 @@
   "documentViewerError": "Preview unavailable. Check the file, access and CORS settings.",
   "documentViewerPage": "Page",
   "documentViewerSheet": "Worksheet",
-  "documentViewerLimited": "Preview is limited to 1,000 rows and 100 columns per worksheet.",
   "home": "Home",
   "archives": "Journal",
   "noPosts": "No posts yet",

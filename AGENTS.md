@@ -3,6 +3,7 @@
 ## Cloud synchronization and document previews
 
 - Pages document elements use continuous separated pages; Pages media-viewer elements reuse the shared gallery and lazily imported player. Never copy either engine, preload nonselected attachments or enable scripts in document frames.
+- Render each document title once in the reusable viewer, not again in its surrounding block. Preserve read-only controls and complete windowed worksheet access; never reintroduce arbitrary row/column truncation.
 
 - Native WebMCP is progressive enhancement: detect document.modelContext, register only real page capabilities, silently skip unsupported browsers and remove tools on pagehide. Keep tools top-level, same-origin navigation bounded to existing links, document controls behind their current consent gates, no downloads or iframe injection. Do not fake browser APIs, enable sandbox scripts, or modify Cloudflare security settings to silence logs.
 

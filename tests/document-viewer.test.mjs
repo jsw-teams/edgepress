@@ -33,6 +33,7 @@ test('articles and Pages share inline document previews, escaping, no download l
     assert.match(html, /data-document-format="docx"/);
     assert.doesNotMatch(html, /Download original|<a\b/);
     assert.match(html, /data-document-mount/);
+    assert.doesNotMatch(html, /<figcaption>/);
     assert.doesNotMatch(html, /<iframe|<p>\s*<figure/);
   }
   for (const example of ['`' + source + '`', '```md\n' + source + '\n```', '\\' + source]) {

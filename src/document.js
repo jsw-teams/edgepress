@@ -37,8 +37,8 @@ export function renderDocument(block, { config, locale }) {
   if (service?.enabled === false) return '<figure class="document-block"><figcaption>' + escape(title) + '</figcaption><p>' + unavailable + '</p></figure>';
   const caption = block.caption ? '<p>' + escape(block.caption) + '</p>' : '';
   const consent = service ? '<p>' + escape(translateValue(config, locale, service.purpose)) + '</p><button type="button" data-service-consent-settings>' + escape(translate(config, locale, 'privacySettings')) + '</button>' : '';
-  return '<figure class="document-block" data-edgepress-document data-document-src="' + escape(block.src) + '" data-document-title="' + escape(title) + '" data-document-format="' + format + '"' +
+  return '<figure class="document-block" aria-label="' + escape(title) + '" data-edgepress-document data-document-src="' + escape(block.src) + '" data-document-title="' + escape(title) + '" data-document-format="' + format + '"' +
     (block.previewSrc ? ' data-document-preview="' + escape(block.previewSrc) + '"' : '') +
-    (service ? ' data-document-service="' + escape(service.id) + '"' : '') + '><figcaption>' + escape(title) + '</figcaption>' + consent +
+    (service ? ' data-document-service="' + escape(service.id) + '"' : '') + '>' + consent +
     '<div data-document-mount><p>' + escape(translate(config, locale, 'documentViewerLoading')) + '</p></div><noscript><p>' + unavailable + '</p></noscript>' + caption + '</figure>';
 }

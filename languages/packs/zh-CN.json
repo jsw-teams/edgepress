@@ -5,7 +5,6 @@
   "documentViewerError": "无法预览。请检查文件、访问权限和跨域设置。",
   "documentViewerPage": "页码",
   "documentViewerSheet": "工作表",
-  "documentViewerLimited": "每个工作表最多预览 1,000 行、100 列。",
   "home": "首页",
   "archives": "见闻",
   "noPosts": "还没有文章",
