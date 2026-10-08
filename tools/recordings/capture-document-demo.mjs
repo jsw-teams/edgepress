@@ -59,6 +59,9 @@ try {
     await first.scrollIntoViewIfNeeded();
     await record(page, 'doc-views-' + locale.toLowerCase(), async () => {
       await pause(2500);
+      const expand = first.locator('.document-viewer-expand');
+      await pointAt(page, expand); await expand.click(); await pause(1800);
+      await pointAt(page, expand); await expand.click(); await pause(600);
       const zoom = first.getByRole('button', { name: locale === 'en' ? 'Zoom in' : '放大', exact: true });
       await pointAt(page, zoom); await zoom.click(); await pause(1000);
       await first.getByRole('button', { name: locale === 'en' ? 'Fit width' : locale === 'zh-SG' ? '适合宽度' : '符合寬度', exact: true }).click(); await pause(600);
@@ -108,7 +111,7 @@ try {
           const cell = frame.locator('[data-row="89"][data-column="0"]');
           await cell.waitFor(); await pointAt(page, cell); await cell.click(); await pause(1800);
           const summary = block.getByRole('tab', { name: 'Summary', exact: true });
-          await pointAt(page, summary); await summary.click(); await frame.getByText('Metric', { exact: true }).waitFor(); await pause(2200);
+          await pointAt(page, summary); await summary.click(); await frame.getByText('595500', { exact: true }).waitFor(); await pause(2200);
         }
         const close = block.locator('.document-viewer button').nth(1);
         await pointAt(page, close); await close.click(); await pause(400);
