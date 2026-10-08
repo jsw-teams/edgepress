@@ -103,6 +103,10 @@ test('hashed EdgePress viewer previews shared URLs inline only after current con
   try {
     const context = await browser.newContext({ viewport: { width: 320, height: 850 } });
     const page = await context.newPage();
+    await page.addInitScript(() => {
+      window.documentTools = {};
+      Object.defineProperty(document, 'modelContext', { value: { registerTool(tool) { window.documentTools[tool.name] = tool; } } });
+    });
     const errors = [];
     let loads = 0;
     page.on('pageerror', error => errors.push(error.message));
@@ -124,6 +128,10 @@ test('hashed EdgePress viewer previews shared URLs inline only after current con
     await page.getByRole('button', { name: 'Preview document', exact: true }).waitFor();
     assert.equal(loads, 0);
     await page.evaluate(() => document.querySelector('.document-viewer button').click());
+    assert.equal(loads, 0);
+    assert.equal(await page.locator('iframe').count(), 0);
+    await page.waitForFunction(() => window.documentTools.edgepress_control_document);
+    await page.evaluate(() => window.documentTools.edgepress_control_document.execute({ document: '1', action: 'open' }));
     assert.equal(loads, 0);
     assert.equal(await page.locator('iframe').count(), 0);
     await page.evaluate(async choiceUrl => {

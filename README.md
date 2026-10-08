@@ -1,5 +1,7 @@
 # EdgePress
 
+EdgePress automatically registers page-specific native WebMCP tools for reading visible page content, navigating existing same-origin page links and using available document-preview controls. It uses `document.modelContext` only when supported; otherwise it silently does nothing. No Cloudflare bridge, polyfill, AI provider request or script injection into document frames is needed. Document tools invoke the existing UI without bypassing consent or enabling downloads. Disable Cloudflare’s `webmcp_enabled` injection to avoid duplicate bridges; this is independent of WAF or bot protection.
+
 Document previews use the browser-only `document-viewer` package: PDF, DOC/DOCX, PPT/PPTX and XLS/XLSX render inside the page automatically without moving keyboard focus. Articles accept `!document[Report](/documents/report.docx)`; Pages support `type: document`. Remote direct-file URLs require a configured consent service and CORS. See the theme-development guide.
 
 The dependency is pinned to a full commit in the public [document-viewer repository](https://github.com/jsw-teams/document-viewer). Cloud `npm ci` needs no sibling checkout, bundled source snapshot or Office conversion software. Publish and validate document-viewer first, then update the dependency URL and lockfile here. Sites can consume the resulting pinned EdgePress commit without copying either implementation.

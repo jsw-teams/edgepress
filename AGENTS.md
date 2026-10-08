@@ -2,6 +2,8 @@
 
 ## Cloud synchronization and document previews
 
+- Native WebMCP is progressive enhancement: detect document.modelContext, register only real page capabilities, silently skip unsupported browsers and remove tools on pagehide. Keep tools top-level, same-origin navigation bounded to existing links, document controls behind their current consent gates, no downloads or iframe injection. Do not fake browser APIs, enable sandbox scripts, or modify Cloudflare security settings to silence logs.
+
 - Before editing or pushing, fetch origin and inspect incoming commits. Preserve local-only changes in a backup outside the checkout before resolving conflicts. Fast-forward clean checkouts; never force-push or overwrite another contributor's work.
 - Keep document preview code in the canonical document-viewer repository. Pin a published full GitHub commit and synchronize package-lock.json; do not copy the engine or rely on sibling checkouts or conversion software.
 - Document previews open automatically without moving focus. External document URLs still require current per-service consent and CORS before requests. Do not expose original-download links or legacy PPT warning notes in the UI. Preserve script-disabled isolation, local workers, immutable dependency hashes and technical renderer boundaries in source documentation.
