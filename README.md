@@ -1,6 +1,6 @@
 # EdgePress
 
-Document previews use the browser-only `document-viewer` package: PDF, DOC/DOCX, PPT/PPTX and XLS/XLSX render inside the page on explicit preview. Articles accept `!document[Report](/documents/report.docx)`; Pages support `type: document`. Remote direct-file URLs require a configured consent service and CORS. Legacy PPT uses a project-owned, watermark-free basic renderer with documented fidelity limits. See the theme-development guide.
+Document previews use the browser-only `document-viewer` package: PDF, DOC/DOCX, PPT/PPTX and XLS/XLSX render inside the page automatically without moving keyboard focus. Articles accept `!document[Report](/documents/report.docx)`; Pages support `type: document`. Remote direct-file URLs require a configured consent service and CORS. See the theme-development guide.
 
 The dependency is pinned to a full commit in the public [document-viewer repository](https://github.com/jsw-teams/document-viewer). Cloud `npm ci` needs no sibling checkout, bundled source snapshot or Office conversion software. Publish and validate document-viewer first, then update the dependency URL and lockfile here. Sites can consume the resulting pinned EdgePress commit without copying either implementation.
 

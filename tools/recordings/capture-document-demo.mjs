@@ -18,7 +18,7 @@ const { collectAssets, rewriteAssetLinks } = await import(pathToFileURL(engine.r
 const { createExtensions } = await import(pathToFileURL(engine.resolve('edgepress/src/plugin-api.js')));
 const { renderBlocks } = await import(pathToFileURL(engine.resolve('edgepress/src/page-blocks.js')));
 const { renderLayout } = await import(pathToFileURL(engine.resolve('edgepress/src/theme.js')));
-const names = ['sample-document-medium.docx', 'sample-document-medium.doc', 'report.pdf', 'sample-document.ppt', 'sample-presentation-10-slides.pptx', 'sample-spreadsheet-100-rows.xlsx', 'sample-spreadsheet-100-rows.xls'];
+const names = ['sample-document-medium.docx', 'sample-document-medium.doc', 'sample-document-5-pages.pdf', 'sample-document.ppt', 'sample-presentation-10-slides.pptx', 'sample-spreadsheet-100-rows.xlsx', 'sample-spreadsheet-100-rows.xls'];
 const files = new Map(await Promise.all(names.map(async name => [name, await readFile(resolve(documents, name))])));
 const config = await loadConfig(site);
 await loadLanguagePacks(config);
@@ -55,7 +55,6 @@ try {
     await page.goto(config.site.url + '/document-demo/');
     await page.locator('.privacy-reject').click();
     const first = page.locator('.document-block').first();
-    await first.locator('.document-viewer button').first().click();
     await first.frameLocator('iframe').getByText('Sample Business Document', { exact: true }).waitFor();
     await first.scrollIntoViewIfNeeded();
     await record(page, 'doc-views-' + locale.toLowerCase(), async () => {
@@ -64,13 +63,11 @@ try {
       await first.locator('.document-viewer button').nth(1).click();
       for (const index of [1, 2, 3, 4, 5, 6]) {
         const block = page.locator('.document-block').nth(index);
-        const preview = block.locator('.document-viewer button').first();
-        await pointAt(page, preview); await pause(300); await preview.click();
         await block.locator('iframe').waitFor();
         const frame = block.frameLocator('iframe');
         if (index === 1) await frame.locator('body').filter({ hasText: 'Sample Business Document' }).waitFor();
         if (index === 2) {
-          await frame.getByText('Document preview page one', { exact: true }).waitFor();
+          await frame.getByText('Sample Business Document', { exact: true }).waitFor();
           const painted = await frame.locator('.pdf-page img').evaluate(image => {
             const canvas = document.createElement('canvas');
             canvas.width = image.naturalWidth;
@@ -87,10 +84,19 @@ try {
         if ([3, 4].includes(index)) await frame.getByText('Sample Presentation', { exact: true }).waitFor();
         if ([5, 6].includes(index)) await frame.getByText('Order ID', { exact: true }).waitFor();
         await block.scrollIntoViewIfNeeded(); await pause(2200);
-        if ([2, 3].includes(index)) {
+        if (index === 2) {
+          const controls = block.locator('.document-viewer-controls');
+          for (let number = 2; number <= 8; number++) {
+            const next = controls.locator('button').last();
+            await pointAt(page, next); await next.click();
+            await controls.locator('[aria-live]').filter({ hasText: new RegExp(' ' + number + ' / 8$') }).waitFor();
+            await pause(1600);
+          }
+        }
+        if (index === 3) {
           const next = block.locator('.document-viewer-controls button').last();
           await pointAt(page, next); await next.click();
-          await frame.getByText(index === 2 ? 'Document preview page two' : 'Agenda', { exact: true }).waitFor();
+          await frame.getByText('Agenda', { exact: true }).waitFor();
           await pause(2200);
         }
         if (index === 5) { const summary = block.getByRole('tab', { name: 'Summary', exact: true }); await pointAt(page, summary); await summary.click(); await frame.getByText('Metric', { exact: true }).waitFor(); await pause(2200); }
@@ -99,7 +105,7 @@ try {
       }
     });
     assert.deepEqual(errors, []);
-    entries.push(...(await closeRecording(context, { artifact, output })).map(entry => ({ ...entry, kind: 'FFmpeg recording of actual Chromium in an isolated WSL2 desktop; operator-supplied Office samples and original PDF fixture', source: 'edgepress/tools/recordings/capture-document-demo.mjs' })));
+    entries.push(...(await closeRecording(context, { artifact, output })).map(entry => ({ ...entry, kind: 'FFmpeg recording of actual Chromium in an isolated WSL2 desktop; automatically opened operator-supplied Office and eight-page PDF samples; no original-download links', source: 'edgepress/tools/recordings/capture-document-demo.mjs' })));
   }
 } finally { await browser.close(); }
 await writeFile(resolve(artifact, 'document-demo.json'), JSON.stringify(entries, null, 2) + '\n');

@@ -20,7 +20,7 @@ async function configuration() {
   return config;
 }
 
-test('articles and Pages share explicit document previews, escaping, fallback links and inert code examples', async () => {
+test('articles and Pages share inline document previews, escaping, no download links and inert code examples', async () => {
   const config = await configuration();
   const renderer = (await createExtensions(config)).renderer('.md');
   const context = { config, locale: 'en' };
@@ -31,7 +31,8 @@ test('articles and Pages share explicit document previews, escaping, fallback li
   for (const html of [post, text, block]) {
     assert.match(html, /data-edgepress-document/);
     assert.match(html, /data-document-format="docx"/);
-    assert.match(html, /Download original/);
+    assert.doesNotMatch(html, /Download original|<a\b/);
+    assert.match(html, /data-document-mount/);
     assert.doesNotMatch(html, /<iframe|<p>\s*<figure/);
   }
   for (const example of ['`' + source + '`', '```md\n' + source + '\n```', '\\' + source]) {

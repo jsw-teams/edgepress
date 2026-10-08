@@ -5,14 +5,13 @@ const labels = JSON.parse(document.getElementById('edgepress-document-viewer-con
 const settings = JSON.parse(document.getElementById('edgepress-privacy-config')?.textContent || '{}');
 const viewers = new Map();
 
-function allowed(root, prompt = false) {
+function allowed(root) {
   const id = root.dataset.documentService;
   const origins = [root.dataset.documentSrc, root.dataset.documentPreview].filter(Boolean).map(source => new URL(source, document.baseURI).origin);
   if (!id) return origins.every(origin => origin === location.origin);
   const service = settings.privacy?.integrations?.find(item => item.id === id);
   const permitted = service?.backendUrl ? [location.origin, new URL(service.backendUrl).origin, ...(service.csp?.['connect-src'] || [])] : [];
   if (service?.provider === 'external-api' && service.enabled !== false && origins.every(origin => permitted.includes(origin)) && readChoice(settings)?.allowed.includes(id)) return true;
-  if (prompt) document.dispatchEvent(new CustomEvent('edgepress:privacy-open'));
   return false;
 }
 
@@ -21,7 +20,7 @@ for (const root of document.querySelectorAll('[data-edgepress-document]')) {
   const viewer = mountDocument(root.querySelector('[data-document-mount]'), {
     src: root.dataset.documentSrc, previewSrc: root.dataset.documentPreview,
     title: root.dataset.documentTitle, format: root.dataset.documentFormat,
-    locale: document.documentElement.lang, labels, canLoad: () => allowed(root, true)
+    locale: document.documentElement.lang, labels, canLoad: () => allowed(root)
   });
   viewers.set(root, viewer);
 }

@@ -96,7 +96,7 @@ blocks:
   - columns: 1
     cells:
       - - type: text
-          text: "Documents use the browser-only document-viewer library. PDF, DOC/DOCX, PPT/PPTX and XLS/XLSX render on demand without cloud conversion software. Legacy PPT uses a project-owned, watermark-free basic parser and renderer; animations, charts and some complex drawing features are unsupported. Office layouts are approximate; macros and external document resources are blocked."
+          text: "Documents use the browser-only document-viewer library. PDF, DOC/DOCX, PPT/PPTX and XLS/XLSX open automatically without cloud conversion software. Office layouts are approximate; macros and external document resources are blocked."
         - type: code
           title: Document block
           language: yaml

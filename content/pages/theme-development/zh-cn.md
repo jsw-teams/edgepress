@@ -7,7 +7,7 @@ blocks:
   - columns: 1
     cells:
       - - type: text
-          text: "文档通过纯浏览器 document-viewer 按需预览，支持 PDF、DOC/DOCX、PPT/PPTX 和 XLS/XLSX。云端构建无需安装 Office 或 LibreOffice。旧版 PPT 使用本项目自写、无水印的基础解析和渲染器，暂不支持动画、图表及部分复杂绘图效果。预览不保证 Office 排版完全一致，不执行宏，也不加载文档内外部资源。"
+          text: "文档通过纯浏览器 document-viewer 自动预览，支持 PDF、DOC/DOCX、PPT/PPTX 和 XLS/XLSX。云端构建无需安装 Office 或 LibreOffice。预览不保证 Office 排版完全一致，不执行宏，也不加载文档内外部资源。"
         - type: code
           title: 文档区块
           language: yaml
