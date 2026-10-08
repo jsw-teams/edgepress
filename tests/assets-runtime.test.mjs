@@ -7,6 +7,35 @@ import {fileURLToPath} from 'node:url';
 import {loadConfig} from '../src/config.js';
 import {collectAssets,writeAssets} from '../src/assets.js';
 
+test('large dependency graphs stay within static header budgets without caching mutable metadata', async () => {
+  const directory = await mkdtemp(resolve(tmpdir(), 'edgepress-header-budget-'));
+  try {
+    const files = Array.from({ length: 110 }, (_, index) => 'runtime/chunk-' + index + '.0123456789abcdef.js');
+    files.push('runtime/metadata.json', 'images/cover.0123456789abcdef.webp', 'images/cover.webp');
+    await writeAssets({ existingHeaders: '/data/signal.json\n  Cache-Control: public, max-age=0, must-revalidate', assets: files.map(path => ({ path, content: Buffer.from('fixture') })) }, directory);
+    const headers = await readFile(resolve(directory, '_headers'), 'utf8');
+    assert.ok(headers.includes('/runtime/*.js\n  Cache-Control: public, max-age=31536000, immutable'));
+    assert.ok(!headers.includes('/runtime/*\n'));
+    assert.ok(!headers.includes('/images/*.webp\n'));
+    assert.ok(!headers.includes('/runtime/metadata.json\n'));
+    assert.ok(headers.split('\n').filter(line => line.startsWith('/')).length <= 100);
+    assert.match(headers, /\/data\/signal.json\n  Cache-Control: public, max-age=0, must-revalidate/);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test('unsafe nested mutable files prevent wildcard cache grouping and excessive custom headers fail locally', async () => {
+  const directory = await mkdtemp(resolve(tmpdir(), 'edgepress-header-rejection-'));
+  try {
+    const files = Array.from({ length: 90 }, (_, index) => 'runtime/chunk-' + index + '.0123456789abcdef.js');
+    files.push('runtime/mutable/config.js');
+    const bundle = { existingHeaders: '', assets: files.map(path => ({ path, content: Buffer.from('fixture') })) };
+    await writeAssets(bundle, directory);
+    assert.ok(!(await readFile(resolve(directory, '_headers'), 'utf8')).includes('/runtime/*.js'));
+    bundle.existingHeaders = Array.from({ length: 101 }, (_, index) => '/custom-' + index + '\n  X-Test: present').join('\n\n');
+    await assert.rejects(writeAssets(bundle, directory), /header rules exceed 100/);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
 test('a dependency-based site receives hashed core runtime and can retain explicit local overrides',async()=>{
   const directory=await mkdtemp(resolve(tmpdir(),'edgepress-runtime-'));
   try {

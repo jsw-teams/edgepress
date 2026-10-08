@@ -1,5 +1,9 @@
 # EdgePress
 
+A static-site builder for independent writing, small websites and curious experiments. Keep content in plain files and use the host you already have.
+
+Curious about improving this project? Vibe Coding and AI-assisted contributions are welcome, with no tool restrictions. Start with [Contributing](CONTRIBUTING.md), follow [AGENTS.md](AGENTS.md), and share a small, understandable change with reproducible tests. [Report a bug or idea](https://github.com/jsw-teams/edgepress/issues/new/choose) · [Security](SECURITY.md) · [License](LICENSE).
+
 EdgePress automatically registers page-specific native WebMCP tools for reading visible page content, navigating existing same-origin page links and using available document-preview controls. It uses `document.modelContext` only when supported; otherwise it silently does nothing. No Cloudflare bridge, polyfill, AI provider request or script injection into document frames is needed. Document tools invoke the existing UI without bypassing consent or enabling downloads. Disable Cloudflare’s `webmcp_enabled` injection to avoid duplicate bridges; this is independent of WAF or bot protection.
 
 Document previews use the browser-only `document-viewer` package: PDF, DOC/DOCX, PPT/PPTX and XLS/XLSX render inside the page automatically without moving keyboard focus. Articles accept `!document[Report](/documents/report.docx)`; Pages support `type: document`. Remote direct-file URLs require a configured consent service and CORS. See the theme-development guide.
@@ -44,6 +48,23 @@ The commands below install the published npm release and initialize a new projec
 Use Node.js 22.12 or newer. Set the real site URL and operator contact in config.yml before publishing. Deploy with edgepress deploy. When developing EdgePress itself, use `npm ci`, then `npm link` to expose the local CLI.
 
 Run `edgepress init` in a new project directory to scaffold a site pinned to the installed EdgePress release. The initializer keeps the existing package name and scripts.
+
+## External link prompts
+
+The optional local prompt shows the destination domain and lets the visitor return or continue. It makes no request to the destination before confirmation. Configure exact origins, not wildcard domains:
+
+```yaml
+site:
+  url: https://example.com
+  externalLinks:
+    enabled: true
+    trustedOrigins:
+      - https://notes.example.com
+```
+
+Site paths, anchors, mailto/tel links, downloads and modified/new-tab gestures keep their normal behavior. Ordinary `_blank` clicks show the prompt, then continue in a protected new tab. A trusted origin bypasses only this prompt, never service consent or CSP. Explicit `data-external-link-skip` is available on integration-owned OAuth/service navigation; it does not permit executable URL schemes. No redirect API, tracking or persistent preference is added. JavaScript-disabled browsers follow the original link normally. Theme variables and `--external-link-surface`, `--external-link-ink`, `--external-link-accent` customize the UI; labels use the normal language dictionaries.
+
+Large hashed dependency graphs automatically group safe immutable cache rules, never mutable metadata. The build rejects more than 100 static header rules locally instead of discovering the error while publishing. Build and dry-run checks do not authorize deployment.
 
 ## Everyday writing
 

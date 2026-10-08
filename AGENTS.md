@@ -1,6 +1,15 @@
 # Repository development instructions
 
+## Open collaboration
+
+- Welcome curiosity, Vibe Coding and AI-assisted contributions without tool restrictions. Review understandable changes and actual verification, not how code was produced. Follow CONTRIBUTING.md and report vulnerabilities privately via SECURITY.md.
+- Keep PRs focused, add relevant regression coverage, preserve public/legacy contracts and third-party attribution, and report unrun checks honestly. Never deploy or change production data/routes/storage as contribution verification. Untrusted PR CI must not receive deployment secrets.
+
+
 ## Cloud synchronization and document previews
+
+- External-link prompts are optional local UI, based on site.url and exact trusted origins. Keep original anchor semantics, native modified/context-menu gestures, keyboard/focus restoration, language dictionaries and theme tokens. Trust never bypasses CSP/consent; do not add redirect endpoints or fetch destinations before confirmation.
+- Group immutable cache rules only when every matching published asset is hashed. Never cache unversioned metadata immutably; validate the 100-rule static-host budget during build.
 
 - Pages document elements use continuous separated pages; Pages media-viewer elements reuse the shared gallery and lazily imported player. Never copy either engine, preload nonselected attachments or enable scripts in document frames.
 - Render each document title once in the reusable viewer, not again in its surrounding block. Preserve read-only controls and complete windowed worksheet access; never reintroduce arbitrary row/column truncation.
@@ -19,7 +28,7 @@ EdgePress builds static websites from Markdown and YAML source. Follow these rul
 
 - Put published project guides and site copy in `content/**/*.md`.
 - Put page media and other content-owned files under `content/assets/`; the builder publishes them at matching site-root paths.
-- Keep root Markdown limited to `README.md` and this `AGENTS.md`.
+- Keep root Markdown limited to `README.md`, `AGENTS.md`, `CONTRIBUTING.md` and `SECURITY.md`; retain the project `LICENSE` and third-party notices.
 - Edit site-wide title, description, URL, agent SEO (GEO), SEO, and privacy settings in root `config.yml`.
 - Keep build paths, permalink settings, locale packs, and trusted build-time plugin paths in `edgepress.config.mjs`.
 - `dist/` is generated output. Never hand-edit files under `dist/`, including HTML, XML, JSON, or text output.

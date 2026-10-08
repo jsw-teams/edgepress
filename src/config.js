@@ -5,6 +5,7 @@ import { basename, dirname, isAbsolute, relative, resolve, sep } from 'node:path
 import { pathToFileURL } from 'node:url';
 import { parse as parseYaml } from 'yaml';
 import {validateServiceCsp} from './consent-csp.js';
+import {linkOrigin} from '../static/edgepress/external-links-policy.js';
 
 const defaults = {
   site: {
@@ -15,6 +16,7 @@ const defaults = {
     author: { name: '', avatar: '' },
     archive: { categories: [] },
     navigation: [],
+    externalLinks: { enabled: false, trustedOrigins: [] },
     footerNavigation: [],
     footer: '',
     seo: { author: '', keywords: [], image: '', robots: 'index,follow' },
@@ -114,6 +116,11 @@ async function readSiteYaml(root) {
 }
 
 function validateSiteConfig(config) {
+  const externalLinks = config.site.externalLinks;
+  if (!externalLinks || typeof externalLinks !== 'object' || Array.isArray(externalLinks) || typeof externalLinks.enabled !== 'boolean' || !Array.isArray(externalLinks.trustedOrigins) || externalLinks.trustedOrigins.length > 100 || Object.keys(externalLinks).some(key => !['enabled', 'trustedOrigins'].includes(key))) throw new Error('site.externalLinks needs enabled and a trustedOrigins list');
+  if (externalLinks.trustedOrigins.some(origin => typeof origin !== 'string')) throw new Error('site.externalLinks.trustedOrigins must contain exact origins');
+  externalLinks.trustedOrigins = [...new Set(externalLinks.trustedOrigins.map(linkOrigin))];
+  if (externalLinks.enabled && !/^https?:\/\//i.test(config.site.url)) throw new Error('External link prompts need an HTTP(S) site.url');
   if (!config.site.seo || typeof config.site.seo !== 'object' || Array.isArray(config.site.seo)) throw new Error('site.seo must be an object');
   if (typeof config.site.footer !== 'string') throw new Error('site.footer must be a string');
   for (const field of ['author', 'image', 'robots']) {

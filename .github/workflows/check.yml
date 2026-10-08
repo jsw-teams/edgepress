@@ -5,8 +5,12 @@ on:
   pull_request:
 permissions:
   contents: read
+concurrency:
+  group: source-checks-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   test:
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -17,7 +21,8 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - run: git diff --check && test -s CONTRIBUTING.md && test -s LICENSE && test -s SECURITY.md
+      - run: npx playwright install --with-deps chromium firefox
       - run: npm test
       - run: npm run build
       - run: npm run doctor

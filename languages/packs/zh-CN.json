@@ -102,5 +102,9 @@
   "demoError": "演示暂时无法加载，请重试。",
   "demoResume": "继续播放",
   "demoLoading": "正在加载演示…",
-  "demoSeek": "演示进度"
+  "demoSeek": "演示进度",
+  "externalLinkTitle": "即将离开本站",
+  "externalLinkDescription": "这个链接指向其他网站，其内容与隐私政策由对方负责。是否继续由你决定。",
+  "externalLinkBack": "返回",
+  "externalLinkContinue": "继续前往"
 }

@@ -186,6 +186,12 @@ export async function renderLayout(config, extensions, page, body) {
     filtered=filtered.replace('</head>','<link rel="stylesheet" href="/edgepress/image-viewer.css"></head>').replace('</body>','<script id="edgepress-image-viewer-config" type="application/json">'+JSON.stringify(labels).replace(/</g,'\\u003c')+'</script><script type="module" src="/edgepress/image-viewer.js"></script></body>');
   }
   const scripts = [];
+  if (config.site.externalLinks?.enabled) {
+    const labels = Object.fromEntries(['title', 'description', 'back', 'continue'].map(key => [key, translate(config, locale, 'externalLink' + key[0].toUpperCase() + key.slice(1))]));
+    const settings = { ...config.site.externalLinks, siteUrl: config.site.url, labels };
+    filtered = filtered.replace(/<\/head\s*>/i, '<link rel="stylesheet" href="/edgepress/external-links.css"></head>');
+    scripts.push('<script id="edgepress-external-links-config" type="application/json">' + JSON.stringify(settings).replace(/</g, '\\u003c') + '</script><script type="module" src="/edgepress/external-links.js"></script>');
+  }
   if (/<main\b/i.test(filtered)) scripts.push('<script type="module" src="/edgepress/webmcp.js"></script>');
   if (/data-edgepress-media-viewer(?:\s|=|>)/i.test(filtered)) {
     filtered = filtered.replace(/<\/head\s*>/i, '<link rel="stylesheet" href="/edgepress/media-viewer.css"><link rel="stylesheet" href="/edgepress/image-viewer.css"></head>');

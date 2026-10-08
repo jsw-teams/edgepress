@@ -1,0 +1,14 @@
+.edgepress-external-overlay{--external-paper:var(--external-link-surface,var(--surface,var(--panel,var(--paper,var(--external-auto-paper,Canvas)))));--external-ink:var(--external-link-ink,var(--ink,var(--text,var(--external-auto-ink,CanvasText))));--external-accent:var(--external-link-accent,var(--accent,var(--external-auto-accent,LinkText)));position:fixed;inset:0;z-index:100000;display:grid;place-items:center;padding:clamp(16px,4vw,40px);background:rgba(0,0,0,.52);color:var(--external-ink);font:inherit;overflow:auto;overscroll-behavior:contain;color-scheme:inherit}
+.edgepress-external-overlay[hidden]{display:none!important}
+.edgepress-external-panel{box-sizing:border-box;width:min(100%,520px);max-height:90dvh;overflow:auto;background:var(--external-paper);color:var(--external-ink);border:1px solid var(--line,currentColor);border-radius:var(--radius-card,20px);padding:clamp(22px,5vw,36px);box-shadow:0 24px 80px rgba(0,0,0,.25);text-align:start;overflow-wrap:anywhere}
+.edgepress-external-panel h2{margin:0 0 16px;font:inherit;font-size:1.35rem;font-weight:750;color:inherit}
+.edgepress-external-panel p{margin:12px 0;line-height:1.65;color:inherit}
+.edgepress-external-domain{font-size:1.3rem;font-weight:750}
+.edgepress-external-origin{font-size:.9rem}
+.edgepress-external-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px}
+.edgepress-external-actions button{appearance:none;box-sizing:border-box;flex:1;min-width:140px;min-height:48px;margin:0;padding:12px 18px;border:1px solid var(--external-accent);border-radius:var(--radius-small,12px);background:var(--external-paper);color:var(--external-ink);font:inherit;font-weight:650;line-height:1.4;cursor:pointer}
+.edgepress-external-actions button:last-child{border-width:2px}
+.edgepress-external-actions button:hover{box-shadow:inset 0 0 0 1px var(--external-accent)}
+.edgepress-external-actions button:focus-visible{outline:3px solid var(--external-accent);outline-offset:4px}
+@media(forced-colors:active){.edgepress-external-panel{background:Canvas;color:CanvasText;border:2px solid CanvasText}.edgepress-external-actions button{background:ButtonFace;color:ButtonText;border-color:ButtonText}.edgepress-external-actions button:focus-visible{outline-color:Highlight}}
+@media(prefers-reduced-motion:reduce){.edgepress-external-overlay,.edgepress-external-overlay *{animation:none!important;transition:none!important;scroll-behavior:auto!important}}

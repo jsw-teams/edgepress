@@ -102,5 +102,9 @@
   "demoError": "The walkthrough could not load. Please try again.",
   "demoResume": "Continue demo",
   "demoLoading": "Loading demo…",
-  "demoSeek": "Demo progress"
+  "demoSeek": "Demo progress",
+  "externalLinkTitle": "You're leaving this site",
+  "externalLinkDescription": "This link opens a different website, with its own content and privacy practices. Continue only if you want to visit it.",
+  "externalLinkBack": "Return",
+  "externalLinkContinue": "Continue to website"
 }

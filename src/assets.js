@@ -214,7 +214,28 @@ export async function writeAssets(bundle, output, concurrency = 8) {
     const {size}=await stat(resolve(output,...asset.path.split('/')));
     return '/'+asset.path+'\n  Content-Length: '+size+'\n  Accept-Ranges: bytes';
   }));
+  if (immutableRules.length + mediaRules.length > 85) {
+    const immutablePath = /\.[a-f0-9]{16}\.(?:css|m?js|json|png|jpe?g|webp|avif|svg|gif|mp4|webm|woff2?)$/i;
+    const patterns = new Map();
+    for (const asset of bundle.assets.filter(asset => immutablePath.test(asset.path))) {
+      const directory = posix.dirname(asset.path);
+      const prefix = directory === '.' ? '' : directory + '/';
+      const suffix = posix.extname(asset.path);
+      const matching = bundle.assets.filter(candidate => candidate.path.startsWith(prefix) && candidate.path.endsWith(suffix));
+      if (matching.length > 1 && matching.every(candidate => immutablePath.test(candidate.path))) {
+        patterns.set('/' + prefix + '*' + suffix, matching.map(candidate => '/' + candidate.path));
+      }
+    }
+    for (const [pattern, paths] of [...patterns].sort((first, second) => second[1].length - first[1].length)) {
+      const exact = immutableRules.filter(rule => paths.includes(rule.split('\n')[0]));
+      if (exact.length < 2) continue;
+      for (const rule of exact) immutableRules.splice(immutableRules.indexOf(rule), 1);
+      immutableRules.push(pattern + '\n  Cache-Control: public, max-age=31536000, immutable');
+    }
+  }
   const headers = [bundle.existingHeaders.trim(), securityRules, ...immutableRules, ...mediaRules].filter(Boolean).join('\n\n') + '\n';
+  const count = headers.split(/\r?\n/).filter(line => line && !/^\s|^#/.test(line)).length;
+  if (count > 100) throw new Error('Static header rules exceed 100 after safe cache grouping; reduce custom rules or per-file media headers.');
   await writeFile(resolve(output, '_headers'), serializeConsentHeaders(headers), 'utf8');
 }
 
