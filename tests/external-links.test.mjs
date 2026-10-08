@@ -138,6 +138,18 @@ for (const [name, engine] of [['Chromium', chromium], ['Firefox', firefox]]) {
           }, properties);
           assert.equal(native, true);
         }
+        for (const properties of [{}, { ctrlKey: true }, { metaKey: true }, { button: 1 }]) {
+          assert.equal(await page.evaluate(properties => {
+            const unsafe = document.createElement('a');
+            unsafe.href = 'javascript:window.unsafeNavigation=true';
+            document.body.append(unsafe);
+            let intercepted = false;
+            window.addEventListener('click', event => { intercepted = event.defaultPrevented; event.preventDefault(); }, { once: true });
+            unsafe.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, ...properties }));
+            unsafe.remove();
+            return intercepted;
+          }, properties), true);
+        }
         await page.emulateMedia({ colorScheme: 'light', forcedColors: 'active' });
         await page.locator('#external').click();
         assert.equal(await page.getByRole('dialog').getByRole('button', { name: back, exact: true }).evaluate(element => getComputedStyle(element).appearance), 'none');

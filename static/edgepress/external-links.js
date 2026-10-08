@@ -75,9 +75,10 @@ export function mountExternalLinks(settings, doc = document) {
   doc.addEventListener('click', event => {
     const anchor = event.target.closest?.('a[href]');
     if (anchor) protectTarget(anchor);
-    if (!anchor || bypass.has(anchor) || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    if (!anchor || bypass.has(anchor) || event.defaultPrevented) return;
     const target = classifyLink(anchor.getAttribute('href'), settings, doc.baseURI);
     if (target.kind === 'blocked') { event.preventDefault(); return; }
+    if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
     if (target.kind !== 'external' || anchor.hasAttribute('download') || anchor.closest('[data-external-link-skip]')) return;
     event.preventDefault();
     if (pending) return;
