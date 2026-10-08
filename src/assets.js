@@ -5,7 +5,7 @@ import * as posix from 'node:path/posix';
 import {fileURLToPath} from 'node:url';
 import { mapLimit } from './concurrency.js';
 import {extendConsentPolicy,serializeConsentHeaders} from './consent-csp.js';
-import {imageViewerAssets} from './media-assets.js';
+import {imageViewerAssets, mediaViewerAssets} from './media-assets.js';
 import {documentViewerAssets} from '@jsw-teams/document-viewer/assets';
 import {collectImageDimensions} from './image-dimensions.js';
 
@@ -82,7 +82,7 @@ function rewriteCodeReferences(item, text, outputByOriginal) {
   });
 }
 
-export async function collectAssets(config, { documentViewer = false } = {}) {
+export async function collectAssets(config, { documentViewer = false, mediaViewer = false } = {}) {
   const sources = [];
   const directories = [
     { root: config.resolvedPaths.static, name: 'static' },
@@ -102,6 +102,7 @@ export async function collectAssets(config, { documentViewer = false } = {}) {
   const supplied=new Set(sources.map(item=>item.path));
   if (documentViewer) for (const item of await documentViewerAssets('edgepress/document-viewer')) if (!supplied.has(item.path)) sources.push(item);
   for(const item of await imageViewerAssets())if(!supplied.has(item.path))sources.push(item);
+  if (mediaViewer) for (const item of await mediaViewerAssets()) if (!supplied.has(item.path)) sources.push(item);
   for(const source of await walk(runtimeRoot)) {
     const path='edgepress/'+relative(runtimeRoot,source).split(sep).join('/');
     if(!supplied.has(path))sources.push({source,path,sourceName:'EdgePress runtime'});

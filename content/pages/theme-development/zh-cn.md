@@ -189,4 +189,31 @@ blocks:
         - type: text
           text: 字体覆盖拉丁字母、希腊字母、西里尔字母及常用简繁中文，并非完整 Unicode。增加阿拉伯语等其他文字系统的语言包时，应同时加入对应 Noto 字体与 unicode-range；保持同源加载、OFL 许可证和内容哈希。fonts:sync 仅维护字体资源，普通构建无需下载字体。
 
+  - columns: 1
+    cells:
+      - - type: text
+          heading: 在 Pages 插入查看器
+          text: "文档以带页码的连续分页展示，不再使用上下页按钮。document 插入 PDF 和 Office；media-viewer 插入图片、视频或混合附件。只挂载选中的媒体，点击播放后才加载视频。远程资源须填写 service，登记 external-api 服务并明确配置 img-src、media-src、connect-src 所需来源，授权后才请求。视频字幕填写 captions 和 captionLanguage；只有确实无声的片段才可用 silent: true 代替字幕。"
+        - type: code
+          title: Pages 查看器元素
+          language: yaml
+          code: |
+                - columns: 1
+                  cells:
+                    - - type: document
+                        title: Report
+                        src: /documents/report.pdf
+                      - type: media-viewer
+                        title: Photos and video
+                        items:
+                          - type: image
+                            src: /images/photo.webp
+                            originalSrc: /images/photo-original.webp
+                            alt: Detail of the project interface
+                          - type: video
+                            src: /videos/walkthrough.mp4
+                            poster: /images/poster.webp
+                            label: Project walkthrough
+                            captions: /videos/walkthrough.en.vtt
+                            captionLanguage: en
 ---

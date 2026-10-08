@@ -3,8 +3,6 @@
   "documentViewerClose": "Close preview",
   "documentViewerLoading": "Loading document…",
   "documentViewerError": "Preview unavailable. Check the file, access and CORS settings.",
-  "documentViewerPrevious": "Previous page",
-  "documentViewerNext": "Next page",
   "documentViewerPage": "Page",
   "documentViewerSheet": "Worksheet",
   "documentViewerLimited": "Preview is limited to 1,000 rows and 100 columns per worksheet.",

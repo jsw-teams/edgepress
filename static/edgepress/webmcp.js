@@ -61,20 +61,18 @@ if (typeof context?.registerTool === 'function') {
 
   if (documents.length) void register({
     name: 'edgepress_control_document',
-    description: 'Use a document’s existing preview controls: reopen, close, previous/next page or select a named worksheet. Read edgepress_read_page for document ids and worksheet names. Existing consent and disabled-control checks remain enforced. No downloads, uploads or document scripts.',
+    description: 'Use a document’s existing preview controls: reopen, close or select a named worksheet. Documents have continuous separated pages. Read edgepress_read_page for document ids and worksheet names. Existing consent and disabled-control checks remain enforced. No downloads, uploads or document scripts.',
     inputSchema: { type: 'object', properties: {
       document: { type: 'string', enum: documents.map((_, index) => String(index + 1)) },
-      action: { type: 'string', enum: ['open', 'close', 'previous_page', 'next_page', 'worksheet'] },
+      action: { type: 'string', enum: ['open', 'close', 'worksheet'] },
       worksheet: { type: 'string', maxLength: 100 }
     }, required: ['document', 'action'], additionalProperties: false },
     execute: async ({ document: identifier, action, worksheet }) => {
       const element = documents.find((_, index) => String(index + 1) === identifier);
       if (!element?.isConnected) throw new Error('Unknown document');
       const toolbar = element.querySelectorAll('.document-viewer-toolbar button');
-      const pages = ['pdf', 'ppt'].includes(element.dataset.documentFormat)
-        ? element.querySelectorAll('.document-viewer-controls button:not([role=tab])') : [];
       const controls = {
-        open: toolbar[0], close: toolbar[1], previous_page: pages[0], next_page: pages[pages.length - 1],
+        open: toolbar[0], close: toolbar[1],
         worksheet: [...element.querySelectorAll('[role=tab]')].find(tab => tab.textContent === worksheet)
       };
       const control = Object.hasOwn(controls, action) && controls[action];

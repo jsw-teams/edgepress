@@ -3,8 +3,6 @@
   "documentViewerClose": "关闭预览",
   "documentViewerLoading": "正在加载文档…",
   "documentViewerError": "无法预览。请检查文件、访问权限和跨域设置。",
-  "documentViewerPrevious": "上一页",
-  "documentViewerNext": "下一页",
   "documentViewerPage": "页码",
   "documentViewerSheet": "工作表",
   "documentViewerLimited": "每个工作表最多预览 1,000 行、100 列。",

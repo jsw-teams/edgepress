@@ -1,5 +1,6 @@
 import {renderServiceBlock} from './service-block.js';
 import {renderDocument} from './document.js';
+import {renderMediaViewer} from './media-viewer.js';
 import {renderEmbed, renderPageText} from './embed.js';
 import { renderMarkdownExcerpt } from './markdown.js';
 import { localizedContentUrl, translate, translateValue } from './i18n.js';
@@ -173,6 +174,7 @@ async function renderBlock(block, context, depth, index) {
   const type = text(block.type, 'block.type', 40);
   switch (type) {
     case 'document': return renderDocument(block, context);
+    case 'media-viewer': return renderMediaViewer(block, context);
     case 'hero': {
       const heading = text(block.title, 'hero.title', 240);
       const level = context.isHomepage && index === 0 ? 'h1' : 'h2';

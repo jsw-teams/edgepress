@@ -216,7 +216,7 @@ export async function buildSite(root = process.cwd(), options = {}) {
     const sourceDocuments = await readDocuments(config);
     const loadedDocuments = await extensions.filter('content:loaded', sourceDocuments, { config });
     if (!Array.isArray(loadedDocuments)) throw new Error('content:loaded filters must return an array');
-    const assetBundle = await collectAssets(config, { documentViewer: loadedDocuments.some(document => /!document\[|"type":"document"/.test(JSON.stringify(document))) });
+    const assetBundle = await collectAssets(config, { documentViewer: loadedDocuments.some(document => /!document\[|"type":"document"/.test(JSON.stringify(document))), mediaViewer: loadedDocuments.some(document => /"type":"media-viewer"/.test(JSON.stringify(document))) });
 
     const cacheFile = resolve(config.resolvedPaths.cache, 'render-cache.json');
     const oldCache = await readCache(cacheFile);

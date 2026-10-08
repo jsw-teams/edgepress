@@ -187,8 +187,13 @@ export async function renderLayout(config, extensions, page, body) {
   }
   const scripts = [];
   if (/<main\b/i.test(filtered)) scripts.push('<script type="module" src="/edgepress/webmcp.js"></script>');
+  if (/data-edgepress-media-viewer(?:\s|=|>)/i.test(filtered)) {
+    filtered = filtered.replace(/<\/head\s*>/i, '<link rel="stylesheet" href="/edgepress/media-viewer.css"><link rel="stylesheet" href="/edgepress/image-viewer.css"></head>');
+    scripts.push('<script type="module" src="/edgepress/media-viewer.js"></script>');
+    if (filtered.includes('data-media-service')) scripts.push('<script defer src="/edgepress/services-consent.js"></script>');
+  }
   if (/data-edgepress-document(?:\s|=|>)/i.test(filtered)) {
-    const keys = ['preview', 'close', 'loading', 'error', 'previous', 'next', 'page', 'sheet', 'limited'];
+    const keys = ['preview', 'close', 'loading', 'error', 'page', 'sheet', 'limited'];
     const labels = Object.fromEntries(keys.map(key => [key, translate(config, locale, 'documentViewer' + key[0].toUpperCase() + key.slice(1))]));
     filtered = filtered.replace(/<\/head\s*>/i, '<link rel="stylesheet" href="/edgepress/document-viewer/styles.css"></head>');
     scripts.push('<script id="edgepress-document-viewer-config" type="application/json">' + JSON.stringify(labels).replace(/</g, '\\u003c') + '</script><script type="module" src="/edgepress/document-viewer.js"></script>');

@@ -68,7 +68,7 @@ try {
         if (index === 1) await frame.locator('body').filter({ hasText: 'Sample Business Document' }).waitFor();
         if (index === 2) {
           await frame.getByText('Sample Business Document', { exact: true }).waitFor();
-          const painted = await frame.locator('.pdf-page img').evaluate(image => {
+          const painted = await frame.locator('.pdf-page img').first().evaluate(image => {
             const canvas = document.createElement('canvas');
             canvas.width = image.naturalWidth;
             canvas.height = image.naturalHeight;
@@ -85,17 +85,17 @@ try {
         if ([5, 6].includes(index)) await frame.getByText('Order ID', { exact: true }).waitFor();
         await block.scrollIntoViewIfNeeded(); await pause(2200);
         if (index === 2) {
-          const controls = block.locator('.document-viewer-controls');
           for (let number = 2; number <= 8; number++) {
-            const next = controls.locator('button').last();
-            await pointAt(page, next); await next.click();
-            await controls.locator('[aria-live]').filter({ hasText: new RegExp(' ' + number + ' / 8$') }).waitFor();
+            const section = frame.locator('[data-document-page="' + number + '"]');
+            await section.scrollIntoViewIfNeeded();
+            await section.locator('.pdf-page[aria-busy="false"] img').waitFor();
             await pause(1600);
           }
         }
         if (index === 3) {
-          const next = block.locator('.document-viewer-controls button').last();
-          await pointAt(page, next); await next.click();
+          const title = frame.locator('.document-page-text').getByText('Sample Presentation', { exact: true });
+          assert.ok(await title.evaluate(element => element.getBoundingClientRect().height > 16), 'PPT title must be visibly readable');
+          await frame.locator('[data-document-page="2"]').scrollIntoViewIfNeeded();
           await frame.getByText('Agenda', { exact: true }).waitFor();
           await pause(2200);
         }

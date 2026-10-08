@@ -191,4 +191,31 @@ blocks:
         - type: text
           text: Coverage includes Latin, Greek, Cyrillic and common simplified/traditional Chinese, rather than all Unicode. Language packs using other scripts, such as Arabic, also need the corresponding Noto font and unicode-range. Keep fonts same-origin, licensed and content-hashed. fonts:sync maintains font assets; ordinary builds need no font downloads.
 
+  - columns: 1
+    cells:
+      - - type: text
+          heading: Viewers as Pages elements
+          text: "Documents scroll through numbered, separated pages, without previous/next buttons. Use document for PDF and Office; use media-viewer for locally bundled images, video or mixed attachments. Only the selected media attachment mounts; video bytes wait for Play. For remote resources, set service to an enabled external-api consent service and explicitly allow each image/media/connect origin in its CSP. Captions require captionLanguage; use silent: true without captions only for a genuinely silent clip."
+        - type: code
+          title: Pages viewer elements
+          language: yaml
+          code: |
+                - columns: 1
+                  cells:
+                    - - type: document
+                        title: Report
+                        src: /documents/report.pdf
+                      - type: media-viewer
+                        title: Photos and video
+                        items:
+                          - type: image
+                            src: /images/photo.webp
+                            originalSrc: /images/photo-original.webp
+                            alt: Detail of the project interface
+                          - type: video
+                            src: /videos/walkthrough.mp4
+                            poster: /images/poster.webp
+                            label: Project walkthrough
+                            captions: /videos/walkthrough.en.vtt
+                            captionLanguage: en
 ---
