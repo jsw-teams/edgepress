@@ -6,7 +6,7 @@
 - Keep document preview code in the canonical document-viewer repository. Pin a published full GitHub commit and synchronize package-lock.json; do not copy the engine or rely on sibling checkouts or conversion software.
 - Document previews load only after a preview click. External document URLs require current per-service consent and CORS. Preserve script-disabled isolation, local workers, immutable dependency hashes and the documented legacy PPT limitations.
 - Run document regression tests and a build before pushing. Browser document tests use isolated Playwright Chromium with extensions disabled, never the user's system Edge or Chrome.
-- tools/recordings/capture-document-demo.mjs records actual Word, PDF, PPT/PPTX and XLSX renderers in the isolated WSL2 desktop. It uses original fixtures from the canonical document-viewer checkout (DOCUMENT_VIEWER_ROOT can select its path), never production documents or host desktop input. Inspect visible PDF ink and Word geometry before publishing recordings.
+- tools/recordings/capture-document-demo.mjs records actual DOC/DOCX, PDF, PPT/PPTX and XLS/XLSX renderers in the isolated WSL2 desktop. It reads the published examples from web/js.gripe/content/assets/documents/doc-views (DOCUMENT_DEMO_ROOT may select another source directory), preserving operator-supplied Office files and attribution. Never overwrite them with synthetic Office fixtures, use production documents or capture host desktop input. Inspect visible PDF ink and Word geometry before publishing recordings. Controls adapt to arbitrary host palettes, not just the default theme.
 
 EdgePress builds static websites from Markdown and YAML source. Follow these rules when changing the project.
 

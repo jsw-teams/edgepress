@@ -9,8 +9,7 @@ import { pointAt } from './vm-desktop.mjs';
 
 const workspace = resolve(import.meta.dirname, '../../..');
 const site = resolve(workspace, 'web/js.gripe');
-const fixtureRoot = resolve(process.env.DOCUMENT_VIEWER_ROOT || resolve(workspace, 'document-viewer'));
-const { pdfFixture, wordFixture, legacyPpt, slidesFixture } = await import(pathToFileURL(resolve(fixtureRoot, 'tests/fixtures.mjs')));
+const documents = resolve(process.env.DOCUMENT_DEMO_ROOT || resolve(site, 'content/assets/documents/doc-views'));
 const require = createRequire(resolve(site, 'package.json'));
 const engine = createRequire(require.resolve('edgepress/package.json'));
 const { loadConfig } = await import(pathToFileURL(engine.resolve('edgepress/src/config.js')));
@@ -19,14 +18,8 @@ const { collectAssets, rewriteAssetLinks } = await import(pathToFileURL(engine.r
 const { createExtensions } = await import(pathToFileURL(engine.resolve('edgepress/src/plugin-api.js')));
 const { renderBlocks } = await import(pathToFileURL(engine.resolve('edgepress/src/page-blocks.js')));
 const { renderLayout } = await import(pathToFileURL(engine.resolve('edgepress/src/theme.js')));
-const { utils, write } = createRequire(engine.resolve('@jsw-teams/document-viewer'))('xlsx');
-const workbook = utils.book_new();
-utils.book_append_sheet(workbook, utils.aoa_to_sheet([['Quarter', 'Revenue', 'Costs'], ['Q1', 120000, 75000], ['Q2', 145000, 82000], ['Q3', 159000, 91000]]), 'Summary');
-utils.book_append_sheet(workbook, utils.aoa_to_sheet([['Team', 'People'], ['Editorial', 4], ['Engineering', 6]]), 'Details');
-const files = new Map([['report.docx', await wordFixture()], ['report.pdf', pdfFixture()], ['report.ppt', legacyPpt()], ['report.pptx', await slidesFixture()], ['report.xlsx', write(workbook, { type: 'buffer', bookType: 'xlsx' })]]);
-const documents = resolve(site, 'content/assets/documents/doc-views');
-await mkdir(documents, { recursive: true });
-for (const [name, bytes] of files) await writeFile(resolve(documents, name), bytes);
+const names = ['sample-document-medium.docx', 'sample-document-medium.doc', 'report.pdf', 'sample-document.ppt', 'sample-presentation-10-slides.pptx', 'sample-spreadsheet-100-rows.xlsx', 'sample-spreadsheet-100-rows.xls'];
+const files = new Map(await Promise.all(names.map(async name => [name, await readFile(resolve(documents, name))])));
 const config = await loadConfig(site);
 await loadLanguagePacks(config);
 const bundle = await collectAssets(config, { documentViewer: true });
@@ -63,19 +56,20 @@ try {
     await page.locator('.privacy-reject').click();
     const first = page.locator('.document-block').first();
     await first.locator('.document-viewer button').first().click();
-    await first.frameLocator('iframe').getByText('Word preview 中文', { exact: true }).waitFor();
+    await first.frameLocator('iframe').getByText('Sample Business Document', { exact: true }).waitFor();
     await first.scrollIntoViewIfNeeded();
     await record(page, 'doc-views-' + locale.toLowerCase(), async () => {
       await pause(2500);
       await pointAt(page, first.locator('.document-viewer button').nth(1));
       await first.locator('.document-viewer button').nth(1).click();
-      for (const index of [1, 2, 3, 4]) {
+      for (const index of [1, 2, 3, 4, 5, 6]) {
         const block = page.locator('.document-block').nth(index);
         const preview = block.locator('.document-viewer button').first();
         await pointAt(page, preview); await pause(300); await preview.click();
         await block.locator('iframe').waitFor();
         const frame = block.frameLocator('iframe');
-        if (index === 1) {
+        if (index === 1) await frame.getByText('Sample Business Document', { exact: true }).waitFor();
+        if (index === 2) {
           await frame.getByText('Document preview page one', { exact: true }).waitFor();
           const painted = await frame.locator('.pdf-page img').evaluate(image => {
             const canvas = document.createElement('canvas');
@@ -90,23 +84,22 @@ try {
           console.log('PDF canvas: ' + JSON.stringify(painted));
           assert.ok(painted.ink > 100, 'The recorded PDF must paint visible content');
         }
-        if (index === 2) await frame.getByText('First slide: 中文', { exact: true }).waitFor();
-        if (index === 3) await frame.getByText('PowerPoint preview 中文', { exact: true }).waitFor();
-        if (index === 4) await frame.getByText('Revenue', { exact: true }).waitFor();
+        if ([3, 4].includes(index)) await frame.getByText('Sample Presentation', { exact: true }).waitFor();
+        if ([5, 6].includes(index)) await frame.getByText('Order ID', { exact: true }).waitFor();
         await block.scrollIntoViewIfNeeded(); await pause(2200);
-        if ([1, 2].includes(index)) {
+        if ([2, 3].includes(index)) {
           const next = block.locator('.document-viewer-controls button').last();
           await pointAt(page, next); await next.click();
-          await frame.getByText(index === 1 ? 'Document preview page two' : 'Second slide', { exact: true }).waitFor();
+          await frame.getByText(index === 2 ? 'Document preview page two' : 'Agenda', { exact: true }).waitFor();
           await pause(2200);
         }
-        if (index === 4) { await pointAt(page, block.locator('select')); await block.locator('select').selectOption('Details'); await frame.getByText('Engineering', { exact: true }).waitFor(); await pause(2200); }
+        if (index === 5) { const summary = block.getByRole('tab', { name: 'Summary', exact: true }); await pointAt(page, summary); await summary.click(); await frame.getByText('Metric', { exact: true }).waitFor(); await pause(2200); }
         const close = block.locator('.document-viewer button').nth(1);
         await pointAt(page, close); await close.click(); await pause(400);
       }
     });
     assert.deepEqual(errors, []);
-    entries.push(...(await closeRecording(context, { artifact, output })).map(entry => ({ ...entry, source: 'edgepress/tools/recordings/capture-document-demo.mjs' })));
+    entries.push(...(await closeRecording(context, { artifact, output })).map(entry => ({ ...entry, kind: 'FFmpeg recording of actual Chromium in an isolated WSL2 desktop; operator-supplied Office samples and original PDF fixture', source: 'edgepress/tools/recordings/capture-document-demo.mjs' })));
   }
 } finally { await browser.close(); }
 await writeFile(resolve(artifact, 'document-demo.json'), JSON.stringify(entries, null, 2) + '\n');
