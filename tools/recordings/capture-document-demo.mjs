@@ -68,7 +68,7 @@ try {
         await pointAt(page, preview); await pause(300); await preview.click();
         await block.locator('iframe').waitFor();
         const frame = block.frameLocator('iframe');
-        if (index === 1) await frame.getByText('Sample Business Document', { exact: true }).waitFor();
+        if (index === 1) await frame.locator('body').filter({ hasText: 'Sample Business Document' }).waitFor();
         if (index === 2) {
           await frame.getByText('Document preview page one', { exact: true }).waitFor();
           const painted = await frame.locator('.pdf-page img').evaluate(image => {
