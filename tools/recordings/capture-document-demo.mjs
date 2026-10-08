@@ -56,6 +56,8 @@ try {
     await page.locator('.privacy-reject').click();
     const first = page.locator('.document-block').first();
     await first.frameLocator('iframe').getByText('Sample Business Document', { exact: true }).waitFor();
+    const bullet = await first.frameLocator('iframe').getByText('Realistic structure: headings, lists, tables, and images', { exact: true }).evaluate(element => getComputedStyle(element.closest('p'), '::before').content);
+    assert.ok(bullet.includes('\u2022'), 'The recorded Word list must render its Unicode bullet without a proprietary font');
     await first.scrollIntoViewIfNeeded();
     await record(page, 'doc-views-' + locale.toLowerCase(), async () => {
       await pause(2500);

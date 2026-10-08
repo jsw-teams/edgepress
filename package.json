@@ -65,7 +65,7 @@
     "fonts:sync": "node tools/assets/sync-fonts.mjs"
   },
   "dependencies": {
-    "@jsw-teams/document-viewer": "https://codeload.github.com/jsw-teams/document-viewer/tar.gz/220277d23ce2ce0bb247dc12e5f34492ccdc90f7",
+    "@jsw-teams/document-viewer": "https://codeload.github.com/jsw-teams/document-viewer/tar.gz/4714acb395d63ea3cc9776b3ab75ad811a75375a",
     "@jsw-teams/media-viewer": "https://codeload.github.com/jsw-teams/media-viewer/tar.gz/158ca150b221b4da0058b61d87c8d3ca787ebf25",
     "esbuild": "^0.28.2",
     "image-size": "^2.0.4",
