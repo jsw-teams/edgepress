@@ -56,7 +56,7 @@ try {
     await page.locator('.privacy-reject').click();
     const first = page.locator('.document-block').first();
     await first.frameLocator('iframe').getByText('Sample Business Document', { exact: true }).waitFor();
-    const bullet = await first.frameLocator('iframe').getByText('Realistic structure: headings, lists, tables, and images', { exact: true }).evaluate(element => getComputedStyle(element.closest('p'), '::before').content);
+    const bullet = await first.frameLocator('iframe').getByText('Realistic structure: headings, lists, tables, and images', { exact: true }).first().evaluate(element => getComputedStyle(element.closest('p'), '::before').content);
     assert.ok(bullet.includes('\u2022'), 'The recorded Word list must render its Unicode bullet without a proprietary font');
     await first.scrollIntoViewIfNeeded();
     await record(page, 'doc-views-' + locale.toLowerCase(), async () => {
@@ -105,6 +105,7 @@ try {
           assert.ok(await title.evaluate(element => element.getBoundingClientRect().height > 16), 'PPT title must be visibly readable');
           await frame.locator('[data-document-page="2"]').scrollIntoViewIfNeeded();
           await frame.getByText('Agenda', { exact: true }).waitFor();
+          assert.equal((await frame.locator('body').textContent()).includes('\uf0b7'), false, 'The recorded PPT bullets must not depend on a proprietary Symbol font');
           await pause(2200);
         }
         if (index === 5) {
