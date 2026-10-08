@@ -93,7 +93,7 @@ try {
           }
         }
         if (index === 3) {
-          const title = frame.locator('.document-page-text').getByText('Sample Presentation', { exact: true });
+          const title = frame.locator('foreignObject').getByText('Sample Presentation', { exact: true });
           assert.ok(await title.evaluate(element => element.getBoundingClientRect().height > 16), 'PPT title must be visibly readable');
           await frame.locator('[data-document-page="2"]').scrollIntoViewIfNeeded();
           await frame.getByText('Agenda', { exact: true }).waitFor();
