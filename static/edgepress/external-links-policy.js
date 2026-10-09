@@ -9,6 +9,6 @@ export function classifyLink(value, settings, base) {
   try { url = new URL(value, base); } catch { return { kind: 'blocked' }; }
   if (['javascript:', 'data:', 'vbscript:', 'file:', 'blob:', 'filesystem:', 'about:'].includes(url.protocol) || url.username || url.password) return { kind: 'blocked' };
   if (!['http:', 'https:'].includes(url.protocol)) return { kind: 'native' };
-  const origins = new Set([new URL(settings.siteUrl).origin, new URL(base).origin, ...settings.trustedOrigins]);
+  const origins = new Set([new URL(settings.siteUrl).origin, ...settings.trustedOrigins]);
   return { kind: origins.has(url.origin) ? 'native' : 'external', url: url.href, domain: url.host, origin: url.origin };
 }

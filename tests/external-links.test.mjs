@@ -18,6 +18,14 @@ test('external links use exact origins and reject executable URLs, credentials a
   for (const href of ['/article/', '#section', 'https://site.test/article/', 'https://trusted.test/path', 'mailto:hello@example.test', 'tel:+1234567']) assert.equal(classifyLink(href, settings, 'https://site.test/page/').kind, 'native');
   for (const href of ['https://trusted.test.attacker.test', 'https://child.trusted.test', 'http://trusted.test', 'https://trusted.test:8443', '//other.test/path']) assert.equal(classifyLink(href, settings, 'https://site.test/page/').kind, 'external');
   for (const href of ['javascript:alert(1)', 'java\nscript:alert(1)', 'data:text/html,hello', 'https://trusted.test@other.test/', 'file:///tmp/private']) assert.equal(classifyLink(href, settings, 'https://site.test/').kind, 'blocked');
+  // A cross-origin <base> or an absolute GitHub file URL must not silently become trusted.
+  const outsideBase = 'https://untrusted.test/embedded/';
+  assert.equal(classifyLink('https://untrusted.test/file.mp4', settings, outsideBase).kind, 'external');
+  assert.equal(classifyLink('/file.mp4', settings, outsideBase).kind, 'external');
+  const githubFilm = 'https://github.com/jsw-teams/ai-video-production-workflow/blob/main/projects/guoqing/final.mp4';
+  const githubTarget = classifyLink(githubFilm, settings, 'https://site.test/article/');
+  assert.equal(githubTarget.kind, 'external');
+  assert.equal(githubTarget.url, githubFilm);
   assert.equal(linkOrigin('https://trusted.test/'), 'https://trusted.test');
   for (const origin of ['https://*.test', 'https://trusted.test/path', 'https://user@trusted.test', 'javascript:alert(1)', 'https://trusted.test?next=other', 'https://trusted.test#hash']) assert.throws(() => linkOrigin(origin));
 });
@@ -71,7 +79,7 @@ for (const [name, engine] of [['Chromium', chromium], ['Firefox', firefox]]) {
         const requests = [];
         const errors = [];
         page.on('pageerror', error => errors.push(error.message));
-        const content = '<main><a id="external" href="https://other.test/read?q=%3Cscript%3E#chapter">Other site</a><a id="long-url" href="https://other.test/path/' + 'a'.repeat(180) + '?x=1#part">Long URL</a><a id="root-url" href="https://other.test/">Site root</a><a id="trusted" href="https://trusted.test/path">Trusted site</a><a id="internal" href="#section">Inside</a><a id="new-tab" href="https://other.test/new" target="_blank">New tab</a><a id="download" href="https://other.test/file" download>Download</a><a id="auth" href="https://other.test/auth" data-external-link-skip>Sign in</a><section id="section">Section</section></main>';
+        const content = '<main><a id="external" href="https://other.test/read?q=%3Cscript%3E#chapter">Other site</a><a id="github-film" href="https://github.com/jsw-teams/ai-video-production-workflow/blob/main/projects/guoqing/final.mp4">GitHub film</a><a id="long-url" href="https://other.test/path/' + 'a'.repeat(180) + '?x=1#part">Long URL</a><a id="root-url" href="https://other.test/">Site root</a><a id="trusted" href="https://trusted.test/path">Trusted site</a><a id="internal" href="#section">Inside</a><a id="new-tab" href="https://other.test/new" target="_blank">New tab</a><a id="download" href="https://other.test/file" download>Download</a><a id="auth" href="https://other.test/auth" data-external-link-skip>Sign in</a><section id="section">Section</section></main>';
         const html = rewriteAssetLinks(await renderLayout(config, extensions, { title: 'Links', locale, urlPath: '/links/' }, content.replace('<main>', '<div>').replace('</main>', '</div>')), bundle.urlMap);
         await context.route('**/*', async route => {
           const url = new URL(route.request().url());
@@ -113,6 +121,11 @@ for (const [name, engine] of [['Chromium', chromium], ['Firefox', firefox]]) {
         assert.equal(await page.locator('body > aside').evaluate(element => element.inert), true);
         await page.keyboard.press('Escape');
         assert.equal(await page.locator('body > aside').evaluate(element => element.inert), false);
+        await page.locator('#github-film').click();
+        await dialog.waitFor();
+        assert.equal(await dialog.locator('.edgepress-external-url').textContent(), 'https://github.com/jsw-teams/ai-video-production-workflow/blob/main/projects/guoqing/final.mp4');
+        assert.deepEqual(requests, [], 'The video host must not be contacted before visitor confirmation');
+        await page.keyboard.press('Escape');
         await page.locator('#long-url').click();
         await dialog.waitFor();
         assert.equal(await dialog.locator('.edgepress-external-url').textContent(), 'https://other.test/path/' + 'a'.repeat(180) + '?x=1#part');
