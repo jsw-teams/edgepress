@@ -17,7 +17,7 @@ test('cloud dependency is pinned to a published source commit and excludes the r
   const component = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'));
   assert.ok(!component.dependencies['@file-viewer/ppt']);
   assert.equal(component.dependencies.cfb, '1.2.2');
-  for (const path of ['src/ppt/parser.js', 'src/ppt/worker.js', 'src/renderers/ppt.js', 'tools/assets.mjs', 'NOTICE.md']) {
+  for (const path of ['src/ppt/parser.js', 'src/ppt/worker.js', 'src/renderers/ppt.js', 'src/icons.js', 'src/sheets/columns.js', 'src/sheets/column-controls.js', 'src/lucide-license.txt', 'tools/assets.mjs', 'NOTICE.md']) {
     const content = await readFile(resolve(root, path), 'utf8');
     assert.ok(content.length);
     if (/\.(?:js|mjs)$/.test(path)) assert.doesNotMatch(content, /@file-viewer\/ppt|__DOCUMENT_PPT_ASSETS__|Flyfish Viewer|vendor-ppt|soffice/);

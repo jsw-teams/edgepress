@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { recordingContext, record, closeRecording, preparePage } from './desktop-recording.mjs';
-import { pointAt } from './vm-desktop.mjs';
+import { pointAt, drag } from './vm-desktop.mjs';
 
 const workspace = resolve(import.meta.dirname, '../../..');
 const site = resolve(workspace, 'web/js.gripe');
@@ -115,6 +115,18 @@ try {
           await cell.waitFor(); await pointAt(page, cell); await cell.click(); await pause(1800);
           const summary = block.getByRole('tab', { name: 'Summary', exact: true });
           await pointAt(page, summary); await summary.click(); await frame.getByText('595500', { exact: true }).waitFor(); await pause(2200);
+          const grip = frame.locator('[data-resize-column="0"]').first();
+          const width = Number(await grip.getAttribute('aria-valuenow'));
+          await pointAt(page, grip);
+          const position = await grip.boundingBox();
+          const from = { x: position.x + position.width / 2, y: position.y + position.height / 2 };
+          await drag(page, { from, to: { x: from.x + 100, y: from.y } });
+          assert.equal(Number(await grip.getAttribute('aria-valuenow')), width + 100);
+          await pause(1600);
+          const stretch = block.getByRole('button', { name: locale === 'en' ? 'Fill viewport' : locale === 'zh-SG' ? '铺满视口' : '填滿視口', exact: true });
+          await pointAt(page, stretch); await stretch.click(); await pause(1600);
+          const reset = block.getByRole('button', { name: locale === 'en' ? 'Restore column widths' : locale === 'zh-SG' ? '恢复原列宽' : '還原原欄寬', exact: true });
+          await pointAt(page, reset); await reset.click(); await pause(1000);
         }
         const close = block.locator('.document-viewer button').nth(1);
         await pointAt(page, close); await close.click(); await pause(400);
