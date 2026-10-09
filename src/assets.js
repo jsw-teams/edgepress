@@ -8,6 +8,7 @@ import {extendConsentPolicy,serializeConsentHeaders} from './consent-csp.js';
 import {imageViewerAssets, mediaViewerAssets} from './media-assets.js';
 import {documentViewerAssets} from '@jsw-teams/document-viewer/assets';
 import {collectImageDimensions} from './image-dimensions.js';
+import {dataSaverLayout} from './data-saver.js';
 
 async function walk(directory) {
   let entries;
@@ -128,6 +129,8 @@ export async function collectAssets(config, { documentViewer = false, mediaViewe
       content: isCodeAsset(item.path) ? item.content??await readFile(item.source) : null
     }))
   ]);
+  const layout = await dataSaverLayout(config, items);
+  if (layout) items.push(layout);
   const originals = new Map();
   for (const item of items) {
     const normalized = item.path.toLowerCase();

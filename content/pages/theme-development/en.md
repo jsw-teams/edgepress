@@ -12,15 +12,16 @@ blocks:
             - type: text
               paragraphs:
                 - A lightweight variant is optional, not a new requirement for every theme. Declare dataSaver in theme.json only when the theme supports readable text-first presentation. Its stylesheet and optional scripts belong to assets/. The framework handles detection, user choice, deferred media and CSP-compatible local resources; themes own their lightweight colors, layout and necessary interactions.
-                - Use system fonts, modest CSS and no decorative image backgrounds or full-theme imports. Keep article text, navigation, labels, focus, contrast and privacy/external-link controls usable. Optional theme scripts must remain small; mark heavyweight full-view scripts with data-data-optional. For dynamic pictures, call window.edgepressDataSaver?.deferMedia before assigning any media URL, not after the browser has started downloading it.
-                - Operators separately enable slow-connection detection and browser data-saving hints. Both are optional and unavailable in some browsers; always retain the manual Automatic, Text only and Full view controls. An explicit choice overrides automatic hints. Network changes apply on the next navigation, not through unexpected page reloads.
+                - Use system fonts and modest CSS without decorative images or downloaded fonts. Optional layoutStyles lists published stylesheets whose shared layout is compiled without font faces or URL declarations. Adapt image-heavy cards in the variant, preserving real titles, excerpts, dates, navigation, footer, focus and theme tokens. Optional theme scripts must remain small; mark heavyweight full-view scripts with data-data-optional. For dynamic pictures, call window.edgepressDataSaver?.deferMedia before assigning any media URL, not after the browser has started downloading it.
+                - Operators separately enable first-screen delay detection and browser data-saving preferences. Detection offers text view only when initial rendering takes too long; a slow network label does not automatically switch modes. Explicit saveData can select text view on navigation. Do not display a permanent selector; keep a full-page return action in text view. An explicit choice overrides hints, without unexpected reloads.
             - type: code
               title: theme.json addition
               language: json
               code: |
                 "dataSaver": {
                   "stylesheet": "data-saver-theme.css",
-                  "scripts": []
+                  "scripts": [],
+                  "layoutStyles": ["style.css"]
                 }
             - type: code
               title: Operator configuration in config.yml
@@ -32,6 +33,7 @@ blocks:
                     mode: auto
                     detectSlowConnection: true
                     respectBrowserPreference: true
+                    promptAfterMs: 5000
             - type: text
               paragraphs:
                 - Verify request logs in an isolated browser with mocked slow-network and saveData hints, plus unsupported APIs, blocked storage, JavaScript disabled, keyboard navigation, narrow screens and dark/high-contrast modes. Confirm that text mode requests no full theme, fonts, pictures or document/video engines until demanded, and that individual media loading does not start unrelated previews. Keep CSS/JS dependency graphs fingerprinted. Full view, external-link prompts and current service consent must still work.

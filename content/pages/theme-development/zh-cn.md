@@ -12,15 +12,16 @@ blocks:
             - type: text
               paragraphs:
                 - 轻量版本是主题的可选能力，不强制每个主题提供。支持时在 theme.json 中声明 dataSaver，并把专用样式与可选脚本放在 assets/。框架负责检测、用户选择、延后媒体请求及本地资源安全；主题负责合理的轻量配色、布局与必要交互。
-                - 使用系统字体和少量 CSS，不引入装饰性背景图、网络字体或完整主题样式。保留正文、导航、标签、可见焦点、对比度以及隐私和外链提示。非必要的完整模式脚本使用 data-data-optional。动态图片在设置任何媒体地址前调用 window.edgepressDataSaver?.deferMedia，不能等下载开始后才隐藏。
-                - 站长分别决定是否自动检测慢网络、是否响应浏览器节流信号；这些 API 并非所有浏览器都支持，所以始终保留自动、仅文字和完整显示的手动选择。用户明确选择优先于自动判断。网络变化在下次访问页面时生效，不突然刷新正在阅读的页面。
+                - 使用系统字体和少量 CSS，不引入装饰性图片或网络字体。可选 layoutStyles 声明已发布样式，构建时提取共享布局并移除字体声明与 URL。专用样式调整图片卡片，保留真实标题、摘要、日期、导航、页脚、焦点与主题配色，不能粗暴将所有网格变为一列。非必要的完整模式脚本使用 data-data-optional。动态图片在设置任何媒体地址前调用 window.edgepressDataSaver?.deferMedia，不能等下载开始后才隐藏。
+                - 站长分别决定是否检测首屏延迟、是否响应浏览器节流偏好。首屏过久才提示选择文字省流版，不因慢网络标签自动切换；明确的 saveData 信号可以在导航时启用省流版。不常驻三档选择器，文字版保留切回完整页面的入口。用户明确选择优先于自动判断，不突然刷新正在阅读的页面。
             - type: code
               title: theme.json 增加声明
               language: json
               code: |
                 "dataSaver": {
                   "stylesheet": "data-saver-theme.css",
-                  "scripts": []
+                  "scripts": [],
+                  "layoutStyles": ["style.css"]
                 }
             - type: code
               title: config.yml 站点配置
@@ -32,6 +33,7 @@ blocks:
                     mode: auto
                     detectSlowConnection: true
                     respectBrowserPreference: true
+                    promptAfterMs: 5000
             - type: text
               paragraphs:
                 - 用隔离浏览器模拟慢网络与 saveData，检查真实请求记录，同时覆盖不支持相关 API、存储受阻、关闭 JavaScript、键盘操作、小屏幕、暗色及高对比。文字模式不应自动请求完整主题、字体、图片或文档和视频引擎；单独加载媒体不能启动其他预览。保留资源依赖指纹、完整显示功能、外链提示与当前有效服务同意。

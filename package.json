@@ -1,7 +1,7 @@
 {
   "name": "edgepress",
   "license": "MIT",
-  "version": "2026.10.8",
+  "version": "2026.10.9",
   "description": "Static websites from Markdown and editable pages, with themes, consent-controlled embeds and readable article updates.",
   "type": "module",
   "bin": {
@@ -71,6 +71,7 @@
     "htmlparser2": "^12.0.0",
     "image-size": "^2.0.4",
     "marked": "^18.0.13",
+    "postcss": "^8.5.15",
     "sanitize-html": "^2.17.7",
     "yaml": "^2.9.1"
   },
