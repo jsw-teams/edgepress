@@ -83,8 +83,10 @@ test('text mode defers actual requests, preserves external prompts and loads onl
       await page.locator('main img[src="/two.png"]').evaluate(element => element.decode());
       assert(!requests.some(url => /large\.(?:pdf|mp4)|woff|\/style\./.test(url)));
       await Promise.all([page.waitForNavigation(), page.getByRole('button', { name: 'Full view', exact: true }).click()]);
+      await page.getByRole('button', { name: 'Full view', exact: true }).waitFor({ state: 'visible' });
       assert.equal(await page.getAttribute('html', 'data-edgepress-data-mode'), 'full');
-      assert.equal(await page.evaluate(() => document.activeElement.textContent), 'Full view');
+      await page.waitForFunction(() => document.activeElement.dataset.dataMode === 'full');
+      assert.equal(await page.evaluate(() => document.activeElement.dataset.dataMode), 'full');
       assert(requests.some(url => /\/style\./.test(url)));
       await context.close();
     }
@@ -112,6 +114,7 @@ test('text mode defers actual requests, preserves external prompts and loads onl
       const page = await context.newPage();
       await page.goto(origin);
       assert.equal(await page.getAttribute('html', 'data-edgepress-data-mode'), scenario.expected);
+      if (scenario.expected === 'full') await page.waitForFunction(() => document.documentElement.dataset.edgepressDataReady === 'true');
       await context.close();
     }
     html = initial;
@@ -125,7 +128,9 @@ test('text mode defers actual requests, preserves external prompts and loads onl
     await fallback.getByRole('button', { name: 'Full view', exact: true }).focus();
     await Promise.all([fallback.waitForNavigation(), fallback.keyboard.press('Enter')]);
     assert.equal(new URL(fallback.url()).searchParams.get('data-mode'), 'full');
-    assert.equal(await fallback.evaluate(() => document.activeElement.textContent), 'Full view');
+    await fallback.getByRole('button', { name: 'Full view', exact: true }).waitFor({ state: 'visible' });
+    await fallback.waitForFunction(() => document.activeElement.dataset.dataMode === 'full');
+    assert.equal(await fallback.evaluate(() => document.activeElement.dataset.dataMode), 'full');
     await blocked.close();
     const alternate = await firefox.launch({ headless: true });
     try {
@@ -138,6 +143,46 @@ test('text mode defers actual requests, preserves external prompts and loads onl
       await page.getByRole('button', { name: 'Load this media: Second image', exact: true }).click();
       await page.locator('main img[src="/two.png"]').evaluate(element => element.decode());
     } finally { await alternate.close(); }
+  } finally {
+    await browser.close();
+    await new Promise(resolve => server.close(resolve));
+  }
+});
+
+test('full mode restores preloaded styles before revealing a stable keyboard-accessible page', async () => {
+  const config = await loadConfig(process.cwd());
+  await loadLanguagePacks(config);
+  config.site.dataSaver = { enabled: true, mode: 'full', detectSlowConnection: false, respectBrowserPreference: false };
+  await configureDataSaver(config);
+  const script = await readFile('static/edgepress/data-saver.js');
+  const stylesheet = await readFile('static/edgepress/data-saver.css');
+  const html = dataSaverHtml('<html lang="en"><head><link rel="preload" as="style" href="/full.css"><link rel="stylesheet" href="/full.css"></head><body><main><h1>Stable page</h1><p>Readable content</p></main></body></html>', config);
+  const server = createServer((request, response) => {
+    const path = new URL(request.url, 'http://localhost').pathname;
+    if (path === '/full.css') {
+      setTimeout(() => response.writeHead(200, { 'Content-Type': 'text/css' }).end('main{padding:100px 20px}'), 150);
+      return;
+    }
+    if (path.endsWith('.js')) response.writeHead(200, { 'Content-Type': 'text/javascript' }).end(script);
+    else if (path.endsWith('.css')) response.writeHead(200, { 'Content-Type': 'text/css' }).end(stylesheet);
+    else response.writeHead(200, { 'Content-Type': 'text/html' }).end(html);
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const browser = await chromium.launch({ headless: true, args: ['--disable-extensions'] });
+  try {
+    const page = await browser.newPage();
+    await page.addInitScript(() => {
+      window.layoutShift = 0;
+      new PerformanceObserver(list => {
+        for (const entry of list.getEntries()) if (!entry.hadRecentInput) window.layoutShift += entry.value;
+      }).observe({ type: 'layout-shift', buffered: true });
+    });
+    await page.goto('http://127.0.0.1:' + server.address().port + '/?data-mode=full');
+    await page.waitForFunction(() => document.activeElement.dataset.dataMode === 'full');
+    assert.equal(await page.locator('main').evaluate(element => getComputedStyle(element).paddingTop), '100px');
+    assert.equal(await page.locator('link[rel="stylesheet"][href="/full.css"]').count(), 1);
+    await page.waitForTimeout(100);
+    assert(await page.evaluate(() => window.layoutShift <= 0.01));
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));

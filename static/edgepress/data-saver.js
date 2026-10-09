@@ -14,19 +14,26 @@
   document.documentElement.dataset.edgepressDataMode = mode;
   const resources = new Map();
   const activateResources = (kind, feature) => {
+    const loading = [];
     for (const template of document.querySelectorAll('template[data-edgepress-data-resource]')) {
       if (template.dataset.edgepressDataResource !== kind) continue;
       if (feature && template.dataset.dataFeature !== feature) continue;
       const original = template.content.firstElementChild;
       if (!original) continue;
       const source = original.getAttribute('src') || original.getAttribute('href');
-      if (resources.has(source)) continue;
+      const identity = kind + ':' + original.tagName + ':' + (original.getAttribute('rel') || '') + ':' + source;
+      if (resources.has(identity)) continue;
       const element = document.createElement(original.tagName);
       for (const attribute of original.attributes) element.setAttribute(attribute.name, attribute.value);
       if (element.tagName === 'SCRIPT') element.async = false;
-      resources.set(source, element);
+      if (element.tagName === 'LINK' && element.rel === 'stylesheet') loading.push(new Promise(resolve => {
+        element.addEventListener('load', resolve, { once: true });
+        element.addEventListener('error', resolve, { once: true });
+      }));
+      resources.set(identity, element);
       template.replaceWith(element);
     }
+    return loading;
   };
   const activateMedia = host => {
     const template = host.querySelector(':scope > template');
@@ -62,6 +69,7 @@
   };
   window.edgepressDataSaver = Object.freeze({ mode, preference, deferMedia });
   const initialize = () => {
+    let restoreFocus = () => {};
     const controls = document.querySelector('.edgepress-data-controls');
     if (controls) {
       controls.hidden = false;
@@ -80,10 +88,30 @@
       }
       let focusMode = query;
       try { focusMode = sessionStorage.getItem('edgepress-data-focus') || focusMode; sessionStorage.removeItem('edgepress-data-focus'); } catch {}
-      if (modes.includes(focusMode)) controls.querySelector('[data-data-mode="' + focusMode + '"]')?.focus({ preventScroll: true });
+      if (modes.includes(focusMode)) {
+        const focusDeadline = performance.now() + 8000;
+        restoreFocus = () => {
+          const target = controls.querySelector('[data-data-mode="' + focusMode + '"]');
+          if (!target?.isConnected || document.activeElement !== document.body) return;
+          if (getComputedStyle(target).visibility !== 'visible') {
+            if (performance.now() < focusDeadline) requestAnimationFrame(restoreFocus);
+            return;
+          }
+          target.focus({ preventScroll: true });
+        };
+      }
+      if (mode !== 'full') restoreFocus();
     }
     if (mode === 'full') {
-      activateResources('style');
+      const loading = activateResources('style');
+      const reveal = () => {
+        clearTimeout(deadline);
+        if (document.documentElement.dataset.edgepressDataReady === 'true') return;
+        document.documentElement.dataset.edgepressDataReady = 'true';
+        requestAnimationFrame(restoreFocus);
+      };
+      const deadline = setTimeout(reveal, 4000);
+      void Promise.all(loading).then(() => document.fonts?.ready).then(reveal, reveal);
       document.querySelectorAll('[data-edgepress-data-media]').forEach(activateMedia);
       activateResources('script');
       return;
