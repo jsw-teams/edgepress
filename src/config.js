@@ -17,6 +17,7 @@ const defaults = {
     archive: { categories: [] },
     navigation: [],
     externalLinks: { enabled: false, trustedOrigins: [] },
+    dataSaver: { enabled: false, mode: 'auto', detectSlowConnection: false, respectBrowserPreference: true },
     footerNavigation: [],
     footer: '',
     seo: { author: '', keywords: [], image: '', robots: 'index,follow' },
@@ -116,6 +117,8 @@ async function readSiteYaml(root) {
 }
 
 function validateSiteConfig(config) {
+  const dataSaver = config.site.dataSaver;
+  if (!dataSaver || typeof dataSaver !== 'object' || Array.isArray(dataSaver) || ['enabled', 'detectSlowConnection', 'respectBrowserPreference'].some(key => typeof dataSaver[key] !== 'boolean') || !['auto', 'text', 'full'].includes(dataSaver.mode) || Object.keys(dataSaver).some(key => !['enabled', 'mode', 'detectSlowConnection', 'respectBrowserPreference'].includes(key))) throw new Error('site.dataSaver needs enabled, mode (auto, text or full), detectSlowConnection and respectBrowserPreference');
   const externalLinks = config.site.externalLinks;
   if (!externalLinks || typeof externalLinks !== 'object' || Array.isArray(externalLinks) || typeof externalLinks.enabled !== 'boolean' || !Array.isArray(externalLinks.trustedOrigins) || externalLinks.trustedOrigins.length > 100 || Object.keys(externalLinks).some(key => !['enabled', 'trustedOrigins'].includes(key))) throw new Error('site.externalLinks needs enabled and a trustedOrigins list');
   if (externalLinks.trustedOrigins.some(origin => typeof origin !== 'string')) throw new Error('site.externalLinks.trustedOrigins must contain exact origins');

@@ -12,6 +12,7 @@ import { loadLanguagePacks } from './i18n.js';
 import { contentPermissions, extendConsentPolicy, injectConsentPolicy } from './consent-csp.js';
 import { generateBuiltinRoutes } from './generators.js';
 import {reserveImageDimensions,collectImageDimensions} from './image-dimensions.js';
+import { dataSaverHtml, configureDataSaver } from './data-saver.js';
 
 const RENDER_CACHE_VERSION = 3;
 const MARKDOWN_SECURITY_POLICY_VERSION = 5;
@@ -194,6 +195,7 @@ async function writeRoutes(routes, stage, assetBundle, extensions, site, config)
     if (typeof body !== 'string') throw new Error('route:body filters must return a string for ' + route.path);
     body = rewriteAssetLinks(body, assetBundle.urlMap);
     body = reserveImageDimensions(body, assetBundle.imageDimensions, route.path, site.config.site.url);
+    body = dataSaverHtml(body, config, assetBundle.urlMap);
     body = injectConsentPolicy(body, assetBundle.existingHeaders);
     await writeFile(file, body, 'utf8');
   });
@@ -202,6 +204,7 @@ async function writeRoutes(routes, stage, assetBundle, extensions, site, config)
 export async function buildSite(root = process.cwd(), options = {}) {
   const started = Date.now();
   const config = await loadConfig(root);
+  await configureDataSaver(config);
   if (options.preview === true) {
     config.preview = true;
     config.previewBuildId = randomUUID();

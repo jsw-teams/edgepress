@@ -66,6 +66,14 @@ Site paths, anchors, mailto/tel links, downloads and modified/new-tab gestures k
 
 Large hashed dependency graphs automatically group safe immutable cache rules, never mutable metadata. The build rejects more than 100 static header rules locally instead of discovering the error while publishing. Build and dry-run checks do not authorize deployment.
 
+## Optional data-saving theme variants
+
+This capability is off by default. Theme authors opt in through `theme.json` with `"dataSaver": { "stylesheet": "data-saver-theme.css", "scripts": [] }`; the referenced files live in the theme's `assets/` directory. Keep the lightweight stylesheet free of downloadable fonts, background images and imports of the full theme. Optional scripts should contain only essential text-view interactions. A theme without this declaration remains unchanged unless its operator explicitly enables the feature, in which case the build explains the missing variant.
+
+Operators can set `site.dataSaver` to `{ enabled: true, mode: auto, detectSlowConnection: true, respectBrowserPreference: true }` in `config.yml`. Slow-network detection and browser data-saving preferences are separate switches. Automatic mode uses available `slow-2g`/`2g`, `saveData` and reduced-data hints on navigation; it does not probe external services or claim to measure bandwidth. Unsupported browsers retain full view and the manual selector. An explicit visitor choice takes precedence over hints; blocked storage falls back to a validated `data-mode` query value.
+
+Text mode keeps readable content, core accessibility, navigation, search and the external-link/consent UI, while images, web fonts, document previews and optional services stay unloaded. Media can be requested individually without restoring the full theme. Full view and no-JavaScript links retain their original behavior. Dynamic theme content can use `window.edgepressDataSaver?.deferMedia(element, activate, accessibleDescription)` before assigning a media URL; it returns a placeholder in text mode and otherwise calls `activate`. Mark nonessential theme scripts with `data-data-optional`. Test actual request logs, not merely hidden pixels. See the theme-development guide for the contract and lightweight styles; the framework owns detection and loading, not a mandatory appearance.
+
 ## Everyday writing
 
 After the one-time site setup, create an article with `npm run new -- post "My first article"`. Open the printed file path and write Markdown below the second `---` line. The command fills the title, date, and language; the theme supplies the page title, article list, contents, search, and feed.

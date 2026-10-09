@@ -1,0 +1,3 @@
+html[data-edgepress-data-mode=text]{color-scheme:light;--paper:#f6f4ee;--ink:#201e19;--muted:#56534b;--line:#a8a397;--accent:#155a9b}html[data-edgepress-data-mode=text] .brand{font:700 1.5rem Georgia,serif}html[data-edgepress-data-mode=text] .signal-cover{display:block}html[data-edgepress-data-mode=text] .latest-posts{display:block}html[data-edgepress-data-mode=text] .post-card{padding-block:1rem;border-top:1px solid var(--line)}
+@media(prefers-color-scheme:dark){html[data-edgepress-data-mode=text]{color-scheme:dark;--paper:#171714;--ink:#f6f3e9;--muted:#cbc8bc;--line:#929083;--accent:#9dcbff}}
+@media(forced-colors:active){html[data-edgepress-data-mode=text]{--paper:Canvas;--ink:CanvasText;--muted:CanvasText;--line:GrayText;--accent:LinkText}}

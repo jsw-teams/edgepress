@@ -44,6 +44,8 @@ EdgePress builds static websites from Markdown and YAML source. Follow these rul
 
 ## Themes
 
+- Data-saving variants are optional theme-owned assets declared in theme.json. Keep them free of full-theme imports, downloaded fonts and background images. Framework detection uses separate operator switches, no bandwidth probes; explicit visitor choices override hints. Verify actual requests, not CSS hiding, including Firefox speculative loading and consent.
+
 - Themes use HTML layouts at `themes/<name>/layouts/layout.html` and `.html` partials under `layouts/partials/`; they do not use TSX renderers.
 - Keep shared theme CSS and scripts in that theme's `assets/` directory. The builder fingerprints CSS and JavaScript files.
 - Escape normal layout placeholders. Only generated page content, JSON-LD, and generated navigation may use the renderer's approved raw placeholders.

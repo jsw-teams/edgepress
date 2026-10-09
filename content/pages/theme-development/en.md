@@ -6,6 +6,37 @@ description: Build EdgePress themes with shared HTML partials, CSS palettes, ele
 blocks:
   - columns: 1
     cells:
+      - - type: section
+          title: Optional data-saving variant
+          blocks:
+            - type: text
+              paragraphs:
+                - A lightweight variant is optional, not a new requirement for every theme. Declare dataSaver in theme.json only when the theme supports readable text-first presentation. Its stylesheet and optional scripts belong to assets/. The framework handles detection, user choice, deferred media and CSP-compatible local resources; themes own their lightweight colors, layout and necessary interactions.
+                - Use system fonts, modest CSS and no decorative image backgrounds or full-theme imports. Keep article text, navigation, labels, focus, contrast and privacy/external-link controls usable. Optional theme scripts must remain small; mark heavyweight full-view scripts with data-data-optional. For dynamic pictures, call window.edgepressDataSaver?.deferMedia before assigning any media URL, not after the browser has started downloading it.
+                - Operators separately enable slow-connection detection and browser data-saving hints. Both are optional and unavailable in some browsers; always retain the manual Automatic, Text only and Full view controls. An explicit choice overrides automatic hints. Network changes apply on the next navigation, not through unexpected page reloads.
+            - type: code
+              title: theme.json addition
+              language: json
+              code: |
+                "dataSaver": {
+                  "stylesheet": "data-saver-theme.css",
+                  "scripts": []
+                }
+            - type: code
+              title: Operator configuration in config.yml
+              language: yaml
+              code: |
+                site:
+                  dataSaver:
+                    enabled: true
+                    mode: auto
+                    detectSlowConnection: true
+                    respectBrowserPreference: true
+            - type: text
+              paragraphs:
+                - Verify request logs in an isolated browser with mocked slow-network and saveData hints, plus unsupported APIs, blocked storage, JavaScript disabled, keyboard navigation, narrow screens and dark/high-contrast modes. Confirm that text mode requests no full theme, fonts, pictures or document/video engines until demanded, and that individual media loading does not start unrelated previews. Keep CSS/JS dependency graphs fingerprinted. Full view, external-link prompts and current service consent must still work.
+  - columns: 1
+    cells:
       -
         - type: hero
           eyebrow: Theme guide

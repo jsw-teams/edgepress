@@ -6,6 +6,37 @@ description: 使用共享 HTML 局部模板、CSS 配色、页面元素布局和
 blocks:
   - columns: 1
     cells:
+      - - type: section
+          title: 按需开发节省流量版本
+          blocks:
+            - type: text
+              paragraphs:
+                - 轻量版本是主题的可选能力，不强制每个主题提供。支持时在 theme.json 中声明 dataSaver，并把专用样式与可选脚本放在 assets/。框架负责检测、用户选择、延后媒体请求及本地资源安全；主题负责合理的轻量配色、布局与必要交互。
+                - 使用系统字体和少量 CSS，不引入装饰性背景图、网络字体或完整主题样式。保留正文、导航、标签、可见焦点、对比度以及隐私和外链提示。非必要的完整模式脚本使用 data-data-optional。动态图片在设置任何媒体地址前调用 window.edgepressDataSaver?.deferMedia，不能等下载开始后才隐藏。
+                - 站长分别决定是否自动检测慢网络、是否响应浏览器节流信号；这些 API 并非所有浏览器都支持，所以始终保留自动、仅文字和完整显示的手动选择。用户明确选择优先于自动判断。网络变化在下次访问页面时生效，不突然刷新正在阅读的页面。
+            - type: code
+              title: theme.json 增加声明
+              language: json
+              code: |
+                "dataSaver": {
+                  "stylesheet": "data-saver-theme.css",
+                  "scripts": []
+                }
+            - type: code
+              title: config.yml 站点配置
+              language: yaml
+              code: |
+                site:
+                  dataSaver:
+                    enabled: true
+                    mode: auto
+                    detectSlowConnection: true
+                    respectBrowserPreference: true
+            - type: text
+              paragraphs:
+                - 用隔离浏览器模拟慢网络与 saveData，检查真实请求记录，同时覆盖不支持相关 API、存储受阻、关闭 JavaScript、键盘操作、小屏幕、暗色及高对比。文字模式不应自动请求完整主题、字体、图片或文档和视频引擎；单独加载媒体不能启动其他预览。保留资源依赖指纹、完整显示功能、外链提示与当前有效服务同意。
+  - columns: 1
+    cells:
       - - type: text
           text: "文档通过纯浏览器 document-viewer 自动预览，支持 PDF、DOC/DOCX、PPT/PPTX 和 XLS/XLSX。云端构建无需安装 Office 或 LibreOffice。预览不保证 Office 排版完全一致，不执行宏，也不加载文档内外部资源。"
         - type: code

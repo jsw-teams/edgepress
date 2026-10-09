@@ -280,6 +280,7 @@ function makeIcon(name) {
 
 const activeServices = new Map();
 async function activate(allowed) {
+  if (document.documentElement.dataset.edgepressDataMode === 'text') return;
   const config = JSON.parse(document.getElementById('edgepress-privacy-config').textContent);
   const permitted = new Set(allowed);
   for (const integration of config.privacy.integrations || []) {

@@ -1,5 +1,9 @@
 // Manual playback streams immutable media and preserves the chosen playhead.
+const mounted = new WeakSet();
+function refresh() {
 for (const root of document.querySelectorAll('[data-project-demo]')) {
+  if (mounted.has(root)) continue;
+  mounted.add(root);
   const video=root.querySelector('video'),frame=root.querySelector('.project-demo-media');
   const button=root.querySelector('button'),status=root.querySelector('[role=status]');
   const seek=root.querySelector('[data-demo-seek]'),time=root.querySelector('[data-demo-time]');
@@ -84,3 +88,6 @@ for (const root of document.querySelectorAll('[data-project-demo]')) {
   window.addEventListener('pagehide',pause);
   controls();
 }
+}
+refresh();
+document.addEventListener('edgepress:data-media', refresh);

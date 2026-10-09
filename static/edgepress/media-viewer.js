@@ -48,6 +48,7 @@ function refresh() {
 refresh();
 addEventListener('storage', refresh);
 document.addEventListener('edgepress:service-ready', refresh);
+document.addEventListener('edgepress:data-media', refresh);
 document.addEventListener('visibilitychange', refresh);
 document.addEventListener('click', event => { if (event.target.closest('.privacy-panel button')) setTimeout(refresh, 0); });
 addEventListener('pagehide', () => { for (const dispose of mounted.values()) dispose(); mounted.clear(); });

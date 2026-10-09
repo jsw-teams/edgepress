@@ -1,5 +1,6 @@
 {
   "name": "default",
+  "dataSaver": { "stylesheet": "data-saver-theme.css", "scripts": [] },
   "version": "1.0.0",
   "renderer": "layouts/layout.html",
   "templateEngine": "edgepress-partials-v1"
