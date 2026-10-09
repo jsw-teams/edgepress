@@ -1,0 +1,17 @@
+.link-directory-section{min-width:0;margin-block:clamp(12px,2vw,24px)}
+.link-directory-section>h2{margin:0 0 clamp(14px,2.5vw,24px);font-size:clamp(1.4rem,2.6vw,1.9rem);line-height:1.3}
+.link-directory-items{counter-reset:directory-entry;list-style:none;margin:0;padding:0;border-top:1px solid var(--line,#c8c8c8)}
+.link-directory-entry{counter-increment:directory-entry;border-bottom:1px solid var(--line,#c8c8c8)}
+.link-directory-link{display:grid;grid-template-columns:2.5rem minmax(0,1fr) minmax(5rem,auto);grid-template-areas:"number main destination";gap:clamp(12px,2vw,26px);align-items:center;min-width:0;padding:clamp(20px,3vw,30px) clamp(6px,1vw,14px);color:var(--ink,CanvasText);text-decoration:none;transition:background .16s ease}
+.link-directory-link:hover{background:var(--surface-soft,rgba(127,127,127,.05));text-decoration:none}
+.link-directory-link:focus-visible{outline:3px solid var(--accent,Highlight);outline-offset:-3px}
+.link-directory-number{grid-area:number;align-self:start;padding-top:.25em;color:var(--muted,#666);font:600 .8rem/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}
+.link-directory-number::before{content:counter(directory-entry,decimal-leading-zero)}
+.link-directory-main{grid-area:main;display:flex;flex-direction:column;gap:7px;min-width:0}
+.link-directory-name{color:var(--ink,CanvasText);font-size:clamp(1.05rem,2vw,1.22rem);font-weight:680;line-height:1.35;overflow-wrap:anywhere}
+.link-directory-summary{color:var(--muted,#666);font-size:.95rem;line-height:1.65;overflow-wrap:anywhere}
+.link-directory-destination{grid-area:destination;display:flex;gap:10px;justify-content:flex-end;align-items:center;min-width:0;max-width:25ch;color:var(--muted,#666);font:.8rem/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;text-align:end;overflow-wrap:anywhere}
+.link-directory-arrow{color:var(--accent,LinkText);font:600 1.15rem/1 sans-serif}
+.link-directory-link:hover .link-directory-name,.link-directory-link:focus-visible .link-directory-name{color:var(--accent,LinkText)}
+@media(max-width:650px){.link-directory-link{grid-template-columns:2rem minmax(0,1fr);grid-template-areas:"number main" ". destination";row-gap:8px}.link-directory-destination{justify-content:flex-start;text-align:start;max-width:100%;padding-left:0}}
+@media(prefers-reduced-motion:reduce){.link-directory-link{transition:none}}

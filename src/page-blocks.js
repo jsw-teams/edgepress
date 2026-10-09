@@ -371,6 +371,22 @@ async function renderBlock(block, context, depth, index) {
         '</span><span class="privacy-controller-separator" aria-hidden="true">·</span><span><strong>' + contactLabel +
         ':</strong> ' + contactValue + '</span></p>';
     }
+    case 'link-directory': {
+      const items = list(block.items, 'link-directory.items', 1, 100);
+      const heading = text(block.title, 'link-directory.title', 200);
+      const entries = items.map((item) => {
+        const name = escapeHtml(text(item?.title, 'link-directory item title', 200));
+        const summary = escapeHtml(text(item?.text, 'link-directory item text', 1000, true));
+        const href = localizedSiteUrl(item?.url, 'link-directory item url', context);
+        const host = /^https?:\/\//i.test(href) ? new URL(href).host : '';
+        return '<li class="link-directory-entry"><a class="link-directory-link" href="' + escapeHtml(href) + '">' +
+          '<span class="link-directory-number" aria-hidden="true"></span><span class="link-directory-main"><strong class="link-directory-name">' + name + '</strong>' +
+          (summary ? '<span class="link-directory-summary">' + summary + '</span>' : '') + '</span>' +
+          '<span class="link-directory-destination" aria-hidden="true">' + (host ? '<span>' + escapeHtml(host) + '</span>' : '') +
+          '<span class="link-directory-arrow">↗</span></span></a></li>';
+      }).join('');
+      return '<section class="link-directory-section"><h2>' + escapeHtml(heading) + '</h2><ol class="link-directory-items">' + entries + '</ol></section>';
+    }
     case 'feature-grid': {
       const items = list(block.items, 'feature-grid.items', 1, 12);
       const heading = text(block.title, 'feature-grid.title', 200);

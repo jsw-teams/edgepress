@@ -179,6 +179,7 @@ export async function renderLayout(config, extensions, page, body) {
   let filtered = await extensions.filter('html:afterLayout', html, context);
   if (typeof filtered !== 'string') throw new Error('html:afterLayout filters must return a string');
   filtered = filtered.replace(/<\/head\s*>/i, '<link rel="stylesheet" href="/edgepress/fonts.css"></head>');
+  if (/class="link-directory-section"/.test(filtered)) filtered = filtered.replace(/<\/head\s*>/i, '<link rel="stylesheet" href="/edgepress/link-directory.css"></head>');
   if(/<img\b[^>]*\sloading=["\']lazy["\']/i.test(filtered))filtered=filtered.replace(/<\/head\s*>/i, '<link rel="stylesheet" href="/edgepress/images.css"></head>');
   if(/\b(?:post-content|image-block|media-text|data-edgepress-oembed)\b/.test(filtered)){
     const keys=['openImage','closeImage','zoomIn','zoomOut','saveOriginal','retryMedia','loading','imageUnavailable'];

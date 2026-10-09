@@ -74,6 +74,23 @@ Use `##` for sections, lists, links, and fenced code blocks as needed. Put artic
 
 日常发文：运行 `npm run new -- post "我的第一篇文章"`，打开输出的文件，在第二个 `---` 后写 Markdown 正文。标题、日期和语言自动填写。运行 `npm run dev` 预览，发布前运行 `npm run build`。页面布局和主题开发可以在需要调整设计时再了解。
 
+## Link directories
+
+Use a `link-directory` block in a Pages layout to publish an editorial directory rather than a grid of cards. Each row is defined by its title, URL and optional description in the locale's page YAML; the renderer displays the hostname automatically for external HTTP(S) links. There is no site-name allowlist, fixed item count, remote favicon fetch, or other third-party request when the directory loads. Links retain the site's existing external-departure prompt when enabled.
+
+```yaml
+- columns: 1
+  cells:
+    - - type: link-directory
+        title: Independent websites
+        items:
+          - title: Example Journal
+            url: https://example.org/journal/
+            text: Notes on technology and design.
+```
+
+The presentation is a responsive, separator-lined list with numeric markers. It follows theme variables and does not require site-specific styling. Each localized page supplies its own entries.
+
 ## Page editing
 
 Each page has a folder under content/pages/ and one lowercase locale Markdown file per language. Keep the file body empty after its YAML front matter. Edit the ordered blocks there:
