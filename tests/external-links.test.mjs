@@ -71,7 +71,7 @@ for (const [name, engine] of [['Chromium', chromium], ['Firefox', firefox]]) {
         const requests = [];
         const errors = [];
         page.on('pageerror', error => errors.push(error.message));
-        const content = '<main><a id="external" href="https://other.test/read?q=%3Cscript%3E#chapter">Other site</a><a id="trusted" href="https://trusted.test/path">Trusted site</a><a id="internal" href="#section">Inside</a><a id="new-tab" href="https://other.test/new" target="_blank">New tab</a><a id="download" href="https://other.test/file" download>Download</a><a id="auth" href="https://other.test/auth" data-external-link-skip>Sign in</a><section id="section">Section</section></main>';
+        const content = '<main><a id="external" href="https://other.test/read?q=%3Cscript%3E#chapter">Other site</a><a id="long-url" href="https://other.test/path/' + 'a'.repeat(180) + '?x=1#part">Long URL</a><a id="root-url" href="https://other.test/">Site root</a><a id="trusted" href="https://trusted.test/path">Trusted site</a><a id="internal" href="#section">Inside</a><a id="new-tab" href="https://other.test/new" target="_blank">New tab</a><a id="download" href="https://other.test/file" download>Download</a><a id="auth" href="https://other.test/auth" data-external-link-skip>Sign in</a><section id="section">Section</section></main>';
         const html = rewriteAssetLinks(await renderLayout(config, extensions, { title: 'Links', locale, urlPath: '/links/' }, content.replace('<main>', '<div>').replace('</main>', '</div>')), bundle.urlMap);
         await context.route('**/*', async route => {
           const url = new URL(route.request().url());
@@ -89,7 +89,10 @@ for (const [name, engine] of [['Chromium', chromium], ['Firefox', firefox]]) {
         const dialog = page.getByRole('dialog');
         await dialog.waitFor();
         assert.equal(await dialog.getByRole('heading').textContent(), title);
-        assert.equal(await dialog.locator('.edgepress-external-domain').textContent(), 'other.test');
+        assert.equal(await dialog.locator('.edgepress-external-url').textContent(), 'https://other.test/read?q=%3Cscript%3E#chapter');
+        assert.equal(await dialog.locator('.edgepress-external-url').count(), 1);
+        assert.equal(await dialog.locator('.edgepress-external-domain, .edgepress-external-origin').count(), 0);
+        assert.equal(await dialog.locator('.edgepress-external-url').evaluate(element => element.scrollWidth <= element.clientWidth), true);
         assert.equal(await dialog.getByRole('button', { name: back, exact: true }).evaluate(element => element === document.activeElement), true);
         assert.deepEqual(requests, []);
         assert.equal(await dialog.evaluate(element => getComputedStyle(element).backgroundColor), 'rgb(24, 37, 47)');
@@ -110,6 +113,16 @@ for (const [name, engine] of [['Chromium', chromium], ['Firefox', firefox]]) {
         assert.equal(await page.locator('body > aside').evaluate(element => element.inert), true);
         await page.keyboard.press('Escape');
         assert.equal(await page.locator('body > aside').evaluate(element => element.inert), false);
+        await page.locator('#long-url').click();
+        await dialog.waitFor();
+        assert.equal(await dialog.locator('.edgepress-external-url').textContent(), 'https://other.test/path/' + 'a'.repeat(180) + '?x=1#part');
+        assert.equal(await dialog.locator('.edgepress-external-url').evaluate(element => element.scrollWidth <= element.clientWidth), true);
+        await page.keyboard.press('Escape');
+        await page.locator('#root-url').click();
+        await dialog.waitFor();
+        assert.equal(await dialog.locator('.edgepress-external-url').textContent(), 'https://other.test/');
+        assert.equal(await dialog.locator('.edgepress-external-url').count(), 1);
+        await page.keyboard.press('Escape');
         await page.locator('#internal').click();
         assert.ok(page.url().endsWith('#section'));
         await anchor.click();
