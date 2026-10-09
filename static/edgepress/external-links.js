@@ -20,9 +20,7 @@ export function mountExternalLinks(settings, doc = document) {
   description.id = 'edgepress-external-description';
   description.textContent = settings.labels.description;
   const destination = doc.createElement('p');
-  destination.className = 'edgepress-external-domain';
-  const origin = doc.createElement('p');
-  origin.className = 'edgepress-external-origin';
+  destination.className = 'edgepress-external-url';
   const actions = doc.createElement('div');
   actions.className = 'edgepress-external-actions';
   const back = doc.createElement('button');
@@ -32,7 +30,7 @@ export function mountExternalLinks(settings, doc = document) {
   proceed.type = 'button';
   proceed.textContent = settings.labels.continue;
   actions.append(back, proceed);
-  panel.append(title, description, destination, origin, actions);
+  panel.append(title, description, destination, actions);
   overlay.append(panel);
   doc.body.append(overlay);
   const bypass = new WeakSet();
@@ -85,8 +83,7 @@ export function mountExternalLinks(settings, doc = document) {
     active = anchor;
     pending = { anchor, url: target.url, target: anchor.target };
     palette();
-    destination.textContent = target.domain;
-    origin.textContent = target.origin;
+    destination.textContent = target.url;
     scrollStyle = doc.body.style.overflow;
     doc.body.style.overflow = 'hidden';
     for (const element of doc.body.children) if (element !== overlay) { inert.set(element, element.inert); element.inert = true; }
