@@ -3,8 +3,7 @@
 .edgepress-external-panel{box-sizing:border-box;width:min(100%,520px);max-height:90dvh;overflow:auto;background:var(--external-paper);color:var(--external-ink);border:1px solid var(--line,currentColor);border-radius:var(--radius-card,20px);padding:clamp(22px,5vw,36px);box-shadow:0 24px 80px rgba(0,0,0,.25);text-align:start;overflow-wrap:anywhere}
 .edgepress-external-panel h2{margin:0 0 16px;font:inherit;font-size:1.35rem;font-weight:750;color:inherit}
 .edgepress-external-panel p{margin:12px 0;line-height:1.65;color:inherit}
-.edgepress-external-domain{font-size:1.3rem;font-weight:750}
-.edgepress-external-origin{font-size:.9rem}
+.edgepress-external-url{font-size:1rem;font-weight:650;overflow-wrap:anywhere;word-break:break-word;unicode-bidi:plaintext}
 .edgepress-external-actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px}
 .edgepress-external-actions button{appearance:none;box-sizing:border-box;flex:1;min-width:140px;min-height:48px;margin:0;padding:12px 18px;border:1px solid var(--external-accent);border-radius:var(--radius-small,12px);background:var(--external-paper);color:var(--external-ink);font:inherit;font-weight:650;line-height:1.4;cursor:pointer}
 .edgepress-external-actions button:last-child{border-width:2px}
