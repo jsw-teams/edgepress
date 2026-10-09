@@ -51,7 +51,7 @@ Run `edgepress init` in a new project directory to scaffold a site pinned to the
 
 ## External link prompts
 
-The optional local prompt shows the destination domain and lets the visitor return or continue. It makes no request to the destination before confirmation. Configure exact origins, not wildcard domains:
+The optional local prompt shows the complete destination URL (including path, query and fragment) once, with no duplicate hostname, and lets the visitor return or continue. It makes no request to the destination before confirmation. Configure exact origins, not wildcard domains:
 
 ```yaml
 site:
