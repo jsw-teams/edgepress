@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { recordingContext, record, closeRecording, preparePage } from './desktop-recording.mjs';
-import { pointAt, drag } from './vm-desktop.mjs';
+import { pointAt, pointAtPosition, drag } from './vm-desktop.mjs';
 
 const workspace = resolve(import.meta.dirname, '../../..');
 const site = resolve(workspace, 'web/js.gripe');
@@ -30,6 +30,11 @@ const output = resolve(site, 'content/assets/images/previews');
 await mkdir(output, { recursive: true });
 const browser = await chromium.connectOverCDP('http://127.0.0.1:9222');
 const pause = milliseconds => new Promise(done => setTimeout(done, milliseconds));
+const frameTargetBox = (element, selector) => element.evaluate((frame, selector) => {
+  const outer = frame.getBoundingClientRect();
+  const inner = frame.contentDocument.querySelector(selector).getBoundingClientRect();
+  return { x: outer.x + frame.clientLeft + inner.x, y: outer.y + frame.clientTop + inner.y, width: inner.width, height: inner.height };
+}, selector);
 const entries = [];
 try {
   for (const locale of (process.env.RECORDING_LOCALES || 'en,zh-SG,zh-TW').split(',')) {
@@ -112,14 +117,17 @@ try {
           const address = block.locator('.document-viewer-formula input');
           await pointAt(page, address); await address.fill('A90'); await address.press('Enter');
           const cell = frame.locator('[data-row="89"][data-column="0"]');
-          await cell.waitFor(); await pointAt(page, cell); await cell.click(); await pause(1800);
+          await cell.waitFor();
+          const cellBox = await frameTargetBox(block.locator('iframe'), '[data-row="89"][data-column="0"]');
+          const cellPoint = { x: cellBox.x + cellBox.width / 2, y: cellBox.y + cellBox.height / 2 };
+          await pointAtPosition(page, cellPoint); await page.mouse.click(cellPoint.x, cellPoint.y); await pause(1800);
           const summary = block.getByRole('tab', { name: 'Summary', exact: true });
           await pointAt(page, summary); await summary.click(); await frame.getByText('595500', { exact: true }).waitFor(); await pause(2200);
           const grip = frame.locator('[data-resize-column="0"]').first();
           const width = Number(await grip.getAttribute('aria-valuenow'));
-          await pointAt(page, grip);
-          const position = await grip.boundingBox();
+          const position = await frameTargetBox(block.locator('iframe'), '[data-resize-column="0"]');
           const from = { x: position.x + position.width / 2, y: position.y + position.height / 2 };
+          await pointAtPosition(page, from);
           await drag(page, { from, to: { x: from.x + 100, y: from.y } });
           assert.equal(Number(await grip.getAttribute('aria-valuenow')), width + 100);
           await pause(1600);
