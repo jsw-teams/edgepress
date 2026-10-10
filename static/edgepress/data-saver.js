@@ -174,12 +174,12 @@
       activateResources('script');
       const checkFirstScreen = () => {
         if (!stylesReady || document.readyState === 'loading') return;
-        const pending = [...document.images].some(image => {
+        const pending = [...document.images].filter(image => {
           const rectangle = image.getBoundingClientRect();
           const visible = rectangle.width > 0 && rectangle.height > 0 && rectangle.top < innerHeight && rectangle.bottom > 0;
           if (visible && image.loading === 'lazy' && !image.complete) image.loading = 'eager';
           return visible && !image.complete;
-        });
+        }).length > 0;
         if (pending) return;
         firstScreenReady = true;
         clearTimeout(offerTimer);
