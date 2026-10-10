@@ -30,10 +30,13 @@ blocks:
                 site:
                   dataSaver:
                     enabled: true
+                    debug: false
                     mode: auto
                     detectSlowConnection: true
                     respectBrowserPreference: true
                     promptAfterMs: 5000
+            - type: text
+              text: "Enable site.dataSaver.debug only for preview testing with /?data-save. When disabled, this entry opens the localized static 404 page; a true HTTP 404 requires a host rule. Full styles preload only in full view. Keep slow-loading choices stable until the visitor decides, and allow explicitly requested services after current consent without loading unrelated integrations. Use CJK-capable system font fallbacks."
             - type: text
               paragraphs:
                 - Verify request logs in an isolated browser with mocked slow-network and saveData hints, plus unsupported APIs, blocked storage, JavaScript disabled, keyboard navigation, narrow screens and dark/high-contrast modes. Confirm that text mode requests no full theme, fonts, pictures or document/video engines until demanded, and that individual media loading does not start unrelated previews. Keep CSS/JS dependency graphs fingerprinted. Full view, external-link prompts and current service consent must still work.

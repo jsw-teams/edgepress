@@ -6,19 +6,24 @@ import { chromium } from 'playwright';
 import { loadConfig } from '../src/config.js';
 import { loadLanguagePacks } from '../src/i18n.js';
 import { renderEmbed } from '../src/embed.js';
+import { configureDataSaver, dataSaverHtml, dataSaverLayout } from '../src/data-saver.js';
 
 test('embed entry stays compact until requested, retries failures and keeps keyboard focus without preconsent requests', async () => {
   const config = await loadConfig(process.cwd());
   await loadLanguagePacks(config);
+  config.site.dataSaver = { enabled:true, mode:'text', debug:false, detectSlowConnection:false, respectBrowserPreference:true };
+  await configureDataSaver(config);
   const origin = 'https://embed-layout.test';
   const service = { id: 'shared-media', provider: 'oembed', enabled: true, name: 'Shared media', backendUrl: 'https://media.example.test' };
   config.browserPlugins.services = [service];
   const block = await renderEmbed({ integration: service.id, url: service.backendUrl + '/s/example', title: 'A meaningful shared story' }, { config, locale: 'en' });
   const browser = await chromium.launch({ headless: true, args: ['--disable-extensions'] });
   try {
-    for (const theme of ['default', 'folio', 'signal']) for (const colorScheme of ['light', 'dark']) {
+    for (const theme of ['default', 'folio', 'signal']) for (const colorScheme of ['light', 'dark']) for (const mode of ['full','text']) {
       const context = await browser.newContext({ viewport: { width: 320, height: 900 }, colorScheme, reducedMotion: 'reduce' });
       let calls = 0, requests = 0;
+      const themeStyle = await readFile(resolve('themes',theme,'assets/style.css'));
+      const textLayout = await dataSaverLayout(config,[{path:'style.css',content:themeStyle}]);
       await context.route('**/*', async route => {
         const url = new URL(route.request().url());
         if (url.origin === service.backendUrl) {
@@ -34,8 +39,11 @@ test('embed entry stays compact until requested, retries failures and keeps keyb
         assert.equal(url.origin, origin);
         if (url.pathname.endsWith('/choices.js')) return route.fulfill({ contentType: 'text/javascript', body: 'export function readChoice(){return {allowed:window.testAllowed?["shared-media"]:[]}}' });
         if (url.pathname === '/style.css') return route.fulfill({ contentType: 'text/css', body: await readFile(resolve('themes', theme, 'assets/style.css')) });
-        if (url.pathname.startsWith('/edgepress/')) return route.fulfill({ contentType: url.pathname.endsWith('.js') ? 'text/javascript' : 'text/css', body: await readFile(resolve('static', '.' + url.pathname)) });
-        return route.fulfill({ contentType: 'text/html', body: '<!doctype html><html><head><link rel="stylesheet" href="/style.css"></head><body><main>' + block + '</main><script id="edgepress-privacy-config" type="application/json">' + JSON.stringify({ privacy: { integrations: [service] }, ui: { embedNeedsConsent: 'Allow {service} to load media.', embedLoading: 'Loading {service}…', embedUnavailable: 'Media unavailable. Try again.', embedLoaded: 'Loaded {service}.' } }) + '</script><script type="module" src="/edgepress/oembed.js"></script></body></html>' });
+        if (url.pathname === '/edgepress/data-saver-layout.css') return route.fulfill({contentType:'text/css',body:textLayout.content});
+        if (url.pathname === '/data-saver-theme.css') return route.fulfill({contentType:'text/css',body:await readFile(resolve('themes',theme === 'signal' ? 'folio' : theme,'assets/data-saver-theme.css'))});
+        if (url.pathname.startsWith('/edgepress/')) return route.fulfill({ contentType: url.pathname.endsWith('.js') ? 'text/javascript' : 'text/css', body: await readFile(resolve('static', '.' + url.pathname.replace('.aaaaaaaaaaaaaaaa',''))) });
+        const html = '<!doctype html><html><head><link rel="stylesheet" href="/style.css"></head><body><main>' + block + '</main><script id="edgepress-privacy-config" type="application/json">' + JSON.stringify({ privacy: { integrations: [service] }, ui: { embedNeedsConsent: 'Allow {service} to load media.', embedLoading: 'Loading {service}…', embedUnavailable: 'Media unavailable. Try again.', embedLoaded: 'Loaded {service}.' } }) + '</script><script type="module" src="/edgepress/oembed.aaaaaaaaaaaaaaaa.js"></script></body></html>';
+        return route.fulfill({ contentType:'text/html', body:mode === 'text' ? dataSaverHtml(html,config) : html });
       });
       const page = await context.newPage();
       const errors = [];
@@ -55,7 +63,8 @@ test('embed entry stays compact until requested, retries failures and keeps keyb
       await button.focus(); await page.keyboard.press('Enter');
       await page.waitForFunction(() => document.querySelector('[data-edgepress-oembed]').getAttribute('aria-busy') === 'true');
       assert.equal(await button.isEnabled(), false);
-      assert((await entry.locator('[data-oembed-placeholder]').boundingBox()).height <= 60);
+      const pendingBounds = await entry.locator('[data-oembed-placeholder]').boundingBox();
+      assert(mode === 'text' ? pendingBounds === null : pendingBounds.height <= 60);
       await entry.locator('[data-oembed-notice]').getByText('Media unavailable. Try again.', { exact: true }).waitFor();
       assert.equal(await button.isEnabled(), true);
       assert.equal(await entry.locator('[data-oembed-status]').evaluate(element => element.getBoundingClientRect().height), 0);

@@ -15,7 +15,7 @@ import { chromium, firefox } from 'playwright';
 test('data-saving variants are opt-in and require safe theme-owned assets', async () => {
   const config = await loadConfig(process.cwd());
   assert.equal(config.site.dataSaver.enabled, false);
-  assert.equal(dataSaverHtml('<html><head></head><body>Text</body></html>', config), '<html><head></head><body>Text</body></html>');
+  assert.match(dataSaverHtml('<html><head></head><body>Text</body></html>', config), /"enabled":false/);
   config.site.dataSaver.enabled = true;
   await configureDataSaver(config);
   assert.equal(config.dataSaverTheme.stylesheet, 'data-saver-theme.css');
@@ -28,7 +28,7 @@ test('data-saving variants are opt-in and require safe theme-owned assets', asyn
       await writeFile(resolve(directory, 'theme.json'), JSON.stringify({ dataSaver: variant }));
       await assert.rejects(configureDataSaver(config));
     }
-    for (const setting of ['enabled: yes', 'mode: invalid', 'detectSlowConnection: 1', 'respectBrowserPreference: null', 'promptAfterMs: 99', 'promptAfterMs: 60001', 'promptAfterMs: 500.5', 'unknown: true']) {
+    for (const setting of ['enabled: yes', 'debug: yes', 'mode: invalid', 'detectSlowConnection: 1', 'respectBrowserPreference: null', 'promptAfterMs: 99', 'promptAfterMs: 60001', 'promptAfterMs: 500.5', 'unknown: true']) {
       await writeFile(resolve(directory, 'config.yml'), 'site:\n  dataSaver:\n    ' + setting + '\n');
       await assert.rejects(loadConfig(directory), /site.dataSaver/);
     }

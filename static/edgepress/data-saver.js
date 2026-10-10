@@ -2,9 +2,15 @@
   const configuration = document.getElementById('edgepress-data-saver-config');
   if (!configuration) return;
   const settings = JSON.parse(configuration.textContent);
+  const parameters = new URL(location.href).searchParams;
+  if (parameters.has('data-save') && (!settings.enabled || !settings.debug || parameters.getAll('data-save').length !== 1 || parameters.get('data-save') !== '')) {
+    location.replace(settings.notFoundUrl);
+    return;
+  }
+  if (!settings.enabled) return;
   const modes = ['auto', 'text', 'full'];
   const key = 'edgepress-data-mode';
-  const query = new URL(location.href).searchParams.get('data-mode');
+  const query = parameters.has('data-save') ? 'text' : parameters.get('data-mode');
   let preference = settings.mode;
   try { const saved = localStorage.getItem(key); if (modes.includes(saved)) preference = saved; } catch {}
   if (modes.includes(query)) preference = query;
@@ -12,11 +18,21 @@
   const reduced = settings.respectBrowserPreference && (connection?.saveData === true || matchMedia('(prefers-reduced-data: reduce)').matches);
   const mode = preference === 'auto' ? reduced ? 'text' : 'full' : preference;
   document.documentElement.dataset.edgepressDataMode = mode;
+  if (mode === 'full') for (const source of settings.preloadStyles || []) {
+    const address = new URL(source, location.href);
+    if (address.origin !== location.origin) continue;
+    const preload = document.createElement('link');
+    preload.rel = 'preload';
+    preload.as = 'style';
+    preload.href = address.href;
+    document.head.append(preload);
+  }
   const resources = new Map();
   let firstScreenReady = false;
   let dismissed = false;
   let offerRequested = false;
   let monitor;
+  let switching = false;
   const showOffer = () => {
     if (firstScreenReady || dismissed) return;
     offerRequested = true;
@@ -39,9 +55,13 @@
       const element = document.createElement(original.tagName);
       for (const attribute of original.attributes) element.setAttribute(attribute.name, attribute.value);
       if (element.tagName === 'SCRIPT') element.async = false;
-      if (element.tagName === 'LINK' && element.rel === 'stylesheet') loading.push(new Promise(resolve => {
-        element.addEventListener('load', resolve, { once: true });
-        element.addEventListener('error', resolve, { once: true });
+      if (element.tagName === 'SCRIPT' || element.tagName === 'LINK' && element.rel === 'stylesheet') loading.push(new Promise(resolve => {
+        element.addEventListener('load', () => resolve(true), { once: true });
+        element.addEventListener('error', () => {
+          resources.delete(identity);
+          element.replaceWith(template);
+          resolve(false);
+        }, { once: true });
       }));
       resources.set(identity, element);
       template.replaceWith(element);
@@ -80,6 +100,9 @@
   window.edgepressDataSaver = Object.freeze({ mode, preference, deferMedia });
   const initialize = () => {
     const offer = document.querySelector('[data-data-offer]');
+    const waiting = document.querySelector('[data-data-wait]');
+    if (waiting) waiting.hidden = mode !== 'full';
+    let revealPage = () => {};
     const returnEntry = document.querySelector('[data-data-return]');
     if (returnEntry) returnEntry.hidden = mode !== 'text';
     if (offer && offerRequested) offer.hidden = false;
@@ -91,13 +114,19 @@
       }
       offer.hidden = true;
     };
-    const dismiss = () => { dismissed = true; clearTimeout(offerTimer); closeOffer(); };
+    const dismiss = () => { dismissed = true; clearTimeout(offerTimer); revealPage(); closeOffer(); };
     document.querySelector('[data-data-dismiss]')?.addEventListener('click', dismiss);
     document.addEventListener('keydown', event => { if (event.key === 'Escape' && offer && !offer.hidden) dismiss(); });
     for (const button of document.querySelectorAll('[data-data-mode]')) {
       button.addEventListener('click', () => {
+        if (switching) return;
+        switching = true;
         const selected = button.dataset.dataMode;
         const url = new URL(location.href);
+        url.searchParams.delete('data-save');
+        document.documentElement.dataset.edgepressDataReady = 'false';
+        if (waiting) waiting.hidden = false;
+        if (offer) offer.querySelectorAll('button').forEach(control => { control.disabled = true; });
         let persisted = false;
         try { sessionStorage.setItem('edgepress-data-focus', selected); sessionStorage.setItem('edgepress-data-scroll', String(scrollY)); } catch {}
         try { localStorage.setItem(key, selected); persisted = localStorage.getItem(key) === selected; } catch {}
@@ -129,14 +158,17 @@
     if (mode === 'full') {
       const loading = activateResources('style');
       const reveal = () => {
+        if (switching) return;
         clearTimeout(deadline);
         if (document.documentElement.dataset.edgepressDataReady === 'true') return;
         document.documentElement.dataset.edgepressDataReady = 'true';
+        if (waiting) waiting.hidden = true;
         requestAnimationFrame(restoreFocus);
       };
-      const deadline = setTimeout(reveal, 4000);
+      revealPage = reveal;
+      const deadline = setTimeout(() => { if (!offerRequested) reveal(); }, settings.detectSlowConnection && preference === 'auto' ? Math.max(20000, (settings.promptAfterMs || 5000) + 1000) : 4000);
       let stylesReady = false;
-      const ready = () => { stylesReady = true; reveal(); };
+      const ready = () => { stylesReady = true; checkFirstScreen(); };
       void Promise.all(loading).then(() => document.fonts?.ready).then(ready, ready);
       document.querySelectorAll('[data-edgepress-data-media]').forEach(activateMedia);
       activateResources('script');
@@ -150,15 +182,25 @@
         firstScreenReady = true;
         clearTimeout(offerTimer);
         clearInterval(monitor);
-        closeOffer();
+        if (!offerRequested || dismissed) { reveal(); closeOffer(); }
       };
-      if (offerTimer !== null) {
-        monitor = setInterval(checkFirstScreen, 250);
-        requestAnimationFrame(checkFirstScreen);
-      }
+      monitor = setInterval(checkFirstScreen, 100);
+      requestAnimationFrame(checkFirstScreen);
+      addEventListener('pagehide', () => clearTimeout(deadline), { once: true });
       return;
     }
     requestAnimationFrame(restoreFocus);
+    document.addEventListener('click', event => {
+      const button = event.target.closest('[data-oembed-load]');
+      if (!button || !document.querySelector('template[data-edgepress-data-resource="script"][data-data-feature="embed"]')) return;
+      button.disabled = true;
+      button.setAttribute('aria-busy', 'true');
+      void Promise.all(activateResources('script', 'embed')).then(results => {
+        button.disabled = false;
+        button.removeAttribute('aria-busy');
+        if (results.every(Boolean)) button.click();
+      });
+    });
     for (const host of document.querySelectorAll('[data-edgepress-data-media]')) {
       if (host.hasAttribute('data-data-decorative') || host.hasAttribute('data-data-brand')) continue;
       const button = document.createElement('button');

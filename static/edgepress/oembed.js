@@ -120,7 +120,7 @@ if(typeof document!=='undefined'){
     if(event.data?.type==='edgepress:embed-ready'){frame.dataset.themeReady='true';frameTheme(frame);}
     if(event.data?.type==='edgepress:embed-size'&&Number.isFinite(event.data.height)&&event.data.height>=120&&event.data.height<=4096){frame.style.height=Math.ceil(event.data.height)+'px';frame.style.aspectRatio='auto';}
   });
-  function loadAllowed(root){updateNotice(root);if(!root.dataset.oembedUnavailable&&readChoice(config())?.allowed.includes(root.dataset.edgepressOembed)&&(visible.has(root)||root.dataset.requested==='true'))void show(root);}
+  function loadAllowed(root){updateNotice(root);if(!root.dataset.oembedUnavailable&&readChoice(config())?.allowed.includes(root.dataset.edgepressOembed)&&(root.dataset.requested==='true'||document.documentElement.dataset.edgepressDataMode!=='text'&&visible.has(root)))void show(root);}
   const observer=typeof IntersectionObserver==='function'?new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting){visible.add(entry.target);loadAllowed(entry.target);}else visible.delete(entry.target);},{rootMargin:'200px'}):null;
   for(const root of roots){updateNotice(root);if(observer)observer.observe(root);else{visible.add(root);loadAllowed(root);}}
   document.addEventListener('click',event=>{const button=event.target.closest('[data-oembed-load]');if(button)void show(button.closest('[data-edgepress-oembed]'));});

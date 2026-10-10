@@ -9,6 +9,79 @@ import consentManager from '../plugins/consent/index.js';
 import {choiceSnapshot,readChoice} from '../static/edgepress/plugins/consent/choices.js';
 const root=fileURLToPath(new URL('../',import.meta.url));
 
+test('text view resumes the requested widget after consent, retries failure and never loads other allowed widgets', async () => {
+ const config = await loadConfig(root);
+ const origin = new URL(config.site.url).origin;
+ const service = {id:'discussion',provider:'external-widget',moduleUrl:'https://comments.example.com/widget.js',placement:'posts',backendUrl:'https://comments.example.com',name:'Discussion',purpose:'Read discussions.',dataCategories:'Comments.',recipient:'Publisher',retention:'Until removed.',privacyUrl:'https://comments.example.com/privacy'};
+ config.browserPlugins.services = [service, {...service, id:'other', moduleUrl:'https://comments.example.com/other.js'}];
+ let filter;
+ consentManager({registerFilter:(_name, callback) => {filter = callback;}});
+ const body = '<main>文章 Article 繁體</main><section data-edgepress-service="discussion"><button data-service-load="discussion">Load discussion</button></section><section data-edgepress-service="other"><button data-service-load="other">Load other</button></section>';
+ const html = filter('<!doctype html><html data-edgepress-data-mode="text"><body>' + body + '</body></html>', {config,page:{locale:'en'}});
+ const browser = await chromium.launch({headless:true,args:['--disable-extensions']});
+ try {
+  for (const blocked of [false, true]) {
+   const context = await browser.newContext();
+   if (blocked) await context.addInitScript(() => Object.defineProperty(window,'localStorage',{get(){throw new Error('Denied');}}));
+   const vendors = [];
+   await context.route('**/*', async route => {
+    const address = new URL(route.request().url());
+    if (address.origin !== origin) {
+     vendors.push(address.pathname);
+     return route.fulfill({contentType:'text/javascript',body:'export function mount(root){globalThis.attempts=(globalThis.attempts||0)+1;if(globalThis.attempts===1)throw new Error("Retry fixture");root.textContent="Mounted discussion";}'});
+    }
+    if (address.pathname.startsWith('/edgepress/')) {
+     try { return route.fulfill({contentType:address.pathname.endsWith('.js')?'text/javascript':'image/svg+xml',body:await readFile(resolve(root,'static',address.pathname.slice(1)))}); }
+     catch { return route.fulfill({status:404}); }
+    }
+    return route.fulfill({contentType:'text/html',body:html});
+   });
+   const page = await context.newPage();
+   const errors = [];
+   page.on('pageerror', error => errors.push(error.message));
+   await page.goto(origin + '/article/');
+   await page.locator('.privacy-accept').click();
+   await page.waitForTimeout(150);
+   assert.deepEqual(vendors, []);
+   await page.getByRole('button',{name:'Load discussion',exact:true}).click();
+   await page.waitForFunction(() => globalThis.attempts === 1);
+   await page.waitForFunction(() => !document.querySelector('[data-service-load=discussion]').disabled);
+   await page.getByRole('button',{name:'Load discussion',exact:true}).click();
+   await page.getByText('Mounted discussion',{exact:true}).waitFor();
+   assert.deepEqual(vendors, ['/widget.js']);
+   await page.reload();
+   await page.locator('.privacy-settings-button').waitFor();
+   assert.equal(await page.locator('.privacy-panel').isVisible(), false);
+   await page.waitForTimeout(150);
+   assert.deepEqual(vendors, ['/widget.js']);
+   await page.getByRole('button',{name:'Load discussion',exact:true}).click();
+   await page.waitForFunction(() => globalThis.attempts === 1);
+   assert.deepEqual(vendors, ['/widget.js','/widget.js']);
+   assert.deepEqual(errors, []);
+   await context.close();
+  }
+  const context = await browser.newContext();
+  await context.route('**/*', async route => {
+   const address = new URL(route.request().url());
+   if (address.origin !== origin) return route.fulfill({contentType:'text/javascript',body:'export function mount(root){root.textContent="Consented discussion";}'});
+   if (address.pathname.startsWith('/edgepress/')) {
+    try { return route.fulfill({contentType:address.pathname.endsWith('.js')?'text/javascript':'image/svg+xml',body:await readFile(resolve(root,'static',address.pathname.slice(1)))}); }
+    catch { return route.fulfill({status:404}); }
+   }
+   return route.fulfill({contentType:'text/html',body:html});
+  });
+  const page = await context.newPage();
+  await page.goto(origin + '/article/');
+  await page.locator('.privacy-close').click();
+  await page.getByRole('button',{name:'Load discussion',exact:true}).click();
+  await page.locator('.privacy-panel').waitFor({state:'visible'});
+  await page.locator('.privacy-accept').click();
+  await page.getByText('Consented discussion',{exact:true}).waitFor();
+  assert.equal(await page.getByRole('button',{name:'Load other',exact:true}).isVisible(),true);
+  await context.close();
+ } finally { await browser.close(); }
+});
+
 test('saved formal choices survive the provider rename, while an actual endpoint change requires consent',()=>{
  const original=Object.fromEntries(['localStorage','sessionStorage','document','location'].map(name=>[name,Object.getOwnPropertyDescriptor(globalThis,name)]));
  const values=new Map();const store={getItem:key=>values.get(key)||null,setItem:(key,value)=>values.set(key,value)};

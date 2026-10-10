@@ -1,5 +1,5 @@
 import { parseDocument } from 'htmlparser2';
-import { translate } from './i18n.js';
+import { localizedUrl, translate } from './i18n.js';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import * as posix from 'node:path/posix';
@@ -7,7 +7,7 @@ import postcss from 'postcss';
 import { transform, transformSync } from 'esbuild';
 
 const essentialStyles = /\/edgepress\/(?:external-links|data-saver|data-saver-layout)\.[a-f0-9]{16}\.css$/;
-const optionalScripts = /\/edgepress\/(?:image-viewer|media-viewer|document-viewer|project-demo|webmcp|oembed|services-consent|code-copy|post-toc)\.[a-f0-9]{16}\.js$/;
+const optionalScripts = /\/edgepress\/(?:image-viewer|media-viewer|document-viewer|project-demo|webmcp|oembed|code-copy|post-toc)\.[a-f0-9]{16}\.js$/;
 const escape = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]);
 
 export async function configureDataSaver(config) {
@@ -58,6 +58,7 @@ export async function dataSaverLayout(config, items) {
 }
 
 function featureFor(source) {
+  if (/oembed/.test(source)) return 'embed';
   if (/document-viewer/.test(source)) return 'document';
   if (/image-viewer/.test(source)) return 'image';
   if (/media-viewer/.test(source)) return 'gallery';
@@ -78,12 +79,20 @@ function mediaLabel(node) {
 }
 
 export function dataSaverHtml(html, config, manifest = {}) {
-  if (!config.site.dataSaver?.enabled || !/<html\b/i.test(html)) return html;
+  if (!/<html\b/i.test(html)) return html;
+  if (!config.site.dataSaver?.enabled) {
+    if (config.site.dataSaver?.debug) return html;
+    const language = html.match(/<html\b[^>]*\blang=["']([^"']+)/i)?.[1] || config.i18n.defaultLocale;
+    const settings = JSON.stringify({ enabled: false, notFoundUrl: localizedUrl(config, language, '404.html') }).replace(/</g, '\\u003c');
+    const source = escape(manifest['/edgepress/data-saver.js'] || '/edgepress/data-saver.js');
+    return html.replace(/(<meta\b[^>]*charset[^>]*>|<head\b[^>]*>)/i, '$1<script id="edgepress-data-saver-config" type="application/json">' + settings + '</script><script src="' + source + '"></script>');
+  }
   const document = parseDocument(html, { withStartIndices: true, withEndIndices: true });
   const patches = [];
   let head;
   let body;
   let locale = config.i18n.defaultLocale;
+  const preloadStyles = new Set();
   const visit = node => {
     const name = node.name;
     const attributes = node.attribs || {};
@@ -96,6 +105,7 @@ export function dataSaverHtml(html, config, manifest = {}) {
     if (name === 'link' && (['preload', 'modulepreload', 'prefetch', 'preconnect', 'dns-prefetch'].includes(attributes.rel) || attributes.rel === 'stylesheet' && !essentialStyles.test(attributes.href))) resource = 'style';
     if (name === 'script' && attributes.src && (optionalScripts.test(attributes.src) || attributes['data-data-optional'] !== undefined)) resource = 'script';
     if (resource) {
+      if (name === 'link' && attributes.rel === 'stylesheet' && attributes.href?.startsWith('/') && !attributes.href.startsWith('//')) preloadStyles.add(attributes.href);
       patches.push({ start: node.startIndex, end: node.endIndex + 1, text: '<template data-edgepress-data-resource="' + resource + '" data-data-feature="' + featureFor(attributes.src || attributes.href || '') + '">' + original + '</template><noscript>' + original + '</noscript>' });
       return;
     }
@@ -114,9 +124,9 @@ export function dataSaverHtml(html, config, manifest = {}) {
   };
   visit(document);
   if (!head || !body) return html;
-  const keys = ['load', 'slowTitle', 'slowNotice', 'switchText', 'keepFull', 'returnFull', 'textNotice', 'missingDescription'];
+  const keys = ['load', 'loading', 'slowTitle', 'slowNotice', 'switchText', 'keepFull', 'returnFull', 'textNotice', 'missingDescription'];
   const labels = Object.fromEntries(keys.map(key => [key, translate(config, locale, 'dataSaver' + key[0].toUpperCase() + key.slice(1))]));
-  const settings = JSON.stringify({ ...config.site.dataSaver, labels }).replace(/</g, '\\u003c');
+  const settings = JSON.stringify({ ...config.site.dataSaver, labels, preloadStyles: [...preloadStyles], notFoundUrl: localizedUrl(config, locale, '404.html') }).replace(/</g, '\\u003c');
   const asset = path => escape(manifest[path] || path);
   const variant = config.dataSaverTheme;
   if (!variant) throw new Error('Missing data-saving theme variant');
@@ -124,7 +134,10 @@ export function dataSaverHtml(html, config, manifest = {}) {
   const charset = head.children?.find(node => node.name === 'meta' && node.attribs?.charset);
   const headPosition = charset ? charset.endIndex + 1 : html.indexOf('>', head.startIndex) + 1;
   patches.push({ start: headPosition, end: headPosition, text: bootstrap });
-  const controls = '<aside class="edgepress-data-offer" data-data-offer aria-labelledby="edgepress-data-offer-title" hidden><h2 id="edgepress-data-offer-title">' + escape(labels.slowTitle) + '</h2><p role="status">' + escape(labels.slowNotice) + '</p><div><button type="button" data-data-mode="text">' + escape(labels.switchText) + '</button><button type="button" data-data-dismiss>' + escape(labels.keepFull) + '</button></div></aside><aside class="edgepress-data-return" data-data-return hidden><span>' + escape(labels.textNotice) + '</span><button type="button" data-data-mode="full">' + escape(labels.returnFull) + '</button></aside>';
+  const waiting = '<div class="edgepress-data-wait" data-data-wait hidden><p role="status">' + escape(labels.loading) + '</p><aside class="edgepress-data-offer" data-data-offer aria-labelledby="edgepress-data-offer-title" hidden><h2 id="edgepress-data-offer-title">' + escape(labels.slowTitle) + '</h2><p>' + escape(labels.slowNotice) + '</p><div><button type="button" data-data-mode="text">' + escape(labels.switchText) + '</button><button type="button" data-data-dismiss>' + escape(labels.keepFull) + '</button></div></aside></div>';
+  const bodyPosition = html.indexOf('>', body.startIndex) + 1;
+  patches.push({ start: bodyPosition, end: bodyPosition, text: waiting });
+  const controls = '<aside class="edgepress-data-return" data-data-return hidden><span>' + escape(labels.textNotice) + '</span><button type="button" data-data-mode="full">' + escape(labels.returnFull) + '</button></aside>';
   patches.push({ start: body.endIndex - 6, end: body.endIndex - 6, text: controls });
   patches.sort((first, second) => second.start - first.start);
   for (const patch of patches) html = html.slice(0, patch.start) + patch.text + html.slice(patch.end);

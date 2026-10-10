@@ -17,7 +17,7 @@ const defaults = {
     archive: { categories: [] },
     navigation: [],
     externalLinks: { enabled: false, trustedOrigins: [] },
-    dataSaver: { enabled: false, mode: 'auto', detectSlowConnection: false, respectBrowserPreference: true, promptAfterMs: 5000 },
+    dataSaver: { enabled: false, debug: false, mode: 'auto', detectSlowConnection: false, respectBrowserPreference: true, promptAfterMs: 5000 },
     footerNavigation: [],
     footer: '',
     seo: { author: '', keywords: [], image: '', robots: 'index,follow' },
@@ -118,7 +118,7 @@ async function readSiteYaml(root) {
 
 function validateSiteConfig(config) {
   const dataSaver = config.site.dataSaver;
-  if (!dataSaver || typeof dataSaver !== 'object' || Array.isArray(dataSaver) || ['enabled', 'detectSlowConnection', 'respectBrowserPreference'].some(key => typeof dataSaver[key] !== 'boolean') || !['auto', 'text', 'full'].includes(dataSaver.mode) || !Number.isInteger(dataSaver.promptAfterMs) || dataSaver.promptAfterMs < 100 || dataSaver.promptAfterMs > 60000 || Object.keys(dataSaver).some(key => !['enabled', 'mode', 'detectSlowConnection', 'respectBrowserPreference', 'promptAfterMs'].includes(key))) throw new Error('Invalid site.dataSaver settings or promptAfterMs (100–60000)');
+  if (!dataSaver || typeof dataSaver !== 'object' || Array.isArray(dataSaver) || ['enabled', 'debug', 'detectSlowConnection', 'respectBrowserPreference'].some(key => typeof dataSaver[key] !== 'boolean') || !['auto', 'text', 'full'].includes(dataSaver.mode) || !Number.isInteger(dataSaver.promptAfterMs) || dataSaver.promptAfterMs < 100 || dataSaver.promptAfterMs > 60000 || Object.keys(dataSaver).some(key => !['enabled', 'debug', 'mode', 'detectSlowConnection', 'respectBrowserPreference', 'promptAfterMs'].includes(key))) throw new Error('Invalid site.dataSaver settings or promptAfterMs (100–60000)');
   const externalLinks = config.site.externalLinks;
   if (!externalLinks || typeof externalLinks !== 'object' || Array.isArray(externalLinks) || typeof externalLinks.enabled !== 'boolean' || !Array.isArray(externalLinks.trustedOrigins) || externalLinks.trustedOrigins.length > 100 || Object.keys(externalLinks).some(key => !['enabled', 'trustedOrigins'].includes(key))) throw new Error('site.externalLinks needs enabled and a trustedOrigins list');
   if (externalLinks.trustedOrigins.some(origin => typeof origin !== 'string')) throw new Error('site.externalLinks.trustedOrigins must contain exact origins');

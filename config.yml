@@ -4,6 +4,13 @@ site:
   description: A static website builder for Cloudflare Workers with editable pages, Markdown posts, themes, and plugins.
   url: https://example.org
   language: en
+  dataSaver:
+    enabled: false
+    debug: false
+    mode: auto
+    detectSlowConnection: false
+    respectBrowserPreference: true
+    promptAfterMs: 5000
   head:
     titleSuffix: ""
     titleSeparator: " · "

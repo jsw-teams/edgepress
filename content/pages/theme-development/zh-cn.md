@@ -30,10 +30,13 @@ blocks:
                 site:
                   dataSaver:
                     enabled: true
+                    debug: false
                     mode: auto
                     detectSlowConnection: true
                     respectBrowserPreference: true
                     promptAfterMs: 5000
+            - type: text
+              text: "只有调试时才开启 site.dataSaver.debug，并用 /?data-save 查看文字版。关闭后该入口进入本地化静态 404 页面；真正 HTTP 404 需由托管规则处理。仅完整版预加载完整样式。慢加载选择要保留到用户决定，授权后按需加载所选服务，不连带加载其他插件。系统字体回退需覆盖中日韩文字。"
             - type: text
               paragraphs:
                 - 用隔离浏览器模拟慢网络与 saveData，检查真实请求记录，同时覆盖不支持相关 API、存储受阻、关闭 JavaScript、键盘操作、小屏幕、暗色及高对比。文字模式不应自动请求完整主题、字体、图片或文档和视频引擎；单独加载媒体不能启动其他预览。保留资源依赖指纹、完整显示功能、外链提示与当前有效服务同意。

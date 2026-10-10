@@ -14,6 +14,8 @@ const modules = {
   'hcaptcha': () => import('../captcha/hcaptcha.js')
 };
 
+const activeServices = new Map();
+const requestedServices = new Set();
 const configElement = document.getElementById('edgepress-privacy-config');
 if (configElement) {
   try { initialize(JSON.parse(configElement.textContent)); }
@@ -152,6 +154,14 @@ function initialize(config) {
     heading.focus();
   });
   const saved = readChoice(config);
+  document.addEventListener('click', event => {
+    const button = event.target.closest('[data-service-load]');
+    if (!button || !integrations.some(integration => integration.id === button.dataset.serviceLoad)) return;
+    requestedServices.add(button.dataset.serviceLoad);
+    const current = readChoice(config);
+    if (current?.allowed.includes(button.dataset.serviceLoad)) void activate(current.allowed);
+    else document.dispatchEvent(new CustomEvent('edgepress:privacy-open'));
+  });
   for (const [id, checkbox] of checkboxes) checkbox.checked = Boolean(saved?.allowed.includes(id));
 
   settingsButton.addEventListener('click', () => {
@@ -278,21 +288,25 @@ function makeIcon(name) {
   return image;
 }
 
-const activeServices = new Map();
 async function activate(allowed) {
-  if (document.documentElement.dataset.edgepressDataMode === 'text') return;
+  const textMode = document.documentElement.dataset.edgepressDataMode === 'text';
   const config = JSON.parse(document.getElementById('edgepress-privacy-config').textContent);
   const permitted = new Set(allowed);
   for (const integration of config.privacy.integrations || []) {
     if (!permitted.has(integration.id)) continue;
+    if (textMode && !requestedServices.has(integration.id) && !['oembed', 'external-api'].includes(integration.provider)) continue;
     const loader = modules[integration.provider];
     if (!loader) continue;
     try {
       const provider = await loader();
       if (!activeServices.has(integration.id)) {
-        const task = provider.load(integration);
+        const buttons = [...document.querySelectorAll('[data-service-load]')].filter(button => button.dataset.serviceLoad === integration.id);
+        buttons.forEach(button => { button.disabled = true; button.setAttribute('aria-busy', 'true'); });
+        const task = Promise.resolve().then(() => provider.load(integration));
         activeServices.set(integration.id, task);
-        try { await task; } catch (error) {activeServices.delete(integration.id); throw error;}
+        try { await task; buttons.forEach(button => { button.hidden = true; }); }
+        catch (error) {activeServices.delete(integration.id); throw error;}
+        finally { buttons.forEach(button => { button.disabled = false; button.removeAttribute('aria-busy'); }); }
       }
     } catch (error) {
       console.error('EdgePress optional integration failed to load:', integration.provider, error);
