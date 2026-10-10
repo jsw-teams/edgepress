@@ -12,6 +12,9 @@ test('cloud dependency is pinned to a published source commit and excludes the r
   assert.equal(lock.packages['node_modules/@jsw-teams/document-viewer'].resolved, source);
   assert.ok(!manifest.files.includes('vendor'));
   assert.ok(!lock.packages['node_modules/@file-viewer/ppt']);
+  assert.equal(manifest.overrides['@file-viewer/doc'].dompurify, '3.4.16');
+  const sanitizerVersions = Object.entries(lock.packages).filter(([path]) => path.endsWith('node_modules/dompurify')).map(([, dependency]) => dependency.version);
+  assert.deepEqual(sanitizerVersions, ['3.4.16']);
   const require = createRequire(import.meta.url);
   const root = resolve(dirname(require.resolve('@jsw-teams/document-viewer')), '..');
   const component = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'));

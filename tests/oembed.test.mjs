@@ -36,7 +36,7 @@ test('oEmbed automatically loads visible content after consent and on return, an
   await assert.rejects(renderBlocks([{columns:1,cells:[[{type:'oembed',integration:'ishare',url:'https://evil.example/a'}]]}],{config,locale:'en'}),/origin/);
   const policy=extendConsentPolicy('/*\n  Content-Security-Policy: default-src \'self\'; connect-src \'none\'',config);assert.match(policy,/frame-src 'self' https:\/\/share.js.gripe/);assert.match(policy,/img-src 'self' https:\/\/share.js.gripe/);
   let filter;consentManager({registerFilter:(_name,fn)=>{filter=fn;}});
-  const browser=await chromium.launch({headless:true,...(process.platform==='win32'?{channel:'msedge'}:{})});
+  const browser=await chromium.launch({headless:true,args:['--disable-extensions']});
   try{
     const context=await browser.newContext();let calls=0,frames=0;
     await context.route('**/*',async route=>{const url=new URL(route.request().url());
@@ -74,7 +74,7 @@ test('third-party metadata is cached, mixed Pages cells wait for consent, and Yo
     assert.match(blocks,/data-oembed-data/);assert.doesNotMatch(blocks,/<iframe|<script/);assert.match(blocks,/Video description/);
     assert.doesNotMatch(sanitizeEmbed(data,youtube).html,/onload|script/);
     let filter;consentManager({registerFilter:(_n,fn)=>filter=fn});
-    browser=await chromium.launch({headless:true,...(process.platform==='win32'?{channel:'msedge'}:{})});const context=await browser.newContext({viewport:{width:390,height:844}});let vendor=0;
+    browser=await chromium.launch({headless:true,args:['--disable-extensions']});const context=await browser.newContext({viewport:{width:390,height:844}});let vendor=0;
     await context.route('**/*',async route=>{
       const url=new URL(route.request().url());
       if(url.origin==='https://www.youtube.com'){assert.equal(route.request().headers().referer,origin+'/');vendor++;return route.fulfill({contentType:'text/html',body:'Player'});}

@@ -76,6 +76,16 @@ async function show(root) {
   const id=root.dataset.edgepressOembed,config=JSON.parse(document.getElementById('edgepress-privacy-config')?.textContent||'{}');
   const integration=config.privacy?.integrations?.find(service=>service.id===id&&service.provider==='oembed');if(!integration)return;
   root.dataset.requested='true';root.dataset.loading='true';root.setAttribute('aria-busy','true');root.classList.add('is-loading');
+  const button=root.querySelector('[data-oembed-load]');
+  const buttonHadFocus=document.activeElement===button;
+  if(button)button.disabled=true;
+  const complete=media=>{
+    const restoreFocus=buttonHadFocus&&(document.activeElement===button||document.activeElement===document.body);
+    const status=root.querySelector('[data-oembed-status]');
+    if(media.parentElement!==status)status.replaceChildren(media);
+    button?.remove();root.dataset.loaded='true';updateNotice(root,'embedLoaded');
+    if(restoreFocus)root.querySelector('figcaption a')?.focus({preventScroll:true});
+  };
   const dimensions=data=>({...data,...(root.dataset.oembedWidth?{width:Number(root.dataset.oembedWidth)}:{}),...(root.dataset.oembedHeight?{height:Number(root.dataset.oembedHeight)}:{})});
   try{
     if(!readChoice(config)?.allowed.includes(id))throw new Error('Service requires visitor consent: '+id);
@@ -84,16 +94,16 @@ async function show(root) {
       const stored=root.querySelector('[data-oembed-data]');if(!stored)throw new Error('Embed unavailable');
       const data=dimensions(JSON.parse(stored.content.textContent)),media=trustedProviderEmbed(data,integration,document);
       root.querySelector('[data-oembed-status]').replaceChildren(media);
-      await loadScripts(integration,media);root.querySelector('[data-oembed-load]')?.remove();root.dataset.loaded='true';updateNotice(root,'embedLoaded');return;
+      await loadScripts(integration,media);complete(media);return;
     }
     const response=await callService(id,'oembed',{headers:{'X-Service-Resource':encodeURIComponent(root.dataset.oembedUrl)}});
     if(!response.ok||!/^application\/json(?:;|$)/i.test(response.headers.get('Content-Type')||''))throw new Error('Embed unavailable');
     const data=dimensions(await response.json()),media=trustedEmbed(data,new URL(integration.backendUrl).origin,document);
-    root.querySelector('[data-oembed-load]')?.remove();root.querySelector('[data-oembed-status]').replaceChildren(media);root.dataset.loaded='true';updateNotice(root,'embedLoaded');
+    complete(media);
   }catch(error){
     if(error.message.startsWith('Service requires visitor consent:'))document.dispatchEvent(new CustomEvent('edgepress:privacy-open'));
     else{root.dataset.requested='false';root.querySelector('[data-oembed-status]').replaceChildren();updateNotice(root,'embedUnavailable');}
-  }finally{delete root.dataset.loading;root.classList.remove('is-loading');root.setAttribute('aria-busy','false');}
+  }finally{delete root.dataset.loading;root.classList.remove('is-loading');root.setAttribute('aria-busy','false');if(button?.isConnected)button.disabled=false;}
 }
 if(typeof document!=='undefined'){
   const roots=[...document.querySelectorAll('[data-edgepress-oembed]')],visible=new WeakSet();

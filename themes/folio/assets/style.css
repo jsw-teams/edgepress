@@ -513,3 +513,4 @@ h1,h2,h3,.display-text--serif{font-family:var(--serif);font-weight:700;font-synt
 .table-widget:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
 
 .project-demo-seek{display:block;width:100%;min-height:44px;margin:4px 0;accent-color:var(--accent);cursor:pointer}.project-demo-seek:focus-visible{outline:3px solid var(--accent);outline-offset:3px}.project-demo-time{display:block;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1.5}.project-demo-seek:disabled{cursor:wait;opacity:.5}
+.edgepress-oembed:not([data-loaded=true]) [data-oembed-status]{min-height:0}.edgepress-oembed:not(.is-loading) .oembed-placeholder{display:none}.edgepress-oembed.is-loading .oembed-placeholder{height:3rem;min-height:0;aspect-ratio:auto}.edgepress-oembed [data-oembed-load]:disabled{cursor:wait;opacity:.6}.edgepress-oembed>figcaption a:focus-visible{outline:3px solid var(--accent);outline-offset:3px}

@@ -74,6 +74,22 @@ test('CLI creates a localized post and refuses to overwrite it', async () => {
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 
+test('CLI initialization carries root security overrides without discarding operator choices', async () => {
+  const root = await mkdtemp(resolve(tmpdir(), 'edgepress-cli-init-'));
+  try {
+    await writeFile(resolve(root, 'package.json'), JSON.stringify({ name: 'operator-site', overrides: { 'operator-package': '2.0.0' }, scripts: { verify: 'node verify.mjs' } }));
+    const result = spawnSync(process.execPath, [resolve('src/cli.js'), 'init'], { cwd: root, encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    const manifest = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'));
+    const framework = JSON.parse(await readFile(resolve('package.json'), 'utf8'));
+    assert.deepEqual(manifest.overrides['@file-viewer/doc'], framework.overrides['@file-viewer/doc']);
+    assert.equal(manifest.overrides['operator-package'], '2.0.0');
+    assert.equal(manifest.dependencies.wrangler, framework.devDependencies.wrangler);
+    assert.equal(manifest.scripts.verify, 'node verify.mjs');
+    assert.equal(manifest.name, 'operator-site');
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
 test('bitmap icon paths reject traversal and preserve safe caller classes', () => {
   assert.match(renderIcon('book-open', 'icon nav_icon'), /class="icon nav_icon icon-library"/);
   assert.match(renderIcon('book-open'), /alt="" aria-hidden="true"/);

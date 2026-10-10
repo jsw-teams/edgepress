@@ -19,7 +19,7 @@ export async function renderEmbed(block, {config, locale}) {
     throw new Error('Embed URL must use its registered HTTPS service origin');
   }
   const provider = translateValue(config, locale, service.name || service.id);
-  const label = String(block.title || provider);
+  let label = String(block.title || provider);
   if (label.length > 200) throw new Error('Embed title must contain at most 200 characters');
   const notice = key => escapeHtml(translate(config, locale, key).replace('{service}', provider));
   const link = '<a href="' + escapeHtml(address.href) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(label) + '</a>';
@@ -31,10 +31,12 @@ export async function renderEmbed(block, {config, locale}) {
   if (service.enabled === false) return '<figure class="edgepress-oembed" data-oembed-disabled><figcaption>' + link + '</figcaption><p role="status">' + notice('embedDisabled') + '</p></figure>';
   const data = service.embedTemplate ? {version:'1.0', type:'rich', title:label, width:640, height:480, html:'<iframe src="' + escapeHtml(service.embedTemplate.replaceAll('{url}', encodeURIComponent(address.href)).replaceAll('{path}', address.pathname).replaceAll('{id}', encodeURIComponent(match?.[1] || ''))) + '"></iframe>'} :
     service.oembedEndpoint ? await resolveEmbed(service, address.href, config) : undefined;
+  if (!block.title && data?.title) label = String(data.title).slice(0, 200);
+  const heading = '<a href="' + escapeHtml(address.href) + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(label) + '</a>';
   const dimensions = ' data-oembed-width="' + (block.width || data?.width || 640) + '" data-oembed-height="' + (block.height || data?.height || 480) + '"';
   const caption = block.caption ? '<p class="oembed-caption">' + escapeHtml(block.caption) + '</p>' : '';
   return '<figure class="edgepress-oembed" data-edgepress-oembed="' + escapeHtml(service.id) + '" data-oembed-url="' + escapeHtml(address.href) + '"' + dimensions +
-    (data === null ? ' data-oembed-unavailable="true"' : '') + '><figcaption>' + link + '</figcaption><p data-oembed-notice role="status">' + notice(data === null ? 'embedUnavailable' : 'embedNeedsConsent') + '</p>' +
+    (data === null ? ' data-oembed-unavailable="true"' : '') + '><figcaption>' + heading + '</figcaption><p data-oembed-notice role="status">' + notice(data === null ? 'embedUnavailable' : 'embedNeedsConsent') + '</p>' +
     (data !== null ? '<button type="button" data-oembed-load>' + escapeHtml(translate(config, locale, 'loadMedia')) + '</button>' : '') +
     '<div data-oembed-status><div class="oembed-placeholder" data-oembed-placeholder aria-hidden="true"></div></div>' + caption +
     (data ? '<template data-oembed-data>' + escapeHtml(JSON.stringify(data)) + '</template>' : '') + '</figure>';

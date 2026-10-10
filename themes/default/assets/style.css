@@ -369,3 +369,4 @@ body{background:radial-gradient(ellipse at 92% 0%,#e9e9ff 0,transparent 33%),var
 
 /* Vertical touch gestures scroll the page; seeking requires horizontal intent. */
 .project-demo-seek{touch-action:pan-y;user-select:none}
+.edgepress-oembed:not([data-loaded=true]) [data-oembed-status]{min-height:0}.edgepress-oembed:not(.is-loading) .oembed-placeholder{display:none}.edgepress-oembed.is-loading .oembed-placeholder{height:3rem;min-height:0;aspect-ratio:auto}.edgepress-oembed [data-oembed-load]:disabled{cursor:wait;opacity:.6}.edgepress-oembed>figcaption a:focus-visible{outline:3px solid var(--accent);outline-offset:3px}

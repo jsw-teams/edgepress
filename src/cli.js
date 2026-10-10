@@ -90,6 +90,10 @@ async function initializeProject() {
       'deploy:edgeone': 'edgepress deploy edgeone',
       'deploy:esa': 'edgepress deploy esa'
     },
+    overrides: {
+      ...(packageData.overrides || {}),
+      ...(existingManifest.overrides || {})
+    },
     dependencies: {
       ...(existingManifest.dependencies || {}),
       edgepress: packageData.version,
