@@ -14,7 +14,7 @@ test('slow loading choices remain stable after late completion, preload only ful
   const runtime = await readFile('static/edgepress/data-saver.js');
   const css = await readFile('static/edgepress/data-saver.css');
   const image = await readFile('content/assets/edgepress/favicon/favicon-16.png');
-  const source = '<html lang="zh-CN"><head><meta charset="utf-8"><link rel="stylesheet" href="/full.css"></head><body><header><nav><a href="/second/">第二頁</a></nav></header><main><h1>繁體 简体 Article</h1><img src="/slow.png" width="100" height="100" alt="有意义的图像"></main><footer>頁腳 Footer</footer></body></html>';
+  const source = '<html lang="zh-CN"><head><meta charset="utf-8"><link rel="stylesheet" href="/full.css"></head><body><header><nav><a href="/second/">第二頁</a></nav></header><main><h1>繁體 简体 Article</h1><img src="/slow.png" loading="lazy" width="100" height="100" alt="有意义的图像"></main><footer>頁腳 Footer</footer></body></html>';
   const html = dataSaverHtml(source, config);
   for (const engine of [chromium,firefox]) {
     const browser = await engine.launch({ headless:true, ...(engine === chromium ? {args:['--disable-extensions']} : {}) });

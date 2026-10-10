@@ -176,7 +176,9 @@
         if (!stylesReady || document.readyState === 'loading') return;
         const pending = [...document.images].some(image => {
           const rectangle = image.getBoundingClientRect();
-          return rectangle.width > 0 && rectangle.height > 0 && rectangle.top < innerHeight && rectangle.bottom > 0 && !image.complete;
+          const visible = rectangle.width > 0 && rectangle.height > 0 && rectangle.top < innerHeight && rectangle.bottom > 0;
+          if (visible && image.loading === 'lazy' && !image.complete) image.loading = 'eager';
+          return visible && !image.complete;
         });
         if (pending) return;
         firstScreenReady = true;
