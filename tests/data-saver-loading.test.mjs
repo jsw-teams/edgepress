@@ -66,6 +66,7 @@ test('unfinished or failed CSS never exposes an unstyled page and retry restores
     const page = await context.newPage();
     await page.goto('https://loading.test/',{waitUntil:'domcontentloaded'});
     await page.waitForTimeout(4500);
+    assert(await page.evaluate(()=>performance.getEntriesByName('first-contentful-paint').length>0),'The waiting UI must paint before the pending stylesheet completes');
     assert.equal(await page.locator('main').isVisible(),false);
     await page.locator('[data-data-dismiss]').click();
     assert.equal(await page.locator('main').isVisible(),false);
