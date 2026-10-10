@@ -68,6 +68,8 @@ test('text mode defers actual requests, preserves external prompts and loads onl
       page.on('request', request => requests.push(request.url()));
       await page.goto(origin);
       assert.equal(await page.getAttribute('html', 'data-edgepress-data-mode'), 'text');
+      await page.waitForFunction(() => document.documentElement.dataset.edgepressDataReady === 'true');
+      await page.locator('main').waitFor({ state: 'visible' });
       assert.match(await page.locator('main').innerText(), /Keep this paragraph/);
       assert.match(await page.locator('main').innerText(), /First image/);
       assert.equal(await page.locator('[data-data-description]').filter({ hasText: 'First image' }).isVisible(), true);

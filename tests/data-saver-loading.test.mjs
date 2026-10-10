@@ -6,7 +6,7 @@ import { loadConfig } from '../src/config.js';
 import { loadLanguagePacks } from '../src/i18n.js';
 import { configureDataSaver, dataSaverHtml } from '../src/data-saver.js';
 
-test('slow loading choices remain stable after late completion, preload only full styles and guard the debug entry', async () => {
+test('loading choices and measured progress remain stable after late completion and guard the debug entry', async () => {
   const config = await loadConfig(process.cwd());
   await loadLanguagePacks(config);
   config.site.dataSaver = { enabled:true, debug:false, mode:'auto', detectSlowConnection:true, respectBrowserPreference:true, promptAfterMs:150 };
@@ -38,8 +38,9 @@ test('slow loading choices remain stable after late completion, preload only ful
         await page.goto('https://example.test/zh-CN/',{waitUntil:'domcontentloaded'});
         await page.locator('[data-data-offer]').waitFor({state:'visible'});
         assert.equal(await page.locator('main').isVisible(),false);
-        assert.match(await page.locator('[data-data-wait]').innerText(),/正在准备页面/);
-        assert(await page.locator('link[rel=preload][as=style][href="https://example.test/full.css"]').count());
+        assert.match(await page.locator('[data-data-wait]').innerText(),/正在准备页面|首屏图片|页面样式/);
+        assert.equal(await page.locator('link[rel=preload]').count(),0);
+        assert.equal(await page.locator('[data-data-progress]').count(),1);
         await page.locator('[data-data-mode=text]').focus();
         finishImage();
         await page.waitForTimeout(350);
@@ -52,6 +53,7 @@ test('slow loading choices remain stable after late completion, preload only ful
         if (process.env.DATA_SAVER_SCREENSHOTS && engine === chromium) await page.screenshot({path:process.env.DATA_SAVER_SCREENSHOTS + '/waiting-' + colorScheme + '.png'});
         await Promise.all([page.waitForNavigation(),page.keyboard.press('Enter')]);
         assert.equal(await page.getAttribute('html','data-edgepress-data-mode'),'text');
+        await page.waitForFunction(() => document.documentElement.dataset.edgepressDataReady === 'true');
         await page.waitForFunction(() => document.activeElement.tagName === 'MAIN');
         assert.equal(await page.locator('[data-data-wait]').isVisible(),false);
         assert.match(await page.locator('main').innerText(),/繁體 简体 Article/);

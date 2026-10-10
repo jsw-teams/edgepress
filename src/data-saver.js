@@ -92,7 +92,6 @@ export function dataSaverHtml(html, config, manifest = {}) {
   let head;
   let body;
   let locale = config.i18n.defaultLocale;
-  const preloadStyles = new Set();
   const visit = node => {
     const name = node.name;
     const attributes = node.attribs || {};
@@ -102,11 +101,11 @@ export function dataSaverHtml(html, config, manifest = {}) {
     if (['template', 'noscript', 'svg'].includes(name)) return;
     const original = html.slice(node.startIndex, node.endIndex + 1);
     let resource = '';
-    if (name === 'link' && (['preload', 'modulepreload', 'prefetch', 'preconnect', 'dns-prefetch'].includes(attributes.rel) || attributes.rel === 'stylesheet' && !essentialStyles.test(attributes.href))) resource = 'style';
-    if (name === 'script' && attributes.src && (optionalScripts.test(attributes.src) || attributes['data-data-optional'] !== undefined)) resource = 'script';
+    if (name === 'link' && (['preload', 'modulepreload', 'prefetch', 'preconnect', 'dns-prefetch', 'stylesheet'].includes(attributes.rel))) resource = 'style';
+    if (name === 'script' && attributes.src) resource = 'script';
     if (resource) {
-      if (name === 'link' && attributes.rel === 'stylesheet' && attributes.href?.startsWith('/') && !attributes.href.startsWith('//')) preloadStyles.add(attributes.href);
-      patches.push({ start: node.startIndex, end: node.endIndex + 1, text: '<template data-edgepress-data-resource="' + resource + '" data-data-feature="' + featureFor(attributes.src || attributes.href || '') + '">' + original + '</template><noscript>' + original + '</noscript>' });
+      const core = resource === 'script' && !optionalScripts.test(attributes.src) && attributes['data-data-optional'] === undefined || resource === 'style' && essentialStyles.test(attributes.href);
+      patches.push({ start: node.startIndex, end: node.endIndex + 1, text: '<template data-edgepress-data-resource="' + resource + '" data-data-feature="' + (core ? 'core' : featureFor(attributes.src || attributes.href || '')) + '">' + original + '</template><noscript>' + original + '</noscript>' });
       return;
     }
     if (['img', 'picture', 'video', 'audio', 'iframe'].includes(name) || attributes['data-edgepress-document'] !== undefined || attributes['data-edgepress-media-viewer'] !== undefined || attributes['data-project-demo'] !== undefined) {
@@ -124,17 +123,18 @@ export function dataSaverHtml(html, config, manifest = {}) {
   };
   visit(document);
   if (!head || !body) return html;
-  const keys = ['load', 'loading', 'slowTitle', 'slowNotice', 'switchText', 'keepFull', 'returnFull', 'textNotice', 'missingDescription'];
+  const keys = ['load', 'loading', 'loadingNotice', 'progressStyles', 'progressMedia', 'slowTitle', 'slowNotice', 'switchText', 'keepFull', 'returnFull', 'textNotice', 'missingDescription'];
   const labels = Object.fromEntries(keys.map(key => [key, translate(config, locale, 'dataSaver' + key[0].toUpperCase() + key.slice(1))]));
-  const settings = JSON.stringify({ ...config.site.dataSaver, labels, preloadStyles: [...preloadStyles], notFoundUrl: localizedUrl(config, locale, '404.html') }).replace(/</g, '\\u003c');
+  const settings = JSON.stringify({ ...config.site.dataSaver, labels, notFoundUrl: localizedUrl(config, locale, '404.html') }).replace(/</g, '\\u003c');
   const asset = path => escape(manifest[path] || path);
   const variant = config.dataSaverTheme;
   if (!variant) throw new Error('Missing data-saving theme variant');
-  const bootstrap = '<script id="edgepress-data-saver-config" type="application/json">' + settings + '</script><script src="' + asset('/edgepress/data-saver.js') + '"></script>' + (variant.layoutStyles?.length ? '<link rel="stylesheet" href="' + asset('/edgepress/data-saver-layout.css') + '">' : '') + '<link rel="stylesheet" href="' + asset('/edgepress/data-saver.css') + '"><link rel="stylesheet" href="' + asset('/' + variant.stylesheet) + '">' + variant.scripts.map(file => '<script defer src="' + asset('/' + file) + '"></script>').join('');
+  const coreStyle = path => '<template data-edgepress-data-resource="style" data-data-feature="core"><link rel="stylesheet" href="' + asset(path) + '"></template><noscript><link rel="stylesheet" href="' + asset(path) + '"></noscript>';
+  const bootstrap = '<script id="edgepress-data-saver-config" type="application/json">' + settings + '</script><script src="' + asset('/edgepress/data-saver.js') + '"></script><link rel="stylesheet" href="' + asset('/edgepress/data-saver.css') + '">' + (variant.layoutStyles?.length ? coreStyle('/edgepress/data-saver-layout.css') : '') + coreStyle('/' + variant.stylesheet) + variant.scripts.map(file => '<template data-edgepress-data-resource="script" data-data-feature="core"><script src="' + asset('/' + file) + '"></script></template><noscript><script defer src="' + asset('/' + file) + '"></script></noscript>').join('');
   const charset = head.children?.find(node => node.name === 'meta' && node.attribs?.charset);
   const headPosition = charset ? charset.endIndex + 1 : html.indexOf('>', head.startIndex) + 1;
   patches.push({ start: headPosition, end: headPosition, text: bootstrap });
-  const waiting = '<div class="edgepress-data-wait" data-data-wait hidden><p role="status">' + escape(labels.loading) + '</p><aside class="edgepress-data-offer" data-data-offer aria-labelledby="edgepress-data-offer-title" hidden><h2 id="edgepress-data-offer-title">' + escape(labels.slowTitle) + '</h2><p>' + escape(labels.slowNotice) + '</p><div><button type="button" data-data-mode="text">' + escape(labels.switchText) + '</button><button type="button" data-data-dismiss>' + escape(labels.keepFull) + '</button></div></aside></div>';
+  const waiting = '<div class="edgepress-data-wait" data-data-wait hidden><div class="edgepress-data-progress"><p role="status" data-data-progress-label>' + escape(labels.loading) + '</p><progress data-data-progress aria-label="' + escape(labels.loading) + '"></progress></div><aside class="edgepress-data-offer" data-data-offer aria-labelledby="edgepress-data-offer-title" hidden><h2 id="edgepress-data-offer-title">' + escape(labels.loading) + '</h2><p data-data-loading-notice>' + escape(labels.loadingNotice) + '</p><div><button type="button" data-data-mode="text">' + escape(labels.switchText) + '</button><button type="button" data-data-dismiss>' + escape(labels.keepFull) + '</button></div></aside></div>';
   const bodyPosition = html.indexOf('>', body.startIndex) + 1;
   patches.push({ start: bodyPosition, end: bodyPosition, text: waiting });
   const controls = '<aside class="edgepress-data-return" data-data-return hidden><span>' + escape(labels.textNotice) + '</span><button type="button" data-data-mode="full">' + escape(labels.returnFull) + '</button></aside>';

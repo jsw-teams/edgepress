@@ -17,7 +17,7 @@ const defaults = {
     archive: { categories: [] },
     navigation: [],
     externalLinks: { enabled: false, trustedOrigins: [] },
-    dataSaver: { enabled: false, debug: false, mode: 'auto', detectSlowConnection: false, respectBrowserPreference: true, promptAfterMs: 5000 },
+    dataSaver: { enabled: false, debug: false, mode: 'auto', detectSlowConnection: false, respectBrowserPreference: false, promptAfterMs: 5000 },
     footerNavigation: [],
     footer: '',
     seo: { author: '', keywords: [], image: '', robots: 'index,follow' },

@@ -9,7 +9,7 @@ site:
     debug: false
     mode: auto
     detectSlowConnection: false
-    respectBrowserPreference: true
+    respectBrowserPreference: false
     promptAfterMs: 5000
   head:
     titleSuffix: ""

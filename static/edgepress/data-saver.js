@@ -18,26 +18,63 @@
   const reduced = settings.respectBrowserPreference && (connection?.saveData === true || matchMedia('(prefers-reduced-data: reduce)').matches);
   const mode = preference === 'auto' ? reduced ? 'text' : 'full' : preference;
   document.documentElement.dataset.edgepressDataMode = mode;
-  if (mode === 'full') for (const source of settings.preloadStyles || []) {
-    const address = new URL(source, location.href);
-    if (address.origin !== location.origin) continue;
-    const preload = document.createElement('link');
-    preload.rel = 'preload';
-    preload.as = 'style';
-    preload.href = address.href;
-    document.head.append(preload);
-  }
   const resources = new Map();
   let firstScreenReady = false;
   let dismissed = false;
   let offerRequested = false;
   let monitor;
   let switching = false;
+  const prepareWaiting = () => {
+    const waiting = document.querySelector('[data-data-wait]');
+    if (!waiting) return;
+    waiting.hidden = false;
+    const offer = waiting.querySelector('[data-data-offer]');
+    if (offer) offer.hidden = mode !== 'full' || !settings.detectSlowConnection;
+    earlyObserver.disconnect();
+  };
+  const earlyObserver = new MutationObserver(prepareWaiting);
+  earlyObserver.observe(document.documentElement, { childList: true, subtree: true });
+  document.documentElement.dataset.edgepressDataReady = 'false';
+  const switchView = selected => {
+    if (switching || !['text', 'full'].includes(selected)) return;
+    switching = true;
+    const url = new URL(location.href);
+    url.searchParams.delete('data-save');
+    document.documentElement.dataset.edgepressDataReady = 'false';
+    const waiting = document.querySelector('[data-data-wait]');
+    if (waiting) waiting.hidden = false;
+    document.querySelectorAll('[data-data-mode]').forEach(control => { control.disabled = true; });
+    let persisted = false;
+    try { sessionStorage.setItem('edgepress-data-focus', selected); sessionStorage.setItem('edgepress-data-scroll', String(scrollY)); } catch {}
+    try { localStorage.setItem(key, selected); persisted = localStorage.getItem(key) === selected; } catch {}
+    if (persisted) url.searchParams.delete('data-mode'); else url.searchParams.set('data-mode', selected);
+    location.assign(url.href);
+  };
+  document.addEventListener('click', event => {
+    const button = event.target.closest('[data-data-mode]');
+    if (button) switchView(button.dataset.dataMode);
+  });
+  document.addEventListener('focusin', event => {
+    if (event.target.closest('[data-data-offer]')) offerRequested = true;
+  });
+  const progress = (phase, completed, total) => {
+    const indicator = document.querySelector('[data-data-progress]');
+    const label = document.querySelector('[data-data-progress-label]');
+    if (!indicator || !label || switching) return;
+    indicator.max = Math.max(1, total);
+    indicator.value = completed;
+    label.textContent = (settings.labels[phase] || settings.labels.loading).replace('{loaded}', completed).replace('{total}', total);
+    indicator.setAttribute('aria-label', label.textContent);
+  };
   const showOffer = () => {
     if (firstScreenReady || dismissed) return;
     offerRequested = true;
     const offer = document.querySelector('[data-data-offer]');
-    if (offer) offer.hidden = false;
+    if (offer) {
+      offer.hidden = false;
+      offer.querySelector('h2').textContent = settings.labels.slowTitle;
+      offer.querySelector('[data-data-loading-notice]').textContent = settings.labels.slowNotice;
+    }
   };
   const offerTimer = mode === 'full' && preference === 'auto' && settings.detectSlowConnection
     ? setTimeout(showOffer, Math.max(0, (settings.promptAfterMs || 5000) - performance.now()))
@@ -101,7 +138,7 @@
   const initialize = () => {
     const offer = document.querySelector('[data-data-offer]');
     const waiting = document.querySelector('[data-data-wait]');
-    if (waiting) waiting.hidden = mode !== 'full';
+    prepareWaiting();
     let revealPage = () => {};
     const returnEntry = document.querySelector('[data-data-return]');
     if (returnEntry) returnEntry.hidden = mode !== 'text';
@@ -117,23 +154,6 @@
     const dismiss = () => { dismissed = true; clearTimeout(offerTimer); revealPage(); closeOffer(); };
     document.querySelector('[data-data-dismiss]')?.addEventListener('click', dismiss);
     document.addEventListener('keydown', event => { if (event.key === 'Escape' && offer && !offer.hidden) dismiss(); });
-    for (const button of document.querySelectorAll('[data-data-mode]')) {
-      button.addEventListener('click', () => {
-        if (switching) return;
-        switching = true;
-        const selected = button.dataset.dataMode;
-        const url = new URL(location.href);
-        url.searchParams.delete('data-save');
-        document.documentElement.dataset.edgepressDataReady = 'false';
-        if (waiting) waiting.hidden = false;
-        if (offer) offer.querySelectorAll('button').forEach(control => { control.disabled = true; });
-        let persisted = false;
-        try { sessionStorage.setItem('edgepress-data-focus', selected); sessionStorage.setItem('edgepress-data-scroll', String(scrollY)); } catch {}
-        try { localStorage.setItem(key, selected); persisted = localStorage.getItem(key) === selected; } catch {}
-        if (persisted) url.searchParams.delete('data-mode'); else url.searchParams.set('data-mode', selected);
-        location.assign(url.href);
-      });
-    }
     let requestedFocus = false;
     let position = 0;
     try {
@@ -155,32 +175,40 @@
       target.focus({ preventScroll: true });
       if (position > 0) scrollTo({ top: position, behavior: 'instant' });
     };
+    const loading = activateResources('style', mode === 'text' ? 'core' : undefined);
+    let completedStyles = 0;
+    progress('progressStyles', 0, loading.length);
+    for (const resource of loading) void resource.then(() => progress('progressStyles', ++completedStyles, loading.length));
     if (mode === 'full') {
-      const loading = activateResources('style');
       const reveal = () => {
         if (switching) return;
         clearTimeout(deadline);
         if (document.documentElement.dataset.edgepressDataReady === 'true') return;
         document.documentElement.dataset.edgepressDataReady = 'true';
         if (waiting) waiting.hidden = true;
+        activateResources('script');
         requestAnimationFrame(restoreFocus);
       };
       revealPage = reveal;
       const deadline = setTimeout(() => { if (!offerRequested) reveal(); }, settings.detectSlowConnection && preference === 'auto' ? Math.max(20000, (settings.promptAfterMs || 5000) + 1000) : 4000);
       let stylesReady = false;
       const ready = () => { stylesReady = true; checkFirstScreen(); };
-      void Promise.all(loading).then(() => document.fonts?.ready).then(ready, ready);
-      document.querySelectorAll('[data-edgepress-data-media]').forEach(activateMedia);
-      activateResources('script');
+      void Promise.all(loading).then(() => {
+        if (switching) return;
+        document.querySelectorAll('[data-edgepress-data-media]').forEach(activateMedia);
+        ready();
+      }, ready);
       const checkFirstScreen = () => {
         if (!stylesReady || document.readyState === 'loading') return;
-        const pending = [...document.images].filter(image => {
+        const visibleImages = [...document.images].filter(image => {
           const rectangle = image.getBoundingClientRect();
           const visible = rectangle.width > 0 && rectangle.height > 0 && rectangle.top < innerHeight && rectangle.bottom > 0;
           if (visible && image.loading === 'lazy' && !image.complete) image.loading = 'eager';
-          return visible && !image.complete;
-        }).length > 0;
-        if (pending) return;
+          return visible;
+        });
+        const completedImages = visibleImages.filter(image => image.complete).length;
+        progress('progressMedia', completedImages, visibleImages.length);
+        if (completedImages < visibleImages.length) return;
         firstScreenReady = true;
         clearTimeout(offerTimer);
         clearInterval(monitor);
@@ -191,7 +219,13 @@
       addEventListener('pagehide', () => clearTimeout(deadline), { once: true });
       return;
     }
-    requestAnimationFrame(restoreFocus);
+    void Promise.all(loading).then(() => {
+      if (switching) return;
+      document.documentElement.dataset.edgepressDataReady = 'true';
+      if (waiting) waiting.hidden = true;
+      activateResources('script', 'core');
+      requestAnimationFrame(restoreFocus);
+    });
     document.addEventListener('click', event => {
       const button = event.target.closest('[data-oembed-load]');
       if (!button || !document.querySelector('template[data-edgepress-data-resource="script"][data-data-feature="embed"]')) return;
@@ -225,6 +259,6 @@
       }, { once: true });
     }
   };
-  addEventListener('pagehide', () => { clearTimeout(offerTimer); clearInterval(monitor); }, { once: true });
+  addEventListener('pagehide', () => { earlyObserver.disconnect(); clearTimeout(offerTimer); clearInterval(monitor); }, { once: true });
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialize, { once: true }); else initialize();
 })();
