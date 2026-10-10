@@ -17,6 +17,7 @@ test('critical waiting assets receive exact CSP hashes without granting arbitrar
     const page=await browser.newPage();
     await page.route('**/*',route=>route.fulfill({contentType:'text/html',body:injectConsentPolicy('<html><head><script id="edgepress-data-saver-config" type="application/json">{"enabled":true,"labels":{},"mode":"full"}</script><style>'+inline.style+'</style><script>'+inline.script+'</script><script>window.untrustedInline=true</script></head><body><main>Reading</main></body></html>',headers)}));
     await page.goto('https://example.test/');
+    await page.waitForFunction(()=>document.documentElement.dataset.edgepressDataReady === 'true');
     assert.equal(await page.evaluate(()=>window.untrustedInline),undefined);
     assert.equal(await page.getAttribute('html','data-edgepress-data-mode'),'full');
     assert.equal(await page.locator('body').evaluate(element=>getComputedStyle(element).visibility),'visible');

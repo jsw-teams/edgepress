@@ -325,5 +325,9 @@
     }
   };
   addEventListener('pagehide', () => { earlyObserver.disconnect(); clearTimeout(offerTimer); clearInterval(monitor); }, { once: true });
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialize, { once: true }); else initialize();
+  const start = () => {
+    if (document.hidden) initialize();
+    else requestAnimationFrame(() => setTimeout(initialize, 0));
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true }); else start();
 })();
