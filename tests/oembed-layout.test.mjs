@@ -23,7 +23,8 @@ test('embed entry stays compact until requested, retries failures and keeps keyb
       const context = await browser.newContext({ viewport: { width: 320, height: 900 }, colorScheme, reducedMotion: 'reduce' });
       let calls = 0, requests = 0;
       const themeStyle = await readFile(resolve('themes',theme,'assets/style.css'));
-      const textLayout = await dataSaverLayout(config,[{path:'style.css',content:themeStyle}]);
+      const textVariant = await readFile(resolve(config.resolvedPaths.theme,'assets',config.dataSaverTheme.stylesheet));
+      const textLayout = await dataSaverLayout(config,[{path:'style.css',content:themeStyle},{path:config.dataSaverTheme.stylesheet,content:textVariant}]);
       await context.route('**/*', async route => {
         const url = new URL(route.request().url());
         if (url.origin === service.backendUrl) {
@@ -49,6 +50,7 @@ test('embed entry stays compact until requested, retries failures and keeps keyb
       const errors = [];
       page.on('pageerror', error => errors.push(error.message));
       await page.goto(origin);
+      if (mode === 'text') await page.waitForFunction(()=>document.documentElement.dataset.edgepressDataReady === 'true');
       await page.evaluate(() => document.addEventListener('edgepress:privacy-open', () => window.testOpened = (window.testOpened || 0) + 1));
       const entry = page.locator('[data-edgepress-oembed]');
       const button = entry.locator('[data-oembed-load]');
@@ -56,7 +58,8 @@ test('embed entry stays compact until requested, retries failures and keeps keyb
       assert((await entry.boundingBox()).height < 300);
       assert.equal(requests, 0);
       await button.focus(); await page.keyboard.press('Enter');
-      await page.waitForFunction(() => window.testOpened === 1);
+      await page.waitForFunction(() => window.testOpened > 0);
+      assert.equal(await page.evaluate(()=>window.testOpened),1);
       assert.equal(requests, 0);
       assert.equal(await button.isEnabled(), true);
       await page.evaluate(() => { window.testAllowed = true; });
@@ -66,8 +69,13 @@ test('embed entry stays compact until requested, retries failures and keeps keyb
       const pendingBounds = await entry.locator('[data-oembed-placeholder]').boundingBox();
       assert(mode === 'text' ? pendingBounds === null : pendingBounds.height <= 60);
       await entry.locator('[data-oembed-notice]').getByText('Media unavailable. Try again.', { exact: true }).waitFor();
+      await page.waitForFunction(() => !document.querySelector('[data-oembed-load]').disabled);
       assert.equal(await button.isEnabled(), true);
       assert.equal(await entry.locator('[data-oembed-status]').evaluate(element => element.getBoundingClientRect().height), 0);
+      await page.evaluate(()=>document.dispatchEvent(new CustomEvent('edgepress:service-ready',{detail:{id:'shared-media'}})));
+      await page.waitForTimeout(300);
+      assert.equal(calls,1);
+      assert.equal(await entry.getAttribute('data-oembed-unavailable'),'true');
       await button.focus(); await page.keyboard.press('Enter');
       await page.waitForFunction(() => document.querySelector('[data-edgepress-oembed]').dataset.loaded === 'true');
       await page.frameLocator('iframe').getByText('Shared story content').waitFor();

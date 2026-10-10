@@ -9,6 +9,7 @@ import {imageViewerAssets, mediaViewerAssets} from './media-assets.js';
 import {documentViewerAssets} from '@jsw-teams/document-viewer/assets';
 import {collectImageDimensions} from './image-dimensions.js';
 import {dataSaverLayout} from './data-saver.js';
+import { build, transform } from 'esbuild';
 
 async function walk(directory) {
   let entries;
@@ -33,7 +34,7 @@ function referencedPaths(path, content, known) {
   const text = content.toString('utf8');
   const expression = ['.js', '.mjs'].includes(extname(path).toLowerCase())
     ? /\b(?:from\s*|import\s*(?:\(\s*)?|new\s+URL\s*\(\s*)['"]([^'"]+)['"]/g
-    : /(?:@import\s+(?:url\()?\s*|url\(\s*)['"]?([^'")\s;]+)['"]?\s*\)?/gi;
+    : /(?:@import\s*(?:url\()?\s*|url\(\s*)['"]?([^'")\s;]+)['"]?\s*\)?/gi;
   const refs = [];
   for (const match of text.matchAll(expression)) {
     const specifier = match[1];
@@ -76,7 +77,7 @@ function rewriteCodeReferences(item, text, outputByOriginal) {
     });
   }
 
-  const expression = /((?:@import\s+(?:url\()?\s*|url\(\s*))(['"]?)([^)'"\s;]+)(['"]?\s*\)?)/gi;
+  const expression = /((?:@import\s*(?:url\()?\s*|url\(\s*))(['"]?)([^)'"\s;]+)(['"]?\s*\)?)/gi;
   return text.replace(expression, (match, prefix, quote, specifier, suffix) => {
     const rewritten = rewriteSpecifier(specifier);
     return rewritten === null ? match : prefix + quote + rewritten + suffix;
@@ -124,11 +125,69 @@ export async function collectAssets(config, { documentViewer = false, mediaViewe
   }
   const [headerContents, items] = await Promise.all([
     mapLimit(headers, config.concurrency, async (item) => (await readFile(item.source)).toString('utf8')),
-    mapLimit(assetSources, config.concurrency, async (item) => ({
-      ...item,
-      content: isCodeAsset(item.path) ? item.content??await readFile(item.source) : null
-    }))
+    mapLimit(assetSources, config.concurrency, async (item) => {
+      if (!isCodeAsset(item.path)) return { ...item, content: null };
+      const source = item.content ?? await readFile(item.source);
+      const result = await transform(source.toString('utf8'), {
+        loader: item.path.endsWith('.css') ? 'css' : 'js',
+        minifyWhitespace: true,
+        minifySyntax: true,
+        minifyIdentifiers: item.path === 'edgepress/data-saver.js',
+        legalComments: 'inline',
+        charset: 'utf8',
+        sourcefile: item.path
+      });
+      return { ...item, content: Buffer.from(result.code) };
+    })
   ]);
+  const coreEntries = ['edgepress/plugins/consent/manager.js', 'edgepress/external-links.js'];
+  const sourceByPath = new Map(items.map(item => [item.path, item]));
+  const bundleControl = async entry => {
+    const item = sourceByPath.get(entry);
+    if (!item) return;
+    const output = await build({
+      entryPoints: [entry],
+      bundle: true,
+      write: false,
+      format: 'esm',
+      minifyWhitespace: true,
+      minifySyntax: true,
+      minifyIdentifiers: false,
+      legalComments: 'inline',
+      charset: 'utf8',
+      plugins: [{
+        name: 'local-core-controls',
+        setup(builder) {
+          builder.onResolve({filter:/.*/}, args => {
+            const target = args.kind === 'entry-point' ? args.path : args.path.startsWith('/') ? args.path.slice(1) : posix.normalize(posix.join(posix.dirname(args.importer),args.path));
+            if (args.kind === 'dynamic-import' || !sourceByPath.has(target)) {
+              const path = sourceByPath.has(target) ? '/' + target : args.path;
+              return {path,external:true};
+            }
+            return {path:target,namespace:'local-core-controls'};
+          });
+          builder.onLoad({filter:/.*/,namespace:'local-core-controls'}, args => ({contents:sourceByPath.get(args.path).content.toString('utf8'),loader:'js'}));
+        }
+      }]
+    });
+    item.content = Buffer.from(output.outputFiles[0].contents);
+  };
+  for (const entry of coreEntries) await bundleControl(entry);
+  if (config.site.dataSaver?.enabled) {
+    const candidates = [...coreEntries, 'edgepress/language-select.js', 'edgepress/local-time.js', 'edgepress/navigation-select.js', 'edgepress/services-consent.js'];
+    const scripts = candidates.filter(path => {
+      const source = sourceByPath.get(path)?.source;
+      return source && relative(runtimeRoot,source).split(sep).join('/') === path.slice('edgepress/'.length);
+    });
+    if (scripts.length) {
+      const entry = 'edgepress/data-saver-controls.js';
+      const item = {path:entry,content:Buffer.from(scripts.map(path => 'import "/' + path + '";').join('\n')),sourceName:'Data-saving core controls'};
+      sourceByPath.set(entry,item);
+      items.push(item);
+      await bundleControl(entry);
+      config.dataSaverCore = {path:'/' + entry,scripts:scripts.map(path => '/' + path)};
+    }
+  }
   const layout = await dataSaverLayout(config, items);
   if (layout) items.push(layout);
   const originals = new Map();

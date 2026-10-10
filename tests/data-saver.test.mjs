@@ -207,7 +207,7 @@ test('theme variants stay small and translated text is escaped without activatin
   assert.match(result, /&lt;script&gt;/);
   assert.match(result, /<template data-edgepress-data-html>&lt;img/);
   const unlabelled = dataSaverHtml('<html lang="en"><head></head><body><img src="/chart.png"><img src="/decoration.png" alt=""></body></html>', config);
-  assert.equal((unlabelled.match(/data-data-decorative/g) || []).length, 1, 'Missing alt is not permission to discard information');
+  assert.equal((unlabelled.match(/<span[^>]*data-data-decorative/g) || []).length, 1, 'Missing alt is not permission to discard information');
   for (const theme of ['default', 'folio']) {
     const stylesheet = await readFile('themes/' + theme + '/assets/data-saver-theme.css', 'utf8');
     assert(Buffer.byteLength(stylesheet) < 2048);
@@ -236,7 +236,7 @@ test('shared text layout retains themed landmarks and resolves local imports wit
 test('only a delayed first screen offers text view, without an automatic switch or permanent selector', async () => {
   const config = await loadConfig(process.cwd());
   await loadLanguagePacks(config);
-  config.site.dataSaver = { enabled: true, mode: 'auto', detectSlowConnection: true, respectBrowserPreference: true, promptAfterMs: 300 };
+  config.site.dataSaver = { enabled: true, mode: 'auto', detectSlowConnection: true, respectBrowserPreference: true, promptAfterMs: 1500 };
   await configureDataSaver(config);
   const script = await readFile('static/edgepress/data-saver.js');
   const stylesheet = await readFile('static/edgepress/data-saver.css');
@@ -260,7 +260,7 @@ test('only a delayed first screen offers text view, without an automatic switch 
     assert.equal(await fast.getAttribute('html', 'data-edgepress-data-mode'), 'full');
     assert.equal(await fast.locator('[data-data-offer]').isVisible(), false);
     assert.equal(await fast.locator('[data-data-return]').isVisible(), false);
-    delay = 1800;
+    delay = 2500;
     const slow = await browser.newPage();
     await slow.goto(origin, { waitUntil: 'domcontentloaded' });
     const offer = slow.locator('[data-data-offer]');
@@ -270,8 +270,10 @@ test('only a delayed first screen offers text view, without an automatic switch 
     assert.equal(await slow.locator('footer').count(), 1);
     await offer.getByRole('button', { name: 'Keep waiting' }).focus();
     await slow.keyboard.press('Escape');
-    assert.equal(await offer.isVisible(), false);
-    assert.equal(await slow.evaluate(() => document.activeElement.tagName), 'MAIN');
+    assert.equal(await offer.isVisible(), true);
+    assert.equal(await slow.locator('main').isVisible(), false);
+    assert.equal(await slow.locator('[data-data-wait]').isVisible(), true);
+    assert.equal(await slow.evaluate(() => document.activeElement.hasAttribute('data-data-progress-label')), true);
     const choose = await browser.newPage();
     await choose.goto(origin, { waitUntil: 'domcontentloaded' });
     await choose.getByRole('button', { name: 'Use text view', exact: true }).waitFor();

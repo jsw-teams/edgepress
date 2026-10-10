@@ -407,7 +407,10 @@ async function renderBlock(block, context, depth, index) {
       const alt = text(block.alt, 'image.alt', 500);
       const caption = text(block.caption, 'image.caption', 500, true);
       const original=block.originalSrc?' data-original="'+escapeHtml(safeUrl(block.originalSrc,'image.originalSrc'))+'"':'';
-      return '<figure class="image-block"><img src="' + escapeHtml(src) + '"'+original+' alt="' + escapeHtml(alt) + '" loading="lazy" decoding="async">' +
+      const srcset = block.srcset === undefined ? '' : imageCandidates(block.srcset, 'image.srcset');
+      const responsive = srcset ? ' srcset="' + srcset + '" sizes="' + escapeHtml(text(block.sizes ?? '(max-width: 640px) calc(100vw - 32px), 560px', 'image.sizes', 200)) + '"' : '';
+      if (block.sizes !== undefined && !srcset) throw new Error('image.sizes requires image.srcset');
+      return '<figure class="image-block"><img src="' + escapeHtml(src) + '"'+original+responsive+' alt="' + escapeHtml(alt) + '" loading="lazy" decoding="async">' +
         (caption ? '<figcaption>' + escapeHtml(caption) + '</figcaption>' : '') + '</figure>';
     }
     case 'quote': {

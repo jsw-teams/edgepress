@@ -49,7 +49,40 @@ test('a dependency-based site receives hashed core runtime and can retain explic
     // Theme assets are also a supported explicit override source.
     const override="export const customLanguageSwitcher=true;\n";
     await mkdir(resolve(directory,'theme/assets/edgepress'),{recursive:true});await writeFile(resolve(directory,'theme/assets/edgepress/language-select.js'),override);
-    const custom=await collectAssets(config);assert.equal(custom.assets.find(item=>'/'+item.path===custom.urlMap['/edgepress/language-select.js']).content.toString(),override);
+    const custom=await collectAssets(config);
+    const output=custom.assets.find(item=>'/'+item.path===custom.urlMap['/edgepress/language-select.js']).content.toString();
+    assert.equal((await import('data:text/javascript,'+encodeURIComponent(output))).customLanguageSwitcher,true);
+    assert.equal(await readFile(resolve(directory,'theme/assets/edgepress/language-select.js'),'utf8'),override);
+  }finally{await rm(directory,{recursive:true,force:true});}
+});
+
+test('build minification preserves exports, licenses and fingerprinted CSS and module dependencies',async()=>{
+  const directory=await mkdtemp(resolve(tmpdir(),'edgepress-minification-'));
+  try {
+    const config=await loadConfig(fileURLToPath(new URL('../',import.meta.url)));
+    config.resolvedPaths.static=resolve(directory,'static');
+    config.resolvedPaths.content=resolve(directory,'content');
+    config.resolvedPaths.theme=resolve(directory,'theme');
+    await mkdir(config.resolvedPaths.static,{recursive:true});
+    const stylesheet='/*! Sample license */\n@import "./base.css";\n.card {\n        display: grid;\n        color: red;\n        padding: 10px 10px 10px 10px;\n}\n';
+    const script='/*! Sample license */\nimport { value } from "./value.js";\nexport function publicName() {\n        return value;\n}\n';
+    for(const [name,source] of [['style.css',stylesheet],['base.css','body { margin: 0; }'],['app.js',script],['value.js','export const value = 42;']]) await writeFile(resolve(config.resolvedPaths.static,name),source);
+    const bundle=await collectAssets(config);
+    const output=path=>bundle.assets.find(item=>'/'+item.path===bundle.urlMap['/'+path]).content.toString();
+    assert(output('style.css').length < stylesheet.length);
+    assert(output('app.js').length < script.length);
+    assert.match(output('style.css'),/Sample license/);
+    assert.match(output('app.js'),/Sample license/);
+    assert(output('style.css').includes(bundle.urlMap['/base.css'].slice(1)));
+    assert(output('app.js').includes(bundle.urlMap['/value.js'].slice(1)));
+    assert.match(output('app.js'),/function publicName\(/);
+    assert.equal(await readFile(resolve(config.resolvedPaths.static,'style.css'),'utf8'),stylesheet);
+    assert.equal(await readFile(resolve(config.resolvedPaths.static,'app.js'),'utf8'),script);
+    await writeFile(resolve(config.resolvedPaths.static,'base.css'),'body { margin: 1px; }');
+    await writeFile(resolve(config.resolvedPaths.static,'value.js'),'export const value = 43;');
+    const changed=await collectAssets(config);
+    assert.notEqual(changed.urlMap['/style.css'],bundle.urlMap['/style.css']);
+    assert.notEqual(changed.urlMap['/app.js'],bundle.urlMap['/app.js']);
   }finally{await rm(directory,{recursive:true,force:true});}
 });
 

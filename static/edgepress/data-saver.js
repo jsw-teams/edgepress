@@ -18,6 +18,25 @@
   const reduced = settings.respectBrowserPreference && (connection?.saveData === true || matchMedia('(prefers-reduced-data: reduce)').matches);
   const mode = preference === 'auto' ? reduced ? 'text' : 'full' : preference;
   document.documentElement.dataset.edgepressDataMode = mode;
+  if (mode === 'full' && settings.firstImage) {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
+    link.href = settings.firstImage.href;
+    if (settings.firstImage.srcset) link.imageSrcset = settings.firstImage.srcset;
+    if (settings.firstImage.sizes) link.imageSizes = settings.firstImage.sizes;
+    if (settings.firstImage.type) link.type = settings.firstImage.type;
+    link.fetchPriority = 'high';
+    document.head.append(link);
+  }
+  for (const hint of (mode === 'text' ? settings.textPreloads : settings.fullPreloads) || []) {
+    const link = document.createElement('link');
+    link.rel = hint.rel;
+    link.href = hint.href;
+    if (hint.as) link.as = hint.as;
+    link.dataset.edgepressDataPreload = '';
+    document.head.append(link);
+  }
   const resources = new Map();
   let firstScreenReady = false;
   let dismissed = false;
@@ -29,8 +48,10 @@
     if (!waiting) return;
     waiting.hidden = false;
     const offer = waiting.querySelector('[data-data-offer]');
-    if (offer) offer.hidden = mode !== 'full' || !settings.detectSlowConnection;
-    earlyObserver.disconnect();
+    if (offer) {
+      offer.hidden = mode !== 'full' || !settings.detectSlowConnection;
+      earlyObserver.disconnect();
+    }
   };
   const earlyObserver = new MutationObserver(prepareWaiting);
   earlyObserver.observe(document.documentElement, { childList: true, subtree: true });
@@ -61,10 +82,11 @@
     const indicator = document.querySelector('[data-data-progress]');
     const label = document.querySelector('[data-data-progress-label]');
     if (!indicator || !label || switching) return;
-    indicator.max = Math.max(1, total);
-    indicator.value = completed;
-    label.textContent = (settings.labels[phase] || settings.labels.loading).replace('{loaded}', completed).replace('{total}', total);
-    indicator.setAttribute('aria-label', label.textContent);
+    if (indicator.max !== Math.max(1, total)) indicator.max = Math.max(1, total);
+    if (indicator.value !== completed) indicator.value = completed;
+    const message = (settings.labels[phase] || settings.labels.loading).replace('{loaded}', completed).replace('{total}', total);
+    if (label.textContent !== message) label.textContent = message;
+    if (indicator.getAttribute('aria-label') !== message) indicator.setAttribute('aria-label', message);
   };
   const showOffer = () => {
     if (firstScreenReady || dismissed) return;
@@ -84,6 +106,7 @@
     for (const template of document.querySelectorAll('template[data-edgepress-data-resource]')) {
       if (template.dataset.edgepressDataResource !== kind) continue;
       if (feature && template.dataset.dataFeature !== feature) continue;
+      if (!feature && kind === 'style' && template.dataset.dataFeature === 'fonts') continue;
       const original = template.content.firstElementChild;
       if (!original) continue;
       const source = original.getAttribute('src') || original.getAttribute('href');
@@ -151,7 +174,18 @@
       }
       offer.hidden = true;
     };
-    const dismiss = () => { dismissed = true; clearTimeout(offerTimer); revealPage(); closeOffer(); };
+    const dismiss = () => {
+      dismissed = true;
+      offerRequested = false;
+      clearTimeout(offerTimer);
+      if (firstScreenReady) { revealPage(); closeOffer(); return; }
+      if (offer) {
+        offer.querySelector('h2').textContent = settings.labels.loading;
+        offer.querySelector('[data-data-loading-notice]').textContent = settings.labels.loadingNotice;
+      }
+      const status = waiting?.querySelector('[data-data-progress-label]');
+      if (status) { status.tabIndex = -1; status.focus({ preventScroll: true }); }
+    };
     document.querySelector('[data-data-dismiss]')?.addEventListener('click', dismiss);
     document.addEventListener('keydown', event => { if (event.key === 'Escape' && offer && !offer.hidden) dismiss(); });
     let requestedFocus = false;
@@ -176,39 +210,71 @@
       if (position > 0) scrollTo({ top: position, behavior: 'instant' });
     };
     const loading = activateResources('style', mode === 'text' ? 'core' : undefined);
+    const controls = activateResources('script', 'core');
+    const criticalReady = results => {
+      if (results.every(Boolean)) return true;
+      clearTimeout(offerTimer);
+      offerRequested = true;
+      if (offer) {
+        offer.hidden = false;
+        offer.querySelector('h2').textContent = settings.labels.loading;
+        offer.querySelector('[data-data-loading-notice]').textContent = settings.labels.loadFailed;
+        offer.querySelector('[data-data-dismiss]').hidden = true;
+        offer.querySelector('[data-data-mode=text]').hidden = mode === 'text';
+        const retry = offer.querySelector('[data-data-retry]');
+        retry.hidden = false;
+        retry.addEventListener('click', () => location.reload(), { once:true });
+      }
+      const status = waiting?.querySelector('[data-data-progress-label]');
+      if (status) status.textContent = settings.labels.loadFailed;
+      return false;
+    };
     let completedStyles = 0;
-    progress('progressStyles', 0, loading.length);
-    for (const resource of loading) void resource.then(() => progress('progressStyles', ++completedStyles, loading.length));
+    let completedControls = 0;
+    const updateProgress = () => {
+      if (completedStyles < loading.length) progress('progressStyles', completedStyles, loading.length);
+      else progress('progressControls', completedControls, controls.length);
+    };
+    updateProgress();
+    for (const resource of loading) void resource.then(() => { completedStyles++; updateProgress(); });
+    for (const resource of controls) void resource.then(() => { completedControls++; updateProgress(); });
     if (mode === 'full') {
       const reveal = () => {
         if (switching) return;
-        clearTimeout(deadline);
         if (document.documentElement.dataset.edgepressDataReady === 'true') return;
         document.documentElement.dataset.edgepressDataReady = 'true';
         if (waiting) waiting.hidden = true;
-        activateResources('script');
+        document.querySelectorAll('[data-edgepress-data-preload]').forEach(link => link.remove());
+        requestAnimationFrame(() => {
+          activateResources('script');
+          const loadFonts = () => { if (!switching) activateResources('style', 'fonts'); };
+          if (typeof requestIdleCallback === 'function') requestIdleCallback(loadFonts, {timeout:1500});
+          else setTimeout(loadFonts, 250);
+        });
         requestAnimationFrame(restoreFocus);
       };
       revealPage = reveal;
-      const deadline = setTimeout(() => { if (!offerRequested) reveal(); }, settings.detectSlowConnection && preference === 'auto' ? Math.max(20000, (settings.promptAfterMs || 5000) + 1000) : 4000);
       let stylesReady = false;
-      const ready = () => { stylesReady = true; checkFirstScreen(); };
-      void Promise.all(loading).then(() => {
-        if (switching) return;
+      const visibleImages = new Set();
+      const ready = () => {
+        stylesReady = true;
+        for (const image of document.images) {
+          const rectangle = image.getBoundingClientRect();
+          if (rectangle.width > 0 && rectangle.height > 0 && rectangle.top < innerHeight && rectangle.bottom > 0) visibleImages.add(image);
+        }
+        for (const image of visibleImages) if (image.loading === 'lazy' && !image.complete) image.loading = 'eager';
+        checkFirstScreen();
+      };
+      void Promise.all([...loading, ...controls]).then(results => {
+        if (switching || !criticalReady(results)) return;
         document.querySelectorAll('[data-edgepress-data-media]').forEach(activateMedia);
         ready();
       }, ready);
       const checkFirstScreen = () => {
         if (!stylesReady || document.readyState === 'loading') return;
-        const visibleImages = [...document.images].filter(image => {
-          const rectangle = image.getBoundingClientRect();
-          const visible = rectangle.width > 0 && rectangle.height > 0 && rectangle.top < innerHeight && rectangle.bottom > 0;
-          if (visible && image.loading === 'lazy' && !image.complete) image.loading = 'eager';
-          return visible;
-        });
-        const completedImages = visibleImages.filter(image => image.complete).length;
-        progress('progressMedia', completedImages, visibleImages.length);
-        if (completedImages < visibleImages.length) return;
+        const completedImages = [...visibleImages].filter(image => image.complete).length;
+        progress('progressMedia', completedImages, visibleImages.size);
+        if (completedImages < visibleImages.size) return;
         firstScreenReady = true;
         clearTimeout(offerTimer);
         clearInterval(monitor);
@@ -216,14 +282,13 @@
       };
       monitor = setInterval(checkFirstScreen, 100);
       requestAnimationFrame(checkFirstScreen);
-      addEventListener('pagehide', () => clearTimeout(deadline), { once: true });
       return;
     }
-    void Promise.all(loading).then(() => {
-      if (switching) return;
+    void Promise.all([...loading, ...controls]).then(results => {
+      if (switching || !criticalReady(results)) return;
       document.documentElement.dataset.edgepressDataReady = 'true';
       if (waiting) waiting.hidden = true;
-      activateResources('script', 'core');
+      document.querySelectorAll('[data-edgepress-data-preload]').forEach(link => link.remove());
       requestAnimationFrame(restoreFocus);
     });
     document.addEventListener('click', event => {

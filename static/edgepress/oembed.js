@@ -75,6 +75,7 @@ async function show(root) {
   if(root.dataset.loading||root.dataset.loaded)return;
   const id=root.dataset.edgepressOembed,config=JSON.parse(document.getElementById('edgepress-privacy-config')?.textContent||'{}');
   const integration=config.privacy?.integrations?.find(service=>service.id===id&&service.provider==='oembed');if(!integration)return;
+  delete root.dataset.oembedUnavailable;
   root.dataset.requested='true';root.dataset.loading='true';root.setAttribute('aria-busy','true');root.classList.add('is-loading');
   const button=root.querySelector('[data-oembed-load]');
   const buttonHadFocus=document.activeElement===button;
@@ -102,7 +103,7 @@ async function show(root) {
     complete(media);
   }catch(error){
     if(error.message.startsWith('Service requires visitor consent:'))document.dispatchEvent(new CustomEvent('edgepress:privacy-open'));
-    else{root.dataset.requested='false';root.querySelector('[data-oembed-status]').replaceChildren();updateNotice(root,'embedUnavailable');}
+    else{root.dataset.oembedUnavailable='true';root.dataset.requested='false';root.querySelector('[data-oembed-status]').replaceChildren();updateNotice(root,'embedUnavailable');}
   }finally{delete root.dataset.loading;root.classList.remove('is-loading');root.setAttribute('aria-busy','false');if(button?.isConnected)button.disabled=false;}
 }
 if(typeof document!=='undefined'){

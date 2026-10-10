@@ -2,6 +2,26 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 import {extendConsentPolicy,injectConsentPolicy,contentPermissions,validateServiceCsp,serializeConsentHeaders} from '../src/consent-csp.js';
+import { dataSaverInlineAssets } from '../src/data-saver.js';
+
+test('critical waiting assets receive exact CSP hashes without granting arbitrary inline scripts',async()=>{
+  const config={site:{dataSaver:{enabled:true}},browserPlugins:{services:[]}};
+  const inline=dataSaverInlineAssets(config);
+  const headers=extendConsentPolicy("/*\n  Content-Security-Policy: default-src 'self'; script-src 'self'; script-src-elem 'self'; style-src 'self'; style-src-elem 'self'",config);
+  assert(headers.includes(inline.scriptHash));
+  assert(headers.includes(inline.styleHash));
+  assert.doesNotMatch(headers,/unsafe-inline|unsafe-eval/);
+  assert.match(extendConsentPolicy('',config),/style-src 'self' 'unsafe-inline';/);
+  const browser=await chromium.launch({headless:true,args:['--disable-extensions']});
+  try {
+    const page=await browser.newPage();
+    await page.route('**/*',route=>route.fulfill({contentType:'text/html',body:injectConsentPolicy('<html><head><script id="edgepress-data-saver-config" type="application/json">{"enabled":true,"labels":{},"mode":"full"}</script><style>'+inline.style+'</style><script>'+inline.script+'</script><script>window.untrustedInline=true</script></head><body><main>Reading</main></body></html>',headers)}));
+    await page.goto('https://example.test/');
+    assert.equal(await page.evaluate(()=>window.untrustedInline),undefined);
+    assert.equal(await page.getAttribute('html','data-edgepress-data-mode'),'full');
+    assert.equal(await page.locator('body').evaluate(element=>getComputedStyle(element).visibility),'visible');
+  }finally{await browser.close();}
+});
 
 test('CSP is generated without source headers and removes disabled service permissions',()=>{
   const services=[{provider:'external-widget',backendUrl:'https://comments.example',moduleUrl:'https://comments.example/widget.js'},{provider:'cloudflare-web-analytics'},{enabled:false,provider:'oembed',backendUrl:'https://disabled.example',embedOrigins:['https://disabled-media.example']}];
@@ -25,6 +45,16 @@ test('global source policy and content media survive generation without granting
   const html=injectConsentPolicy('<html><head><title>Site</title></head><body></body></html>',headers);
   assert.match(html,/http-equiv="Content-Security-Policy"/);assert.match(html,/https:\/\/uploads.example/);assert.match(html,/https:\/\/pictures.example/);assert.match(html,/https:\/\/video.example/);
   assert.doesNotMatch(html,/frame-ancestors|disabled.example/);assert.match(headers,/frame-ancestors 'none'/);
+  const large=injectConsentPolicy('<html><head data-theme="test"><meta charset="utf-8"><title>繁體中文</title></head><body>简体中文</body></html>',extendConsentPolicy('',{browserPlugins:{services:[]},contentCsp:{'img-src':Array.from({length:24},(_,index)=>'https://image-'+index+'.example')}}));
+  assert(Buffer.byteLength(large.slice(0,large.indexOf('<meta charset="utf-8">')+22)) < 1024);
+  assert.equal((large.match(/<meta charset=/g)||[]).length,1);
+  assert(large.indexOf('<meta charset=') < large.indexOf('http-equiv="Content-Security-Policy"'));
+  for (const head of ['', '<meta charset="windows-1252">', '<title>'+'測試'.repeat(500)+'</title><meta charset="utf-8">']) {
+    const normalized = injectConsentPolicy('<!doctype html><html><head>'+head+'</head><body>中文</body></html>','');
+    assert(Buffer.byteLength(normalized.slice(0,normalized.indexOf('<meta charset="utf-8">')+22)) < 1024);
+    assert.equal((normalized.match(/<meta charset=/g)||[]).length,1);
+    assert.doesNotMatch(normalized,/windows-1252/);
+  }
   const json=JSON.stringify({example:'<html><head></head><body><img src="https://metadata.example/a"></body></html>'});
   assert.equal(injectConsentPolicy(json,headers),json);assert.deepEqual(contentPermissions([{body:json,contentType:'application/json'}]),{});
 });

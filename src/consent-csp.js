@@ -1,3 +1,5 @@
+import { dataSaverInlineAssets } from './data-saver.js';
+
 // Network permission is not consent: browser loaders still require the visitor's choice.
 const defaults = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' blob:; connect-src 'self'; frame-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'";
 const providers = {
@@ -43,6 +45,17 @@ function permissions(config) {
 }
 function extend(policy,config) {
   const directives=new Map(policy.split(';').map(value=>value.trim().split(/\s+/)).filter(parts=>parts[0]).map(([name,...sources])=>[name,sources]));
+  const inline = dataSaverInlineAssets(config);
+  if (inline) {
+    for (const name of ['script-src', ...(directives.has('script-src-elem') ? ['script-src-elem'] : [])]) {
+      const inherited = directives.get(name) || directives.get('script-src') || directives.get('default-src') || ["'self'"];
+      directives.set(name, [...new Set([...inherited.filter(value => value !== "'none'"), inline.scriptHash])]);
+    }
+    for (const name of ['style-src', ...(directives.has('style-src-elem') ? ['style-src-elem'] : [])]) {
+      const inherited = directives.get(name) || directives.get('style-src') || directives.get('default-src') || ["'self'"];
+      if (!inherited.includes("'unsafe-inline'")) directives.set(name, [...new Set([...inherited.filter(value => value !== "'none'"), inline.styleHash])]);
+    }
+  }
   for(const [name,sources] of permissions(config)) {
     if (!sources.length) continue;
     const inherited=directives.get(name) || directives.get('default-src') || ["'self'"];
@@ -76,10 +89,10 @@ export function injectConsentPolicy(html,headers) {
   if (!/^\s*(?:<!doctype html>\s*)?<html\b/i.test(html) || !/<head\b/i.test(html)) return html;
   // Use the global source policy when provided (e.g. first-party upload endpoints).
   let policy=globalPolicy(headers);
-  if (!policy) return html;
+  if (!policy) return html.replace(/(<head\b[^>]*>)([\s\S]*?)<\/head>/i,(_match,head,content)=>head+'\n<meta charset="utf-8">'+content.replace(/<meta\b[^>]*\bcharset\s*=\s*["']?[^\s"'>]+["']?[^>]*>/gi,'')+'</head>');
   policy=policy.split(';').filter(part=>!/^\s*(?:frame-ancestors|sandbox|report-uri|report-to)\b/i.test(part)).join(';');
   const escaped=policy.replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;');
-  return html.replace(/<head\b[^>]*>/i,head=>head+'\n<meta http-equiv="Content-Security-Policy" content="'+escaped+'">');
+  return html.replace(/(<head\b[^>]*>)([\s\S]*?)<\/head>/i,(_match,head,content)=>head+'\n<meta charset="utf-8">\n<meta http-equiv="Content-Security-Policy" content="'+escaped+'">'+content.replace(/<meta\b[^>]*\bcharset\s*=\s*["']?[^\s"'>]+["']?[^>]*>/gi,'')+'</head>');
 }
 function globalPolicy(headers) {
   let scope='';

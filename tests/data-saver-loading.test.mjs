@@ -6,6 +6,81 @@ import { loadConfig } from '../src/config.js';
 import { loadLanguagePacks } from '../src/i18n.js';
 import { configureDataSaver, dataSaverHtml } from '../src/data-saver.js';
 
+test('full view discovers critical assets early and never waits for font styles', async () => {
+  const config = await loadConfig(process.cwd());
+  await loadLanguagePacks(config);
+  config.site.dataSaver = {enabled:true,mode:'full',debug:false,detectSlowConnection:false,respectBrowserPreference:false};
+  await configureDataSaver(config);
+  const html = dataSaverHtml('<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="/full.css"><link rel="stylesheet" href="/edgepress/fonts.css"><script defer src="/control.js"></script></head><body><header>Navigation</header><main><h1>Readable 中文</h1></main><footer>Footer</footer></body></html>',config);
+  const settings = JSON.parse(html.match(/id="edgepress-data-saver-config"[^>]*>([\s\S]*?)<\/script>/)[1]);
+  assert(settings.fullPreloads.some(hint=>hint.href === '/full.css'));
+  assert(settings.fullPreloads.some(hint=>hint.href === '/control.js'));
+  assert(!settings.fullPreloads.some(hint=>/fonts/.test(hint.href)));
+  const browser = await chromium.launch({headless:true,args:['--disable-extensions']});
+  try {
+    const context = await browser.newContext();
+    let releaseFont;
+    const font = new Promise(resolve=>{releaseFont=resolve;});
+    let fontStarted;
+    const requested = new Promise(resolve=>{fontStarted=resolve;});
+    await context.route('**/*',async route=>{
+      const path = new URL(route.request().url()).pathname;
+      if (path === '/edgepress/fonts.css') { fontStarted(); await font; }
+      if (path.endsWith('.css')) return route.fulfill({contentType:'text/css',body:'body{font-family:system-ui}main{padding:1rem}'});
+      if (path.endsWith('.js')) return route.fulfill({contentType:'text/javascript',body:'document.documentElement.dataset.controlBound="true";'});
+      return route.fulfill({contentType:'text/html; charset=utf-8',body:html});
+    });
+    const page = await context.newPage();
+    await page.goto('https://loading.test/',{waitUntil:'domcontentloaded'});
+    await page.waitForFunction(()=>document.documentElement.dataset.edgepressDataReady === 'true');
+    assert.equal(await page.locator('main').isVisible(),true);
+    assert.equal(await page.getAttribute('html','data-control-bound'),'true');
+    await requested;
+    assert.equal(await page.locator('[data-data-wait]').isVisible(),false);
+    releaseFont();
+    await context.close();
+  } finally { await browser.close(); }
+});
+
+test('unfinished or failed CSS never exposes an unstyled page and retry restores reading', {timeout:30000}, async () => {
+  const config = await loadConfig(process.cwd());
+  await loadLanguagePacks(config);
+  config.site.dataSaver = {enabled:true,mode:'full',debug:false,detectSlowConnection:true,respectBrowserPreference:false,promptAfterMs:150};
+  await configureDataSaver(config);
+  const html = dataSaverHtml('<html lang="en"><head><meta charset="utf-8"><link rel="stylesheet" href="/full.css"></head><body><header>Navigation</header><main><h1>Readable page</h1></main><footer>Footer</footer></body></html>',config);
+  const browser = await chromium.launch({headless:true,args:['--disable-extensions']});
+  try {
+    const context = await browser.newContext();
+    let release;
+    const pending = new Promise(resolve=>{release=resolve;});
+    let failed = false;
+    await context.route('**/*',async route=>{
+      const path = new URL(route.request().url()).pathname;
+      if (path === '/full.css') {
+        await pending;
+        if (!failed) { failed = true; return route.abort(); }
+      }
+      if (path.endsWith('.css')) return route.fulfill({contentType:'text/css',body:'body{margin:0}main{padding:1rem}'});
+      return route.fulfill({contentType:'text/html',body:html});
+    });
+    const page = await context.newPage();
+    await page.goto('https://loading.test/',{waitUntil:'domcontentloaded'});
+    await page.waitForTimeout(4500);
+    assert.equal(await page.locator('main').isVisible(),false);
+    await page.locator('[data-data-dismiss]').click();
+    assert.equal(await page.locator('main').isVisible(),false);
+    assert.equal(await page.locator('[data-data-mode=text]').isVisible(),true);
+    release();
+    await page.locator('[data-data-retry]').waitFor({state:'visible'});
+    assert.equal(await page.locator('main').isVisible(),false);
+    assert.match(await page.locator('[data-data-progress-label]').innerText(),/could not load/);
+    await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),page.locator('[data-data-retry]').click()]);
+    await page.waitForFunction(()=>document.documentElement.dataset.edgepressDataReady==='true');
+    assert.equal(await page.locator('main').isVisible(),true);
+    await context.close();
+  }finally{await browser.close();}
+});
+
 test('loading choices and measured progress remain stable after late completion and guard the debug entry', async () => {
   const config = await loadConfig(process.cwd());
   await loadLanguagePacks(config);
@@ -39,7 +114,7 @@ test('loading choices and measured progress remain stable after late completion 
         await page.locator('[data-data-offer]').waitFor({state:'visible'});
         assert.equal(await page.locator('main').isVisible(),false);
         assert.match(await page.locator('[data-data-wait]').innerText(),/正在准备页面|首屏图片|页面样式/);
-        assert.equal(await page.locator('link[rel=preload]').count(),0);
+        assert.equal(await page.locator('link[rel=preload][as=image]').count(),0);
         assert.equal(await page.locator('[data-data-progress]').count(),1);
         await page.locator('[data-data-mode=text]').focus();
         finishImage();

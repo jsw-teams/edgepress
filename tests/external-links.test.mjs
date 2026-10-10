@@ -42,7 +42,8 @@ test('prompts are opt-in, localized and fingerprint their complete dependency gr
   const bundle = await collectAssets(config);
   assert.match(bundle.urlMap['/edgepress/external-links.js'], /\.[a-f0-9]{16}\.js$/);
   const runtime = bundle.assets.find(asset => '/' + asset.path === bundle.urlMap['/edgepress/external-links.js']).content.toString();
-  assert.match(runtime, /external-links-policy\.[a-f0-9]{16}\.js/);
+  assert.match(runtime, /function classifyLink\(/);
+  assert.doesNotMatch(runtime, /from["']\.\/external-links-policy/);
   assert.match(rewriteAssetLinks(html, bundle.urlMap), /external-links\.[a-f0-9]{16}\.css/);
 });
 
