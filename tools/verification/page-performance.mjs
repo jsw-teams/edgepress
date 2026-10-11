@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
-import { resolve, extname, sep } from 'node:path';
+import { resolve, extname, sep, basename } from 'node:path';
 import { gzipSync } from 'node:zlib';
 
 const root = process.cwd();
