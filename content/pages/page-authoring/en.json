@@ -1,0 +1,107 @@
+{
+  "$schema": "../../../schemas/pages.schema.json",
+  "title": "Read Pages as nested collections",
+  "lang": "en",
+  "slug": "page-authoring",
+  "description": "Author JSON Pages with editor schema, nested objects and arrays, and independent folding.",
+  "blocks": [
+    {
+      "columns": 1,
+      "cells": [
+        [
+          {
+            "type": "hero",
+            "title": "Read Pages as nested collections",
+            "text": "Author JSON Pages with editor schema, nested objects and arrays, and independent folding."
+          }
+        ]
+      ]
+    },
+    {
+      "columns": 1,
+      "cells": [
+        [
+          {
+            "type": "code",
+            "title": "Complete two-column JSON Page",
+            "language": "json",
+            "code": "{\n  \"title\": \"My page\",\n  \"lang\": \"en\",\n  \"slug\": \"my-page\",\n  \"blocks\": [\n    {\n      \"columns\": 2,\n      \"cells\": [\n        [\n          {\n            \"type\": \"heading\",\n            \"level\": 2,\n            \"text\": \"About this project\"\n          },\n          {\n            \"type\": \"text\",\n            \"text\": \"A small tool for everyday writing.\"\n          }\n        ],\n        [\n          {\n            \"type\": \"link-list\",\n            \"title\": \"Read more\",\n            \"items\": [\n              {\n                \"label\": \"Project\",\n                \"url\": \"/[launge]/project-introduction/\"\n              }\n            ]\n          }\n        ]\n      ]\n    }\n  ]\n}"
+          }
+        ]
+      ]
+    },
+    {
+      "columns": 1,
+      "cells": [
+        [
+          {
+            "type": "text",
+            "paragraphs": [
+              "Save the example as content/pages/my-page/en.json. Locale filenames are lowercase; lang must match an enabled locale. homepage: true publishes at the localized site root. slug selects an ordinary page path. JSON Pages have no YAML front matter or Markdown body.",
+              "The blocks array holds rows in order. A row sets columns from 1 to 4 and contains that many arrays in cells. Each cell is an array containing at least one element. Elements appear from top to bottom.",
+              "JSON keys and strings use double quotes. Objects use braces and arrays use brackets; commas separate siblings. Do not add an elements field: the innermost arrays directly contain the elements.",
+              "A section’s blocks hold child elements, not new rows. For prose use text or paragraphs; for code use a code string with \\n for line breaks. Articles remain Markdown under content/posts.",
+              "A local $schema reference enables field help and validation in VS Code. The editor can fold each object and array and show its children in Outline. Legacy .md YAML Pages remain readable, but do not keep both formats for the same locale."
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "columns": 1,
+      "cells": [
+        [
+          {
+            "type": "data-table",
+            "title": "Common elements (fields)",
+            "headers": [
+              "Purpose",
+              "Element and key fields"
+            ],
+            "rows": [
+              [
+                "Title",
+                "heading (level, text)"
+              ],
+              [
+                "Prose",
+                "text (text OR paragraphs)"
+              ],
+              [
+                "Group",
+                "section (title, blocks)"
+              ],
+              [
+                "Code",
+                "code (language, code)"
+              ],
+              [
+                "Articles",
+                "post-list (title, category OR categories, count)"
+              ],
+              [
+                "Document",
+                "document (title, src)"
+              ],
+              [
+                "Gallery",
+                "media-viewer (title, items)"
+              ]
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "columns": 1,
+      "cells": [
+        [
+          {
+            "type": "text",
+            "text": "Run npm run pages:format to preview migration, then npm run pages:format -- --write to apply it. The tool checks field values and order before removing the legacy file. Run npm run build to validate the renderer."
+          }
+        ]
+      ]
+    }
+  ]
+}

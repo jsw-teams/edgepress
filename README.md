@@ -20,7 +20,7 @@ The Cloudflare button creates a copy of this repository in your GitHub account a
 
 EdgePress builds static websites for Cloudflare, Vercel, Netlify, Tencent EdgeOne Pages and Alibaba Cloud ESA Pages.
 
-Built-in themes include local Noto fonts for English and simplified/traditional Chinese. Unicode subsets load on demand, with no font CDN or requirement to install Chinese fonts. Custom themes can use the shared font variables described in the [theme guide](content/pages/theme-development/en.md).
+Built-in themes include local Noto fonts for English and simplified/traditional Chinese. Unicode subsets load on demand, with no font CDN or requirement to install Chinese fonts. Custom themes can use the shared font variables described in the [theme guide](content/pages/theme-development/en.json).
 
 Content images open a zoomable, closable viewer. The [media-viewer component](https://github.com/jsw-teams/media-viewer) is bundled locally; original images load on click when an original URL is provided.
 
@@ -82,7 +82,7 @@ Text mode keeps readable content, core accessibility, navigation, search and the
 
 ## Readable Pages
 
-Page (rows) → row (columns, cells) → cell (ordered elements). Standard YAML brackets make containment explicit: `cells: [[{ type: text, text: "Hello" }]]`. Keep `columns: 1` beside this one-cell list. The example site's actual Pages use brackets and containment comments. See the [complete authoring guide](content/pages/page-authoring/en.md) and [中文说明](content/pages/page-authoring/zh-cn.md) for a two-column example, field reference and multiline alternatives. Indented YAML remains supported.
+Pages are real JSON files such as `content/pages/home/en.json`. Page (rows) → row (columns, cells) → cell (ordered elements): `"cells": [[{"type": "text", "text": "Hello"}]]`. Keep `"columns": 1` beside this one-cell list. VS Code recognizes each object and array in Outline and can fold them independently. Each file points to the local [Pages schema](schemas/pages.schema.json), which checks rows, cell counts and element types and supplies field help. See the [complete authoring guide](content/pages/page-authoring/en.json) and [中文说明](content/pages/page-authoring/zh-cn.json). Legacy Markdown/YAML Pages remain readable; keep only one format per locale.
 
 Theme developers can reuse the [public formatting and data-saving verification tools](tools/verification/README.md). Each site owns its command entry and test paths; common implementations come from its pinned EdgePress dependency. The Pages formatter checks that every field value and element order survives formatting.
 
@@ -96,24 +96,28 @@ Use `##` for sections, lists, links, and fenced code blocks as needed. Put artic
 
 ## Link directories
 
-Use a `link-directory` block in a Pages layout to publish an editorial directory rather than a grid of cards. Each row is defined by its title, URL and optional description in the locale's page YAML; the renderer displays the hostname automatically for external HTTP(S) links. There is no site-name allowlist, fixed item count, remote favicon fetch, or other third-party request when the directory loads. Links retain the site's existing external-departure prompt when enabled.
+Use a `link-directory` block in a Pages layout to publish equal, unnumbered link cards. Each entry has a title, URL and optional description in the locale's page JSON; the renderer displays the hostname automatically for external HTTP(S) links. Links retain the site's existing external-departure prompt when enabled.
 
-```yaml
-- columns: 1
-  cells:
-    - - type: link-directory
-        title: Independent websites
-        items:
-          - title: Example Journal
-            url: https://example.org/journal/
-            text: Notes on technology and design.
+```json
+{
+  "columns": 1,
+  "cells": [[{
+    "type": "link-directory",
+    "title": "Independent websites",
+    "items": [{
+      "title": "Example Journal",
+      "url": "https://example.org/journal/",
+      "text": "Notes on technology and design."
+    }]
+  }]]
+}
 ```
 
-The presentation is a responsive, separator-lined list with numeric markers. It follows theme variables and does not require site-specific styling. Each localized page supplies its own entries.
+The responsive card grid follows theme variables and shows no numeric ranking. Each localized page supplies its own entries.
 
 ## Page editing
 
-Each page has a folder under content/pages/ and one lowercase locale Markdown file per language. Keep the file body empty after its YAML front matter. Edit the ordered blocks there:
+Each page has a folder under content/pages/ and one lowercase locale JSON file per language. Put metadata and ordered blocks in the same JSON object; reference the local Pages schema for editor validation:
 
 - Choose a row column count first.
 - Add one cell per column.
@@ -226,12 +230,12 @@ Multiple post lists on the same page share a displayed-article set: an article a
 Run npm run deploy:cloudflare, npm run deploy:vercel, npm run deploy:netlify, npm run deploy:edgeone -- -n my-site, or npm run deploy:esa -- --name my-site. Platform authentication is required. GitHub Actions also provides a manual Deploy static website workflow using repository Secrets.
 
 
-All platforms build dist/. CSS and JS are fingerprinted, with one-year immutable cache policies for Cloudflare, Vercel, Netlify and EdgeOne. ESA uses the same assets; set its browser and edge cache rules for hashed CSS/JS while leaving HTML short-lived. See the [deployment guide](content/pages/deployment/en.md) and [ESA build configuration](https://help.aliyun.com/en/edge-security-acceleration/esa/user-guide/build-pages).
+All platforms build dist/. CSS and JS are fingerprinted, with one-year immutable cache policies for Cloudflare, Vercel, Netlify and EdgeOne. ESA uses the same assets; set its browser and edge cache rules for hashed CSS/JS while leaving HTML short-lived. See the [deployment guide](content/pages/deployment/en.json) and [ESA build configuration](https://help.aliyun.com/en/edge-security-acceleration/esa/user-guide/build-pages).
 
 Optional API requests use one fixed endpoint: backendUrl itself when it has a path, otherwise /api on its origin. callService(id, action, options) puts the operation in X-Service-Action; context belongs in request headers and payloads in the body. The independent API must implement this contract and allow the required CORS request headers. Third-party vendor integrations retain their vendor-defined protocols.
 
 
-Articles use a standalone `!embed[youtube](https://www.youtube.com/watch?v=jNQXAC9IVRw)` line in their Markdown body. Pages use the same line in a `type: text` block’s `text` field. Register the service under `plugins.consent.services` with `provider: oembed`, privacy disclosures and permitted origins. Embeds remain inert until current consent; nearby authorized media then loads automatically. Public oEmbed metadata is cached at build time. See the [plugin guide](content/pages/plugin-development/en.md).
+Articles use a standalone `!embed[youtube](https://www.youtube.com/watch?v=jNQXAC9IVRw)` line in their Markdown body. Pages use the same line in a `type: text` block’s `text` field. Register the service under `plugins.consent.services` with `provider: oembed`, privacy disclosures and permitted origins. Embeds remain inert until current consent; nearby authorized media then loads automatically. Public oEmbed metadata is cached at build time. See the [plugin guide](content/pages/plugin-development/en.json).
 
 Posts use standalone embed lines in their Markdown body. Specify the configured service ID:
 

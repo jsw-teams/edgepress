@@ -1,19 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {parse} from 'yaml';
 import {renderBlocks} from '../src/page-blocks.js';
 import {loadConfig} from '../src/config.js';
 import {loadLanguagePacks} from '../src/i18n.js';
 
 async function context(){const config=await loadConfig(process.cwd());await loadLanguagePacks(config);return {config,locale:'en',site:{posts:[],pages:[]}};}
 
-test('the published bracket example parses and renders like indented YAML',async()=>{
-  const source=await readFile('content/pages/page-authoring/en.md','utf8');
-  const guide=parse(source.split(/^---\s*$/m)[1]);
-  const example=guide.blocks.flatMap(row=>row.cells.flat()).find(block=>block.type==='code'&&block.language==='yaml').code;
-  const page=parse(example.split(/^---\s*$/m)[1]);
-  const equivalent=[{columns:2,cells:[[{type:'heading',level:2,text:'About this project'},{type:'text',text:'A small tool for everyday writing.'}],[{type:'link-list',title:'Read more',items:[{label:'Project',url:'/project-introduction/'}]}]]}];
+test('the published JSON example parses and renders with the same ordered containment',async()=>{
+  const guide=JSON.parse(await readFile('content/pages/page-authoring/en.json','utf8'));
+  const example=guide.blocks.flatMap(row=>row.cells.flat()).find(block=>block.type==='code'&&block.language==='json').code;
+  const page=JSON.parse(example);
+  const equivalent=[{columns:2,cells:[[{type:'heading',level:2,text:'About this project'},{type:'text',text:'A small tool for everyday writing.'}],[{type:'link-list',title:'Read more',items:[{label:'Project',url:'/[launge]/project-introduction/'}]}]]}];
   assert.deepEqual(page.blocks,equivalent);
   assert.equal(await renderBlocks(page.blocks,await context()),await renderBlocks(equivalent,await context()));
 });

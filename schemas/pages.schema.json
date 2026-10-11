@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "EdgePress Page / 写文建站页面",
+  "description": "Page → rows → cells → ordered elements. 页面 → 行 → 单元格 → 按顺序排列的元素。",
+  "type": "object",
+  "required": ["blocks"],
+  "properties": {
+    "$schema": {"type": "string", "description": "Local editor schema; never fetched by the built website. 编辑器的本地结构说明。"},
+    "title": {"type": "string", "minLength": 1, "description": "Page title / 页面标题"},
+    "lang": {"type": "string", "description": "Enabled locale matching the lowercase filename / 与文件名匹配的已启用语言"},
+    "slug": {"type": "string", "description": "Page path / 页面路径"},
+    "homepage": {"type": "boolean", "description": "Publish at the localized site root / 发布为当前语言首页"},
+    "description": {"type": "string"},
+    "keywords": {"type": "array", "items": {"type": "string"}},
+    "draft": {"type": "boolean"},
+    "robots": {"type": "string"},
+    "image": {"type": "string"},
+    "blocks": {
+      "type": "array", "minItems": 1, "maxItems": 100,
+      "description": "Page rows in display order / 页面中按顺序显示的行",
+      "items": {"$ref": "#/definitions/row"}
+    }
+  },
+  "definitions": {
+    "row": {
+      "type": "object", "required": ["columns", "cells"], "additionalProperties": false,
+      "description": "One row; columns must equal the cell count / 一行，栏数必须等于单元格个数",
+      "properties": {
+        "columns": {"type": "integer", "minimum": 1, "maximum": 4, "description": "Column count / 栏数"},
+        "cells": {"type": "array", "minItems": 1, "maxItems": 4, "description": "Parallel cells in this row / 这一行的并列单元格", "items": {"$ref": "#/definitions/elements"}}
+      },
+      "allOf": [
+        {"if": {"properties": {"columns": {"const": 1}}}, "then": {"properties": {"cells": {"minItems": 1, "maxItems": 1}}}},
+        {"if": {"properties": {"columns": {"const": 2}}}, "then": {"properties": {"cells": {"minItems": 2, "maxItems": 2}}}},
+        {"if": {"properties": {"columns": {"const": 3}}}, "then": {"properties": {"cells": {"minItems": 3, "maxItems": 3}}}},
+        {"if": {"properties": {"columns": {"const": 4}}}, "then": {"properties": {"cells": {"minItems": 4, "maxItems": 4}}}}
+      ]
+    },
+    "elements": {
+      "type": "array", "minItems": 1, "maxItems": 100,
+      "description": "Ordered elements inside one cell or section / 单元格或分区内按顺序排列的元素",
+      "items": {"$ref": "#/definitions/element"}
+    },
+    "element": {
+      "type": "object", "required": ["type"],
+      "description": "One element; type selects its renderer / 一个元素，type 指定呈现方式",
+      "properties": {
+        "type": {"enum": ["hero", "section", "heading", "text", "media-text", "display-text", "link-list", "steps", "code", "data-table", "list", "notice", "privacy-services", "privacy-consent", "privacy-controller", "link-directory", "feature-grid", "image", "quote", "cta", "faq", "oembed", "service", "post-list", "latest-posts", "ad-slot", "captcha", "document", "media-viewer"]},
+        "title": {"type": "string"},
+        "text": {"type": "string"},
+        "paragraphs": {"type": "array", "items": {"type": "string"}},
+        "items": {"type": "array", "description": "Entries for this element / 此元素的条目"},
+        "blocks": {"$ref": "#/definitions/elements", "description": "Section child elements, not page rows / 分区的子元素，不是页面行"},
+        "category": {"type": "string"},
+        "categories": {"type": "array", "items": {"type": "string"}},
+        "count": {"type": "integer", "minimum": 1, "maximum": 12},
+        "level": {"type": "integer", "minimum": 2, "maximum": 6},
+        "code": {"type": "string", "description": "Code content; use \\n for line breaks / 代码内容，换行使用 \\n"},
+        "language": {"type": "string"},
+        "src": {"type": "string"},
+        "url": {"type": "string"},
+        "alt": {"type": "string"},
+        "caption": {"type": "string"},
+        "cta": {"type": "object", "properties": {"label": {"type": "string"}, "url": {"type": "string"}}, "required": ["label", "url"]}
+      }
+    }
+  }
+}

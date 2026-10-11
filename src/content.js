@@ -28,7 +28,7 @@ export function postsForLocale(posts, locale, defaultLocale) {
   return sortPostsNewest([...byBundle.values()]);
 }
 
-async function walkMarkdown(directory) {
+async function walkContent(directory, kind) {
   let entries;
   try {
     entries = await readdir(directory, { withFileTypes: true });
@@ -40,8 +40,8 @@ async function walkMarkdown(directory) {
   const found = [];
   for (const entry of entries) {
     const fullPath = resolve(directory, entry.name);
-    if (entry.isDirectory()) found.push(...await walkMarkdown(fullPath));
-    else if (entry.isFile() && extname(entry.name).toLowerCase() === '.md') found.push(fullPath);
+    if (entry.isDirectory()) found.push(...await walkContent(fullPath, kind));
+    else if (entry.isFile() && (extname(entry.name).toLowerCase() === '.md' || (kind === 'pages' && extname(entry.name).toLowerCase() === '.json'))) found.push(fullPath);
   }
   return found;
 }
@@ -56,6 +56,15 @@ function splitFrontmatter(source, file) {
     throw new Error('Front matter must be a YAML object in ' + file);
   }
   return { metadata, markdown: lines.slice(end + 1).join('\n') };
+}
+
+export function parseDocumentSource(source, file) {
+  if (extname(file).toLowerCase() !== '.json') return splitFrontmatter(source, file);
+  let metadata;
+  try { metadata = JSON.parse(source.replace(/^\uFEFF/, '')); }
+  catch (error) { throw new Error('Invalid page JSON in ' + file + ': ' + error.message, {cause: error}); }
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) throw new Error('Page JSON must be an object in ' + file);
+  return {metadata, markdown: ''};
 }
 
 export function slugify(value) {
@@ -132,11 +141,17 @@ export async function readDocuments(config) {
   const groups = [['posts', resolve(root, 'posts')], ['pages', resolve(root, 'pages')]];
   const files = [];
   for (const [kind, directory] of groups) {
-    for (const file of await walkMarkdown(directory)) files.push({ kind, file });
+    const identities = new Set();
+    for (const file of await walkContent(directory, kind)) {
+      const identity = resolve(dirname(file), basename(file, extname(file)).toLowerCase());
+      if (identities.has(identity)) throw new Error('Duplicate language document; keep only one .json or .md file per page locale: ' + file);
+      identities.add(identity);
+      files.push({ kind, file });
+    }
   }
   return await mapLimit(files, config.concurrency, async ({ kind, file }) => {
     const source = await readFile(file, 'utf8');
-    const { metadata, markdown } = splitFrontmatter(source, file);
+    const { metadata, markdown } = parseDocumentSource(source, file);
     const contentRoot = resolve(root, kind);
     const relativePath = relative(contentRoot, file).split(sep).join('/');
     const bundleDirectory = dirname(file);
@@ -148,13 +163,13 @@ export async function readDocuments(config) {
     const languageFileName = basename(file, extname(file));
     const languageFile = languageFileName.toLowerCase();
     const fileLocale = config.i18n.locales.find((locale) => locale.toLowerCase() === languageFile);
-    if (!fileLocale || languageFileName !== languageFile || extname(file).toLowerCase() !== '.md') {
-      throw new Error('Content language files must be named after a configured locale, such as en.md or zh-cn.md: ' + file);
+    if (!fileLocale || languageFileName !== languageFile) {
+      throw new Error('Content language files must be named after a configured locale, such as en.json or zh-cn.md: ' + file);
     }
     const declaredLocale = metadata.lang === undefined ? fileLocale :
       config.i18n.locales.find((locale) => locale.toLowerCase() === String(metadata.lang).toLowerCase());
     if (!declaredLocale) throw new Error('Unsupported lang value in ' + file + '; use the language filename and configure its language pack');
-    if (declaredLocale !== fileLocale) throw new Error('Front matter lang must match the content filename locale in ' + file);
+    if (declaredLocale !== fileLocale) throw new Error('Content lang must match the content filename locale in ' + file);
     const locale = fileLocale;
     const fallbackSlug = bundlePath.replace(/\\/g, '/');
     const fallbackName = bundleName.replace(/^\d{4}-\d{2}-\d{2}-/, '');

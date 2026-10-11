@@ -1,0 +1,107 @@
+{
+  "$schema": "../../../schemas/pages.schema.json",
+  "title": "用括号看懂 Pages 的包含关系",
+  "lang": "zh-CN",
+  "slug": "page-authoring",
+  "description": "使用 JSON 页面、本地结构说明和可折叠对象，读懂行、单元格与元素。",
+  "blocks": [
+    {
+      "columns": 1,
+      "cells": [
+        [
+          {
+            "type": "hero",
+            "title": "用括号看懂 Pages 的包含关系",
+            "text": "使用 JSON 页面、本地结构说明和可折叠对象，读懂行、单元格与元素。"
+          }
+        ]
+      ]
+    },
+    {
+      "columns": 1,
+      "cells": [
+        [
+          {
+            "type": "code",
+            "title": "完整的双栏 JSON 页面",
+            "language": "json",
+            "code": "{\n  \"title\": \"My page\",\n  \"lang\": \"en\",\n  \"slug\": \"my-page\",\n  \"blocks\": [\n    {\n      \"columns\": 2,\n      \"cells\": [\n        [\n          {\n            \"type\": \"heading\",\n            \"level\": 2,\n            \"text\": \"About this project\"\n          },\n          {\n            \"type\": \"text\",\n            \"text\": \"A small tool for everyday writing.\"\n          }\n        ],\n        [\n          {\n            \"type\": \"link-list\",\n            \"title\": \"Read more\",\n            \"items\": [\n              {\n                \"label\": \"Project\",\n                \"url\": \"/[launge]/project-introduction/\"\n              }\n            ]\n          }\n        ]\n      ]\n    }\n  ]\n}"
+          }
+        ]
+      ]
+    },
+    {
+      "columns": 1,
+      "cells": [
+        [
+          {
+            "type": "text",
+            "paragraphs": [
+              "保存为 content/pages/my-page/en.json。语言文件名须小写，lang 匹配已启用的语言；中文页面可用 zh-cn.json。homepage: true 发布为对应语言首页，slug 定义普通页面路径。JSON 页面不使用 YAML 前置数据，也没有 Markdown 正文。",
+              "blocks 数组按顺序放页面行。一行的 columns 从 1 到 4，cells 内须有相同个数的单元格数组。每个单元格至少包含一个元素，元素从上到下显示。",
+              "JSON 键名和字符串使用双引号。花括号放对象，方括号放数组，同级项目用逗号分开。不要新增 elements 字段；最内层数组直接放元素。",
+              "section 的 blocks 放子元素，不是新的页面行。文字用 text 或 paragraphs，代码用 code 字符串，内部换行使用 \\n。文章仍放在 content/posts，用 Markdown 编写。",
+              "本地 $schema 让 VS Code 提供字段说明和结构校验。对象与数组可以逐级折叠，大纲能展示它们的上下关系。旧 .md 页面仍可构建，但同一语言不要同时保留两种页面格式。"
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "columns": 1,
+      "cells": [
+        [
+          {
+            "type": "data-table",
+            "title": "常用元素（字段）",
+            "headers": [
+              "用途",
+              "元素与关键字段"
+            ],
+            "rows": [
+              [
+                "Title",
+                "heading (level, text)"
+              ],
+              [
+                "Prose",
+                "text (text OR paragraphs)"
+              ],
+              [
+                "Group",
+                "section (title, blocks)"
+              ],
+              [
+                "Code",
+                "code (language, code)"
+              ],
+              [
+                "Articles",
+                "post-list (title, category OR categories, count)"
+              ],
+              [
+                "Document",
+                "document (title, src)"
+              ],
+              [
+                "Gallery",
+                "media-viewer (title, items)"
+              ]
+            ]
+          }
+        ]
+      ]
+    },
+    {
+      "columns": 1,
+      "cells": [
+        [
+          {
+            "type": "text",
+            "text": "运行 npm run pages:format 预览迁移，再用 npm run pages:format -- --write 写入。工具在移除旧文件前校验字段值与顺序；随后运行 npm run build 检查实际呈现。"
+          }
+        ]
+      ]
+    }
+  ]
+}

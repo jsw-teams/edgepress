@@ -22,11 +22,11 @@
 - Run document regression tests and a build before pushing. Browser document tests use isolated Playwright Chromium with extensions disabled, never the user's system Edge or Chrome.
 - tools/recordings/capture-document-demo.mjs records actual DOC/DOCX, PDF, PPT/PPTX and XLS/XLSX renderers in the isolated WSL2 desktop. It reads the published examples from web/js.gripe/content/assets/documents/doc-views (DOCUMENT_DEMO_ROOT may select another source directory), preserving operator-supplied Office files and attribution. Never overwrite them with synthetic Office fixtures, use production documents or capture host desktop input. Inspect visible PDF ink and Word geometry before publishing recordings. Controls adapt to arbitrary host palettes, not just the default theme.
 
-EdgePress builds static websites from Markdown and YAML source. Follow these rules when changing the project.
+EdgePress builds static websites from Markdown articles and JSON Pages. Follow these rules when changing the project.
 
 ## Source files
 
-- Put published project guides and site copy in `content/**/*.md`.
+- Put published project guides and site copy under `content/`, using JSON for Pages and Markdown for articles and standalone guides.
 - Put page media and other content-owned files under `content/assets/`; the builder publishes them at matching site-root paths.
 - Keep root Markdown limited to `README.md`, `AGENTS.md`, `CONTRIBUTING.md` and `SECURITY.md`; retain the project `LICENSE` and third-party notices.
 - Edit site-wide title, description, URL, agent SEO (GEO), SEO, and privacy settings in root `config.yml`.
@@ -36,9 +36,9 @@ EdgePress builds static websites from Markdown and YAML source. Follow these rul
 
 ## Pages and posts
 
-- Store each post and page in its own directory. Language versions use lowercase locale filenames (`en.md`, `zh-cn.md`) and front matter `lang` must match the filename.
+- Store each post and page in its own directory. Language versions use lowercase locale filenames (`en.md` for posts, `en.json` for Pages); metadata `lang` must match the filename.
 - Posts under `content/posts/<post-id>/` use the Markdown renderer.
-- Pages under `content/pages/<page-id>/` are Markdown documents whose ordered `blocks` in YAML front matter contain all page content. The body after front matter stays empty. Each row defines its column count before its cells; element types and editable content live inside each cell. Homepages use `homepage: true` and are generated at the localized site root.
+- Pages under `content/pages/<page-id>/` use lowercase locale JSON files, such as `en.json` and `zh-cn.json`. Metadata and ordered `blocks` live in one JSON object with a local `$schema` reference. Each row declares `columns` and `cells`; each cell holds ordered elements. Legacy Markdown/YAML Pages remain readable, but never keep both formats for one page locale. Posts stay in Markdown. Homepages use `homepage: true`.
 - Keep block rendering validated and escaped. Page text, media captions, and URLs must be escaped or validated. Only posts use the Markdown renderer.
 - Generated feeds, search indexes, sitemaps, robots rules, and optional `llms.txt` belong in source generators, never as hand-edited output files.
 

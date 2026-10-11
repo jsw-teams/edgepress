@@ -22,7 +22,8 @@ test('link-directory renders data-driven rows and safely escapes URLs and descri
   ];
   const html = await renderBlocks(rowsFor(items), contextFor(config));
   assert.match(html, /class="link-directory-section"/);
-  assert.match(html, /<ol class="link-directory-items">/);
+  assert.match(html, /<ul class="link-directory-items" role="list">/);
+  assert.doesNotMatch(html, /link-directory-number|<ol/);
   assert.equal((html.match(/class="link-directory-entry"/g) || []).length, items.length);
   assert.match(html, /notes\.example\.org/);
   assert.match(html, /Journal &amp; notes/);

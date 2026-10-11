@@ -17,8 +17,10 @@ const configuredTheme = originalSite.match(/^theme:\s*(\S+)/m)?.[1];
 const defaultLocale = originalConfig.match(/defaultLocale:\s*["']([^"']+)/)?.[1];
 assert.ok(defaultLocale, 'Default language must be declared.');
 const themes = (await readdir(resolve(site, 'themes'), { withFileTypes: true })).filter((entry) => entry.isDirectory()).map((entry) => entry.name);
-const locales = (await Promise.all((await readdir(resolve(site, 'content/pages/home'))).filter((name) => name.endsWith('.md')).map(async (name) =>
-  (await readFile(resolve(site, 'content/pages/home', name), 'utf8')).match(/^lang:\s*(\S+)/m)?.[1]))).filter(Boolean);
+const locales = (await Promise.all((await readdir(resolve(site, 'content/pages/home'))).filter((name) => /\.(?:md|json)$/.test(name)).map(async (name) => {
+  const text = await readFile(resolve(site, 'content/pages/home', name), 'utf8');
+  return name.endsWith('.json') ? JSON.parse(text).lang : text.match(/^lang:\s*(\S+)/m)?.[1];
+}))).filter(Boolean);
 const cli = await stat(resolve(site, 'src/cli.js')).then(() => resolve(site, 'src/cli.js')).catch(() => resolve(site, 'node_modules/edgepress/src/cli.js'));
 async function build() {
   await new Promise((done, reject) => {

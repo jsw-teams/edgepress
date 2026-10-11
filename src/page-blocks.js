@@ -380,12 +380,12 @@ async function renderBlock(block, context, depth, index) {
         const href = localizedSiteUrl(item?.url, 'link-directory item url', context);
         const host = /^https?:\/\//i.test(href) ? new URL(href).host : '';
         return '<li class="link-directory-entry"><a class="link-directory-link" href="' + escapeHtml(href) + '">' +
-          '<span class="link-directory-number" aria-hidden="true"></span><span class="link-directory-main"><strong class="link-directory-name">' + name + '</strong>' +
+          '<span class="link-directory-main"><strong class="link-directory-name">' + name + '</strong>' +
           (summary ? '<span class="link-directory-summary">' + summary + '</span>' : '') + '</span>' +
           '<span class="link-directory-destination" aria-hidden="true">' + (host ? '<span>' + escapeHtml(host) + '</span>' : '') +
           '<span class="link-directory-arrow">↗</span></span></a></li>';
       }).join('');
-      return '<section class="link-directory-section"><h2>' + escapeHtml(heading) + '</h2><ol class="link-directory-items">' + entries + '</ol></section>';
+      return '<section class="link-directory-section"><h2>' + escapeHtml(heading) + '</h2><ul class="link-directory-items" role="list">' + entries + '</ul></section>';
     }
     case 'feature-grid': {
       const items = list(block.items, 'feature-grid.items', 1, 12);

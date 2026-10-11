@@ -87,6 +87,9 @@ test('CLI initialization carries root security overrides without discarding oper
     assert.equal(manifest.dependencies.wrangler, framework.devDependencies.wrangler);
     assert.equal(manifest.scripts.verify, 'node verify.mjs');
     assert.equal(manifest.name, 'operator-site');
+    const home = JSON.parse(await readFile(resolve(root, 'content/pages/home/en.json'), 'utf8'));
+    assert.equal(home.$schema, '../../../node_modules/edgepress/schemas/pages.schema.json');
+    assert.ok(home.blocks.length);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 

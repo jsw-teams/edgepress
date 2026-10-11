@@ -1,67 +1,56 @@
 import assert from 'node:assert/strict';
-import { readFile, readdir, writeFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
-import { parse, parseDocument } from 'yaml';
+import {readFile, readdir, writeFile, unlink} from 'node:fs/promises';
+import {dirname, extname, relative, resolve, sep} from 'node:path';
+import {fileURLToPath, pathToFileURL} from 'node:url';
+import {parseDocumentSource} from '../../src/content.js';
 
-// YAML flow collections expose the actual page → row → cell → element tree.
-function collection(value, indent, role = '') {
-  const pad = ' '.repeat(indent);
-  if (Array.isArray(value)) {
-    if (!value.length) return '[]';
-    if (value.every(item => item === null || typeof item !== 'object')) return '[' + value.map(item => JSON.stringify(item)).join(', ') + ']';
-    const comments = { page: '页面 / page（行 / rows）', cells: '行 / row（单元格 / cells），个数等于 columns', cell: '单元格 / cell（元素 / elements），按顺序显示' };
-    const comment = comments[role] ? ' # ' + comments[role] : '';
-    const children = value.map(item => pad + '  ' + collection(item, indent + 2, role === 'cells' ? 'cell' : '')).join(',\n');
-    return '[' + comment + '\n' + children + '\n' + pad + ']';
-  }
-  if (value !== null && typeof value === 'object') {
-    const entries = Object.entries(value);
-    if (!entries.length) return '{}';
-    return '{\n' + entries.map(([key, item]) => pad + '  ' + (/^[a-zA-Z][\w-]*$/.test(key) ? key : JSON.stringify(key)) + ': ' + collection(item, indent + 2, key === 'cells' ? 'cells' : '')).join(',\n') + '\n' + pad + '}';
-  }
-  return JSON.stringify(value);
+const bundledSchema = fileURLToPath(new URL('../../schemas/pages.schema.json', import.meta.url));
+
+export function formatPageSource(source, {file = 'page.md', schema} = {}) {
+  const {metadata, markdown} = parseDocumentSource(source, file);
+  if (!Array.isArray(metadata.blocks)) return source;
+  if (markdown.trim()) throw new Error('Cannot convert a page with Markdown body content: ' + file);
+  const result = {...(schema ? {$schema: schema} : {}), ...metadata};
+  if (schema) result.$schema = schema;
+  const output = JSON.stringify(result, null, 2) + '\n';
+  assert.deepEqual(JSON.parse(output), result, 'JSON conversion must preserve all page values');
+  return output;
 }
 
-export function formatPageSource(source) {
-  const match = /^(---\r?\n)([\s\S]*?)(\r?\n---(?:\r?\n|$))/.exec(source);
-  if (!match) return source;
-  const doc = parseDocument(match[2]);
-  if (doc.errors.length) throw doc.errors[0];
-  const data = doc.toJS();
-  if (!Array.isArray(data.blocks)) return source;
-  const pairIndex = doc.contents.items.findIndex(pair => pair.key.value === 'blocks');
-  const pair = doc.contents.items[pairIndex];
-  const next = doc.contents.items[pairIndex + 1];
-  const start = match[2].lastIndexOf('\n', pair.key.range[0]) + 1;
-  const end = next ? match[2].lastIndexOf('\n', next.key.range[0]) + 1 : match[2].length;
-  const frontMatter = match[2].slice(0, start) + 'blocks: ' + collection(data.blocks, 0, 'page') + (next ? '\n' : '') + match[2].slice(end);
-  assert.deepEqual(parse(frontMatter), data, 'Page formatting must preserve every field and element order');
-  return match[1] + frontMatter + match[3] + source.slice(match[0].length);
-}
-
-export async function formatPages(siteRoot, { write = false } = {}) {
-  const changes = [];
+export async function formatPages(siteRoot, {write = false, schemaPath = bundledSchema} = {}) {
+  const root = resolve(siteRoot, 'content/pages'), files = [], plans = [];
   async function visit(directory) {
-    for (const entry of await readdir(directory, { withFileTypes: true })) {
-      const path = resolve(directory, entry.name);
-      if (entry.isDirectory()) await visit(path);
-      else if (entry.name.endsWith('.md')) {
-        const before = await readFile(path, 'utf8'), after = formatPageSource(before);
-        if (before !== after) {
-          changes.push(path);
-          if (write) await writeFile(path, after);
-        }
-      }
+    for (const entry of await readdir(directory, {withFileTypes: true})) {
+      const file = resolve(directory, entry.name);
+      if (entry.isDirectory()) await visit(file);
+      else if (entry.isFile() && ['.md', '.json'].includes(extname(entry.name))) files.push(file);
     }
   }
-  await visit(resolve(siteRoot, 'content/pages'));
-  return changes;
+  await visit(root);
+  // Preflight the entire site before applying any conversion or deleting a source.
+  const identities = new Set();
+  for (const file of files) {
+    const identity = file.slice(0, -extname(file).length).toLowerCase();
+    if (identities.has(identity)) throw new Error('Duplicate page language file: ' + file);
+    identities.add(identity);
+    const target = file.slice(0, -extname(file).length) + '.json';
+    assert(target.startsWith(root + sep), 'Pages conversion must stay inside content/pages');
+    const before = await readFile(file, 'utf8');
+    if (!Array.isArray(parseDocumentSource(before, file).metadata.blocks)) continue;
+    const schema = relative(dirname(target), schemaPath).split(sep).join('/');
+    const after = formatPageSource(before, {file, schema});
+    if (after !== before || target !== file) plans.push({file, target, after});
+  }
+  if (write) for (const {file, target, after} of plans) {
+    await writeFile(target, after, file === target ? undefined : {flag: 'wx'});
+    if (file !== target) await unlink(file);
+  }
+  return plans.map(plan => plan.target);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const args = process.argv.slice(2);
   if (args.some(arg => arg !== '--write')) throw new Error('Usage: format-pages.mjs [--write], from a site root');
-  const changes = await formatPages(process.cwd(), { write: args.includes('--write') });
-  console.log(`${args.includes('--write') ? 'Formatted' : 'Would format'} ${changes.length} Pages documents without changing their values.`);
+  const changes = await formatPages(process.cwd(), {write: args.includes('--write')});
+  console.log(`${args.includes('--write') ? 'Converted/formatted' : 'Would convert/format'} ${changes.length} JSON Pages documents.`);
 }

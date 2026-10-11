@@ -14,6 +14,7 @@ import { checkCompatibility, writeIterationPlan } from './maintenance.js';
 import { loadLanguagePacks, translate } from './i18n.js';
 import { postTemplate } from './post-template.js';
 import {deploySite} from './deploy.js';
+import {formatPages} from '../tools/assets/format-pages.mjs';
 
 const siteGitignore = ['node_modules/', 'dist/', '.edgepress/', '.wrangler/', '.dev.vars', '.vercel/', '.netlify/', '.edgeone/', '.esa/', '.env', '.env.*', '!.env.example', '*.tgz', ''].join('\n');
 const siteReadme = [
@@ -28,7 +29,7 @@ const siteReadme = [
   '',
   'Create an article with `npm run new -- post "My first article"`. Open the printed file path and write Markdown below the second `---` line. The command fills the title, date, and language. Run `npm run dev` to preview and `npm run build` before publishing.',
   '',
-  'Page layouts in `content/pages/` and theme customization are optional for everyday article writing. Choose a shared layout with `npx edgepress theme list` and `npx edgepress theme use <name>` when needed.',
+  'Pages use localized JSON files such as `content/pages/home/en.json`; VS Code can fold each row, cell and element and read the local schema. Articles stay in Markdown. Page layouts and theme customization are optional for everyday writing.',
   '',
   '## Deploy a static website',
   '',
@@ -101,6 +102,7 @@ async function initializeProject() {
     }
   };
   for (const directory of directories) await cp(resolve(packageRoot, directory), resolve(root, directory), { recursive: true, errorOnExist: true });
+  await formatPages(root, {write: true, schemaPath: resolve(root, 'node_modules/edgepress/schemas/pages.schema.json')});
   for (const file of files) {
     const destination = resolve(root, file);
     await mkdir(dirname(destination), { recursive: true });
