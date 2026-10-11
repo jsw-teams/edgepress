@@ -4,9 +4,10 @@ lang: en
 slug: deployment
 description: Deploy static output on Cloudflare, Vercel, EdgeOne Pages or ESA Pages and register optional
   external services through consent.
+# Page (rows); row (columns, cells); cell (ordered elements)
 blocks:
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: hero
           eyebrow: Deployment
           title: Publish the same static site on five platforms.

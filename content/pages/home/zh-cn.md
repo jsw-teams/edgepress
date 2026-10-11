@@ -9,9 +9,10 @@ keywords:
   - Cloudflare Workers
   - 页面元素
   - 网站插件
+# 页面（行列表）；行（栏数，单元格列表）；单元格（按顺序排列的元素）
 blocks:
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: hero
           eyebrow: 为边缘网络构建
           title: 用清晰、可编辑的源文件构建快速网站。
@@ -34,7 +35,7 @@ blocks:
             - 使用 Markdown 撰写文章
             - 复用布局，配色由主题定义
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: feature-grid
           title: 网站各部分各有清晰位置
           items:
@@ -55,7 +56,7 @@ blocks:
               text: 配置跟踪、统计、广告或人机验证服务及其供应商信息。
               url: /[launge]/plugin-development/
   - columns: 2
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: section
           title: 了解项目
           tone: soft
@@ -86,13 +87,13 @@ blocks:
                 - label: 插件开发
                   url: /[launge]/plugin-development/
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: latest-posts
           title: 最新项目动态
           count: 3
           paginate: true
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: media-text
           mediaType: image
           src: /images/previews/edgepress-zh.webp
@@ -102,7 +103,7 @@ blocks:
           title: 看见源文件生成的网站
           text: 文章、导航、搜索与语言路由一起发布。选择主题，日常写作只需要 Markdown。
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: data-table
           title: 免费部署优先级（2026-10-04）
           headers:
@@ -126,7 +127,7 @@ blocks:
               - 阿里云 ESA Pages
               - 流量使用站点套餐额度；每天 10 万次函数额度不是静态流量。
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: link-list
           title: 部署说明与额度来源
           items:

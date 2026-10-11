@@ -3,9 +3,10 @@ title: 主题开发
 lang: zh-CN
 slug: theme-development
 description: 使用共享 HTML 局部模板、CSS 配色、页面元素布局和可复用错误页构建 EdgePress 主题。
+# 页面（行列表）；行（栏数，单元格列表）；单元格（按顺序排列的元素）
 blocks:
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: section
           title: 按需开发节省流量版本
           blocks:
@@ -41,7 +42,7 @@ blocks:
               paragraphs:
                 - 用隔离浏览器模拟慢网络与 saveData，检查真实请求记录，同时覆盖不支持相关 API、存储受阻、关闭 JavaScript、键盘操作、小屏幕、暗色及高对比。文字模式不应自动请求完整主题、字体、图片或文档和视频引擎；单独加载媒体不能启动其他预览。保留资源依赖指纹、完整显示功能、外链提示与当前有效服务同意。
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: text
           text: "文档通过纯浏览器 document-viewer 自动预览，支持 PDF、DOC/DOCX、PPT/PPTX 和 XLS/XLSX。云端构建无需安装 Office 或 LibreOffice。预览不保证 Office 排版完全一致，不执行宏，也不加载文档内外部资源。"
         - type: code
@@ -59,14 +60,14 @@ blocks:
         - type: text
           text: "本地文档放在 content/assets/documents/。文章和 Pages 文本区块支持独立一行的 !document[年度报告](/documents/report.docx)。无扩展名的分享下载地址使用 !document[分享报告](https://files.example/download/123){format=pdf service=documents}。远程文档须在 plugins.consent.services 注册 external-api 服务并填写隐私披露，等待当前访客同意后才请求。地址必须返回文件原始字节且允许 CORS；分享页面解析、身份验证和访问权限由外部服务负责，不新增站点代理。"
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       -
         - type: hero
           eyebrow: 主题指南
           title: 让主题负责共享布局和视觉设计。
           text: 页面定义行栏数、元素类型和内容。主题负责网站外壳、字体、间距、颜色和响应式行为。
   - columns: 2
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       -
         - type: section
           title: 主题结构
@@ -112,7 +113,7 @@ blocks:
               text: EdgePress 使用所选主题布局生成本地化的 403 和 404 页面。静态资源被拒绝访问时，Worker 会返回对应的 403 页面。
               tone: info
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       -
         - type: section
           title: 页面行与可编辑元素
@@ -146,7 +147,7 @@ blocks:
               text: media-text 视频元素需要 WebVTT 字幕源、语言标签和字幕轨道名称。视频使用浏览器原生控件并设置 preload none。第三方视频嵌入应放在明确同意后才启用的集成中。
               tone: warning
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       -
         - type: section
           title: 开发与预览
@@ -162,7 +163,7 @@ blocks:
                   text: server 会监视源文件、重新构建输出、刷新浏览器，并更新无障碍化和 agent 友好度报告。
                   command: edgepress server
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       -
         - type: section
           title: 使用共享图标库
@@ -182,7 +183,7 @@ blocks:
                   icon: file-text
                   text: 撰写并发布文章。
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: section
           title: 显示单个项目的文章
           blocks:
@@ -194,7 +195,7 @@ blocks:
               language: yaml
               code: |
                 - columns: 1
-                  cells:
+                  cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
                     - - type: post-list
                         title: EdgePress articles
                         category: edgepress
@@ -203,7 +204,7 @@ blocks:
               paragraphs:
                 - "在文章前置数据加入 category: edgepress；省略分类时默认未分类。标签仅在文章页展示，移除 tag 筛选和标签归档。site.archive.categories 控制主见闻栏目；首页分页时使用相同分类。"
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: text
           heading: 图片细节查看
           text: 文章图片和 Pages 的 image、media-text 图片块支持点击全屏放大。原图地址与展示图不同时，Pages 图片块可填写 originalSrc，Markdown HTML 图片可填写 data-original，链接到图片文件的图片也可直接放大；点击查看时才加载原图。工具栏支持缩放、保存与关闭，关闭后回到原位置。品牌图片和普通导航链接保留原用途，可选服务中的图片仍需要访客授权，并遵循 CSP。
@@ -211,7 +212,7 @@ blocks:
           text: 构建时会自动给本地发布图片添加实际宽高，在加载前保留其比例；已设置的宽高会保留。远程图片请自行填写尺寸，构建器不会请求远程图片。
 
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: text
           heading: 本地多语言字体
           text: 内置主题随站点打包 Noto Sans、Noto Serif 和简繁中文可变字体，不请求字体 CDN。WOFF2 按 Unicode 字符范围分片，只加载当前页面使用的字形；繁体语言优先使用繁体字形。界面、文章、Pages 和代码中的中文均可使用本地字形，不要求访客安装中文字体。
@@ -226,7 +227,7 @@ blocks:
           text: 字体覆盖拉丁字母、希腊字母、西里尔字母及常用简繁中文，并非完整 Unicode。增加阿拉伯语等其他文字系统的语言包时，应同时加入对应 Noto 字体与 unicode-range；保持同源加载、OFL 许可证和内容哈希。fonts:sync 仅维护字体资源，普通构建无需下载字体。
 
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: text
           heading: 在 Pages 插入查看器
           text: "文档以带页码的连续分页展示，不再使用上下页按钮。document 插入 PDF 和 Office；media-viewer 插入图片、视频或混合附件。只挂载选中的媒体，点击播放后才加载视频。远程资源须填写 service，登记 external-api 服务并明确配置 img-src、media-src、connect-src 所需来源，授权后才请求。视频字幕填写 captions 和 captionLanguage；只有确实无声的片段才可用 silent: true 代替字幕。"
@@ -235,7 +236,7 @@ blocks:
           language: yaml
           code: |
                 - columns: 1
-                  cells:
+                  cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
                     - - type: document
                         title: Report
                         src: /documents/report.pdf

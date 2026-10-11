@@ -10,9 +10,10 @@ keywords:
   - Cloudflare Workers
   - page elements
   - website plugins
+# Page (rows); row (columns, cells); cell (ordered elements)
 blocks:
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: hero
           eyebrow: A project built for the edge
           title: Build a fast website from clear, editable source files.
@@ -37,7 +38,7 @@ blocks:
             - Articles written in Markdown
             - Shared layouts and theme-defined palettes
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: feature-grid
           title: A clear place for each part of a site
           items:
@@ -58,7 +59,7 @@ blocks:
               text: Add tracking, statistics, advertising, or CAPTCHA services with provider details in configuration.
               url: /plugin-development/
   - columns: 2
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: section
           title: Learn the project
           tone: soft
@@ -92,13 +93,13 @@ blocks:
                 - label: Plugin development
                   url: /plugin-development/
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: latest-posts
           title: Latest project updates
           count: 3
           paginate: true
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: media-text
           mediaType: image
           src: /images/previews/edgepress-en.webp
@@ -109,7 +110,7 @@ blocks:
           text: Posts, navigation, search and language routes publish together. Choose a theme and keep everyday writing
             in Markdown.
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: data-table
           title: Free hosting priority (2026-10-04)
           headers:
@@ -135,7 +136,7 @@ blocks:
               - Traffic uses the site package. Confirm its quota; 100,000/day functions is not static
                 bandwidth.
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: link-list
           title: Deployment and quota sources
           items:

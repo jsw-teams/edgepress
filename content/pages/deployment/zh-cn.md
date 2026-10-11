@@ -3,9 +3,10 @@ title: 静态部署与可选服务
 lang: zh-CN
 slug: deployment
 description: 将同一份静态产物部署到 Cloudflare、Vercel、Netlify、腾讯 EdgeOne Pages 或阿里云 ESA Pages，外部服务由 consent 注册并按需调用。
+# 页面（行列表）；行（栏数，单元格列表）；单元格（按顺序排列的元素）
 blocks:
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: hero
           eyebrow: 部署指南
           title: 同一份静态网站，部署到五个平台。

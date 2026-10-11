@@ -3,9 +3,10 @@ title: 隐私政策
 lang: zh-CN
 slug: privacy-policy
 description: 说明本网站如何处理请求数据、同意偏好、可选统计服务、个人权利和供应商信息。
+# 页面（行列表）；行（栏数，单元格列表）；单元格（按顺序排列的元素）
 blocks:
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       -
         - type: section
           title: 个人信息处理者与联系
@@ -19,7 +20,7 @@ blocks:
             - type: text
               text: 请确认上方名称能识别负责的个人或法律实体。若运营者情形适用，还应在本政策中补充邮寄地址、欧盟代表或数据保护官的联系方式。
   - columns: 2
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       -
         - type: section
           title: 网站请求与处理依据
@@ -38,7 +39,7 @@ blocks:
             - type: privacy-services
               emptyText: 当前没有配置可选的第三方浏览器服务。
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       -
         - type: section
           title: Cloudflare 网站分析
@@ -48,7 +49,7 @@ blocks:
                 - 访客接受后，Cloudflare 信标会报告页面浏览和浏览器性能指标。Cloudflare 公布的报告维度包括页面路径、来源页、设备、浏览器、操作系统和国家或地区。Cloudflare 表示，信标会在正常 HTTP 请求中接收来源 IP，在最近的数据中心丢弃该 IP，且不会将其保存到核心数据库或日志中；Cloudflare 也表示该信标不会使用浏览器存储。
                 - Cloudflare 表示未采样信标数据保留 7 天，之后汇总为约 10% 的长期数据；仪表板可查看最近 6 个月的数据。信标可能在访客所在国家或地区以外处理。发布前，运营者应核实实际 Cloudflare 账户、套餐和适用的数据处理条款。
   - columns: 2
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       -
         - type: section
           title: 同意、保留期限与跨境传输
@@ -74,7 +75,7 @@ blocks:
                 - 如需行使权利或提出问题，请使用上方的处理者联系方式。你也可以向有管辖权的数据保护监管机构投诉，包括你居住或工作的欧盟国家，或你认为发生违规的国家。
                 - 本网站当前未配置会产生法律影响或类似重大影响的纯自动化决策。如果此情况改变，或网站新增账户、表单等数据用途，运营者应更新本告知。
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       -
         - type: section
           title: 法律与供应商资料

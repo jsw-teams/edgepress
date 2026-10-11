@@ -3,15 +3,16 @@ title: 快速入门
 lang: zh-CN
 slug: quick-start
 description: 安装 EdgePress、创建 Markdown 文章、编辑页面元素、本地构建并打开实时预览。
+# 页面（行列表）；行（栏数，单元格列表）；单元格（按顺序排列的元素）
 blocks:
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: hero
           eyebrow: 从这里开始
           title: 配置项目并打开实时预览。
           text: 安装项目依赖后使用 edgepress 命令。本地预览会在源文件变更后自动构建，并刷新无障碍化和 agent 友好度 PDF 报告。
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: section
           title: 环境要求与初始命令
           tone: soft
@@ -36,7 +37,7 @@ blocks:
                 npm run build
                 npm run dev
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: section
           title: 只用 Markdown 写第一篇文章
           tone: soft
@@ -67,8 +68,20 @@ blocks:
                 [项目源码](https://github.com/jsw-teams/edgepress)
             - type: text
               text: 站点配置在初次设置时完成。想调整页面设计时，再阅读下面的页面布局与主题说明；日常发文无需掌握这些开发内容。
+  - columns: 1
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
+      - - type: heading
+          level: 2
+          text: 用括号看懂 Pages 的包含关系
+        - type: text
+          text: '页面（行列表）→ 行（单元格列表）→ 单元格（元素列表）。cells: [[{ type: text, text: "Hello" }]] 表示一行的一栏里放一个文字元素。完整括号示例和字段说明见 Pages 编写指南。'
+        - type: link-list
+          title: 用括号看懂 Pages 的包含关系
+          items:
+            - label: 用括号看懂 Pages 的包含关系
+              url: /page-authoring/
   - columns: 2
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: section
           title: 创建内容
           blocks:
@@ -94,7 +107,7 @@ blocks:
               text: media-text 视频元素需要 WebVTT 字幕文件、语言代码、字幕轨道名称和可访问的媒体描述。尽量使用本地托管的视频文件。
               tone: info
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: section
           title: 配置与预览
           blocks:
@@ -182,7 +195,7 @@ blocks:
                   text: 各平台均托管静态产物。可选外部 API 和界面在 config.yml 的 plugins.consent.services 注册，独立后端管理凭据和安全验证。
                   tone: warning
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: text
           heading: 发表日期与时区
           text: 在 config.yml 设置 site.timeZone，默认 Asia/Taipei。新文章生成带明确时差的完整时间；没有写时差的具体时间按此配置解释，不依赖构建机器时区。仅有年月日的文章保留日历日期，不补午夜或随读者时区变更。完整时间按读者当前时区展示，遇到夏令时重复或不存在的时间需明确填写时差。

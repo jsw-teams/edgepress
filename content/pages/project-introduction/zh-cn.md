@@ -3,16 +3,17 @@ title: 项目介绍
 lang: zh-CN
 slug: project-introduction
 description: EdgePress 的架构、发布政策、功能成熟度和支持的运行环境基线。
+# 页面（行列表）；行（栏数，单元格列表）；单元格（按顺序排列的元素）
 blocks:
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       -
         - type: hero
           eyebrow: 项目概览
           title: 页面可编辑、文章用 Markdown 的静态网站构建器。
           text: EdgePress 将内容、展示、可信构建插件和 Worker 请求处理分开放置，让每个部分都有清晰的修改位置。
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       -
         - type: feature-grid
           title: 项目边界
@@ -24,7 +25,7 @@ blocks:
             - title: Themes 主题
               text: HTML 布局、共享局部模板和主题内硬编码的 CSS 配色负责网站展示。
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       -
         - type: section
           title: 支持基线
@@ -61,7 +62,7 @@ blocks:
             - type: text
               text: 兼容性清单位于 project-compatibility.json。Worker 兼容日期固定在 wrangler.jsonc 中。静态页面服务不需要 nodejs_compat。
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       -
         - type: section
           title: 发布与功能生命周期

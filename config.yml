@@ -1,10 +1,12 @@
+# Site configuration (site, theme, privacy, optional consent services).
+# Build paths and enabled locales belong to edgepress.config.mjs.
 site:
   timeZone: Asia/Taipei
   title: EdgePress
   description: A static website builder for Cloudflare Workers with editable pages, Markdown posts, themes, and plugins.
   url: https://example.org
   language: en
-  dataSaver:
+  dataSaver: # site (optional text view; requires the theme dataSaver assets)
     enabled: false
     debug: false
     mode: auto

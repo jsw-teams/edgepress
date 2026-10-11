@@ -80,6 +80,10 @@ Compare each text page with its full version: decorative illustrations may be om
 
 Text mode keeps readable content, core accessibility, navigation, search and the external-link/consent UI, while images, web fonts, document previews and optional services stay unloaded. Media can be requested individually without restoring the full theme. Full view and no-JavaScript links retain their original behavior. Dynamic theme content can use `window.edgepressDataSaver?.deferMedia(element, activate, accessibleDescription)` before assigning a media URL; it returns a placeholder in text mode and otherwise calls `activate`. Mark nonessential theme scripts with `data-data-optional`. Test actual request logs, not merely hidden pixels. See the theme-development guide for the contract and lightweight styles; the framework owns detection and loading, not a mandatory appearance.
 
+## Readable Pages
+
+Page (rows) → row (columns, cells) → cell (ordered elements). Standard YAML brackets make containment explicit: `cells: [[{ type: text, text: "Hello" }]]`. Keep `columns: 1` beside this one-cell list. See the [complete authoring guide](content/pages/page-authoring/en.md) and [中文说明](content/pages/page-authoring/zh-cn.md) for a two-column example, field reference and multiline alternatives. Indented YAML remains supported.
+
 ## Everyday writing
 
 After the one-time site setup, create an article with `npm run new -- post "My first article"`. Open the printed file path and write Markdown below the second `---` line. The command fills the title, date, and language; the theme supplies the page title, article list, contents, search, and feed.

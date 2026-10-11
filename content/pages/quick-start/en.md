@@ -3,15 +3,16 @@ title: Quick start
 lang: en
 slug: quick-start
 description: Install EdgePress, create Markdown posts, edit page elements, build the site, and preview it locally.
+# Page (rows); row (columns, cells); cell (ordered elements)
 blocks:
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: hero
           eyebrow: Start here
           title: Set up the project and open the live preview.
           text: Use the edgepress command after installing project dependencies. Local preview rebuilds changed source files and refreshes the PDF accessibility and agent-friendliness report.
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: section
           title: Requirements and first commands
           tone: soft
@@ -36,7 +37,7 @@ blocks:
                 npm run build
                 npm run dev
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: section
           title: Write your first article with Markdown
           tone: soft
@@ -67,8 +68,20 @@ blocks:
                 [Project source](https://github.com/jsw-teams/edgepress)
             - type: text
               text: Site settings are handled during setup. The page-layout and theme guides below are available when you want to change the website design. They are optional for everyday article writing.
+  - columns: 1
+    cells: # Row (cell 1, cell 2, …); count equals columns
+      - - type: heading
+          level: 2
+          text: Read Pages as nested collections
+        - type: text
+          text: 'Page (rows) → row (cells) → cell (elements). cells: [[{ type: text, text: "Hello" }]] places one text element in one cell. See the Pages authoring guide for the complete example.'
+        - type: link-list
+          title: Read Pages as nested collections
+          items:
+            - label: Read Pages as nested collections
+              url: /page-authoring/
   - columns: 2
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: section
           title: Create content
           blocks:
@@ -94,7 +107,7 @@ blocks:
               text: A media-text video element requires a captions WebVTT file, a language code, a track label, and an accessible media label. Use locally hosted files when possible.
               tone: info
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: section
           title: Configure and preview
           blocks:
@@ -182,7 +195,7 @@ blocks:
                   text: All deployments serve static output. Register optional external APIs and widgets under plugins.consent.services in config.yml; each backend manages its own private credentials and security.
                   tone: warning
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: text
           heading: Publication dates and time zones
           text: Set site.timeZone in config.yml (default Asia/Taipei). New posts include a complete timestamp with an explicit offset. Timestamps without an offset are interpreted in that configured zone, independently of the build host. Date-only articles stay calendar dates; complete timestamps are shown in the reader’s current zone. Ambiguous daylight-saving times require an explicit offset.

@@ -462,7 +462,11 @@ async function renderElements(blocks, context, depth = 0) {
   for (let index = 0; index < blocks.length; index += 1) {
     context.blockCount = (context.blockCount || 0) + 1;
     if (context.blockCount > 200) throw new Error('A page may contain at most 200 blocks including nested blocks');
-    rendered.push(await renderBlock(blocks[index], context, depth, index));
+    try {
+      rendered.push(await renderBlock(blocks[index], context, depth, index));
+    } catch (error) {
+      throw new Error('elements[' + index + '] (element ' + (index + 1) + '): ' + error.message, {cause: error});
+    }
   }
   return rendered.join('\n');
 }
@@ -471,20 +475,26 @@ export async function renderBlocks(rows, context) {
   context = {...context, displayedPostBundles:new Set(), servicesRendered:new Set(), blockCount:0, demoCount:0};
   if (!Array.isArray(rows) || rows.length > 100) throw new Error('Page layout needs an array of at most 100 rows');
   const rendered = [];
-  for (const row of rows) {
+  for (const [rowIndex, row] of rows.entries()) {
+    const rowLabel = 'blocks[' + rowIndex + '] (row ' + (rowIndex + 1) + ')';
     if (!row || typeof row !== 'object' || Array.isArray(row) || 'type' in row) {
-      throw new Error('Page layout rows start with a columns count; put element types inside cells');
+      throw new Error(rowLabel + ': Page layout rows start with a columns count; put element types inside cells');
     }
-    for (const key of Object.keys(row)) if (!['columns', 'cells'].includes(key)) throw new Error('Unsupported page row option: ' + key);
+    for (const key of Object.keys(row)) if (!['columns', 'cells'].includes(key)) throw new Error(rowLabel + ': Unsupported page row option: ' + key);
     const columns = row.columns;
-    if (!Number.isInteger(columns) || columns < 1 || columns > 4) throw new Error('Each page row needs a columns count from 1 to 4');
-    if (!Array.isArray(row.cells) || row.cells.length !== columns) throw new Error('Each row needs one cells entry per configured column');
+    if (!Number.isInteger(columns) || columns < 1 || columns > 4) throw new Error(rowLabel + ': Each page row needs a columns count from 1 to 4');
+    if (!Array.isArray(row.cells) || row.cells.length !== columns) throw new Error(rowLabel + ': Each row needs one cells entry per configured column (columns: ' + columns + '; cells: ' + (Array.isArray(row.cells) ? row.cells.length : 'not a list') + ')');
     context.blockCount = (context.blockCount || 0) + 1;
     if (context.blockCount > 200) throw new Error('A page may contain at most 200 blocks including nested blocks');
     const cells = [];
     for (const [index,blocks] of row.cells.entries()) {
-      if (!Array.isArray(blocks) || !blocks.length) throw new Error('Every page row cell needs at least one element block');
-      cells.push('<div class="page-builder-cell" data-cell="' + (index + 1) + '">' + await renderElements(blocks, context, 1) + '</div>');
+      const cellLabel = rowLabel + '.cells[' + index + '] (cell ' + (index + 1) + ')';
+      if (!Array.isArray(blocks) || !blocks.length) throw new Error(cellLabel + ': Every page row cell needs at least one element block; use cells: [[{ type: text, text: "Hello" }]]');
+      try {
+        cells.push('<div class="page-builder-cell" data-cell="' + (index + 1) + '">' + await renderElements(blocks, context, 1) + '</div>');
+      } catch (error) {
+        throw new Error(cellLabel + ': ' + error.message, {cause: error});
+      }
     }
     rendered.push('<div class="page-builder-row" data-columns="' + columns + '">' + cells.join('') + '</div>');
   }

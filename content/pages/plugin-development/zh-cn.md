@@ -3,15 +3,16 @@ title: 插件开发
 lang: zh-CN
 slug: plugin-development
 description: 使用可信构建插件和经过 consent 注册的外部服务扩展静态网站。
+# 页面（行列表）；行（栏数，单元格列表）；单元格（按顺序排列的元素）
 blocks:
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: hero
           eyebrow: 扩展指南
           title: 连接可信构建代码、浏览器供应商和后端服务。
           text: 构建插件在 Node 中运行，浏览器服务只在访客选择后加载，后端独立部署。
   - columns: 2
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: section
           title: 构建插件
           tone: soft
@@ -49,14 +50,14 @@ blocks:
               text: 配置浏览器供应商前，请填写 privacy.controller.name、privacy.controller.contact 和 privacy.policyUrl。控制者名称或联系方式为空时，构建器会拒绝启用供应商服务。
               tone: warning
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: text
           heading: 可选外部服务
           paragraphs:
             - 在 config.yml 的 plugins.consent.services 注册 external-api 或 external-widget。服务使用独立 HTTPS 地址、完整隐私说明和访客明确选择。
             - 网站只提供静态前端。API 身份验证、授权、验证码校验、输入验证和速率限制由独立后端负责，运营者 Secret 不进入浏览器配置。
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: section
           title: 内容安全与维护
           blocks:
@@ -73,7 +74,7 @@ blocks:
                 edgepress check
                 edgepress server
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: text
           heading: 我提问
           text: 显示经过验证的 GitHub 身份和头像，可从本地图片、GIF 图集中选择表情包，支持删除自己的评论。读者选中评论后才加载讨论。
@@ -90,11 +91,11 @@ blocks:
           code: |
             blocks:
               - columns: 1
-                cells:
+                cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
                   - - type: service
                       integration: github-comments
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: text
           heading: 嵌入分享图片与视频
           text: "在 plugins.consent.services 注册 provider: oembed 的 ishare 服务，填写实际 HTTPS backendUrl、用途与隐私披露。页面先显示本地占位，访客授权并点击加载媒体才请求服务。元数据使用固定 /api 和 HTTP 请求头传递，保留作者和来源署名的 iframe 仅使用配置的服务域名。"
@@ -104,7 +105,7 @@ blocks:
           code: |
             blocks:
               - columns: 1
-                cells:
+                cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
                   - - type: text
                       text: "!embed[ishare](https://share.js.gripe/s/REPLACE_WITH_REAL_SHARE_ID)"
         - type: link-list
@@ -113,7 +114,7 @@ blocks:
             - label: ishare
               url: https://github.com/jsw-teams/ishare/blob/main/docs/zh-cn.md
   - columns: 1
-    cells:
+    cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
       - - type: text
           heading: 通用社交媒体嵌入
           text: "通用媒体预设仅保留 YouTube 和 X；share.js.gripe 不启用任何通用平台。自定义平台可按需在 config.yml 注册。逐项设 enabled: false 会移除授权条目和网络权限，区块保留本地未加载说明与原始链接。标准提供方使用 oembedEndpoint，构建阶段缓存元数据；浏览器必须先授权并点击加载。sourceOrigins 指定分享链接域名，embedOrigins 指定播放器与资源域名，embedScripts 是按需加载的完整脚本地址。Instagram 和 Facebook 使用公开内容的官方 iframe，不要求把 Meta 令牌放入前端；私密、禁止嵌入或平台限制的内容仍可能无法显示。Mastodon 需将默认实例替换为实际实例。"
@@ -123,7 +124,7 @@ blocks:
           code: |
             blocks:
               - columns: 2
-                cells:
+                cells: # 本行（单元格 1，单元格 2，…）；数量等于 columns
                   - - type: text
                       heading: 视频与说明
                       text: 在播放器旁介绍内容。

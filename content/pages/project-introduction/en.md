@@ -3,16 +3,17 @@ title: Project introduction
 lang: en
 slug: project-introduction
 description: EdgePress architecture, release policy, feature maturity, and supported runtime baseline.
+# Page (rows); row (columns, cells); cell (ordered elements)
 blocks:
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       -
         - type: hero
           eyebrow: Project overview
           title: A static site builder with editable pages and Markdown articles.
           text: EdgePress separates content, presentation, trusted build-time plugins, and Worker request handling so each part has a clear place to change.
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       -
         - type: feature-grid
           title: Project boundaries
@@ -24,7 +25,7 @@ blocks:
             - title: Themes
               text: HTML layouts, shared partials, and hard-coded CSS palettes control site presentation.
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       -
         - type: section
           title: Supported baseline
@@ -61,7 +62,7 @@ blocks:
             - type: text
               text: The compatibility manifest is project-compatibility.json. The Worker compatibility date is pinned in wrangler.jsonc. Static page delivery does not require nodejs_compat.
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       -
         - type: section
           title: Release and feature lifecycle

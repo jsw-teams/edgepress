@@ -3,15 +3,16 @@ title: Plugin development
 lang: en
 slug: plugin-development
 description: Extend static websites with trusted build plugins and consent-registered external services.
+# Page (rows); row (columns, cells); cell (ordered elements)
 blocks:
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: hero
           eyebrow: Extension guide
           title: Connect trusted build code, browser providers, and backend services.
           text: Build-time plugins run in Node. Browser services load only after visitor consent. Backends are independently deployed.
   - columns: 2
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: section
           title: Build-time plugins
           tone: soft
@@ -49,14 +50,14 @@ blocks:
               text: Fill privacy.controller.name, privacy.controller.contact, and privacy.policyUrl before configuring any browser provider. The build rejects provider services when the controller name or contact is blank.
               tone: warning
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: text
           heading: Optional external services
           paragraphs:
             - Register external-api or external-widget under plugins.consent.services in config.yml. Services require their own HTTPS origin, complete privacy disclosures and explicit visitor consent.
             - The site is static. API authentication, authorization, CAPTCHA verification, input validation and rate limits belong to the independently deployed backend. Operator Secrets never enter browser configuration.
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: section
           title: Content security and maintenance
           blocks:
@@ -73,7 +74,7 @@ blocks:
                 edgepress check
                 edgepress server
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: text
           heading: iask
           text: iask owns comments, styles, identity and stickers. Register an external-widget with backendUrl and moduleUrl under plugins.consent.services; the host only loads it after opt-in.
@@ -90,11 +91,11 @@ blocks:
           code: |
             blocks:
               - columns: 1
-                cells:
+                cells: # Row (cell 1, cell 2, …); count equals columns
                   - - type: service
                       integration: github-comments
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: text
           heading: Shared images and videos
           text: Register ishare as an oembed service in plugins.consent.services, with its HTTPS backendUrl and complete privacy disclosures. The page keeps a local placeholder until the visitor consents and clicks Load media. Metadata uses fixed /api and request headers; the attributed iframe remains on the configured service origin.
@@ -104,7 +105,7 @@ blocks:
           code: |
             blocks:
               - columns: 1
-                cells:
+                cells: # Row (cell 1, cell 2, …); count equals columns
                   - - type: text
                       text: "!embed[ishare](https://share.js.gripe/s/REPLACE_WITH_REAL_SHARE_ID)"
         - type: link-list
@@ -113,7 +114,7 @@ blocks:
             - label: ishare
               url: https://github.com/jsw-teams/ishare/blob/main/docs/zh-cn.md
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: text
           heading: General social media embeds
           text: "Only YouTube and X are registered as general media presets; share.js.gripe enables none. Register custom services in config.yml as needed. Set enabled: false to remove its consent entry and network permissions; its block retains a local disabled notice and the original link. oembedEndpoint metadata is cached at build time; the browser still waits for consent and a load click. sourceOrigins validates shared links; embedOrigins permits media hosts; embedScripts contains exact optional vendor script URLs. Instagram and Facebook use official public-content iframes. Private or embed-restricted posts may be unavailable. Replace the Mastodon instance with your actual instance."
@@ -123,7 +124,7 @@ blocks:
           code: |
             blocks:
               - columns: 2
-                cells:
+                cells: # Row (cell 1, cell 2, …); count equals columns
                   - - type: text
                       heading: Watch with context
                       text: Describe the media next to its player.

@@ -3,9 +3,10 @@ title: Privacy policy
 lang: en
 slug: privacy-policy
 description: How this site handles request data, consent choices, optional analytics, data rights, and supplier disclosures.
+# Page (rows); row (columns, cells); cell (ordered elements)
 blocks:
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       -
         - type: section
           title: Controller and contact
@@ -19,7 +20,7 @@ blocks:
             - type: text
               text: Confirm that the configured name identifies the responsible person or legal entity. Add a postal address, EU representative, or data protection officer contact here when applicable to the operator.
   - columns: 2
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       -
         - type: section
           title: Site requests and legal bases
@@ -38,7 +39,7 @@ blocks:
             - type: privacy-services
               emptyText: No optional third-party browser services are configured.
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       -
         - type: section
           title: Cloudflare Web Analytics
@@ -48,7 +49,7 @@ blocks:
                 - When accepted, the Cloudflare beacon reports page-view and browser performance metrics. Its published dimensions include page path, referrer, device, browser, operating system, and country. Cloudflare says its beacon receives the source IP as part of the HTTP request, discards it at the nearest data center, and does not store it in its core databases or logs; Cloudflare also says the beacon does not use browser storage.
                 - Cloudflare states that unsampled beacon data is retained for 7 days and then aggregated to about 10% for longer-term storage; dashboard history is available for 6 months. The beacon may be processed in a different country or region from the visitor. The operator must check the actual Cloudflare account, plan, and applicable data processing terms before publication.
   - columns: 2
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       -
         - type: section
           title: Consent, retention, and transfers
@@ -74,7 +75,7 @@ blocks:
                 - Contact the controller using the details above to exercise a right or ask a question. You may also complain to the competent data protection supervisory authority, including in the EU country where you live, work, or believe an infringement occurred.
                 - This site does not configure solely automated decisions that produce legal or similarly significant effects. The operator should update this notice if that changes or if the site adds accounts, forms, or other data uses.
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       -
         - type: section
           title: Legal reference

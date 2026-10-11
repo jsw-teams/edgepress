@@ -3,9 +3,10 @@ title: Theme development
 lang: en
 slug: theme-development
 description: Build EdgePress themes with shared HTML partials, CSS palettes, element layouts, and reusable error pages.
+# Page (rows); row (columns, cells); cell (ordered elements)
 blocks:
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: section
           title: Optional data-saving variant
           blocks:
@@ -41,14 +42,14 @@ blocks:
               paragraphs:
                 - Verify request logs in an isolated browser with mocked slow-network and saveData hints, plus unsupported APIs, blocked storage, JavaScript disabled, keyboard navigation, narrow screens and dark/high-contrast modes. Confirm that text mode requests no full theme, fonts, pictures or document/video engines until demanded, and that individual media loading does not start unrelated previews. Keep CSS/JS dependency graphs fingerprinted. Full view, external-link prompts and current service consent must still work.
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       -
         - type: hero
           eyebrow: Theme guide
           title: Let themes own shared layout and visual design.
           text: Pages define row widths, element types, and content. Themes define the site shell, typography, spacing, colors, and responsive behavior.
   - columns: 2
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       -
         - type: section
           title: Theme structure
@@ -94,7 +95,7 @@ blocks:
               text: EdgePress generates localized 403 and 404 pages through the selected theme layout. The Worker serves the matching 403 page when static asset access is denied.
               tone: info
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       -
         - type: section
           title: Page rows and editable elements
@@ -130,7 +131,7 @@ blocks:
               text: media-text video entries require a WebVTT captions source, language tag, and track label. Videos use native controls and preload none. A third-party video embed should remain behind an explicit consent integration.
               tone: warning
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: text
           text: "Documents use the browser-only document-viewer library. PDF, DOC/DOCX, PPT/PPTX and XLS/XLSX open automatically without cloud conversion software. Office layouts are approximate; macros and external document resources are blocked."
         - type: code
@@ -148,7 +149,7 @@ blocks:
         - type: text
           text: "Put local files under content/assets/documents/. Articles and Pages text blocks accept standalone !document[Annual report](/documents/report.docx) lines. Extensionless URLs use !document[Shared report](https://files.example/download/123){format=pdf service=documents}. Remote direct-file URLs must match an external-api service registered in plugins.consent.services, with complete privacy disclosures and current visitor consent. File origins must allow CORS. Share-page metadata and authentication stay in the caller's external integration; no site-owned proxy is introduced."
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       -
         - type: section
           title: Develop and preview
@@ -164,7 +165,7 @@ blocks:
                   text: The server watches source files, rebuilds the output, refreshes the browser, and updates the accessibility and agent-friendliness report.
                   command: edgepress server
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       -
         - type: section
           title: Use the shared icon library
@@ -184,7 +185,7 @@ blocks:
                   icon: file-text
                   text: Write and publish an article.
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: section
           title: Show articles for one project
           blocks:
@@ -196,7 +197,7 @@ blocks:
               language: yaml
               code: |
                 - columns: 1
-                  cells:
+                  cells: # Row (cell 1, cell 2, …); count equals columns
                     - - type: post-list
                         title: EdgePress articles
                         category: edgepress
@@ -205,7 +206,7 @@ blocks:
               paragraphs:
                 - "Set category: edgepress in article front matter. Omitted categories default to uncategorized. Tags are displayed on individual articles; tag filters and tag archives are removed. Set site.archive.categories for the main journal and match those categories when paginating a latest-posts homepage."
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: text
           heading: Image details
           text: Article images and Pages image/media-text blocks open a closable full-screen viewer on click. Use originalSrc in a Pages image block, or data-original on a Markdown HTML img, when its original URL differs from the displayed preview. Originals load only when opened; image-file links are also supported. Branding and ordinary navigation images are unchanged. Optional-service images still wait for consent, and their CSP remains enforced.
@@ -213,7 +214,7 @@ blocks:
           text: Local published images receive their intrinsic width and height during build, preserving their aspect ratio before loading. Explicit dimensions remain authoritative. Supply dimensions for remote pictures because the builder does not request them.
 
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: text
           heading: Local multilingual fonts
           text: Built-in themes ship Noto Sans, Noto Serif and variable simplified/traditional Chinese fonts with the site, without a font CDN. Unicode-range WOFF2 subsets load only the glyphs used on the page. Traditional locales prefer traditional letterforms. UI, articles, Pages and Chinese code text use bundled glyphs without requiring visitors to install Chinese fonts.
@@ -228,7 +229,7 @@ blocks:
           text: Coverage includes Latin, Greek, Cyrillic and common simplified/traditional Chinese, rather than all Unicode. Language packs using other scripts, such as Arabic, also need the corresponding Noto font and unicode-range. Keep fonts same-origin, licensed and content-hashed. fonts:sync maintains font assets; ordinary builds need no font downloads.
 
   - columns: 1
-    cells:
+    cells: # Row (cell 1, cell 2, …); count equals columns
       - - type: text
           heading: Viewers as Pages elements
           text: "Documents scroll through numbered, separated pages, without previous/next buttons. Use document for PDF and Office; use media-viewer for locally bundled images, video or mixed attachments. Only the selected media attachment mounts; video bytes wait for Play. For remote resources, set service to an enabled external-api consent service and explicitly allow each image/media/connect origin in its CSP. Captions require captionLanguage; use silent: true without captions only for a genuinely silent clip."
@@ -237,7 +238,7 @@ blocks:
           language: yaml
           code: |
                 - columns: 1
-                  cells:
+                  cells: # Row (cell 1, cell 2, …); count equals columns
                     - - type: document
                         title: Report
                         src: /documents/report.pdf
