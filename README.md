@@ -82,7 +82,9 @@ Text mode keeps readable content, core accessibility, navigation, search and the
 
 ## Readable Pages
 
-Page (rows) → row (columns, cells) → cell (ordered elements). Standard YAML brackets make containment explicit: `cells: [[{ type: text, text: "Hello" }]]`. Keep `columns: 1` beside this one-cell list. See the [complete authoring guide](content/pages/page-authoring/en.md) and [中文说明](content/pages/page-authoring/zh-cn.md) for a two-column example, field reference and multiline alternatives. Indented YAML remains supported.
+Page (rows) → row (columns, cells) → cell (ordered elements). Standard YAML brackets make containment explicit: `cells: [[{ type: text, text: "Hello" }]]`. Keep `columns: 1` beside this one-cell list. The example site's actual Pages use brackets and containment comments. See the [complete authoring guide](content/pages/page-authoring/en.md) and [中文说明](content/pages/page-authoring/zh-cn.md) for a two-column example, field reference and multiline alternatives. Indented YAML remains supported.
+
+Theme developers can reuse the [public formatting and data-saving verification tools](tools/verification/README.md). Each site owns its command entry and test paths; common implementations come from its pinned EdgePress dependency. The Pages formatter checks that every field value and element order survives formatting.
 
 ## Everyday writing
 
