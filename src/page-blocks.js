@@ -1,4 +1,5 @@
 import {renderServiceBlock} from './service-block.js';
+import {renderLocalTool} from './local-tool.js';
 import {renderDocument} from './document.js';
 import {renderMediaViewer} from './media-viewer.js';
 import {renderEmbed, renderPageText} from './embed.js';
@@ -173,6 +174,7 @@ async function renderBlock(block, context, depth, index) {
   if (depth > 4) throw new Error('Page block nesting may not exceed 4 levels');
   const type = text(block.type, 'block.type', 40);
   switch (type) {
+    case 'local-tool': return renderLocalTool(block, context);
     case 'document': return renderDocument(block, context);
     case 'media-viewer': return renderMediaViewer(block, context);
     case 'hero': {
@@ -472,7 +474,7 @@ async function renderElements(blocks, context, depth = 0) {
 }
 
 export async function renderBlocks(rows, context) {
-  context = {...context, displayedPostBundles:new Set(), servicesRendered:new Set(), blockCount:0, demoCount:0};
+  context = {...context, displayedPostBundles:new Set(), servicesRendered:new Set(), localToolIds:new Set(), blockCount:0, demoCount:0};
   if (!Array.isArray(rows) || rows.length > 100) throw new Error('Page layout needs an array of at most 100 rows');
   const rendered = [];
   for (const [rowIndex, row] of rows.entries()) {

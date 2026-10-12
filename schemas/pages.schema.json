@@ -44,8 +44,14 @@
     "element": {
       "type": "object", "required": ["type"],
       "description": "One element; type selects its renderer / 一个元素，type 指定呈现方式",
+      "allOf": [{"if": {"properties": {"type": {"const": "local-tool"}}}, "then": {"required": ["id", "title", "script", "fallback"]}}],
       "properties": {
-        "type": {"enum": ["hero", "section", "heading", "text", "media-text", "display-text", "link-list", "steps", "code", "data-table", "list", "notice", "privacy-services", "privacy-consent", "privacy-controller", "link-directory", "feature-grid", "image", "quote", "cta", "faq", "oembed", "service", "post-list", "latest-posts", "ad-slot", "captcha", "document", "media-viewer"]},
+        "type": {"enum": ["hero", "section", "heading", "text", "media-text", "display-text", "link-list", "steps", "code", "data-table", "list", "notice", "privacy-services", "privacy-consent", "privacy-controller", "link-directory", "feature-grid", "image", "quote", "cta", "faq", "oembed", "service", "post-list", "latest-posts", "ad-slot", "captcha", "document", "media-viewer", "local-tool"]},
+        "id": {"type": "string"},
+        "script": {"type": "string", "description": "Same-origin local browser module / 站内浏览器模块"},
+        "stylesheet": {"type": "string", "description": "Optional local CSS / 可选站内样式"},
+        "data": {"type": "string", "description": "Optional public local JSON asset / 可选站内公开 JSON 数据"},
+        "fallback": {"type": "string", "description": "Explanation when JavaScript is disabled / 未启用 JavaScript 时的说明"},
         "title": {"type": "string"},
         "text": {"type": "string"},
         "paragraphs": {"type": "array", "items": {"type": "string"}},

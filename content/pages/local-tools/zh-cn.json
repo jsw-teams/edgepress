@@ -1,0 +1,14 @@
+{
+  "$schema": "../../../schemas/pages.schema.json",
+  "title": "浏览器本地工具",
+  "lang": "zh-CN",
+  "slug": "local-tools",
+  "description": "通过 JSON Pages 挂载浏览器本地工具，由写文建站生成页面与资源。",
+  "blocks": [{"columns":1,"cells":[[
+    {"type":"text","text":"`local-tool` 元素在原生 JSON 页面内挂载站点自己的浏览器模块。页面文档、主题、导航、行列布局、文本转义和资源指纹均由写文建站生成，不需要单独维护 HTML 网页。适用于本地计算、文件读取和题库检索；外部服务仍需通过逐服务同意机制接入。"},
+    {"type":"code","language":"json","code":"{\n  \"type\": \"local-tool\",\n  \"id\": \"question-search\",\n  \"title\": \"搜索题库\",\n  \"script\": \"/tools/search.js\",\n  \"stylesheet\": \"/tools/search.css\",\n  \"data\": \"/data/questions.json\",\n  \"fallback\": \"请启用 JavaScript 使用本地搜题。\"\n}"},
+    {"type":"text","text":"将资源放在 `static/` 或 `content/assets/`。模块、可选样式、可选公开数据分别使用 `.js` 或 `.mjs`、`.css`、`.json`，构建时必须存在。仅接受站内绝对路径，禁止外部地址、路径穿越和查询参数。一个页面内的工具 ID 不得重复。"},
+    {"type":"code","language":"javascript","code":"const root = document.querySelector('#question-search');\nconst mount = root.querySelector('[data-tool-mount]');\nconst response = await fetch(root.dataset.toolData);\nconst data = await response.json();\n// 使用 DOM API 在 mount 内创建无障碍控件。\n// 正常导入本地模块，框架会为依赖图生成指纹。"},
+    {"type":"text","text":"本地工具模块与主题脚本一样属于可信站点源码。私人文件和输入留在浏览器内存中，大型 Worker 和模型在访问者主动使用时加载，并提供取消和错误提示。此元素不授予外部服务请求权限，也不创建 API。公开 JSON 保持可重新验证，脚本和样式通过哈希地址长久缓存。"}
+  ]]}]
+}

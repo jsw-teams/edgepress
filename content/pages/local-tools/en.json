@@ -1,0 +1,14 @@
+{
+  "$schema": "../../../schemas/pages.schema.json",
+  "title": "Browser-local tools",
+  "lang": "en",
+  "slug": "local-tools",
+  "description": "Add a local browser tool to JSON Pages without a separate HTML document or server.",
+  "blocks": [{"columns":1,"cells":[[
+    {"type":"text","text":"A `local-tool` element mounts trusted site JavaScript inside a normal JSON Page. EdgePress owns the document, theme, navigation, page rows, escaping and asset fingerprints. Use this element for local calculators, file readers or search tools; external providers still require a consent-controlled service."},
+    {"type":"code","language":"json","code":"{\n  \"type\": \"local-tool\",\n  \"id\": \"question-search\",\n  \"title\": \"Search the question bank\",\n  \"script\": \"/tools/search.js\",\n  \"stylesheet\": \"/tools/search.css\",\n  \"data\": \"/data/questions.json\",\n  \"fallback\": \"Enable JavaScript to search locally.\"\n}"},
+    {"type":"text","text":"Put executable assets in `static/` or `content/assets/`. All referenced assets must exist at build time. Scripts use `.js` or `.mjs`, optional styles use `.css`, and optional public data uses `.json`. Paths must be local absolute site paths without traversal, query strings or remote origins. Keep IDs unique within the Page."},
+    {"type":"code","language":"javascript","code":"const root = document.querySelector('#question-search');\nconst mount = root.querySelector('[data-tool-mount]');\nconst response = await fetch(root.dataset.toolData);\nconst data = await response.json();\n// Create accessible controls with DOM APIs inside mount.\n// Import local modules normally; EdgePress fingerprints the graph."},
+    {"type":"text","text":"The tool module is trusted source, with the same responsibility as a theme script. Keep private files and inputs in browser memory, load expensive workers or models on visitor demand, and provide cancellation and clear failures. A local element does not authorize requests to external services or add an API. Static JSON remains refreshable; executable dependencies receive immutable hashed URLs."}
+  ]]}]
+}
