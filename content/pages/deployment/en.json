@@ -20,7 +20,7 @@
             "heading": "Platform configuration",
             "paragraphs": [
               "Cloudflare reads wrangler.jsonc and serves static assets without a Worker script. Vercel reads vercel.json. Tencent EdgeOne Pages reads edgeone.json. Alibaba Cloud ESA Pages reads esa.jsonc.",
-              "Vercel and EdgeOne support repository deployment buttons. ESA uses repository import or the native deployment CLI. Authenticate in your chosen platform and run one deployment command, or use the manual deployment workflow after setting repository Secrets."
+              "Vercel and EdgeOne support repository deployment buttons. ESA uses repository import or the native deployment CLI. Authenticate in your chosen platform and run one deployment command locally. GitHub Actions runs dependency security audits only."
             ]
           },
           {

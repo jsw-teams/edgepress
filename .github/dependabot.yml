@@ -8,14 +8,5 @@ updates:
       day: "monday"
       time: "09:00"
       timezone: "America/Denver"
-    open-pull-requests-limit: 10
-
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    target-branch: "main"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:15"
-      timezone: "America/Denver"
-    open-pull-requests-limit: 5
+    # Keep security updates; disable routine version-update pull requests.
+    open-pull-requests-limit: 0
