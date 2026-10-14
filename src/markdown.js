@@ -21,7 +21,7 @@ const sanitizeOptions = {
     button: ['type', 'data-oembed-load', 'data-service-consent-settings'],
     code: ['class'],
     img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'data-original'],
-    figure: ['class', 'data-edgepress-video', 'data-edgepress-oembed', 'data-oembed-url', 'data-oembed-width', 'data-oembed-height', 'data-oembed-disabled', 'data-oembed-unavailable', 'data-edgepress-document', 'data-document-src', 'data-document-title', 'data-document-format', 'data-document-preview', 'data-document-service'],
+    figure: ['class', 'data-edgepress-oembed', 'data-oembed-url', 'data-oembed-width', 'data-oembed-height', 'data-oembed-disabled', 'data-oembed-unavailable', 'data-edgepress-document', 'data-document-src', 'data-document-title', 'data-document-format', 'data-document-preview', 'data-document-service'],
     div: ['class', 'data-oembed-status', 'data-oembed-placeholder', 'aria-hidden', 'data-document-mount'],
     p: ['data-oembed-notice', 'class', 'role'],
     template: ['data-oembed-data'],
@@ -32,7 +32,7 @@ const sanitizeOptions = {
     td: ['align', 'colspan', 'rowspan'],
     th: ['align', 'colspan', 'rowspan'],
     track: ['kind', 'src', 'srclang', 'label', 'default'],
-    video: ['aria-label', 'controls', 'playsinline', 'poster', 'preload', 'width', 'height']
+    video: ['data-edgepress-video', 'aria-label', 'controls', 'playsinline', 'poster', 'preload', 'width', 'height']
   },
   allowedSchemes: ['http', 'https', 'mailto', 'tel'],
   allowProtocolRelative: false,
@@ -86,7 +86,7 @@ function markdownRenderer(options) {
       const href = escapeHtml(safeVideoHref(token.href));
       if (options.allowVideo === false) return '<span>' + escapeHtml(description) + '</span>';
       const caption = token.title ? '<figcaption>' + escapeHtml(token.title) + '</figcaption>' : '';
-      return '<figure class="markdown-video" data-edgepress-video><video controls playsinline preload="none" aria-label="' +
+      return '<figure class="markdown-video"><video data-edgepress-video controls playsinline preload="none" aria-label="' +
         escapeHtml(description) + '"><source src="' + href + '" type="' + mimeType + '"><a href="' + href + '">' +
         escapeHtml(description) + '</a></video>' + caption + '</figure>';
     }

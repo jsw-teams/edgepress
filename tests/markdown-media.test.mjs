@@ -45,6 +45,7 @@ test('Markdown videos request the shared engine, including reference links, whil
   assert.match(gated, /data-edgepress-data-media data-data-feature="gallery"/);
   assert.match(gated, /data-data-feature="gallery"[^>]*>.*?media-viewer\.[a-f0-9]{16}\.js/s);
   assert.match(gated, /data-data-description>Recording/);
+  assert.match(gated, /<\/div><figcaption>A caption<\/figcaption>/);
 });
 
 test('inline local files use the shared player, wait for Play, seek, pause out of view and mount after text-view demand', { timeout: 60000 }, async () => {

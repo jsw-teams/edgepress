@@ -64,7 +64,7 @@ function refresh() {
   }
   for (const root of document.querySelectorAll('[data-edgepress-video]')) {
     if (inlineVideos.has(root) || root.closest('template,[hidden],[data-edgepress-oembed],[data-edgepress-service]')) continue;
-    const video = root.querySelector('video');
+    const video = root.matches('video') ? root : root.querySelector('video');
     const source = video?.getAttribute('src') || video?.querySelector('source[src]')?.getAttribute('src');
     if (!source || new URL(source, location.href).origin !== location.origin) continue;
     inlineVideos.set(root, { video, source, started: false, dispose: null });
