@@ -84,7 +84,7 @@ function featureFor(source) {
 
 function mediaLabel(node) {
   const attributes = node.attribs || {};
-  const label = attributes.alt || attributes.title || attributes['data-document-title'];
+  const label = attributes.alt || attributes.title || attributes['aria-label'] || attributes['data-document-title'];
   if (label) return label;
   for (const child of node.children || []) {
     if (['template', 'noscript'].includes(child.name)) continue;
@@ -146,7 +146,7 @@ export function dataSaverHtml(html, config, manifest = {}) {
       patches.push({ start: node.startIndex, end: node.endIndex + 1, text: '<template data-edgepress-data-resource="' + resource + '" data-data-feature="' + (core ? 'core' : featureFor(attributes.src || attributes.href || '')) + '">' + original + '</template><noscript>' + original + '</noscript>' });
       return;
     }
-    if (['img', 'picture', 'video', 'audio', 'iframe'].includes(name) || attributes['data-edgepress-document'] !== undefined || attributes['data-edgepress-media-viewer'] !== undefined || attributes['data-project-demo'] !== undefined) {
+    if (['img', 'picture', 'video', 'audio', 'iframe'].includes(name) || attributes['data-edgepress-document'] !== undefined || attributes['data-edgepress-media-viewer'] !== undefined || attributes['data-edgepress-video'] !== undefined || attributes['data-project-demo'] !== undefined) {
       const candidate = name === 'picture' ? node.children?.find(child => child.name === 'img')?.attribs : name === 'img' ? attributes : null;
       if (!firstImage && candidate?.fetchpriority === 'high') {
         const source = name === 'picture' ? node.children?.find(child => child.name === 'source')?.attribs : null;
@@ -157,7 +157,7 @@ export function dataSaverHtml(html, config, manifest = {}) {
       }
       const label = mediaLabel(node);
       const tag = name === 'img' || name === 'picture' ? 'span' : 'div';
-      const feature = attributes['data-edgepress-document'] !== undefined ? 'document' : attributes['data-edgepress-media-viewer'] !== undefined ? 'gallery' : attributes['data-project-demo'] !== undefined ? 'demo' : name === 'img' || name === 'picture' ? 'image' : 'media';
+      const feature = attributes['data-edgepress-document'] !== undefined ? 'document' : attributes['data-edgepress-media-viewer'] !== undefined || attributes['data-edgepress-video'] !== undefined ? 'gallery' : attributes['data-project-demo'] !== undefined ? 'demo' : name === 'img' || name === 'picture' ? 'image' : 'media';
       const classes = attributes.class || '';
       const pictureImage = name === 'picture' ? node.children?.find(child => child.name === 'img')?.attribs : null;
       const decorative = feature === 'image' && (attributes.alt === '' || pictureImage?.alt === '' || attributes['aria-hidden'] === 'true' || ['none', 'presentation'].includes(attributes.role) || /(?:^|\s)(?:navigation-icon|icon-library|brand-mark)(?:\s|$)/.test(classes));

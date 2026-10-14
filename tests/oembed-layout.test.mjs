@@ -58,7 +58,9 @@ test('embed entry stays compact until requested, retries failures and keeps keyb
       assert((await entry.boundingBox()).height < 300);
       assert.equal(requests, 0);
       await button.focus(); await page.keyboard.press('Enter');
-      await page.waitForFunction(() => window.testOpened > 0);
+      // This is an event counter, so deferred text-view styles must not make
+      // the assertion depend on the browser scheduling animation frames.
+      await page.waitForFunction(() => window.testOpened > 0, null, { polling: 50 });
       assert.equal(await page.evaluate(()=>window.testOpened),1);
       assert.equal(requests, 0);
       assert.equal(await button.isEnabled(), true);

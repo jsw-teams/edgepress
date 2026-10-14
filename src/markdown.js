@@ -21,7 +21,7 @@ const sanitizeOptions = {
     button: ['type', 'data-oembed-load', 'data-service-consent-settings'],
     code: ['class'],
     img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'data-original'],
-    figure: ['class', 'data-edgepress-oembed', 'data-oembed-url', 'data-oembed-width', 'data-oembed-height', 'data-oembed-disabled', 'data-oembed-unavailable', 'data-edgepress-document', 'data-document-src', 'data-document-title', 'data-document-format', 'data-document-preview', 'data-document-service'],
+    figure: ['class', 'data-edgepress-video', 'data-edgepress-oembed', 'data-oembed-url', 'data-oembed-width', 'data-oembed-height', 'data-oembed-disabled', 'data-oembed-unavailable', 'data-edgepress-document', 'data-document-src', 'data-document-title', 'data-document-format', 'data-document-preview', 'data-document-service'],
     div: ['class', 'data-oembed-status', 'data-oembed-placeholder', 'aria-hidden', 'data-document-mount'],
     p: ['data-oembed-notice', 'class', 'role'],
     template: ['data-oembed-data'],
@@ -86,7 +86,7 @@ function markdownRenderer(options) {
       const href = escapeHtml(safeVideoHref(token.href));
       if (options.allowVideo === false) return '<span>' + escapeHtml(description) + '</span>';
       const caption = token.title ? '<figcaption>' + escapeHtml(token.title) + '</figcaption>' : '';
-      return '<figure class="markdown-video"><video controls playsinline preload="none" aria-label="' +
+      return '<figure class="markdown-video" data-edgepress-video><video controls playsinline preload="none" aria-label="' +
         escapeHtml(description) + '"><source src="' + href + '" type="' + mimeType + '"><a href="' + href + '">' +
         escapeHtml(description) + '</a></video>' + caption + '</figure>';
     }
@@ -109,9 +109,44 @@ const documentSyntax = { name: 'document', level: 'block',
   renderer: token => '<p>' + escapeHtml(token.title) + '</p>'
 };
 
+// CommonMark treats punctuation beside a CJK letter as an intraword delimiter.
+// Accept the bracket/punctuation forms authors use in CJK prose, while letting
+// the ordinary lexer handle escapes, code, links and non-CJK emphasis.
+const cjkStrong = {
+  name: 'cjkStrong', level: 'inline', childTokens: ['tokens'],
+  start: source => { const index = source.indexOf('**'); return index < 0 ? undefined : index; },
+  tokenizer(source) {
+    if (!source.startsWith('**') || source.startsWith('***') || /^\*\*\s/.test(source)) return;
+    for (let end = source.indexOf('**', 2); end >= 0; end = source.indexOf('**', end + 2)) {
+      const text = source.slice(2, end);
+      if (source[end + 2] === '*' || /\s$/.test(text) || !text) continue;
+      const escapes = text.match(/\\+$/)?.[0].length || 0;
+      if (escapes % 2) continue;
+      const cjk = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
+      const bracketed = /^[（《「『【]/u.test(text) || /[）》」』】]$/u.test(text);
+      const cjkBoundary = /\p{P}$/u.test(text) && cjk.test(source[end + 2] || '');
+      if (!bracketed && !cjkBoundary) return;
+      return { type: 'cjkStrong', raw: source.slice(0, end + 2), text, tokens: this.lexer.inlineTokens(text) };
+    }
+  },
+  renderer(token) { return '<strong>' + this.parser.parseInline(token.tokens) + '</strong>'; }
+};
+
+function markdownParser(options = {}) {
+  const parser = new Marked({ gfm: options.gfm !== false, breaks: options.breaks === true, renderer: markdownRenderer(options) });
+  parser.use({ extensions: [cjkStrong, { ...documentSyntax, renderer: token => options.documentRenderer ? options.documentRenderer(token) : documentSyntax.renderer(token) }] });
+  return parser;
+}
+
+export function hasMarkdownVideo(source) {
+  const parser = markdownParser();
+  let found = false;
+  parser.walkTokens(parser.lexer(String(source || '')), token => { if (token.type === 'image' && videoMimeType(token.href)) found = true; });
+  return found;
+}
+
 export async function renderMarkdown(source, options = {}) {
-  const parser = new Marked({gfm: options.gfm !== false, breaks: options.breaks === true, renderer: markdownRenderer(options)});
-  parser.use({ extensions: [{ ...documentSyntax, renderer: token => options.documentRenderer ? options.documentRenderer(token) : documentSyntax.renderer(token) }] });
+  const parser = markdownParser(options);
   if (options.embedRenderer) parser.use({
     async: true,
     extensions: [{...embedSyntax, renderer: token => token.html}],
@@ -138,14 +173,14 @@ export async function renderMarkdown(source, options = {}) {
 
 export async function renderMarkdownExcerpt(source, options = {}) {
   const markdown = String(source ?? '');
-  const tokens = new Marked({gfm:options.gfm!==false}).use({extensions:[{...embedSyntax}, {...documentSyntax}]}).lexer(markdown);
+  const tokens = markdownParser(options).use({extensions:[{...embedSyntax}]}).lexer(markdown);
   const paragraph = tokens.find((token) => token.type === 'paragraph');
   if (!paragraph) return '<p>' + escapeHtml(plainText(markdown).slice(0, 220)) + '</p>';
   return renderMarkdown(paragraph.raw, { ...options, allowImages: false, allowVideo: false });
 }
 
 export function plainText(source) {
-  const html = new Marked({gfm:true}).use({extensions:[{...embedSyntax}, {...documentSyntax}]}).parse(String(source ?? ''));
+  const html = markdownParser().use({extensions:[{...embedSyntax}]}).parse(String(source ?? ''));
   const namedEntities = {
     amp: '&', apos: "'", copy: '©', gt: '>', hellip: '…', ldquo: '“', lsquo: '‘',
     lt: '<', mdash: '—', nbsp: ' ', ndash: '–', quot: '"', rdquo: '”', rsquo: '’'

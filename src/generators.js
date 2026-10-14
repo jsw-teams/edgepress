@@ -85,7 +85,7 @@ function addPostContents(html, locale, config) {
 function renderPostVideo(video, locale) {
   if (!video) return '';
   const videoTitle = escapeHtml(video.title);
-  return '<figure class="post-video"><video controls playsinline preload="metadata" poster="' + escapeHtml(video.poster) + '" aria-label="' +
+  return '<figure class="post-video" data-edgepress-video><video controls playsinline preload="none" poster="' + escapeHtml(video.poster) + '" aria-label="' +
     escapeHtml(video.alt) + '"><source src="' + escapeHtml(video.src) + '" type="video/mp4"><track kind="captions" src="' +
     escapeHtml(video.captions) + '" srclang="' + escapeHtml(video.captionLanguage) + '" label="' + escapeHtml(video.captionLabel) + '" default>' +
     '<a href="' + escapeHtml(video.src) + '">' + (locale.toLowerCase().startsWith('zh') ? '下载 MP4 视频' : 'Download the MP4 video') +

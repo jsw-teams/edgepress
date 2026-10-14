@@ -194,7 +194,7 @@ export async function renderLayout(config, extensions, page, body) {
     scripts.push('<script id="edgepress-external-links-config" type="application/json">' + JSON.stringify(settings).replace(/</g, '\\u003c') + '</script><script type="module" src="/edgepress/external-links.js"></script>');
   }
   if (/<main\b/i.test(filtered)) scripts.push('<script type="module" src="/edgepress/webmcp.js"></script>');
-  if (/data-edgepress-media-viewer(?:\s|=|>)/i.test(filtered)) {
+  if (/data-edgepress-(?:media-viewer|video)(?:\s|=|>)/i.test(filtered)) {
     filtered = filtered.replace(/<\/head\s*>/i, '<link rel="stylesheet" href="/edgepress/media-viewer.css"><link rel="stylesheet" href="/edgepress/image-viewer.css"></head>');
     scripts.push('<script type="module" src="/edgepress/media-viewer.js"></script>');
     if (filtered.includes('data-media-service')) scripts.push('<script defer src="/edgepress/services-consent.js"></script>');
