@@ -1,0 +1,15 @@
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+import {writeFile} from 'node:fs/promises';
+import {basename, resolve} from 'node:path';
+const run = promisify(execFile);
+const file = process.argv[2];
+if (!file || !/\.(?:mp4|webm|ogv|ogg)$/i.test(file)) throw new Error('Usage: node tools/assets/video-preview.mjs path/to/video.mp4 [frame-seconds] (requires FFmpeg)');
+const video = resolve(file), poster = video + '.poster.jpg';
+const {stdout} = await run('ffprobe', ['-v','error','-select_streams','v:0','-show_entries','format=duration:stream=width,height','-of','json',video]);
+const info = JSON.parse(stdout), duration = Number(info.format.duration), {width, height} = info.streams[0];
+const time = Number(process.argv[3] ?? Math.min(1, duration / 2));
+if (!(Number.isFinite(time) && time >= 0 && time < duration)) throw new Error('Preview time must be inside the video');
+await run('ffmpeg', ['-v','error','-y','-ss',String(time),'-i',video,'-frames:v','1','-vf','scale=min(960\\,iw):-2','-q:v','3',poster]);
+await writeFile(video + '.json', JSON.stringify({duration, width, height, poster: basename(poster)}, null, 2) + '\n');
+console.log('Created ' + basename(poster) + ' and ' + basename(video) + '.json');

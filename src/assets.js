@@ -8,6 +8,7 @@ import {extendConsentPolicy,serializeConsentHeaders} from './consent-csp.js';
 import {imageViewerAssets, mediaViewerAssets} from './media-assets.js';
 import {documentViewerAssets} from '@jsw-teams/document-viewer/assets';
 import {collectImageDimensions} from './image-dimensions.js';
+import {collectVideoMetadata} from './video-metadata.js';
 import {dataSaverLayout} from './data-saver.js';
 import { build, transform } from 'esbuild';
 
@@ -241,7 +242,7 @@ export async function collectAssets(config, { documentViewer = false, mediaViewe
   const urlMap = Object.create(null);
   for (const item of items) urlMap['/' + item.path] = '/' + outputByOriginal.get(item.path);
   config.assetManifest = urlMap;
-  return { assets, urlMap, imageDimensions:await collectImageDimensions(assets), existingHeaders: extendConsentPolicy(headerContents.join('\n\n'),config) };
+  return { assets, urlMap, imageDimensions:await collectImageDimensions(assets), videoMetadata:await collectVideoMetadata(assets), existingHeaders: extendConsentPolicy(headerContents.join('\n\n'),config) };
 }
 
 export async function writeAssets(bundle, output, concurrency = 8) {

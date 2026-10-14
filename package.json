@@ -67,7 +67,7 @@
   },
   "dependencies": {
     "@jsw-teams/document-viewer": "https://codeload.github.com/jsw-teams/document-viewer/tar.gz/ab21d0ee9c078d084b2abee373ffad302928978c",
-    "@jsw-teams/media-viewer": "https://codeload.github.com/jsw-teams/media-viewer/tar.gz/158ca150b221b4da0058b61d87c8d3ca787ebf25",
+    "@jsw-teams/media-viewer": "https://codeload.github.com/jsw-teams/media-viewer/tar.gz/12eb8983c2df1eabb3aaece44b232c56b4a9e1fe",
     "esbuild": "^0.28.2",
     "htmlparser2": "^12.0.0",
     "image-size": "^2.0.4",

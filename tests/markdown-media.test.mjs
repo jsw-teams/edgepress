@@ -9,6 +9,7 @@ import { loadLanguagePacks } from '../src/i18n.js';
 import { collectAssets, rewriteAssetLinks } from '../src/assets.js';
 import { renderLayout } from '../src/theme.js';
 import { configureDataSaver, dataSaverHtml } from '../src/data-saver.js';
+import {reserveVideoMetadata} from '../src/video-metadata.js';
 
 test('CJK bold with closing punctuation renders beside following prose without rewriting code or URLs', async () => {
   for (const source of ['前文**结果（XXX）**后文', '**（XXX）**后文', '前文**（XXX）** 后文', '前文**result (XXX)**后文', '前文**说明。**后文']) {
@@ -55,7 +56,7 @@ test('inline local files use the shared player, wait for Play, seek, pause out o
   const bundle = await collectAssets(config, { mediaViewer: true });
   const assets = new Map(bundle.assets.map(asset => ['/' + asset.path, asset]));
   const bytes = await readFile(new URL('./fixtures/recording.mp4', import.meta.url));
-  const body = await renderMarkdown('前文**结果（XXX）**后文\n\n![Silent recording](/recording.mp4 "Recording")');
+  const body = reserveVideoMetadata(await renderMarkdown('前文**结果（XXX）**后文\n\n![Silent recording](/recording.mp4 "Recording")'),new Map([['/recording.mp4',{duration:12,width:320,height:180,poster:'/poster.svg'}]]),'index.html','https://site.example');
   const script = '<script type="module" src="/edgepress/media-viewer.js"></script>';
   const browser = await chromium.launch({ headless: true, args: ['--disable-extensions'] });
   try {
@@ -69,6 +70,7 @@ test('inline local files use the shared player, wait for Play, seek, pause out o
         const request = route.request(), path = new URL(request.url()).pathname;
         requests.push(path);
         if (path === '/') return route.fulfill({ contentType: 'text/html', body: html });
+        if (path === '/poster.svg') return route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180"><rect width="320" height="180" fill="green"/></svg>'});
         if (path === '/recording.mp4') {
           const range = request.headers().range?.match(/bytes=(\d+)-(\d*)/);
           const start = range ? Number(range[1]) : 0;
@@ -82,6 +84,8 @@ test('inline local files use the shared player, wait for Play, seek, pause out o
       const player = page.locator('.markdown-video .media-player');
       await player.waitFor();
       assert.equal(requests.includes('/recording.mp4'), false);
+      assert.equal(await player.locator('.plyr__time--duration').textContent(),'00:12');
+      await page.waitForFunction(()=>document.querySelector('.media-player').classList.contains('plyr__poster-enabled'));
       await player.locator('video').evaluate(video => { video.muted = true; });
       await player.locator('.plyr__control--overlaid').click();
       await page.waitForFunction(() => document.querySelector('video').currentTime > 0.2);

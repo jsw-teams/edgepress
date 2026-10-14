@@ -96,7 +96,7 @@ export async function markdownFeatureCoverage() {
   catch { unsafeVideoRejected = true; }
   const videoChecks = [
     ['image-shaped video syntax renders an accessible native player with deferred media',
-      /<video controls playsinline preload="none" aria-label="A kite crossing a field"><source src="https:\/\/media\.example\.org\/field-recording\.mp4" type="video\/mp4"/i.test(videoHtml)],
+      /<video\b(?=[^>]*\bcontrols\b)(?=[^>]*\bplaysinline\b)(?=[^>]*\bpreload="none")(?=[^>]*\baria-label="A kite crossing a field")[^>]*><source src="https:\/\/media\.example\.org\/field-recording\.mp4" type="video\/mp4"/i.test(videoHtml)],
     ['video title renders as a caption', /<figcaption>Wind test<\/figcaption>/i.test(videoHtml)],
     ['unsafe video URL is rejected', unsafeVideoRejected],
     ['post-list excerpt preserves inline Markdown formatting', /<strong>formatted<\/strong>[\s\S]*?<em>emphasis<\/em>[\s\S]*?<code>code<\/code>/i.test(excerptHtml)]

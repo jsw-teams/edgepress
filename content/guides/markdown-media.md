@@ -15,6 +15,14 @@ The native video element remains the fallback if the enhancement is unavailable.
 
 Use meaningful alternative text and an optional title for the visible caption. Reference-style links are supported too:
 
+To show a poster and total duration before Play, generate a local preview once (FFmpeg and FFprobe must be on PATH):
+
+```sh
+node node_modules/edgepress/tools/assets/video-preview.mjs content/assets/media/bypass.mp4
+```
+
+An optional second argument selects the frame time in seconds. Commit the generated `bypass.mp4.poster.jpg` and `bypass.mp4.json` beside the video. The sidecar contains measured `duration`, `width`, `height` and the relative `poster` filename. EdgePress reads these local files during every build and adds the preview attributes to matching video elements, including Markdown videos. Cloud builds need no FFmpeg; visitors load the poster, while the video still waits for Play. After playback begins, the player's actual media duration replaces the supplied value. Regenerate the preview when replacing the video.
+
 ```md
 ![An action comparison][comparison]
 
