@@ -28,7 +28,7 @@ function navigationItems(config, locale, items, currentPath = '', scope = 'prima
   return values.map((item, index) => {
     const path = item.url === '@home' ? localizedUrl(config, locale, '') :
       item.url === '@archives' ? localizedUrl(config, locale, 'archives/') :
-        item.url === '@feed' ? localizedUrl(config, locale, 'feed.xml') :
+        item.url === '@feed' ? localizedUrl(config, locale, 'rss.xml') :
           item.url === '@search' ? localizedUrl(config, locale, 'search/') :
           item.url.startsWith('/') ? localizedUrl(config, locale, item.url) : item.url;
     const label = item.labels?.[locale] ?? item.labels?.[config.i18n.defaultLocale] ?? translate(config, locale, item.key);
@@ -38,7 +38,7 @@ function navigationItems(config, locale, items, currentPath = '', scope = 'prima
     if (item.children?.length) {
       const choices = [{ path, label, target:item.target }, ...item.children.map(child => ({
         path: child.url === '@home' ? localizedUrl(config, locale, '') : child.url === '@archives' ? localizedUrl(config, locale, 'archives/') :
-          child.url === '@feed' ? localizedUrl(config, locale, 'feed.xml') : child.url === '@search' ? localizedUrl(config, locale, 'search/') :
+          child.url === '@feed' ? localizedUrl(config, locale, 'rss.xml') : child.url === '@search' ? localizedUrl(config, locale, 'search/') :
           child.url.startsWith('/') ? localizedUrl(config, locale, child.url) : child.url,
         label: child.labels?.[locale] ?? child.labels?.[config.i18n.defaultLocale] ?? translate(config, locale, child.key), target:child.target
       }))];
@@ -150,7 +150,7 @@ export async function renderLayout(config, extensions, page, body) {
       stylesheet,
       homePath: localizedUrl(config, locale, ''),
       archivesPath: localizedUrl(config, locale, 'archives/'),
-      feedPath: localizedUrl(config, locale, 'feed.xml'),
+      feedPath: localizedUrl(config, locale, 'rss.xml'),
       homeLabel: translate(config, locale, 'home'),
       archivesLabel: translate(config, locale, 'archives'),
       feedLabel: translate(config, locale, 'feed'),

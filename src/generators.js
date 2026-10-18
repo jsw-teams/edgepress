@@ -1,4 +1,5 @@
 import {renderPostServices,hasServiceBlock} from './service-block.js';
+import {generateRssRoute} from './rss.js';
 import {renderRevisionCards} from './revision-cards.js';
 import { authorForPost, readingMinutes, filterPostsByCategory, categorySlug, normalizeCategory } from './post-details.js';
 import { plainText, renderMarkdownExcerpt } from './markdown.js';
@@ -363,14 +364,7 @@ export async function generateBuiltinRoutes(site, config, extensions) {
     routes.push(await pageRoute(prefix + 'search/index.html', label('searchPosts'), label('searchIntro'), searchBody,
       locale, config, extensions));
 
-    const base = config.site.url;
-    const entries = posts.slice(0, 20).map((post) => '<entry><title>' + escapeXml(post.title) + '</title>' +
-      (post.author ? '<author><name>' + escapeXml(post.author) + '</name></author>' : '') + '<link href="' +
-      escapeXml(base + urlFor(post.path)) + '"/><id>' + escapeXml(base + urlFor(post.path)) + '</id><updated>' + post.date.toISOString() +
-      '</updated><summary>' + escapeXml(plainText(post.description || post.markdown).slice(0, 220)) + '</summary></entry>').join('');
-    routes.push(fileRoute(prefix + 'feed.xml', '<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom"><title>' +
-      escapeXml(config.site.title) + '</title><id>' + escapeXml(base || 'urn:edgepress:site') + '</id><updated>' +
-      (posts[0]?.date.toISOString() || new Date(0).toISOString()) + '</updated>' + entries + '</feed>', 'application/atom+xml; charset=utf-8'));
+    routes.push(await generateRssRoute(posts, config, locale));
   }
 
   const base = config.site.url;
