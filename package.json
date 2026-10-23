@@ -63,7 +63,8 @@
     "deploy:edgeone": "node src/cli.js deploy edgeone",
     "deploy:esa": "node src/cli.js deploy esa",
     "deploy:netlify": "node src/cli.js deploy netlify",
-    "fonts:sync": "node tools/assets/sync-fonts.mjs"
+    "fonts:sync": "node tools/assets/sync-fonts.mjs",
+    "editor": "node src/cli.js editor"
   },
   "dependencies": {
     "@jsw-teams/document-viewer": "https://codeload.github.com/jsw-teams/document-viewer/tar.gz/ab21d0ee9c078d084b2abee373ffad302928978c",

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>EdgePress · 可视化 Pages 编辑器</title>
+  <link rel="stylesheet" href="/editor.css">
+  <script type="module" src="/editor.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-icon" aria-hidden="true">◧</span><div><strong>EdgePress</strong><small>Pages 可视化编辑器 · 本地运行</small></div></div>
+    <div class="actions">
+      <label for="page-picker">页面</label><select id="page-picker" aria-label="选择页面"></select>
+      <button id="reload" type="button" class="subtle">重新载入</button>
+      <button id="save" type="button" class="primary">保存更改</button>
+    </div>
+  </header>
+  <main class="workspace">
+    <aside class="side panel" aria-label="页面结构">
+      <div class="panel-header"><h2>页面结构</h2><button id="add-row" type="button" title="添加页面行">＋ 行</button></div>
+      <p class="help">选中元素后可调整内容、顺序和位置。</p>
+      <nav id="outline" aria-label="页面结构导航"></nav>
+    </aside>
+    <section class="center panel" aria-label="可视化页面画布">
+      <div class="panel-header"><div><h1 id="page-name">选择页面</h1><p id="page-path" class="muted"></p></div><span class="preview-label">结构与内容预览</span></div>
+      <div class="page-meta"><label>页面标题 <input id="title" maxlength="500" type="text"></label><label>摘要 <input id="description" type="text"></label></div>
+      <div class="canvas-wrap"><div id="canvas" class="canvas" aria-label="页面内容预览"></div></div>
+      <p class="help note">预览展示真实的行列顺序和主要内容，不是主题渲染或最终网页效果。正式效果请运行 <code>npm run dev</code>。</p>
+    </section>
+    <aside class="inspector panel" aria-label="元素设置">
+      <div class="panel-header"><h2>元素属性</h2><span id="selected-label" class="muted">尚未选择</span></div>
+      <div id="fields"><p class="empty">从中间的页面画布选择一个元素开始编辑。</p></div>
+    </aside>
+  </main>
+  <footer class="footer"><span id="status" role="status" aria-live="polite">正在载入页面…</span><span>只监听 127.0.0.1 · JSON 是唯一的数据源</span></footer>
+</body>
+</html>

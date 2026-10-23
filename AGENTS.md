@@ -26,7 +26,7 @@
 
 EdgePress builds static websites from Markdown articles and JSON Pages. Follow these rules when changing the project.
 
-## Source files
+- The Pages visual editor runs only on loopback via `edgepress editor`. Keep it entirely local (no hosted editor endpoints, no authentication or database). Preserve unknown JSON block properties on save, reject external origins, symlinks and stale revisions, and test the actual browser workflow before shipping.\n\n## Source files
 
 - Put published project guides and site copy under `content/`, using JSON for Pages and Markdown for articles and standalone guides.
 - Put page media and other content-owned files under `content/assets/`; the builder publishes them at matching site-root paths.
