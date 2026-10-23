@@ -161,10 +161,10 @@ function drawCanvas() {
     count.value = String(row.columns);
     count.addEventListener('change', () => {
       const next = Number(count.value);
-      if (next < row.columns && row.cells.slice(next).some(cell => cell.length)) {
-        info('要减少列数，请先将被移除的栏中元素移动或删除。', true);
-        count.value = String(row.columns);
-        return;
+      // Reducing columns reflows all existing elements into the last kept cell.
+      // Never discard content merely because the editor layout changes.
+      if (next < row.columns) {
+        for (const extra of row.cells.slice(next)) row.cells[next - 1].push(...extra);
       }
       while (row.cells.length < next) row.cells.push([{ type: 'text', text: '新栏内容' }]);
       row.cells.length = next;
@@ -182,8 +182,7 @@ function drawCanvas() {
       }, 'danger')
     );
     toolbar.append(title, operations); wrap.append(toolbar);
-    const cells = el('div', null, 'cells');
-    cells.style.gridTemplateColumns = 'repeat(' + row.columns + ', minmax(0,1fr))';
+    const cells = el('div', null, 'cells columns-' + row.columns);
     row.cells.forEach((blocks, cellIndex) => {
       const cell = el('div', null, 'canvas-cell');
       const tools = el('div', null, 'cell-actions');
