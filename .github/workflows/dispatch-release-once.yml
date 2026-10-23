@@ -1,21 +1,32 @@
-name: One-time authorized release dispatcher
+name: Trigger npm and GitHub Release
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths: ['.github/workflows/dispatch-release-once.yml']
 
+# A maintained manual entry point; the path-scoped push trigger also allows
+# an explicitly authorized release request without exposing npm credentials.
 permissions:
   contents: read
   actions: write
 
+concurrency:
+  group: edgepress-release-dispatcher
+  cancel-in-progress: false
+
 jobs:
   dispatch:
-    if: github.repository == 'jsw-teams/edgepress' && github.ref == 'refs/heads/main' && github.event.head_commit.message == 'chore: authorize one-time secure release dispatch'
+    if: >-
+      github.repository == 'jsw-teams/edgepress' &&
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'workflow_dispatch' ||
+       github.event.head_commit.message == 'chore: authorize one-time secure release dispatch')
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - name: Trigger the existing manually approved release workflow once
+      - name: Dispatch the protected npm and GitHub release workflow
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run publish.yml --repo jsw-teams/edgepress --ref main
