@@ -105,7 +105,14 @@ export async function startPageEditor({ root = process.cwd(), port = 4178, local
       if (req.method === 'GET' && staticFiles.has(url.pathname)) {
         const item = staticFiles.get(url.pathname);
         res.writeHead(200, { 'Content-Type': item.type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
-        return res.end(await readFile(resolve(editorRoot, item.file)));
+        const bytes = await readFile(resolve(editorRoot, item.file));
+        // The optional editor extension shares the same module scope as the original
+        // editor to reuse its loaded page and revision state without a second copy.
+        if (url.pathname === '/editor.js') {
+          const extension = await readFile(resolve(editorRoot, 'page-editor-extension.js'));
+          return res.end(Buffer.concat([bytes, Buffer.from('\n'), extension]));
+        }
+        return res.end(bytes);
       }
       if (req.method === 'GET' && url.pathname === '/api/block-catalog') {
         return respond(res, 200, catalog);
