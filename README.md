@@ -49,6 +49,16 @@ Use Node.js 22.12 or newer. Set the real site URL and operator contact in config
 
 Run `edgepress init` in a new project directory to scaffold a site pinned to the installed EdgePress release. The initializer keeps the existing package name and scripts.
 
+## Maintainer npm and GitHub releases
+
+Releases use **year.month.number of updates in that month**, not the calendar day. For example, `2026.10.12` is the twelfth update in October 2026; `2026.10.13` follows it, and November starts at `2026.11.1`. The release workflow uses **UTC** for the month boundary and checks `package.json`, existing `vYYYY.M.N` tags and published npm versions to avoid reusing a version.
+
+Once the npm package owner has configured **Trusted Publishing** at [npmjs.com](https://www.npmjs.com/package/edgepress/access), choose GitHub Actions with owner `jsw-teams`, repository `edgepress`, workflow filename **`publish.yml`**, and allow **`npm publish`** (not only staging). No environment name is used. This is a one-time npm-side setup; no long-lived `NPM_TOKEN` is required. Restrict traditional publish tokens after confirming the first successful trusted publish.
+
+To publish new source, a repository maintainer opens **Actions → Publish npm and GitHub Release → Run workflow** on `main`. The manual-only job installs Node 22 and npm 11, determines the next monthly update number, updates both package manifests, audits dependencies, runs the full browser test suite, builds the project and packs the source. Only after all checks pass does it push a non-force release commit and tag, publish that exact archive to npm with provenance, and create a GitHub Release containing the same `.tgz` and SHA-256 checksum. Ordinary pushes and PRs cannot trigger a publish.
+
+**Recovery:** If a run fails *after* pushing its version tag, do not launch a new release blindly: check whether the tag, npm version or GitHub Release already exists and reconcile the incomplete publish first. npm versions cannot be overwritten. Protected branches must explicitly permit the GitHub Actions bot to create the release commit/tag or use a maintainer-approved release branch process.
+
 ## External link prompts
 
 The optional local prompt shows the complete destination URL (including path, query and fragment) once, with no duplicate hostname, and lets the visitor return or continue. It makes no request to the destination before confirmation. Configure exact origins, not wildcard domains:
