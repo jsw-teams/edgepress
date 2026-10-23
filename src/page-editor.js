@@ -3,6 +3,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { readFile, readdir, lstat, realpath, open, rename, unlink } from 'node:fs/promises';
 import { resolve, relative, dirname, basename, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createPage } from './page-scaffold.js';
 
 const editorRoot = dirname(fileURLToPath(import.meta.url));
 const maxDocumentBytes = 2 * 1024 * 1024;
@@ -78,11 +79,15 @@ async function requestBody(req) {
   return JSON.parse(Buffer.concat(chunks).toString('utf8'));
 }
 
-/** Starts a loopback-only editor for existing localized JSON Pages. Never deploy this server. */
-export async function startPageEditor({ root = process.cwd(), port = 4178 } = {}) {
+/** Starts a loopback-only editor. Never deploy this server. */
+export async function startPageEditor({ root = process.cwd(), port = 4178, locales = ['en', 'zh-CN'], defaultLocale = 'en' } = {}) {
   const contentRoot = resolve(root, 'content/pages');
   const typeSchema = JSON.parse(await readFile(resolve(editorRoot, '../schemas/pages.schema.json'), 'utf8'));
   const typeNames = new Set(typeSchema.definitions.element.properties.type.enum);
+  const catalog = JSON.parse(await readFile(resolve(editorRoot, 'page-block-catalog.json'), 'utf8'));
+  if (typeNames.size !== Object.keys(catalog.blocks).length || [...typeNames].some(type => !catalog.blocks[type]?.template || catalog.blocks[type].template.type !== type)) {
+    throw new Error('The visual editor block catalog is out of sync with the Pages schema');
+  }
   const staticFiles = new Map([
     ['/', { file: 'page-editor.html', type: 'text/html; charset=utf-8' }],
     ['/editor.js', { file: 'page-editor-client.js', type: 'text/javascript; charset=utf-8' }],
@@ -101,6 +106,21 @@ export async function startPageEditor({ root = process.cwd(), port = 4178 } = {}
         const item = staticFiles.get(url.pathname);
         res.writeHead(200, { 'Content-Type': item.type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
         return res.end(await readFile(resolve(editorRoot, item.file)));
+      }
+      if (req.method === 'GET' && url.pathname === '/api/block-catalog') {
+        return respond(res, 200, catalog);
+      }
+      if (req.method === 'GET' && url.pathname === '/api/locales') {
+        return respond(res, 200, { locales, defaultLocale });
+      }
+      if (req.method === 'POST' && url.pathname === '/api/pages') {
+        if (req.headers.origin !== 'http://127.0.0.1:' + serverPort) return respond(res, 403, { error: 'Invalid editor origin' });
+        const body = await requestBody(req);
+        const result = await (pendingWrite = pendingWrite.catch(() => {}).then(async () => {
+          if (!isObject(body) || Object.keys(body).some(key => !['title', 'slug', 'lang'].includes(key))) throw new Error('Invalid new page parameters');
+          return createPage(root, { title: body.title, slug: body.slug, lang: body.lang, locales, defaultLocale });
+        }));
+        return respond(res, 201, { path: result.path, revision: revision(result.source), page: result.page });
       }
       if (req.method === 'GET' && url.pathname === '/api/pages') {
         const paths = await listPages(contentRoot);
@@ -140,8 +160,9 @@ export async function startPageEditor({ root = process.cwd(), port = 4178 } = {}
       }
       return respond(res, 404, { error: 'Not found' });
     } catch (error) {
-      const badInput = error instanceof SyntaxError || /Invalid|must|exceeds|needs|required|Unsafe|does not exist|cannot be changed|too deep|Expected/.test(error.message);
-      return respond(res, badInput ? 400 : 500, { error: badInput ? error.message : 'Editor request failed' });
+      const badInput = error instanceof SyntaxError || /Invalid|must|exceeds|needs|required|Unsafe|does not exist|cannot be changed|too deep|Expected|Unsupported|slug|title|locale/.test(error.message);
+      const conflict = /already exists/.test(error.message);
+      return respond(res, conflict ? 409 : badInput ? 400 : 500, { error: conflict || badInput ? error.message : 'Editor request failed' });
     }
   });
   await new Promise((ok, fail) => { server.once('error', fail); server.listen(port, '127.0.0.1', ok); });
