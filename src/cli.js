@@ -355,8 +355,8 @@ try {
     ? await loadConfig()
     : null;
   if (command === '--help' || command === '-h' || command === 'help') {
-    console.log('EdgePress commands: init, new, build, generate, server, editor, check, doctor, iterate, theme, security, deploy, clean
-    console.log('Create a Page: edgepress new pages "Page title" [--lang en] [--slug page-slug]');');
+    console.log('EdgePress commands: init, new, build, generate, server, editor, check, doctor, iterate, theme, security, deploy, clean');
+    console.log('Create a Page: edgepress new pages "Page title" [--lang en] [--slug page-slug]');
   }
   else if (command === 'build' || command === 'generate') await buildSite();
   else if (command === 'init') await initializeProject();
