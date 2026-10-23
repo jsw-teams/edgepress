@@ -9,6 +9,7 @@ import { spawn } from 'node:child_process';
 import { acquireBuildLock, buildSite } from './build.js';
 import { loadConfig } from './config.js';
 import { slugify } from './content.js';
+import { createPage } from './page-scaffold.js';
 import { checkPages } from './page-check.js';
 import { checkCompatibility, writeIterationPlan } from './maintenance.js';
 import { loadLanguagePacks, translate } from './i18n.js';
@@ -30,7 +31,7 @@ const siteReadme = [
   '',
   'Create an article with `npm run new -- post "My first article"`. Open the printed file path and write Markdown below the second `---` line. The command fills the title, date, and language. Run `npm run dev` to preview and `npm run build` before publishing.',
   '',
-  'Use `npm run editor` to open the local Pages visual editor at http://127.0.0.1:4178/. Add and arrange rows, columns and elements without writing JSON; the editor saves to existing localized page files. Use `npm run dev` to preview the actual theme. Articles stay in Markdown.',
+  'Run `npm run editor` to create and edit Pages visually at http://127.0.0.1:4178/. Or run `npx edgepress new pages "About us" --lang en` to create a JSON Page from the CLI. All Page blocks use shared framework templates; articles remain Markdown.',
   '',
   '## Deploy a static website',
   '',
@@ -250,6 +251,27 @@ async function manageTheme(args, config) {
   console.log('Selected theme ' + selected.id + '.');
 }
 
+async function newPage(args, config) {
+  let lang, slug;
+  const words = [];
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    if (arg === '--lang' || arg === '--slug') {
+      if (!args[i + 1] || args[i + 1].startsWith('--')) throw new Error('Missing value for ' + arg);
+      if (arg === '--lang') lang = args[++i];
+      else slug = args[++i];
+    } else if (arg.startsWith('--')) throw new Error('Unknown new pages option: ' + arg);
+    else words.push(arg);
+  }
+  const title = words.join(' ').trim();
+  if (!title) throw new Error('Usage: edgepress new pages "Page title" [--lang en] [--slug page-slug]');
+  const page = await createPage(config.root, {
+    title, lang, slug, locales: config.i18n.locales, defaultLocale: config.i18n.defaultLocale
+  });
+  console.log('Created Page: ' + relative(config.root, page.file));
+  console.log('Open the local editor with: npm run editor');
+}
+
 async function createPost(title, config) {
   if (!title) throw new Error('Usage: edgepress new post "Post title"');
   const releaseLock = await acquireBuildLock(config.resolvedPaths.cache);
@@ -333,7 +355,8 @@ try {
     ? await loadConfig()
     : null;
   if (command === '--help' || command === '-h' || command === 'help') {
-    console.log('EdgePress commands: init, new, build, generate, server, editor, check, doctor, iterate, theme, security, deploy, clean');
+    console.log('EdgePress commands: init, new, build, generate, server, editor, check, doctor, iterate, theme, security, deploy, clean
+    console.log('Create a Page: edgepress new pages "Page title" [--lang en] [--slug page-slug]');');
   }
   else if (command === 'build' || command === 'generate') await buildSite();
   else if (command === 'init') await initializeProject();
@@ -341,7 +364,8 @@ try {
   else if (command === 'editor') {
     const portText = args[0] === '--port' ? args[1] : args[0]?.startsWith('--port=') ? args[0].slice(7) : args.length ? null : '4178';
     if (!/^\\d{1,5}$/.test(portText || '') || Number(portText) < 1 || Number(portText) > 65535) throw new Error('Usage: edgepress editor [--port 4178]');
-    const editor = await startPageEditor({ port: Number(portText) });
+    const editorConfig = await loadConfig();
+    const editor = await startPageEditor({ port: Number(portText), root: editorConfig.root, locales: editorConfig.i18n.locales, defaultLocale: editorConfig.i18n.defaultLocale });
     console.log('Local Pages editor: ' + editor.url + ' (Ctrl+C to stop)');
   }
   else if (command === 'deploy') {
@@ -351,7 +375,10 @@ try {
   }
   else if (command === 'theme') await manageTheme(args, await loadConfig());
   else if (command === 'security') await runSecurityAudit();
-  else if (command === 'new') await createPost((args[0] === 'post' ? args.slice(1) : args).join(' ').trim(), config);
+  else if (command === 'new') {
+    if (args[0] === 'pages' || args[0] === 'page') await newPage(args.slice(1), config);
+    else await createPost((args[0] === 'post' ? args.slice(1) : args).join(' ').trim(), config);
+  }
   else if (command === 'clean') await clean(config);
   else if (command === 'check') {
     await buildSite(config.root);
