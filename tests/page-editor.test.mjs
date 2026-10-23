@@ -90,7 +90,7 @@ test('visual browser controls edit, preview and save a page without hand-writing
       await page.locator('#add-row').click();
       assert.equal(await page.locator('.canvas-row').count(), 2);
       await page.locator('.canvas-row').last().locator('.pick').click();
-      await page.locator('#fields input[aria-label="text"]').fill('Typed in the visual editor');
+      await page.locator('#fields textarea[aria-label="text"]').fill('Typed in the visual editor');
       await page.locator('#save').click();
       await page.locator('#status.saved').waitFor();
       const result = JSON.parse(await readFile(file, 'utf8'));
