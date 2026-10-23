@@ -363,7 +363,7 @@ try {
   else if (command === 'preview' || command === 'dev' || command === 'server') await import('./preview.js');
   else if (command === 'editor') {
     const portText = args[0] === '--port' ? args[1] : args[0]?.startsWith('--port=') ? args[0].slice(7) : args.length ? null : '4178';
-    if (!/^\\d{1,5}$/.test(portText || '') || Number(portText) < 1 || Number(portText) > 65535) throw new Error('Usage: edgepress editor [--port 4178]');
+    if (!/^\d{1,5}$/.test(portText || '') || Number(portText) < 1 || Number(portText) > 65535) throw new Error('Usage: edgepress editor [--port 4178]');
     const editorConfig = await loadConfig();
     const editor = await startPageEditor({ port: Number(portText), root: editorConfig.root, locales: editorConfig.i18n.locales, defaultLocale: editorConfig.i18n.defaultLocale });
     console.log('Local Pages editor: ' + editor.url + ' (Ctrl+C to stop)');
