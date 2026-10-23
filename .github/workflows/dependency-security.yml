@@ -2,9 +2,9 @@ name: Dependency security
 on:
   push:
     branches: [main]
-    paths: ['package.json', 'package-lock.json', '.github/workflows/dependency-security.yml']
+    paths: ['package.json', 'package-lock.json', '.github/workflows/dependency-security.yml', 'tests/document-package.test.mjs', 'tests/oembed-layout.test.mjs']
   pull_request:
-    paths: ['package.json', 'package-lock.json', '.github/workflows/dependency-security.yml']
+    paths: ['package.json', 'package-lock.json', '.github/workflows/dependency-security.yml', 'tests/document-package.test.mjs', 'tests/oembed-layout.test.mjs']
   schedule:
     - cron: '17 15 * * 1'
   workflow_dispatch:
