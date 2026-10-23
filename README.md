@@ -59,6 +59,14 @@ To publish new source, a repository maintainer opens **Actions → Publish npm a
 
 **Recovery:** If a run fails *after* pushing its version tag, do not launch a new release blindly: check whether the tag, npm version or GitHub Release already exists and reconcile the incomplete publish first. npm versions cannot be overwritten. Protected branches must explicitly permit the GitHub Actions bot to create the release commit/tag or use a maintainer-approved release branch process.
 
+## Visual Pages editor / 可视化页面编辑器
+
+Not comfortable editing nested JSON? Run `npm run editor` (or `npx edgepress editor` in an initialized site), then open **http://127.0.0.1:4178/** in your browser. Use `edgepress editor --port 4179` if 4178 is occupied.
+
+不必先学会 JSON：编辑器可以选择 `content/pages/` 下的现有页面、添加页面行、设置每行 1–4 栏，添加常见元素块、上下调整元素顺序，并通过表单修改标题、文字、链接、图片地址和其他属性。左侧显示结构，中间展示即时布局与内容预览，右侧编辑当前元素。点击“保存更改”才会写回原页面 JSON。
+
+The editor runs **only on 127.0.0.1**, not on your deployed static site. It does not expose credentials, accept requests from other web origins, or load third-party scripts. Existing page metadata and unrecognized element settings are preserved; specialized and deeply nested properties may still have an advanced editor. The built-in preview approximates structure and content rather than rendering your full theme—run `npm run dev` or `npm run build` to verify actual output. Pages must already exist as localized `.json` files; Markdown articles remain edited as Markdown. Saves reject stale copies if another process changed the file.
+
 ## External link prompts
 
 The optional local prompt shows the complete destination URL (including path, query and fragment) once, with no duplicate hostname, and lets the visitor return or continue. It makes no request to the destination before confirmation. Configure exact origins, not wildcard domains:
