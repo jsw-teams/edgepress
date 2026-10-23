@@ -1,0 +1,37 @@
+name: Temporary dependency lockfile repair (#16)
+on:
+  push:
+    branches: [fix/issue-16-dependency-audit]
+    paths: ['.github/workflows/issue-16-lockfile-repair.yml']
+permissions:
+  contents: write
+jobs:
+  regenerate-and-verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+      - name: Regenerate lockfile with npm (no install scripts)
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Commit generated lockfile
+        run: |
+          git add package-lock.json
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m "fix(security): regenerate lockfile for patched dependencies"
+            git push origin HEAD:refs/heads/fix/issue-16-dependency-audit
+          fi
+      - name: Verify clean installation
+        run: npm ci --no-audit --no-fund
+      - name: Install browser test dependencies
+        run: npx playwright install --with-deps chromium firefox
+      - name: Run tests
+        run: npm test
+      - name: Build project
+        run: npm run build
+      - name: Audit resolved dependency graph
+        run: npm audit --package-lock-only --audit-level=low
