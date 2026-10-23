@@ -1,0 +1,345 @@
+{
+  "version": 1,
+  "description": "Shared, public EdgePress page-block presets. Templates are examples, not configuration-specific integrations.",
+  "blocks": {
+    "hero": {
+      "label": "横幅 Hero",
+      "category": "layout",
+      "template": {
+        "type": "hero",
+        "title": "页面横幅",
+        "text": "介绍页面内容"
+      }
+    },
+    "section": {
+      "label": "分区 Section",
+      "category": "layout",
+      "template": {
+        "type": "section",
+        "title": "新分区",
+        "blocks": [
+          {
+            "type": "text",
+            "text": "分区内容"
+          }
+        ]
+      }
+    },
+    "heading": {
+      "label": "标题 Heading",
+      "category": "text",
+      "template": {
+        "type": "heading",
+        "level": 2,
+        "text": "新的标题"
+      }
+    },
+    "text": {
+      "label": "文字 Text",
+      "category": "text",
+      "template": {
+        "type": "text",
+        "text": "在此编辑文字"
+      }
+    },
+    "media-text": {
+      "label": "图文 Media + Text",
+      "category": "media",
+      "template": {
+        "type": "media-text",
+        "mediaType": "image",
+        "src": "/images/example.png",
+        "alt": "图片说明",
+        "title": "图文标题",
+        "text": "图文描述",
+        "placement": "left"
+      }
+    },
+    "display-text": {
+      "label": "展示文字 Display Text",
+      "category": "text",
+      "template": {
+        "type": "display-text",
+        "level": 2,
+        "style": "editorial",
+        "text": "强调文字"
+      }
+    },
+    "link-list": {
+      "label": "链接列表 Link List",
+      "category": "links",
+      "template": {
+        "type": "link-list",
+        "title": "链接列表",
+        "items": [
+          {
+            "label": "链接",
+            "url": "/"
+          }
+        ]
+      }
+    },
+    "steps": {
+      "label": "步骤 Steps",
+      "category": "lists",
+      "template": {
+        "type": "steps",
+        "title": "操作步骤",
+        "items": [
+          {
+            "title": "第一步",
+            "text": "操作说明"
+          }
+        ]
+      }
+    },
+    "code": {
+      "label": "代码 Code",
+      "category": "text",
+      "template": {
+        "type": "code",
+        "language": "text",
+        "code": "示例代码"
+      }
+    },
+    "data-table": {
+      "label": "数据表 Data Table",
+      "category": "lists",
+      "template": {
+        "type": "data-table",
+        "title": "表格标题",
+        "headers": [
+          "字段",
+          "内容"
+        ],
+        "rows": [
+          [
+            "示例",
+            "填写内容"
+          ]
+        ]
+      }
+    },
+    "list": {
+      "label": "列表 List",
+      "category": "lists",
+      "template": {
+        "type": "list",
+        "title": "列表标题",
+        "items": [
+          "项目一",
+          "项目二"
+        ],
+        "ordered": false
+      }
+    },
+    "notice": {
+      "label": "提示 Notice",
+      "category": "text",
+      "template": {
+        "type": "notice",
+        "title": "提示",
+        "text": "提示信息",
+        "tone": "info"
+      }
+    },
+    "privacy-services": {
+      "label": "隐私服务清单",
+      "category": "privacy",
+      "template": {
+        "type": "privacy-services",
+        "emptyText": "暂无已配置的服务"
+      }
+    },
+    "privacy-consent": {
+      "label": "隐私同意信息",
+      "category": "privacy",
+      "template": {
+        "type": "privacy-consent",
+        "storageLabel": "存储位置",
+        "expiryLabel": "保留期限",
+        "proposedDateLabel": "建议日期",
+        "effectiveDateLabel": "生效日期",
+        "expiryText": "{days} 天"
+      }
+    },
+    "privacy-controller": {
+      "label": "隐私管理者信息",
+      "category": "privacy",
+      "template": {
+        "type": "privacy-controller",
+        "missingTitle": "管理者信息未配置",
+        "missingText": "请在站点配置中填写管理者信息",
+        "nameLabel": "管理者",
+        "contactLabel": "联系方式"
+      }
+    },
+    "link-directory": {
+      "label": "链接目录 Link Directory",
+      "category": "links",
+      "template": {
+        "type": "link-directory",
+        "title": "站点目录",
+        "items": [
+          {
+            "title": "参考网站",
+            "text": "站点简介",
+            "url": "https://example.com"
+          }
+        ]
+      }
+    },
+    "feature-grid": {
+      "label": "功能卡片 Feature Grid",
+      "category": "layout",
+      "template": {
+        "type": "feature-grid",
+        "title": "功能特点",
+        "items": [
+          {
+            "title": "功能名称",
+            "text": "功能说明"
+          }
+        ]
+      }
+    },
+    "image": {
+      "label": "图片 Image",
+      "category": "media",
+      "template": {
+        "type": "image",
+        "src": "/images/example.png",
+        "alt": "替换为图片文字描述"
+      }
+    },
+    "quote": {
+      "label": "引用 Quote",
+      "category": "text",
+      "template": {
+        "type": "quote",
+        "text": "引用内容",
+        "attribution": "来源"
+      }
+    },
+    "cta": {
+      "label": "行动按钮 CTA",
+      "category": "links",
+      "template": {
+        "type": "cta",
+        "title": "开始使用",
+        "text": "行动说明",
+        "label": "查看详情",
+        "url": "/"
+      }
+    },
+    "faq": {
+      "label": "常见问题 FAQ",
+      "category": "lists",
+      "template": {
+        "type": "faq",
+        "title": "常见问题",
+        "items": [
+          {
+            "question": "这里写问题",
+            "answer": "这里写回答"
+          }
+        ]
+      }
+    },
+    "oembed": {
+      "label": "外部嵌入 oEmbed",
+      "category": "integrations",
+      "requiresSetup": true,
+      "template": {
+        "type": "oembed",
+        "integration": "configure-service-id",
+        "url": "https://example.com/",
+        "title": "第三方嵌入"
+      }
+    },
+    "service": {
+      "label": "第三方服务 Service",
+      "category": "integrations",
+      "requiresSetup": true,
+      "template": {
+        "type": "service",
+        "integration": "configure-service-id"
+      }
+    },
+    "post-list": {
+      "label": "文章列表 Post List",
+      "category": "content",
+      "template": {
+        "type": "post-list",
+        "title": "文章列表",
+        "count": 3
+      }
+    },
+    "latest-posts": {
+      "label": "最新文章 Latest Posts",
+      "category": "content",
+      "template": {
+        "type": "latest-posts",
+        "title": "最新文章",
+        "count": 3,
+        "paginate": false
+      }
+    },
+    "ad-slot": {
+      "label": "广告位置 Ad Slot",
+      "category": "integrations",
+      "requiresSetup": true,
+      "template": {
+        "type": "ad-slot",
+        "integration": "configure-service-id",
+        "label": "广告"
+      }
+    },
+    "captcha": {
+      "label": "验证码 CAPTCHA",
+      "category": "integrations",
+      "requiresSetup": true,
+      "template": {
+        "type": "captcha",
+        "provider": "cloudflare-turnstile",
+        "label": "人机验证"
+      }
+    },
+    "document": {
+      "label": "文档预览 Document",
+      "category": "media",
+      "template": {
+        "type": "document",
+        "title": "文档预览",
+        "src": "/documents/sample.pdf"
+      }
+    },
+    "media-viewer": {
+      "label": "媒体浏览器 Media Viewer",
+      "category": "media",
+      "template": {
+        "type": "media-viewer",
+        "title": "图片集",
+        "items": [
+          {
+            "type": "image",
+            "src": "/images/example.png",
+            "alt": "图片说明"
+          }
+        ]
+      }
+    },
+    "local-tool": {
+      "label": "本地工具 Local Tool",
+      "category": "integrations",
+      "requiresSetup": true,
+      "template": {
+        "type": "local-tool",
+        "id": "my-local-tool",
+        "title": "本地工具",
+        "script": "/assets/tool.js",
+        "fallback": "JavaScript 未启用时的提示文字"
+      }
+    }
+  }
+}
