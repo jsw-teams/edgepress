@@ -2,9 +2,9 @@ name: Dependency security
 on:
   push:
     branches: [main]
-    paths: ['package.json', 'package-lock.json', '.github/workflows/dependency-security.yml', 'tests/document-package.test.mjs', 'tests/oembed-layout.test.mjs', '.github/workflows/publish.yml', 'tools/release/next-version.mjs', 'tests/release-version.test.mjs']
+    paths: ['package.json', 'package-lock.json', '.github/workflows/dependency-security.yml', 'tests/document-package.test.mjs', 'tests/oembed-layout.test.mjs', '.github/workflows/publish.yml', 'tools/release/next-version.mjs', 'tests/release-version.test.mjs', 'src/cli.js', 'src/page-editor.js', 'src/page-editor-client.js', 'src/page-editor.html', 'src/page-editor.css', 'tests/page-editor.test.mjs']
   pull_request:
-    paths: ['package.json', 'package-lock.json', '.github/workflows/dependency-security.yml', 'tests/document-package.test.mjs', 'tests/oembed-layout.test.mjs', '.github/workflows/publish.yml', 'tools/release/next-version.mjs', 'tests/release-version.test.mjs']
+    paths: ['package.json', 'package-lock.json', '.github/workflows/dependency-security.yml', 'tests/document-package.test.mjs', 'tests/oembed-layout.test.mjs', '.github/workflows/publish.yml', 'tools/release/next-version.mjs', 'tests/release-version.test.mjs', 'src/cli.js', 'src/page-editor.js', 'src/page-editor-client.js', 'src/page-editor.html', 'src/page-editor.css', 'tests/page-editor.test.mjs']
   schedule:
     - cron: '17 15 * * 1'
   workflow_dispatch:
