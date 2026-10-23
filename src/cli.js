@@ -15,6 +15,7 @@ import { loadLanguagePacks, translate } from './i18n.js';
 import { postTemplate } from './post-template.js';
 import {deploySite} from './deploy.js';
 import {formatPages} from '../tools/assets/format-pages.mjs';
+import {startPageEditor} from './page-editor.js';
 
 const siteGitignore = ['node_modules/', 'dist/', '.edgepress/', '.wrangler/', '.dev.vars', '.vercel/', '.netlify/', '.edgeone/', '.esa/', '.env', '.env.*', '!.env.example', '*.tgz', ''].join('\n');
 const siteReadme = [
@@ -81,6 +82,7 @@ async function initializeProject() {
       generate: 'edgepress generate',
       build: 'edgepress build',
       dev: 'edgepress server',
+      editor: 'edgepress editor',
       preview: 'edgepress server',
       check: 'edgepress check',
       doctor: 'edgepress doctor',
@@ -331,11 +333,17 @@ try {
     ? await loadConfig()
     : null;
   if (command === '--help' || command === '-h' || command === 'help') {
-    console.log('EdgePress commands: init, new, build, generate, server, check, doctor, iterate, theme, security, deploy, clean');
+    console.log('EdgePress commands: init, new, build, generate, server, editor, check, doctor, iterate, theme, security, deploy, clean');
   }
   else if (command === 'build' || command === 'generate') await buildSite();
   else if (command === 'init') await initializeProject();
   else if (command === 'preview' || command === 'dev' || command === 'server') await import('./preview.js');
+  else if (command === 'editor') {
+    const portText = args[0] === '--port' ? args[1] : args[0]?.startsWith('--port=') ? args[0].slice(7) : args.length ? null : '4178';
+    if (!/^\\d{1,5}$/.test(portText || '') || Number(portText) < 1 || Number(portText) > 65535) throw new Error('Usage: edgepress editor [--port 4178]');
+    const editor = await startPageEditor({ port: Number(portText) });
+    console.log('Local Pages editor: ' + editor.url + ' (Ctrl+C to stop)');
+  }
   else if (command === 'deploy') {
     const platform = args[0] && !args[0].startsWith('-') ? args.shift() : 'cloudflare';
     const built = process.env.WORKERS_CI === '1' ? {output:(await loadConfig()).resolvedPaths.output} : await buildSite();
@@ -362,7 +370,7 @@ try {
     const compatibilityReport = await checkCompatibility(config);
     const plan = await writeIterationPlan(config, pageReport, compatibilityReport);
     await showReport('Safe iteration plan', plan, resolve(config.resolvedPaths.cache, 'reports/iteration-plan.md'));
-  } else throw new Error('Commands: init, build|generate, server, deploy, new, clean, check, doctor, iterate, theme list|create|install|use, security');
+  } else throw new Error('Commands: init, build|generate, server, editor [--port 4178], deploy, new, clean, check, doctor, iterate, theme list|create|install|use, security');
 } catch (error) {
   console.error(error?.stack || error);
   process.exitCode = 1;
