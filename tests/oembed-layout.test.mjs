@@ -51,6 +51,9 @@ test('embed entry stays compact until requested, retries failures and keeps keyb
       page.on('pageerror', error => errors.push(error.message));
       await page.goto(origin);
       if (mode === 'text') await page.waitForFunction(()=>document.documentElement.dataset.edgepressDataReady === 'true');
+      // Full mode loads optional scripts after the first animation frame; do not
+      // click until the oEmbed module has finished attaching its handlers.
+      if (mode === 'full') await page.waitForFunction(() => Boolean(document.querySelector('[data-edgepress-oembed]')?.style.getPropertyValue('--oembed-ratio')));
       await page.evaluate(() => document.addEventListener('edgepress:privacy-open', () => window.testOpened = (window.testOpened || 0) + 1));
       const entry = page.locator('[data-edgepress-oembed]');
       const button = entry.locator('[data-oembed-load]');
