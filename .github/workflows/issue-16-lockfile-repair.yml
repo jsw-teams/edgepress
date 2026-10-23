@@ -7,7 +7,7 @@ permissions:
   contents: write
 jobs:
   regenerate-and-verify:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -18,6 +18,13 @@ jobs:
           node-version: '22'
       - name: Regenerate lockfile with npm (no install scripts)
         run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Commit generated lockfile
+        run: |
+          git add package-lock.json
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m "fix(security): regenerate lockfile for patched dependencies"
+            git push origin HEAD:refs/heads/fix/issue-16-dependency-audit
+          fi
       - name: Verify clean installation
         run: npm ci --no-audit --no-fund
       - name: Install browser test dependencies
@@ -28,10 +35,3 @@ jobs:
         run: npm run build
       - name: Audit resolved dependency graph
         run: npm audit --package-lock-only --audit-level=low
-      - name: Commit generated lockfile
-        run: |
-          git add package-lock.json
-          if ! git diff --cached --quiet; then
-            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m "fix(security): regenerate lockfile for patched dependencies"
-            git push origin HEAD:refs/heads/fix/issue-16-dependency-audit
-          fi
