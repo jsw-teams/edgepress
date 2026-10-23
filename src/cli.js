@@ -30,7 +30,7 @@ const siteReadme = [
   '',
   'Create an article with `npm run new -- post "My first article"`. Open the printed file path and write Markdown below the second `---` line. The command fills the title, date, and language. Run `npm run dev` to preview and `npm run build` before publishing.',
   '',
-  'Pages use localized JSON files such as `content/pages/home/en.json`; VS Code can fold each row, cell and element and read the local schema. Articles stay in Markdown. Page layouts and theme customization are optional for everyday writing.',
+  'Use `npm run editor` to open the local Pages visual editor at http://127.0.0.1:4178/. Add and arrange rows, columns and elements without writing JSON; the editor saves to existing localized page files. Use `npm run dev` to preview the actual theme. Articles stay in Markdown.',
   '',
   '## Deploy a static website',
   '',
