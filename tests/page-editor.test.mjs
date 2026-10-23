@@ -85,8 +85,9 @@ test('visual browser controls edit, preview and save a page without hand-writing
     try {
       const page = await browser.newPage();
       await page.goto(url);
-      await page.locator('#page-name').getByText('Hello').waitFor();
+      await page.waitForFunction(() => document.querySelector('#page-name')?.textContent === 'Hello');
       await page.locator('#title').fill('Visual title');
+      await page.locator('.canvas-row').first().locator('select').first().selectOption('1');
       await page.locator('#add-row').click();
       assert.equal(await page.locator('.canvas-row').count(), 2);
       await page.locator('.canvas-row').last().locator('.pick').click();
@@ -95,6 +96,9 @@ test('visual browser controls edit, preview and save a page without hand-writing
       await page.locator('#status.saved').waitFor();
       const result = JSON.parse(await readFile(file, 'utf8'));
       assert.equal(result.title, 'Visual title');
+      assert.equal(result.blocks[0].columns, 1);
+      assert.equal(result.blocks[0].cells[0].length, 2);
+      assert.equal(result.blocks[0].cells[0][1].custom, 7);
       assert.equal(result.blocks[1].cells[0][0].text, 'Typed in the visual editor');
       assert.deepEqual(result.customSetting, sample.customSetting);
     } finally { await browser.close(); }
