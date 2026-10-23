@@ -61,11 +61,20 @@ To publish new source, a repository maintainer opens **Actions → Publish npm a
 
 ## Visual Pages editor / 可视化页面编辑器
 
-Not comfortable editing nested JSON? Run `npm run editor` (or `npx edgepress editor` in an initialized site), then open **http://127.0.0.1:4178/** in your browser. Use `edgepress editor --port 4179` if 4178 is occupied.
+Run `npm run editor` (or `npx edgepress editor` in an initialized site), then open **http://127.0.0.1:4178/**. The editor now supports **＋ 新建页面**: choose a title, optional URL slug and configured language; the new JSON Page opens immediately in the visual canvas. Existing Pages can still be selected, arranged into 1–4 columns and edited without touching JSON.
 
-不必先学会 JSON：编辑器可以选择 `content/pages/` 下的现有页面、添加页面行、设置每行 1–4 栏，添加常见元素块、上下调整元素顺序，并通过表单修改标题、文字、链接、图片地址和其他属性。左侧显示结构，中间展示即时布局与内容预览，右侧编辑当前元素。点击“保存更改”才会写回原页面 JSON。
+从命令行也可以新建页面：
 
-The editor runs **only on 127.0.0.1**, not on your deployed static site. It does not expose credentials, accept requests from other web origins, or load third-party scripts. Existing page metadata and unrecognized element settings are preserved; specialized and deeply nested properties may still have an advanced editor. The built-in preview approximates structure and content rather than rendering your full theme—run `npm run dev` or `npm run build` to verify actual output. Pages must already exist as localized `.json` files; Markdown articles remain edited as Markdown. Saves reject stale copies if another process changed the file.
+```sh
+edgepress new pages "About our project" --lang en --slug about
+edgepress new pages "关于我们" --lang zh-cn --slug about
+```
+
+The shortcut `edgepress new page` is also accepted. By default, the CLI creates `content/pages/<slug>/<locale>.json` in the site's default language. Existing pages, legacy `.md` equivalents, and symlinked directories cannot be overwritten. The generated `$schema` reference points to the installed framework (or the local development schema). Run `npm run editor` to continue editing, and `npm run build` to validate the actual generated site.
+
+**Shared block catalog:** `src/page-block-catalog.json` ships with the npm package and defines starter templates for **all 30 supported Pages block types**. This includes site-reusable `link-directory`, `media-text`, `feature-grid`, `privacy-controller`, `document`, `media-viewer` and consent-controlled integrations used by other frontends. Reuse the public EdgePress catalog from site projects (including private ones); do not copy private pages or integrate site-specific services into the framework. Third-party service, CAPTCHA, ad and local-tool blocks are available as templates but **require site configuration and valid resource URLs** before a build; inserting the template does not activate a service.
+
+The editor runs **only on 127.0.0.1**, never on deployed static sites. It enforces origin checks, path restrictions, revision-conflict detection and atomic saves. Unrecognized block properties are kept; complex nested fields can still be edited in the inspector's advanced JSON input. The canvas previews structure, not theme-perfect output. Articles remain Markdown.
 
 ## External link prompts
 
