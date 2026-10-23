@@ -1,0 +1,103 @@
+name: Publish npm and GitHub Release
+
+on:
+  workflow_dispatch:
+
+# Publishing is intentionally manual. Ordinary pushes and pull requests cannot publish.
+permissions:
+  contents: read
+
+concurrency:
+  group: edgepress-npm-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'jsw-teams/edgepress' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Check out the current main branch, including tags
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Node 22 and the npm registry
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
+
+      - name: Install npm with trusted publishing support
+        run: npm install --global 'npm@^11.5.1'
+
+      - name: Calculate the next YYYY.M.monthly-update version
+        id: version
+        run: node tools/release/next-version.mjs
+
+      - name: Update package and lockfile versions
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        run: npm version "$RELEASE_VERSION" --no-git-tag-version --ignore-scripts
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Dependency security audit
+        run: npm audit --package-lock-only --audit-level=low
+
+      - name: Install browsers for the full test suite
+        run: npx playwright install --with-deps chromium firefox
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build package and example site
+        run: npm run build
+
+      - name: Inspect the npm archive
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          npm pack --pack-destination "$RUNNER_TEMP"
+          tarball="$RUNNER_TEMP/edgepress-$RELEASE_VERSION.tgz"
+          test -s "$tarball"
+          tar -tzf "$tarball" | grep -qx 'package/package.json'
+          tar -tzf "$tarball" | grep -qx 'package/src/cli.js'
+          (cd "$RUNNER_TEMP" && sha256sum "edgepress-$RELEASE_VERSION.tgz" > "edgepress-$RELEASE_VERSION.tgz.sha256")
+
+      - name: Commit version and push its release tag
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package.json package-lock.json
+          git commit -m "chore(release): $RELEASE_TAG [skip ci]"
+          # A concurrent main update causes a normal (non-force) push to fail.
+          git push origin HEAD:refs/heads/main
+          git tag -a "$RELEASE_TAG" -m "EdgePress $RELEASE_VERSION"
+          git push origin "refs/tags/$RELEASE_TAG"
+
+      - name: Publish the exact checked archive to npm
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        run: npm publish "$RUNNER_TEMP/edgepress-$RELEASE_VERSION.tgz" --access public --provenance
+
+      - name: Create GitHub Release with the same npm archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            "$RUNNER_TEMP/edgepress-$RELEASE_VERSION.tgz" \
+            "$RUNNER_TEMP/edgepress-$RELEASE_VERSION.tgz.sha256" \
+            --verify-tag --generate-notes --title "EdgePress $RELEASE_VERSION"
