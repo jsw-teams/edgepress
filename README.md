@@ -289,4 +289,6 @@ Project recordings use manual play/pause and a seekable progress bar, with theme
 
 Development files: tests/ contains regression tests and fixtures; tools/assets/ maintains source assets; tools/recordings/ contains desktop capture workflows; tools/verification/ contains browser audits; tools/reports/ holds generated evidence. Run npm test and npm run check after changes.
 
-Dependency maintenance uses compatible release ranges without retained lockfiles. The media and document viewers follow Git semver release ranges; audits resolve fresh dependency snapshots outside the checkout and remove them after use. Dependabot checks daily, including security updates; changed dependencies must pass the full browser suite before release.
+Dependency maintenance uses compatible release ranges without retained lockfiles. The media and document viewers follow Git semver release ranges; audits resolve fresh dependency snapshots outside the checkout and remove them after use. Dependabot checks weekly, including security updates; changed dependencies must pass the full browser suite before release.
+
+Weekly automatic dependency maintenance resolves compatible updates, audits and runs this project's regression suite with read-only access, then uses a separate job to commit verified manifest-only repairs. Failed checks or branch protection retain a repair PR; major upgrades are not forced. No lockfiles are retained. The existing package release process remains separate.
