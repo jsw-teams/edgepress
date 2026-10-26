@@ -40,16 +40,16 @@ jobs:
         id: version
         run: node tools/release/next-version.mjs
 
-      - name: Update package and lockfile versions
+      - name: Update the package version
         env:
           RELEASE_VERSION: ${{ steps.version.outputs.version }}
         run: npm version "$RELEASE_VERSION" --no-git-tag-version --ignore-scripts
 
-      - name: Install locked dependencies
-        run: npm ci --no-audit --no-fund
+      - name: Install current compatible dependencies
+        run: npm install --no-audit --no-fund
 
       - name: Dependency security audit
-        run: npm audit --package-lock-only --audit-level=low
+        run: npm run audit
 
       - name: Install browsers for the full test suite
         run: npx playwright install --with-deps chromium firefox
@@ -79,7 +79,7 @@ jobs:
           git diff --check
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add package.json package-lock.json
+          git add package.json
           git commit -m "chore(release): $RELEASE_TAG [skip ci]"
           # A concurrent main update causes a normal (non-force) push to fail.
           git push origin HEAD:refs/heads/main

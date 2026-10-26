@@ -64,11 +64,12 @@
     "deploy:esa": "node src/cli.js deploy esa",
     "deploy:netlify": "node src/cli.js deploy netlify",
     "fonts:sync": "node tools/assets/sync-fonts.mjs",
-    "editor": "node src/cli.js editor"
+    "editor": "node src/cli.js editor",
+    "audit": "node tools/maintenance/audit-dependencies.mjs low"
   },
   "dependencies": {
-    "@jsw-teams/document-viewer": "https://codeload.github.com/jsw-teams/document-viewer/tar.gz/ab21d0ee9c078d084b2abee373ffad302928978c",
-    "@jsw-teams/media-viewer": "https://codeload.github.com/jsw-teams/media-viewer/tar.gz/12eb8983c2df1eabb3aaece44b232c56b4a9e1fe",
+    "@jsw-teams/document-viewer": "git+https://github.com/jsw-teams/document-viewer.git#semver:^2026.10.1",
+    "@jsw-teams/media-viewer": "git+https://github.com/jsw-teams/media-viewer.git#semver:^2026.10.1",
     "esbuild": "^0.28.2",
     "htmlparser2": "^12.0.0",
     "image-size": "^2.0.4",
@@ -79,13 +80,14 @@
   },
   "overrides": {
     "@file-viewer/doc": {
-      "dompurify": "3.4.17"
-    }
+      "dompurify": "^3.4.17"
+    },
+    "undici": "^7.30.1"
   },
   "devDependencies": {
-    "lucide-static": "1.55.0",
+    "lucide-static": "^1.55.0",
     "playwright": "^1.63.0",
     "vscode-json-languageservice": "^6.0.0-next.3",
-    "wrangler": "^4.149.0"
+    "wrangler": "^4.152.0"
   }
 }

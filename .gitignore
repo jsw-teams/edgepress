@@ -18,3 +18,8 @@ dist/
 tools/.recordings/
 
 tools/.verification/
+
+package-lock.json
+artifacts-dependency-*.log
+
+tools/dependency-*.log

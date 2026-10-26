@@ -8,7 +8,7 @@ EdgePress automatically registers page-specific native WebMCP tools for reading 
 
 Document previews use the browser-only `document-viewer` package: PDF, DOC/DOCX, PPT/PPTX and XLS/XLSX render inside the page automatically without moving keyboard focus. Articles accept `!document[Report](/documents/report.docx)`; Pages support `type: document`. Remote direct-file URLs require a configured consent service and CORS. See the theme-development guide.
 
-The dependency is pinned to a full commit in the public [document-viewer repository](https://github.com/jsw-teams/document-viewer). Cloud `npm ci` needs no sibling checkout, bundled source snapshot or Office conversion software. Publish and validate document-viewer first, then update the dependency URL and lockfile here. Sites can consume the resulting pinned EdgePress commit without copying either implementation.
+The dependency is pinned to a full commit in the public [document-viewer repository](https://github.com/jsw-teams/document-viewer). Cloud `npm install` needs no sibling checkout, bundled source snapshot or Office conversion software. Publish and validate document-viewer first, then update the dependency URL and lockfile here. Sites can consume the resulting pinned EdgePress commit without copying either implementation.
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/jsw-teams/edgepress)
 [![Deploy to EdgeOne Pages](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Fjsw-teams%2Fedgepress&build-command=npm%20run%20build&install-command=npm%20ci&output-directory=dist)
@@ -36,7 +36,7 @@ Buttons open repository setup. Cloudflare, Vercel, Netlify and EdgeOne support r
 
 ## Quick start
 
-The commands below install the published npm release and initialize a new project directory. For the latest GitHub changes, use the deployment buttons or clone this repository, then run `npm ci` and `npm run dev` from its root:
+The commands below install the published npm release and initialize a new project directory. For the latest GitHub changes, use the deployment buttons or clone this repository, then run `npm install` and `npm run dev` from its root:
 
     mkdir my-edgepress-site
     cd my-edgepress-site
@@ -45,7 +45,7 @@ The commands below install the published npm release and initialize a new projec
     npm install
     npm run dev
 
-Use Node.js 22.12 or newer. Set the real site URL and operator contact in config.yml before publishing. Deploy with edgepress deploy. When developing EdgePress itself, use `npm ci`, then `npm link` to expose the local CLI.
+Use Node.js 22.12 or newer. Set the real site URL and operator contact in config.yml before publishing. Deploy with edgepress deploy. When developing EdgePress itself, use `npm install`, then `npm link` to expose the local CLI.
 
 Run `edgepress init` in a new project directory to scaffold a site pinned to the installed EdgePress release. The initializer keeps the existing package name and scripts.
 
@@ -288,3 +288,5 @@ Real static website output demonstrates what the builder produces. Product recor
 Project recordings use manual play/pause and a seekable progress bar, with theme colors and keyboard support. The reproducible CLI/editor workbench lives in [tools/recordings/demo-workbench.mjs](tools/recordings/demo-workbench.mjs); see [the recording guide](content/guides/product-demos.md). Built-in navigation and page icons come from the pinned Lucide 1.52 library, bundled locally with its license.
 
 Development files: tests/ contains regression tests and fixtures; tools/assets/ maintains source assets; tools/recordings/ contains desktop capture workflows; tools/verification/ contains browser audits; tools/reports/ holds generated evidence. Run npm test and npm run check after changes.
+
+Dependency maintenance uses compatible release ranges without retained lockfiles. The media and document viewers follow Git semver release ranges; audits resolve fresh dependency snapshots outside the checkout and remove them after use. Dependabot checks daily, including security updates; changed dependencies must pass the full browser suite before release.

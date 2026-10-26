@@ -11,7 +11,7 @@ Curiosity is a good starting point. Small fixes, experiments, documentation, acc
 3. Use Node.js 22.13+, npm and the committed lockfile:
 
 ```sh
-npm ci
+npm install
 npx playwright install chromium firefox
 npm run build
 npm test
