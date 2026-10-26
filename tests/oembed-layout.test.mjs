@@ -60,7 +60,9 @@ test('embed entry stays compact until requested, retries failures and keeps keyb
       assert.equal(await entry.locator('[data-oembed-status]').evaluate(element => element.getBoundingClientRect().height), 0);
       assert((await entry.boundingBox()).height < 300);
       assert.equal(requests, 0);
-      await button.focus(); await page.keyboard.press('Enter');
+      // Locator.press does not wait for CSS visibility; hidden controls cannot receive focus.
+      await button.waitFor({state:'visible'});
+      await button.press('Enter');
       // This is an event counter, so deferred text-view styles must not make
       // the assertion depend on the browser scheduling animation frames.
       await page.waitForFunction(() => window.testOpened > 0, null, { polling: 50 });
@@ -68,7 +70,8 @@ test('embed entry stays compact until requested, retries failures and keeps keyb
       assert.equal(requests, 0);
       assert.equal(await button.isEnabled(), true);
       await page.evaluate(() => { window.testAllowed = true; });
-      await button.focus(); await page.keyboard.press('Enter');
+      await button.waitFor({state:'visible'});
+      await button.press('Enter');
       await page.waitForFunction(() => document.querySelector('[data-edgepress-oembed]').getAttribute('aria-busy') === 'true');
       assert.equal(await button.isEnabled(), false);
       const pendingBounds = await entry.locator('[data-oembed-placeholder]').boundingBox();
@@ -81,7 +84,8 @@ test('embed entry stays compact until requested, retries failures and keeps keyb
       await page.waitForTimeout(300);
       assert.equal(calls,1);
       assert.equal(await entry.getAttribute('data-oembed-unavailable'),'true');
-      await button.focus(); await page.keyboard.press('Enter');
+      await button.waitFor({state:'visible'});
+      await button.press('Enter');
       await page.waitForFunction(() => document.querySelector('[data-edgepress-oembed]').dataset.loaded === 'true');
       await page.frameLocator('iframe').getByText('Shared story content').waitFor();
       assert.equal(calls, 2);
