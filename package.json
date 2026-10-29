@@ -69,8 +69,8 @@
     "deploy:local": "node src/cli.js server"
   },
   "dependencies": {
-    "@jsw-teams/document-viewer": "git+https://github.com/jsw-teams/document-viewer.git#semver:^2026.10.1",
-    "@jsw-teams/media-viewer": "git+https://github.com/jsw-teams/media-viewer.git#semver:^2026.10.1",
+    "@jsw-teams/document-viewer": "git+https://github.com/jsw-teams/document-viewer.git#semver:^2026.10.2",
+    "@jsw-teams/media-viewer": "git+https://github.com/jsw-teams/media-viewer.git#semver:^2026.10.2",
     "esbuild": "^0.28.2",
     "htmlparser2": "^12.0.0",
     "image-size": "^2.0.4",

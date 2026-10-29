@@ -10,6 +10,9 @@ This explicit operator update supersedes older lockfile/pin instructions below.
 
 ## Open collaboration
 
+- Before uploading a branch or PR, run relevant tests. Runtime/component changes require `npm test`, `npm run build` and `npm run audit`; documentation changes require checking the affected examples and links. Report exact commands/results and unrun checks. Agents may submit security reports under SECURITY.md, with affected commit/configuration, prerequisites, sanitized reproduction, expected/actual behavior, impact and real verification evidence. Label hypotheses and AI assistance; never publish secrets or test unauthorized production targets.
+- 中文：欢迎 Vibe Coding 与 Agent 贡献；先测试再上传，准确说明未验证项。敏感漏洞按 SECURITY.md 私密报告，附版本、前提、脱敏复现、影响和真实测试结果，区分事实与推测。报告不构成生产操作或发包授权。
+
 - Normal GitHub Actions checks audit the committed dependency lockfile and verify Node 22 installation, browser regression tests and the static build with read-only repository permissions. The separate `.github/workflows/publish.yml` workflow is **manual-only** on `main`: it tests, computes a `YYYY.M.<monthly update count>` version, pushes a normal (never forced) release commit/tag, publishes the npm archive with Trusted Publishing, then creates the GitHub Release. Never grant publishing credentials or write permissions to untrusted pull-request CI. Do not weaken audit thresholds without an operator request.
 
 - Welcome curiosity, Vibe Coding and AI-assisted contributions without tool restrictions. Review understandable changes and actual verification, not how code was produced. Follow CONTRIBUTING.md and report vulnerabilities privately via SECURITY.md.

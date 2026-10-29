@@ -1,5 +1,7 @@
 # EdgePress
 
+[中文说明](#中文说明)
+
 A static-site builder for independent writing, small websites and curious experiments. Keep content in plain files and use the host you already have.
 
 Curious about improving this project? Vibe Coding and AI-assisted contributions are welcome, with no tool restrictions. Start with [Contributing](CONTRIBUTING.md), follow [AGENTS.md](AGENTS.md), and share a small, understandable change with reproducible tests. [Report a bug or idea](https://github.com/jsw-teams/edgepress/issues/new/choose) · [Security](SECURITY.md) · [License](LICENSE).
@@ -8,7 +10,7 @@ EdgePress automatically registers page-specific native WebMCP tools for reading 
 
 Document previews use the browser-only `document-viewer` package: PDF, DOC/DOCX, PPT/PPTX and XLS/XLSX render inside the page automatically without moving keyboard focus. Articles accept `!document[Report](/documents/report.docx)`; Pages support `type: document`. Remote direct-file URLs require a configured consent service and CORS. See the theme-development guide.
 
-The dependency is pinned to a full commit in the public [document-viewer repository](https://github.com/jsw-teams/document-viewer). Cloud `npm install` needs no sibling checkout, bundled source snapshot or Office conversion software. Publish and validate document-viewer first, then update the dependency URL and lockfile here. Sites can consume the resulting pinned EdgePress commit without copying either implementation.
+Viewer dependencies use compatible published Git release ranges from the public [document-viewer](https://github.com/jsw-teams/document-viewer) and [media-viewer](https://github.com/jsw-teams/media-viewer) repositories. Cloud `npm install` needs no sibling checkout, copied implementation or Office conversion software. Publish and validate component releases before raising these ranges; downstream sites must update and verify their installed dependencies too.
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/jsw-teams/edgepress)
 [![Deploy to EdgeOne Pages](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Fjsw-teams%2Fedgepress&build-command=npm%20run%20build&install-command=npm%20install&output-directory=dist)
@@ -298,3 +300,11 @@ Development files: tests/ contains regression tests and fixtures; tools/assets/ 
 Dependency maintenance uses compatible release ranges without retained lockfiles. The media and document viewers follow Git semver release ranges; audits resolve fresh dependency snapshots outside the checkout and remove them after use. Dependabot checks weekly, including security updates; changed dependencies must pass the full browser suite before release.
 
 Weekly automatic dependency maintenance resolves compatible updates, audits and runs this project's regression suite with read-only access, then uses a separate job to commit verified manifest-only repairs. Failed checks or branch protection retain a repair PR; major upgrades are not forced. No lockfiles are retained. The existing package release process remains separate.
+
+## 中文说明
+
+EdgePress 的中文名称是写文建站。使用 Markdown 写文章、JSON Pages 排版页面，构建静态站点并发布到 Cloudflare、Vercel、Netlify、EdgeOne 或 ESA；不需要文章数据库。多媒体查看器使用本地打包的 Video.js 10，文档预览使用独立的 document-viewer。英文说明为默认内容，完整中文入门见 [中文指南](content/guides/zh-cn.md)。
+
+安装依赖使用 `npm install`，本地预览使用 `npm run dev`，构建使用 `npm run build`，发布使用 `npm run deploy:cloudflare` 或相应平台命令。平台账号仍需先完成认证。上方 GIF 是真实隔离虚拟机中的终端、编辑器及浏览器录制；演示媒体按需播放，不默认自动播放。
+
+欢迎 Vibe Coding、AI 辅助开发和 Agent 安全报告。先读 [AGENTS.md](AGENTS.md) 与 [贡献规范](CONTRIBUTING.md)，**运行相关测试后再上传代码**，说明命令、结果和未执行项。涉及公共运行时的修改应执行 `npm test`、`npm run build` 和 `npm run audit`，不得把生成的预期输出当作测试证据。敏感问题按 [安全政策](SECURITY.md) 私密报告，注明版本、前提、脱敏复现、预期与实际行为、影响和真实验证结果，明确区分已复现问题与推测；不要公开凭据、用户数据或攻击未获授权的生产环境。

@@ -80,9 +80,9 @@ test('media blocks reuse hashed local components, select only one attachment and
       await local.locator('[data-next]').click();
       await local.locator('.gallery-stage img').waitFor();
       await local.locator('[data-next]').click();
-      await local.locator('.plyr').waitFor();
+      await local.locator('.media-player').waitFor();
       assert.ok(!requests.includes('/recording.mp4'));
-      await local.locator('.plyr__control--overlaid').click();
+      await local.locator('[data-action="play-large"]').click();
       await page.waitForFunction(() => !!document.querySelector('video[src]'));
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
       await page.evaluate(async choiceUrl => {

@@ -7,7 +7,7 @@ import { dirname, resolve } from 'node:path';
 test('cloud dependency follows published release ranges and excludes the removed PPT engine', async () => {
   const manifest = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
   const source = manifest.dependencies['@jsw-teams/document-viewer'];
-  assert.match(source, /^git\+https:\/\/github\.com\/jsw-teams\/document-viewer\.git#semver:\^2026\.10\.1$/);
+  assert.match(source, /^git\+https:\/\/github\.com\/jsw-teams\/document-viewer\.git#semver:\^\d{4}\.\d{1,2}\.\d+$/);
   assert.ok(!manifest.files.includes('vendor'));
   assert.match(manifest.overrides['@file-viewer/doc'].dompurify,/^\^3\./);
   const require = createRequire(import.meta.url);
