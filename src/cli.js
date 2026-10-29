@@ -92,7 +92,8 @@ async function initializeProject() {
       'deploy:netlify': 'edgepress deploy netlify',
       'deploy:vercel': 'edgepress deploy vercel',
       'deploy:edgeone': 'edgepress deploy edgeone',
-      'deploy:esa': 'edgepress deploy esa'
+      'deploy:esa': 'edgepress deploy esa',
+      'deploy:local': 'edgepress server'
     },
     overrides: {
       ...(packageData.overrides || {}),

@@ -11,7 +11,7 @@ Document previews use the browser-only `document-viewer` package: PDF, DOC/DOCX,
 The dependency is pinned to a full commit in the public [document-viewer repository](https://github.com/jsw-teams/document-viewer). Cloud `npm install` needs no sibling checkout, bundled source snapshot or Office conversion software. Publish and validate document-viewer first, then update the dependency URL and lockfile here. Sites can consume the resulting pinned EdgePress commit without copying either implementation.
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/jsw-teams/edgepress)
-[![Deploy to EdgeOne Pages](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Fjsw-teams%2Fedgepress&build-command=npm%20run%20build&install-command=npm%20ci&output-directory=dist)
+[![Deploy to EdgeOne Pages](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Fjsw-teams%2Fedgepress&build-command=npm%20run%20build&install-command=npm%20install&output-directory=dist)
 [![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fjsw-teams%2Fedgepress)
 [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/jsw-teams/edgepress)
 [![Import into ESA Pages](content/assets/edgepress/brand/deploy-esa.svg)](https://esa.console.aliyun.com/edge/pages/creation)
@@ -34,9 +34,15 @@ The builder automatically explains the latest article edit. Readers see formatte
 
 Buttons open repository setup. Cloudflare, Vercel, Netlify and EdgeOne support repository templates; ESA opens its official import screen, where you authorize GitHub and select the repository. Every static platform uses `npm run build` and `dist/`; no database or website Function is required. Write posts in Markdown, compose pages from editable rows and elements, choose a shared theme, and build the site into dist/.
 
+Real VM recording: the actual CLI creates a post, Geany saves its Markdown, and `npm run deploy:local` starts the preview before navigating from the homepage to the article. Playback is manual.
+
+[![Real CLI, editor and browser demonstration](content/assets/images/previews/edgepress-cli-local.1b61974af33b2bb1.webp)](content/assets/images/previews/edgepress-cli-local.065373ef0ebd26fa.mp4)
+
+[Play recording](content/assets/images/previews/edgepress-cli-local.065373ef0ebd26fa.mp4) · [GIF](content/assets/images/previews/edgepress-cli-local.9697a9de52bef936.gif)
+
 ## Quick start
 
-The commands below install the published npm release and initialize a new project directory. For the latest GitHub changes, use the deployment buttons or clone this repository, then run `npm install` and `npm run dev` from its root:
+The commands below install the published npm release and initialize a new project directory. For the latest GitHub changes, use the deployment buttons or clone this repository, then run `npm install` and `npm run deploy:local` from its root:
 
     mkdir my-edgepress-site
     cd my-edgepress-site
@@ -45,9 +51,9 @@ The commands below install the published npm release and initialize a new projec
     npm install
     npm run dev
 
-Use Node.js 22.12 or newer. Set the real site URL and operator contact in config.yml before publishing. Deploy with edgepress deploy. When developing EdgePress itself, use `npm install`, then `npm link` to expose the local CLI.
+Use Node.js 22.12 or newer. Set the real site URL and operator contact in config.yml before publishing. Deploy with `npm run deploy:cloudflare`, `npm run deploy:vercel`, `npm run deploy:netlify`, `npm run deploy:esa` or `npm run deploy:edgeone`. `npm run deploy:local` starts the loopback preview without uploading a site. When developing EdgePress itself, use `npm install`, then `npm link` to expose the local CLI.
 
-Run `edgepress init` in a new project directory to scaffold a site pinned to the installed EdgePress release. The initializer keeps the existing package name and scripts.
+Run `edgepress init` in a new project directory to scaffold a site pinned to the installed EdgePress release. The initializer keeps the existing package name and adds the site's CLI scripts.
 
 ## Maintainer npm and GitHub releases
 

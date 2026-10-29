@@ -65,7 +65,8 @@
     "deploy:netlify": "node src/cli.js deploy netlify",
     "fonts:sync": "node tools/assets/sync-fonts.mjs",
     "editor": "node src/cli.js editor",
-    "audit": "node tools/maintenance/audit-dependencies.mjs low"
+    "audit": "node tools/maintenance/audit-dependencies.mjs low",
+    "deploy:local": "node src/cli.js server"
   },
   "dependencies": {
     "@jsw-teams/document-viewer": "git+https://github.com/jsw-teams/document-viewer.git#semver:^2026.10.1",

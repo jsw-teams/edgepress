@@ -2,7 +2,7 @@
 // Geany edits the actual generated file. Nothing is installed into production.
 import assert from 'node:assert/strict';
 import {readFile,writeFile,mkdir,rm,cp} from 'node:fs/promises';
-import {resolve,sep,extname} from 'node:path';
+import {resolve,sep} from 'node:path';
 import {spawn} from 'node:child_process';
 import {pathToFileURL} from 'node:url';
 import {guest,guestPath,typeCommand,editFile,openApp,activate} from './vm-desktop.mjs';
@@ -23,7 +23,7 @@ export async function workbench({artifact,packageRoot,photoPath,locale,context,e
  await rm(resolve(root,'content/pages'),{recursive:true,force:true});await mkdir(resolve(root,'content/pages/home'),{recursive:true});
  await writeFile(resolve(root,'content/pages/home',locale.toLowerCase()+'.json'),JSON.stringify({title:settings.site.title,lang:locale,slug:'home',homepage:true,blocks:[{columns:1,cells:[[{type:'hero',eyebrow:chinese?'生活里的小事':'Notes from everyday life',title:settings.site.title,text:settings.site.description}]]},{columns:1,cells:[[{type:'post-list',title:chinese?'最近的文章':'Recent stories',category:'uncategorized',count:3}]]}]},null,2)+'\n');
  if(embedding){settings.plugins.consent.services=[{id:'ishare',provider:'oembed',backendUrl:'https://ishare.js.gripe',enabled:true,name:chinese?'爱分享':'ishare',purpose:chinese?'在你同意后显示作者分享的图片与视频。':'Show the author’s shared photos and videos after you agree.',dataCategories:chinese?'请求的媒体和 IP 地址。':'Requested media and IP address.',recipient:'ishare',retention:chinese?'直到发布者删除。':'Until the publisher deletes it.',privacyUrl:'https://ishare.js.gripe/privacy/'}];await writeFile(resolve(root,'config.yml'),stringify(settings));}
- await mkdir(resolve(root,'content/assets/photos'),{recursive:true});await cp(photoPath,resolve(root,'content/assets/photos/seaside.jpg'));
+ if(photoPath){await mkdir(resolve(root,'content/assets/photos'),{recursive:true});await cp(photoPath,resolve(root,'content/assets/photos/seaside.jpg'));}
  let file=null,port;
  const terminalTitle='EdgePress '+locale;
  const {loadConfig}=await import(pathToFileURL(resolve(upstream,'src/config.js')));const {readDocuments}=await import(pathToFileURL(resolve(upstream,'src/content.js')));
@@ -37,9 +37,9 @@ export async function workbench({artifact,packageRoot,photoPath,locale,context,e
  async function createPost(){await run(['new','post',title]);const article=await findPost();assert.ok(article);return file;}
  async function newPost(){await typeCommand(root,terminalTitle,"edgepress new post '"+title+"'");for(let attempt=0;attempt<30;attempt++){const article=await findPost();if(article)return;await new Promise(done=>setTimeout(done,300));}throw Error('CLI did not create the post');}
  async function editPost(body){assert.ok(file);const front=(await readFile(file,'utf8')).split('---')[1];await editFile(root,file,'---'+front+'---\n\n'+body+'\n');}
- async function startServer({omitWait=task=>task()}={}){
+ async function startServer({omitWait=task=>task(),command='edgepress server'}={}){
   const {createServer}=await import('node:net');const socket=createServer();await new Promise(done=>socket.listen(0,'127.0.0.1',done));port=socket.address().port;await new Promise(done=>socket.close(done));
-  await typeCommand(root,terminalTitle,'edgepress server --port '+port);
+  await typeCommand(root,terminalTitle,command+' --port '+port);
   await new Promise(done=>setTimeout(done,1600));
   await omitWait(async()=>{for(let attempt=0;attempt<180;attempt++){try{const response=await fetch('http://127.0.0.1:'+port+'/',{signal:AbortSignal.timeout(1200)});if(response.ok)return;}catch{}await new Promise(done=>setTimeout(done,500));}throw Error('Guest preview did not become ready');});
  }

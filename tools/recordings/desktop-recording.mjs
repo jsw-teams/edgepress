@@ -57,7 +57,7 @@ export async function record(page, name, story, {foreground} = {}) {
 }
 
 // Export the VM desktop master after the browser fixture has been disposed.
-export async function closeRecording(context, {artifact, output}) {
+export async function closeRecording(context, {artifact, output, source='tools/recordings/desktop-recording.mjs', kind}) {
   await context.close();
   const session = sessions.get(context);
   const entries = [];
@@ -81,7 +81,7 @@ export async function closeRecording(context, {artifact, output}) {
     const poster = name + '.' + hash(await readFile(posterPath)) + '.webp';
     for (const [source, target] of [[gif, file], [movie, movieFile], [posterPath, poster]]) await cp(source, resolve(output, target));
     const entry = {name, file, poster, movie:movieFile, movieBytes:movieBytes.length, duration, bytes:bytes.length,
-      date:new Date().toISOString().slice(0, 10), kind:'FFmpeg recording of an isolated WSL2 desktop; '+(name.startsWith('edgepress-')||name.startsWith('ishare-sharing-')?'real terminal, editor and Chromium; preview startup wait shortened':'actual Chromium interface')+'; isolated service fixtures', source:'tools/recordings/capture-project-demos.mjs'};
+      date:new Date().toISOString().slice(0, 10), kind:kind||'FFmpeg recording of an isolated WSL2 desktop; '+(name.startsWith('edgepress-')||name.startsWith('ishare-sharing-')?'real terminal, editor and Chromium; preview startup wait shortened':'actual Chromium interface')+'; isolated service fixtures', source};
     entries.push(entry);
     const manifest = resolve(artifact, 'manifest.json'), previous = await readFile(manifest, 'utf8').then(JSON.parse).catch(() => []);
     await writeFile(manifest, JSON.stringify([...previous.filter(item => item.name !== name), entry], null, 2) + '\n');
