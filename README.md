@@ -34,11 +34,11 @@ The builder automatically explains the latest article edit. Readers see formatte
 
 Buttons open repository setup. Cloudflare, Vercel, Netlify and EdgeOne support repository templates; ESA opens its official import screen, where you authorize GitHub and select the repository. Every static platform uses `npm run build` and `dist/`; no database or website Function is required. Write posts in Markdown, compose pages from editable rows and elements, choose a shared theme, and build the site into dist/.
 
-Real VM recording: the actual CLI creates a post, Geany saves its Markdown, and `npm run deploy:local` starts the preview before navigating from the homepage to the article. Playback is manual.
+Real VM recording: the actual CLI creates a post, Geany saves its Markdown, and `npm run deploy:local` starts the preview before navigating from the homepage to the article.
 
-[![Real CLI, editor and browser demonstration](content/assets/images/previews/edgepress-cli-local.1b61974af33b2bb1.webp)](content/assets/images/previews/edgepress-cli-local.065373ef0ebd26fa.mp4)
+![Real CLI, editor and browser demonstration](content/assets/images/previews/edgepress-cli-local.9697a9de52bef936.gif)
 
-[Play recording](content/assets/images/previews/edgepress-cli-local.065373ef0ebd26fa.mp4) · [GIF](content/assets/images/previews/edgepress-cli-local.9697a9de52bef936.gif)
+For a separate API or origin firewall, [EdgeAegis](https://github.com/jsw-teams/edgeaegis) executes native OWASP CRS across the same five cloud platforms and Node.js. Its README includes a real terminal GIF demonstrating multiple business functions, HTTPS origins, independent origin keys and actual blocked requests. EdgePress remains a static-site builder; this optional integration does not add a website Function or expose private origin configuration.
 
 ## Quick start
 
