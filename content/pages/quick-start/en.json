@@ -13,7 +13,7 @@
             "type": "hero",
             "eyebrow": "Start here",
             "title": "Set up the project and open the live preview.",
-            "text": "Use the edgepress command after installing project dependencies. Local preview rebuilds changed source files and refreshes the PDF accessibility and agent-friendliness report."
+            "text": "Use the edgepress command after installing project dependencies. Local preview rebuilds changed source files without launching an audit browser. Run edgepress check explicitly to generate the PDF accessibility and agent-friendliness report."
           }
         ]
       ]
@@ -200,7 +200,7 @@
                   "Edit site title, description, canonical URL, agent SEO, site navigation, footer text, and privacy controller details in config.yml. Theme colors live in theme CSS.",
                   "Change the selected theme with edgepress theme list and edgepress theme use <theme-name>. Theme paths are stored in edgepress.config.mjs.",
                   "Install a theme package with edgepress theme install <npm-package> or start with a blank theme using edgepress theme create <name>.",
-                  "Use edgepress generate (edgepress g) to generate the static site and edgepress server (edgepress s) to preview. Open http://127.0.0.1:8787/ and choose Edit Pages to edit Pages on the same local server. Saving triggers a rebuild; the server watches source files, reloads the browser, and refreshes tools/reports/page-check.pdf. Screenshots are embedded in the PDF and temporary files are removed after generation."
+                  "Use edgepress generate (edgepress g) to generate the static site and edgepress server (edgepress s) to preview. Open http://127.0.0.1:8787/ and choose Edit Pages to edit Pages on the same local server. Saving triggers a rebuild; the server watches source files and reloads the browser. Preview does not launch an audit browser or generate screenshots and PDF reports. Run edgepress check explicitly when you need tools/reports/page-check.pdf."
                 ]
               },
               {

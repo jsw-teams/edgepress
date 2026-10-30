@@ -2,10 +2,10 @@ import {reportDirectory} from './report-path.js';
 import { createHash } from 'node:crypto';
 import { access, lstat, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
-import { extname, relative, resolve, sep } from 'node:path';
+import { basename, extname, relative, resolve, sep } from 'node:path';
 import { tmpdir } from 'node:os';
-import { spawn } from 'node:child_process';
-import { auditBrowser, deviceProfiles } from './browser-audit.js';
+import { startHeadlessBrowser } from './headless-browser.js';
+import { deviceProfiles } from './browser-audit.js';
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -42,174 +42,6 @@ async function browserPath() {
     try { await access(candidate); return candidate; } catch { /* Try the next installed browser. */ }
   }
   return null;
-}
-
-async function freePort() {
-  const server = createServer();
-  await new Promise((resolveListen, reject) => {
-    server.once('error', reject);
-    server.listen(0, '127.0.0.1', resolveListen);
-  });
-  const port = server.address().port;
-  await new Promise((resolveClose, reject) => server.close((error) => error ? reject(error) : resolveClose()));
-  return port;
-}
-
-function withTimeout(promise, timeoutMs, message) {
-  let timer;
-  return Promise.race([
-    promise,
-    new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(message)), timeoutMs); })
-  ]).finally(() => clearTimeout(timer));
-}
-
-async function startHeadlessBrowser(executable, profile) {
-  const port = await freePort();
-  const child = spawn(executable, [
-    '--headless=new', '--mute-audio', '--disable-notifications',
-    '--disable-sync', '--disable-features=msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion',
-    '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', '--disable-gpu', '--no-sandbox', '--no-first-run', '--no-default-browser-check',
-    '--disable-background-networking', '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost, EXCLUDE 127.0.0.1',
-    '--remote-debugging-port=' + port, '--remote-allow-origins=*', '--user-data-dir=' + profile, 'about:blank'
-  ], { stdio: 'ignore', windowsHide: true });
-  try {
-    let targets = [];
-    for (let attempt = 0; attempt < 80; attempt += 1) {
-      try {
-        targets = await (await fetch('http://127.0.0.1:' + port + '/json/list')).json();
-        if (targets.some((target) => target.type === 'page')) break;
-      } catch { /* Wait for the headless browser endpoint. */ }
-      if (child.exitCode !== null) throw new Error('Headless browser exited during startup');
-      await new Promise((resolveWait) => setTimeout(resolveWait, 250));
-    }
-    const page = targets.find((target) => target.type === 'page');
-    if (!page) throw new Error('Headless browser did not expose a page target');
-    const socket = new WebSocket(page.webSocketDebuggerUrl);
-    await new Promise((resolveOpen, rejectOpen) => {
-      socket.addEventListener('open', resolveOpen, { once: true });
-      socket.addEventListener('error', rejectOpen, { once: true });
-    });
-    let messageId = 0;
-    const pending = new Map();
-    const eventWaiters = new Map();
-    socket.addEventListener('message', (event) => {
-      const message = JSON.parse(event.data);
-      if (message.id && pending.has(message.id)) {
-        const callbacks = pending.get(message.id);
-        pending.delete(message.id);
-        if (message.error) callbacks.reject(new Error(message.error.message));
-        else callbacks.resolve(message.result);
-      }
-      if (message.method && eventWaiters.has(message.method)) {
-        const waiters = eventWaiters.get(message.method);
-        eventWaiters.delete(message.method);
-        for (const resolveEvent of waiters) resolveEvent(message.params);
-      }
-    });
-    const send = (method, params = {}) => new Promise((resolveMessage, rejectMessage) => {
-      const id = ++messageId;
-      pending.set(id, { resolve: resolveMessage, reject: rejectMessage });
-      socket.send(JSON.stringify({ id, method, params }));
-    });
-    const waitFor = (method) => new Promise((resolveEvent) => {
-      const waiters = eventWaiters.get(method) || [];
-      waiters.push(resolveEvent);
-      eventWaiters.set(method, waiters);
-    });
-    await send('Page.enable');
-    await send('Runtime.enable');
-    await send('Accessibility.enable');
-    const setViewport = async (viewport) => {
-      await send('Emulation.setDeviceMetricsOverride', {
-        width: viewport.width, height: viewport.height, deviceScaleFactor: viewport.deviceScaleFactor || 1,
-        mobile: viewport.mobile ?? viewport.name === 'mobile',
-        screenWidth: viewport.width, screenHeight: viewport.height
-      });
-      await send('Emulation.setTouchEmulationEnabled', { enabled: viewport.touch ?? viewport.name === 'mobile', maxTouchPoints: 5 });
-      await send('Emulation.setEmulatedMedia', { features: viewport.colorScheme
-        ? [{ name: 'prefers-color-scheme', value: viewport.colorScheme }] : [] });
-    };
-    const navigate = async (url) => {
-      await send('Page.bringToFront');
-      const loaded = waitFor('Page.loadEventFired');
-      const result = await send('Page.navigate', { url });
-      if (result.errorText) throw new Error('Could not load screenshot page: ' + result.errorText);
-      try { await withTimeout(loaded, 20000, 'Screenshot page load timed out: ' + url); }
-      catch (error) {
-        // Chromium can omit loadEventFired after navigation to an already loaded URL.
-        const state=await send('Runtime.evaluate',{expression:'JSON.stringify({url:location.href,state:document.readyState})',returnByValue:true});
-        const document=JSON.parse(state.result.value||'{}');
-        if(document.url!==url||document.state!=='complete')throw error;
-      }
-      await send('Runtime.evaluate', { expression: 'new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 150)))', awaitPromise: true });
-    };
-    const screenshot = async ({ hideConsent = false, clipSelector = '' } = {}) => {
-      let previousDisplay;
-      if (hideConsent) {
-        const hidden = await send('Runtime.evaluate', {
-          expression: '(() => { const node = document.querySelector("[data-consent-ui]"); if (!node) return null; const old = node.style.display; node.style.display = "none"; return old; })()',
-          returnByValue: true
-        });
-        previousDisplay = hidden.result.value;
-      }
-      try {
-        let clip;
-        if (clipSelector) {
-          const measured = await send('Runtime.evaluate', {
-            expression: '(() => { const node = document.querySelector("' + clipSelector + '"); if (!node) return null; const rect = node.getBoundingClientRect(); return JSON.stringify({x:Math.max(0,rect.left),y:Math.max(0,rect.top),width:Math.min(window.innerWidth,rect.right)-Math.max(0,rect.left),height:Math.min(window.innerHeight,rect.bottom)-Math.max(0,rect.top)}); })()',
-            returnByValue: true
-          });
-          if (!measured.result.value) return null;
-          const rect = JSON.parse(measured.result.value);
-          if (rect.width <= 0 || rect.height <= 0) return null;
-          clip = { x: rect.x, y: rect.y, width: rect.width, height: rect.height, scale: 1 };
-        }
-        const result = await send('Page.captureScreenshot', {
-          format: 'png', fromSurface: true, captureBeyondViewport: false, ...(clip ? { clip } : {})
-        });
-        return Buffer.from(result.data, 'base64');
-      } finally {
-        if (hideConsent && previousDisplay !== undefined && previousDisplay !== null) {
-          await send('Runtime.evaluate', {
-            expression: '(() => { const node = document.querySelector("[data-consent-ui]"); if (node) node.style.display = ' + JSON.stringify(previousDisplay) + '; })()'
-          });
-        }
-      }
-    };
-    const metrics = async () => {
-      const result = await send('Runtime.evaluate', {
-        expression: '(() => { const manager = document.querySelector("[data-consent-ui]"); const oldDisplay = manager?.style.display; if (manager) manager.style.display = "none"; const pageDocumentWidth = Math.max(document.documentElement.scrollWidth,document.body?.scrollWidth || 0); if (manager) manager.style.display = oldDisplay; const panel = manager?.querySelector(".privacy-panel"); const rect = manager?.getBoundingClientRect(); const panelRect = panel?.getBoundingClientRect(); const buttons = [...(panel?.querySelectorAll("button") || [])]; const buttonsFit = !panelRect || buttons.every(button => { const r = button.getBoundingClientRect(); return r.left >= panelRect.left - 1 && r.right <= panelRect.right + 1; }); const consentInnerNoOverflow = !panel || (panel.scrollWidth <= panel.clientWidth + 1 && buttonsFit); const consentWithinViewport = !rect || (rect.left >= -1 && rect.top >= -1 && rect.right <= innerWidth + 1 && rect.bottom <= innerHeight + 1); const accept = panel?.querySelector(".privacy-accept"); const reject = panel?.querySelector(".privacy-reject"); const ar = accept?.getBoundingClientRect(); const rr = reject?.getBoundingClientRect(); const consentActionsBalanced = Boolean(accept && reject && Math.abs(ar.width-rr.width)<1 && Math.abs(ar.height-rr.height)<1 && getComputedStyle(accept).backgroundColor===getComputedStyle(reject).backgroundColor); const switches = [...(panel?.querySelectorAll(".privacy-service-toggle input") || [])]; const consentOptInDefault = switches.every(input => !input.checked); const serviceCards = [...(panel?.querySelectorAll(".privacy-service-setting") || [])]; const consentServiceDisclosures = serviceCards.length===0 || serviceCards.every(card => card.querySelectorAll(".privacy-service-disclosures dt").length>=4); const consentDetails = Boolean(panel?.querySelector(".privacy-details>summary")); return JSON.stringify({viewportWidth:innerWidth,documentWidth:document.documentElement.scrollWidth,pageDocumentWidth,consentExists:Boolean(manager),consentWithinViewport,consentInnerNoOverflow,consentActionsBalanced,consentOptInDefault,consentServiceDisclosures,consentDetails,consentWidth:rect?.width || 0,consentHeight:rect?.height || 0}); })()',
-        returnByValue: true
-      });
-      return JSON.parse(result.result.value);
-    };
-    const printToPdf = async () => {
-      let result;
-      try {
-        result = await send('Page.printToPDF', {
-          printBackground: true, preferCSSPageSize: true, displayHeaderFooter: false,
-          generateTaggedPDF: true, generateDocumentOutline: true
-        });
-      } catch {
-        result = await send('Page.printToPDF', { printBackground: true, preferCSSPageSize: true, displayHeaderFooter: false });
-      }
-      return Buffer.from(result.data, 'base64');
-    };
-    const close = async () => {
-      try { socket.close(); } catch { /* Browser is shutting down. */ }
-      if (child.exitCode === null) {
-        child.kill();
-        await new Promise((resolveExit) => child.once('exit', resolveExit));
-      }
-    };
-    return { setViewport, navigate, screenshot, metrics, printToPdf, close, audit: profile => auditBrowser(send, profile) };
-  } catch (error) {
-    if (child.exitCode === null) {
-      child.kill();
-      await new Promise((resolveExit) => child.once('exit', resolveExit));
-    }
-    throw error;
-  }
 }
 
 const mimeTypes = {
@@ -408,7 +240,9 @@ async function startReportServer(output, evidenceDirectory, htmlPath) {
         response.end();
         return;
       }
-      response.writeHead(200, { 'content-type': mimeTypes[extname(target).toLowerCase()] || 'application/octet-stream', 'cache-control': 'no-store' });
+      const immutable = extname(target).toLowerCase() !== '.html' && /\.[a-f0-9]{16}\./i.test(basename(target));
+      response.writeHead(200, { 'content-type': mimeTypes[extname(target).toLowerCase()] || 'application/octet-stream',
+        'cache-control': immutable ? 'private, max-age=31536000, immutable' : 'no-store' });
       response.end(await readFile(realTarget));
     } catch {
       response.writeHead(404);
@@ -443,6 +277,7 @@ export async function addVisualEvidence(config, report) {
   const pdfPath = resolve(root, 'page-check.pdf');
   let reportServer;
   let browserSession;
+  let browserProcess;
   const browserSessions=[];
   const runInBrowsers=async(items,task)=>Promise.all(browserSessions.map(async(session,worker)=>{
     for(let index=worker;index<items.length;index+=browserSessions.length)await task(session,items[index],index);
@@ -511,10 +346,11 @@ export async function addVisualEvidence(config, report) {
       }
     }
     reportServer = await startReportServer(config.resolvedPaths.output, evidenceDirectory, htmlPath);
-    for(let worker=0;worker<Math.min(3,available.length||1);worker++){
-      const browserProfile=resolve(profile,'browser-'+worker);await mkdir(browserProfile);
-      browserSessions.push(await startHeadlessBrowser(browser,browserProfile));
+    browserProcess = await startHeadlessBrowser(browser, profile);
+    for(let worker=0;worker<Math.min(2,available.length||1);worker++){
+      browserSessions.push(await browserProcess.createSession());
     }
+    report.browserChecks.execution = { browserProcesses: 1, pageWorkers: browserSessions.length, rendering: 'software' };
     browserSession=browserSessions[0];
     let reviewed=0;
     const pageResults=new Array(available.length);
@@ -542,11 +378,8 @@ export async function addVisualEvidence(config, report) {
       report.browserChecks.reason = 'No generated pages were available for browser checks.';
     }
     let captured=0;
-    await runInBrowsers(screenshots,async(browserSession,screenshot)=>{
+    const captureEvidence = async (browserSession, screenshot, dimensions) => {
       const viewport = screenshot.viewport === 'mobile' ? mobile : desktop;
-      await browserSession.setViewport(viewport);
-      await browserSession.navigate('http://127.0.0.1:' + reportServer.port + siteAddress(screenshot.page));
-      const dimensions = await browserSession.metrics();
       if (screenshot.capture === 'consent') {
         report.consentUi.visualChecks ||= [];
         const checks = [
@@ -592,7 +425,22 @@ export async function addVisualEvidence(config, report) {
           message: 'Page content width is ' + dimensions.pageDocumentWidth + ' CSS pixels for a ' + dimensions.viewportWidth + ' pixel viewport; consent UI is measured separately.' });
       }
       captured+=1;if(captured%50===0||captured===screenshots.length)console.log('Report screenshots: '+captured+'/'+screenshots.length);
+    };
+    const screenshotBatches = new Map();
+    for (const screenshot of screenshots) {
+      const key = screenshot.page + ':' + screenshot.viewport;
+      if (!screenshotBatches.has(key)) screenshotBatches.set(key, []);
+      screenshotBatches.get(key).push(screenshot);
+    }
+    await runInBrowsers([...screenshotBatches.values()], async (session, batch) => {
+      const viewport = batch[0].viewport === 'mobile' ? mobile : desktop;
+      await session.setViewport(viewport);
+      await session.navigate('http://127.0.0.1:' + reportServer.port + siteAddress(batch[0].page));
+      const dimensions = await session.metrics();
+      for (const screenshot of batch) await captureEvidence(session, screenshot, dimensions);
     });
+    // PDF printing can be memory intensive. Release the other worker first.
+    await Promise.all(browserSessions.splice(1).map(session => session.close()));
     if (report.consentUi?.visualChecks) {
       const visualChecks = report.consentUi.visualChecks;
       report.consentUi.checks += visualChecks.length;
@@ -636,6 +484,7 @@ export async function addVisualEvidence(config, report) {
     return report.visualEvidence;
   } finally {
     await Promise.allSettled(browserSessions.map(session=>session.close()));
+    await browserProcess?.close();
     if (reportServer) await new Promise((resolveClose) => reportServer.server.close(resolveClose));
     await rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 250 });
   }

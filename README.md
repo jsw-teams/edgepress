@@ -184,7 +184,7 @@ Everyday use needs two commands: `edgepress generate` (`edgepress g`) generates 
 - edgepress init: scaffold a new site in a project directory.
 - edgepress new post "Article title": create a Markdown post.
 - edgepress generate (edgepress g): generate static files in dist/ for Cloudflare Workers or static hosting.
-- edgepress server (edgepress s): start live local preview with the Pages editor, rebuild on source changes, and refresh the PDF audit report. The legacy build, dev, preview, edit and editor commands remain compatibility aliases.
+- edgepress server (edgepress s): start live local preview with the Pages editor and rebuild on source changes. Preview does not launch an audit browser, capture screenshots or generate PDF reports; run edgepress check explicitly when needed. The legacy build, dev, preview, edit and editor commands remain compatibility aliases.
 - edgepress check: build, audit page structure, agent-friendliness, and Markdown rendering, simulate device profiles, inspect the browser accessibility tree and sample keyboard navigation, capture screenshots temporarily, and write only the PDF report under tools/.
 - edgepress doctor: verify static publishing configuration; a pure static project requires no Worker entry or backend bindings.
 - edgepress theme list and edgepress theme use <name>: inspect or select an installed theme.
@@ -201,6 +201,8 @@ The only persisted page-audit report is the accessible PDF at tools/reports/page
 `edgepress check` supports page-only sites, an absent `content/posts/` directory, and ordinary articles without a tutorial slug. Markdown self-checks render a built-in fixture in memory and never add articles to your site. Actual generated pages still receive structural and resource-link checks.
 
 When Edge, Chrome or Chromium is installed, the audit runs desktop (1440px), phone (390px) and tablet (820px) profiles in light and dark modes. Phone/tablet profiles emulate pixel density and touch capability. It checks main/heading semantics and accessible names through the [Chromium DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/), and sends real Tab, Shift+Tab and Enter events to the isolated headless browser. Keyboard checks sample at most 12 focus stops, verify focus visibility and backward navigation, and activate the skip-to-main link. Browser failures affect the check result; missing browser support is reported as unavailable, never as a pass.
+
+The audit reuses one software-rendered browser with at most two isolated page workers. It caches fingerprinted local resources for the run, waits for document/font rendering rather than a fixed delay, and shares page loads for content and consent screenshots at the same size. The spare worker closes before PDF printing to reduce peak memory. All device and color profiles, screenshots and the PDF remain part of the check.
 
 These are browser simulations, not physical-device or screen-reader tests. The tool launches no visible browser window, mutes its own browser audio and disables notifications, does not send keyboard input to your desktop, and never starts Narrator, NVDA, VoiceOver or TalkBack. Physical devices and actual assistive technology require a separate, authorized test environment. The PDF labels this limitation explicitly.
 

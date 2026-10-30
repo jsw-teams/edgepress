@@ -3,7 +3,6 @@ import { spawn } from 'node:child_process';
 import { resolve } from 'node:path';
 import { buildSite } from './build.js';
 import { loadConfig } from './config.js';
-import { checkPages } from './page-check.js';
 import { availablePreviewPort, previewOptions, startPreviewServer } from './preview-server.js';
 
 const watchedDirectories = ['content', 'languages', 'plugins', 'src', 'static', 'themes'];
@@ -50,10 +49,6 @@ export async function startPreview(options = []) {
 
   async function rebuild() {
     await buildSite(root, { preview: true });
-    const currentConfig = await loadConfig(root);
-    const report = await checkPages(currentConfig);
-    console.log('Accessibility and agent-friendliness PDF report: ' + report.status +
-      ' (' + report.accessibility.status + ', ' + report.agentFriendliness.status + ')');
   }
 
   await rebuild();

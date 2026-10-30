@@ -221,7 +221,7 @@
                   },
                   {
                     "title": "预览网站",
-                    "text": "server 会监视源文件、重新构建输出、刷新浏览器，并更新无障碍化和 agent 友好度报告。",
+                    "text": "server 会监视源文件、重新构建输出并刷新浏览器。需要无障碍化和 agent 友好度报告时，再手动运行 edgepress check。",
                     "command": "edgepress server"
                   }
                 ]

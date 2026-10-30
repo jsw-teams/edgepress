@@ -80,8 +80,9 @@ EdgePress builds static websites from Markdown articles and JSON Pages. Follow t
 - `npm ci`: install locked dependencies.
 - `npm link`: expose the CLI when developing from this source checkout.
 - `edgepress generate` (`edgepress g`): generate the website in `dist/`; `build` remains a compatibility alias.
-- `edgepress server` (`edgepress s`): build, preview static assets with Wrangler locally, open the local Pages editor from the preview, watch sources, and refresh the audit report.
+- `edgepress server` (`edgepress s`): build, preview static assets with Wrangler locally, open the local Pages editor from the preview, and watch sources. Never run browser audits, screenshots or PDF generation automatically during preview; reserve them for explicit `edgepress check`.
 - `edgepress check`: build, generate accessibility and agent-friendliness reports, capture screenshots, and write the PDF under `tools/`.
+- Audits use one software-rendered browser with at most two isolated page workers; preserve every existing device/color profile and evidence capture. Cache only fingerprinted resources and release unused workers before PDF printing. Never start multiple full browser instances for parallel checks.
 - `edgepress doctor`: run Worker compatibility checks.
 
 Read the guides in `content/pages/` before extending themes, page blocks, or plugins.

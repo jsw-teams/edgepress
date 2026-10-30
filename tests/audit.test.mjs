@@ -7,7 +7,8 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import { chromium } from 'playwright';
-import { markdownFeatureCoverage } from '../src/page-check.js';
+import { checkPages, markdownFeatureCoverage } from '../src/page-check.js';
+import { loadConfig } from '../src/config.js';
 import { checkCompatibility } from '../src/maintenance.js';
 import { auditBrowser, deviceProfiles } from '../src/browser-audit.js';
 
@@ -85,6 +86,24 @@ test('ordinary articles need no special tutorial slug to pass the audit', { time
   } finally { await cleanup(root); }
 });
 
+test('full PDF audit retains every device and color profile with a shared software browser', {timeout:120000}, async () => {
+  const root = await fixture();
+  try {
+    const built = spawnSync(process.execPath, [resolve(project, 'src/cli.js'), 'generate'], {cwd:root,encoding:'utf8',timeout:60000});
+    assert.equal(built.status, 0, built.stderr);
+    const report = await checkPages(await loadConfig(root));
+    assert.equal(report.visualEvidence.status, 'complete', JSON.stringify(report.visualEvidence));
+    assert.equal(report.visualEvidence.reportAccessibility.status, 'pass');
+    assert.equal(report.browserChecks.status, 'pass');
+    assert.deepEqual(report.browserChecks.execution, {browserProcesses:1,pageWorkers:2,rendering:'software'});
+    const pages = new Set(report.browserChecks.results.map(result => result.page));
+    assert.ok(pages.size >= 4);
+    for (const page of pages) assert.deepEqual(report.browserChecks.results.filter(result => result.page === page).map(result => result.profile + ':' + result.colorScheme).sort(), ['desktop:dark','desktop:light','phone:dark','phone:light','tablet:dark','tablet:light']);
+    assert.ok(report.visualEvidence.screenshots.length >= pages.size);
+    assert.ok((await readFile(resolve(root, 'tools/reports/page-check.pdf'))).length > 1000);
+  } finally { await cleanup(root); }
+});
+
 async function installedBrowser() {
   const candidates = [process.env.EDGEPRESS_BROWSER, 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', '/usr/bin/chromium', '/usr/bin/google-chrome', chromium.executablePath()];
   for (const path of candidates.filter(Boolean)) { try { await access(path); return path; } catch {} }
@@ -97,7 +116,8 @@ test('device/AX/keyboard simulations pass accessible pages and catch inaccessibl
   const bad = good.replace('aria-label="Navigation"', '').replace('</main>', '<button></button></main>').replace('outline:3px solid blue', 'outline:none');
   const trap = good.replace('</main>', '<a href="#section">Unreachable link</a></main>').replace('</body>', '<script>document.addEventListener("keydown",event=>{if(event.key==="Tab"&&!event.shiftKey&&document.activeElement.textContent==="Read more"){event.preventDefault();document.querySelector(".skip").focus();}})</script></body>');
   const smooth=good.replace('body{margin:0}','html{scroll-behavior:smooth}button:focus-visible{outline:3px solid blue}body{margin:0}').replace('</main>','<div style="height:2200px"></div><button>After the fold</button></main>');
-  const server = createServer((request, response) => { response.setHeader('content-type', 'text/html'); response.end(request.url === '/bad' ? bad : request.url === '/trap' ? trap : request.url==='/smooth'?smooth:good); });
+  const dynamic=good.replace('</nav>','</nav><button id="later" hidden>Appeared later</button>').replace('</body>','<script>document.addEventListener("focusin",event=>{if(event.target.getAttribute("aria-label")==="Scroll two")document.querySelector("#later").hidden=false;});</script></body>');
+  const server = createServer((request, response) => { response.setHeader('content-type', 'text/html'); response.end(request.url === '/bad' ? bad : request.url === '/trap' ? trap : request.url==='/smooth'?smooth:request.url==='/dynamic'?dynamic:good); });
   await new Promise(done => server.listen(0, '127.0.0.1', done));
   const browser = await chromium.launch({ executablePath, headless: true, args: ['--mute-audio', '--disable-notifications'] });
   try {
@@ -125,8 +145,12 @@ test('device/AX/keyboard simulations pass accessible pages and catch inaccessibl
     assert.ok(trapped.checks.some(item => item.name === 'Native page wrap does not skip tabbable controls' && !item.passed));
     await page.goto('http://127.0.0.1:'+server.address().port+'/smooth');
     const scrolled=await auditBrowser(send,{...deviceProfiles[2],colorScheme:'dark'});
-    assert.equal(scrolled.status,'pass',JSON.stringify(scrolled.checks.filter(item=>!item.passed)));
+    assert.equal(scrolled.status,'pass',JSON.stringify({failures:scrolled.checks.filter(item=>!item.passed),trace:scrolled.trace}));
     assert.ok(scrolled.trace.some(item=>item.name==='After the fold'));
+    await page.goto('http://127.0.0.1:'+server.address().port+'/dynamic');
+    const revealed=await auditBrowser(send,{...deviceProfiles[2],colorScheme:'dark'});
+    assert.equal(revealed.status,'pass',JSON.stringify(revealed.checks.filter(item=>!item.passed)));
+    assert.ok(!revealed.trace.some(item=>item.name==='Appeared later'));
 
   } finally { await browser.close(); await new Promise(done => server.close(done)); }
 });

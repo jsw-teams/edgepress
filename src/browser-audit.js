@@ -34,7 +34,12 @@ export async function auditBrowser(send, profile) {
       return [style.backgroundColor, style.borderColor, style.color, style.textDecorationLine].join('|');
     };
     window.__edgepressKeyboardAudit = { candidates, elements: [...document.querySelectorAll('*')], visual,
-      before: new Map(candidates.map(element => [element, visual(element)])) };
+      before: new Map(candidates.map(element => [element, visual(element)])),
+      initiallyTabbable: new Set(candidates.filter(element => {
+        const style = getComputedStyle(element), box = element.getBoundingClientRect();
+        return element.tabIndex >= 0 && !element.matches(':disabled') && !element.closest('[hidden],[inert]') &&
+          style.visibility === 'visible' && box.width > 0 && box.height > 0;
+      })) };
     document.activeElement?.blur();
     return { display: display ?? '', href: location.href };
   });
@@ -78,7 +83,12 @@ export async function auditBrowser(send, profile) {
       // Native Tab can start a smooth scroll; observe its result without scrolling for it.
       await new Promise(resolve=>{
         const started=performance.now();
-        const visible=()=>{const box=element.getBoundingClientRect();if((box.bottom>0&&box.top<innerHeight&&box.right>0&&box.left<innerWidth)||performance.now()-started>1500)return resolve();requestAnimationFrame(visible);};
+        const visible=()=>{
+          const box=element.getBoundingClientRect(), now=performance.now();
+          // Software-rendered native smooth scrolling can exceed 1.5 seconds.
+          if((box.bottom>0&&box.top<innerHeight&&box.right>0&&box.left<innerWidth)||now-started>5000)return resolve();
+          requestAnimationFrame(visible);
+        };
         visible();
       });
       const { elements, before, visual } = window.__edgepressKeyboardAudit;
@@ -104,10 +114,12 @@ export async function auditBrowser(send, profile) {
         // Mobile browser chrome may not appear as a focus stop. A natural wrap
         // is valid only after visiting all currently tabbable page controls.
         const expected = await evaluate(send, () => {
-          const { candidates, elements } = window.__edgepressKeyboardAudit;
+          const { candidates, elements, initiallyTabbable } = window.__edgepressKeyboardAudit;
           const visible = candidates.filter(element => {
             const style = getComputedStyle(element), box = element.getBoundingClientRect();
-            return element.tabIndex >= 0 && !element.matches(':disabled') && !element.closest('[hidden],[inert]') &&
+            // Scroll/focus handlers may reveal a control after its place in the
+            // Tab order has already passed. That is not evidence of a focus trap.
+            return initiallyTabbable.has(element) && element.tabIndex >= 0 && !element.matches(':disabled') && !element.closest('[hidden],[inert]') &&
               style.visibility === 'visible' && box.width > 0 && box.height > 0;
           });
           return visible.filter(element => {

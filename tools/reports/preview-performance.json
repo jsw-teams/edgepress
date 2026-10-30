@@ -1,0 +1,47 @@
+{
+  "measuredAt": "2026-10-30T11:50:20.603Z",
+  "baselineCommit": "7b9ff3c6b4a701bfd684c36e385c1029fb655e22",
+  "scope": "Same generated EdgePress site; audit stage only, excluding static generation; isolated Chromium executable; no production deployment.",
+  "coverage": {
+    "htmlPages": 70,
+    "deviceColorProfiles": 420,
+    "screenshots": 112,
+    "pdf": "complete",
+    "browserChecks": "pass",
+    "findingsUnchanged": true,
+    "existingStaticErrors": 1,
+    "existingWarnings": 70
+  },
+  "elapsedMilliseconds": {
+    "before": 308814,
+    "after": 217758,
+    "reductionPercent": 29.5
+  },
+  "browserProcesses": {
+    "before": 3,
+    "after": 1,
+    "isolatedPageWorkers": 2,
+    "rendering": "software"
+  },
+  "processMemory": {
+    "metric": "Sampled sum of Windows WorkingSetSize for the benchmark Node process and its descendants. Shared pages may be counted more than once. This is process RAM, not GPU memory; sampled maxima are not guaranteed lifetime peaks.",
+    "unit": "MiB",
+    "before": {
+      "maximum": 3253.7,
+      "samples": 12
+    },
+    "after": {
+      "maximum": 1923.5,
+      "samples": 91
+    },
+    "sampleIntervalSeconds": 2,
+    "reductionPercent": 40.9
+  },
+  "sourceHashNormalization": "UTF-8 source with LF line endings",
+  "sourceHashes": {
+    "src/preview.js": "cf9010af953588f63b42a21c930a1391f3be57672090127963476eb715b33319",
+    "src/headless-browser.js": "cdc4db28b46291f2331a271c95e713baa747467aa0586abf9f87f1edc5ec4ba4",
+    "src/browser-audit.js": "7bb1a11b49c5526a99f9d5daa94dd2195cb1a2212c7817b94c92f93402a7a1ca",
+    "src/report-visuals.js": "6247101350c9305e51b3dfcbffedf24a615d1db93daf4b911cd09990a5c93265"
+  }
+}

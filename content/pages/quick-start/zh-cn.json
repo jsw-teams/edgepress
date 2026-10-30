@@ -13,7 +13,7 @@
             "type": "hero",
             "eyebrow": "从这里开始",
             "title": "配置项目并打开实时预览。",
-            "text": "安装项目依赖后使用 edgepress 命令。本地预览会在源文件变更后自动构建，并刷新无障碍化和 agent 友好度 PDF 报告。"
+            "text": "安装项目依赖后使用 edgepress 命令。本地预览会在源文件变更后自动构建，不额外启动审计浏览器；需要无障碍化和 agent 友好度 PDF 报告时，再手动运行 edgepress check。"
           }
         ]
       ]
@@ -200,7 +200,7 @@
                   "在 config.yml 中编辑站点标题、简介、规范 URL、agent SEO、导航、页脚文字和隐私运营者信息。主题配色保存在各自主题的 CSS 中。",
                   "使用 edgepress theme list 查看主题，使用 edgepress theme use <主题名称> 切换主题。主题路径保存在 edgepress.config.mjs 中。",
                   "使用 edgepress theme install <npm-package> 安装主题包，或使用 edgepress theme create <名称> 创建空白主题。",
-                  "日常只需两个命令：edgepress generate（edgepress g）生成静态网站，edgepress server（edgepress s）启动本地预览。打开 http://127.0.0.1:8787/ 后点击“编辑 Pages”，即可在同一个本地服务内编辑页面；保存后自动重新构建。服务会监视源文件、刷新浏览器，并更新 tools/reports/page-check.pdf。截图会嵌入 PDF，生成后会清理临时文件。"
+                  "日常只需两个命令：edgepress generate（edgepress g）生成静态网站，edgepress server（edgepress s）启动本地预览。打开 http://127.0.0.1:8787/ 后点击“编辑 Pages”，即可在同一个本地服务内编辑页面；保存后自动重新构建并刷新浏览器。预览不会额外启动审计浏览器、截图或生成 PDF。需要报告时，再手动运行 edgepress check 生成 tools/reports/page-check.pdf。"
                 ]
               },
               {

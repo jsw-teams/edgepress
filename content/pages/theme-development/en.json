@@ -225,7 +225,7 @@
                   },
                   {
                     "title": "Preview the site",
-                    "text": "The server watches source files, rebuilds the output, refreshes the browser, and updates the accessibility and agent-friendliness report.",
+                    "text": "The server watches source files, rebuilds the output and refreshes the browser. Run edgepress check explicitly for accessibility and agent-friendliness reports.",
                     "command": "edgepress server"
                   }
                 ]
