@@ -64,7 +64,6 @@
     "deploy:esa": "node src/cli.js deploy esa",
     "deploy:netlify": "node src/cli.js deploy netlify",
     "fonts:sync": "node tools/assets/sync-fonts.mjs",
-    "editor": "node src/cli.js editor",
     "audit": "node tools/maintenance/audit-dependencies.mjs low",
     "deploy:local": "node src/cli.js server"
   },

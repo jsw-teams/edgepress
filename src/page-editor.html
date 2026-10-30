@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>EdgePress · 可视化 Pages 编辑器</title>
-  <link rel="stylesheet" href="/editor.css">
-  <script type="module" src="/editor.js"></script>
+  <link rel="stylesheet" href="./editor.css">
+  <script type="module" src="./editor.js"></script>
 </head>
 <body>
   <header class="topbar">
@@ -28,7 +28,7 @@
       <div class="panel-header"><div><h1 id="page-name">选择页面</h1><p id="page-path" class="muted"></p></div><span class="preview-label">结构与内容预览</span></div>
       <div class="page-meta"><label>页面标题 <input id="title" maxlength="500" type="text"></label><label>摘要 <input id="description" type="text"></label></div>
       <div class="canvas-wrap"><div id="canvas" class="canvas" aria-label="页面内容预览"></div></div>
-      <p class="help note">预览展示真实的行列顺序和主要内容，不是主题渲染或最终网页效果。正式效果请运行 <code>npm run dev</code>。</p>
+      <p class="help note">这里展示行列顺序和主要内容。保存后返回网站预览，即可查看主题渲染效果；<code>edgepress g</code> 生成静态网站。</p>
     </section>
     <aside class="inspector panel" aria-label="元素设置">
       <div class="panel-header"><h2>元素属性</h2><span id="selected-label" class="muted">尚未选择</span></div>

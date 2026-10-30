@@ -16,7 +16,6 @@ import { loadLanguagePacks, translate } from './i18n.js';
 import { postTemplate } from './post-template.js';
 import {deploySite} from './deploy.js';
 import {formatPages} from '../tools/assets/format-pages.mjs';
-import {startPageEditor} from './page-editor.js';
 
 const siteGitignore = ['node_modules/', 'dist/', '.edgepress/', '.wrangler/', '.dev.vars', '.vercel/', '.netlify/', '.edgeone/', '.esa/', '.env', '.env.*', '!.env.example', '*.tgz', ''].join('\n');
 const siteReadme = [
@@ -27,11 +26,11 @@ const siteReadme = [
   '## Start locally',
   '',
   '    npm install',
-  '    npm run dev',
+  '    npx edgepress s',
   '',
-  'Create an article with `npm run new -- post "My first article"`. Open the printed file path and write Markdown below the second `---` line. The command fills the title, date, and language. Run `npm run dev` to preview and `npm run build` before publishing.',
+  'Create an article with `npm run new -- post "My first article"`. Open the printed file path and write Markdown below the second `---` line. The command fills the title, date, and language. Run `edgepress s` to preview and edit Pages, and `edgepress generate` (or `edgepress g`) before publishing.',
   '',
-  'Run `npm run editor` to create and edit Pages visually at http://127.0.0.1:4178/. Or run `npx edgepress new pages "About us" --lang en` to create a JSON Page from the CLI. All Page blocks use shared framework templates; articles remain Markdown.',
+  'Run `edgepress s`, open http://127.0.0.1:8787/ and choose Edit Pages to create and edit Pages visually in the same local preview. Or run `npx edgepress new pages "About us" --lang en` to create a JSON Page from the CLI. All Page blocks use shared framework templates; articles remain Markdown.',
   '',
   '## Deploy a static website',
   '',
@@ -83,7 +82,6 @@ async function initializeProject() {
       generate: 'edgepress generate',
       build: 'edgepress build',
       dev: 'edgepress server',
-      editor: 'edgepress editor',
       preview: 'edgepress server',
       check: 'edgepress check',
       doctor: 'edgepress doctor',
@@ -115,7 +113,7 @@ async function initializeProject() {
     else await cp(resolve(packageRoot, file), destination, { errorOnExist: true });
   }
   await writeFile(resolve(root, 'package.json'), JSON.stringify(projectManifest, null, 2) + '\n', { flag: packageManifestExists ? 'w' : 'wx' });
-  console.log('Created an EdgePress site. Next run npm install, then npm run dev. Create an article with npm run new -- post "My first article".');
+  console.log('Created an EdgePress site. Next run npm install, then npx edgepress s. Create an article with npm run new -- post "My first article".');
 }
 
 async function runSecurityAudit() {
@@ -270,7 +268,7 @@ async function newPage(args, config) {
     title, lang, slug, locales: config.i18n.locales, defaultLocale: config.i18n.defaultLocale
   });
   console.log('Created Page: ' + relative(config.root, page.file));
-  console.log('Open the local editor with: npm run editor');
+  console.log('Preview and edit Pages with: edgepress s');
 }
 
 async function createPost(title, config) {
@@ -356,18 +354,16 @@ try {
     ? await loadConfig()
     : null;
   if (command === '--help' || command === '-h' || command === 'help') {
-    console.log('EdgePress commands: init, new, build, generate, server, editor, check, doctor, iterate, theme, security, deploy, clean');
+    console.log('Generate: edgepress generate (edgepress g)');
+    console.log('Preview and edit Pages: edgepress server (edgepress s)');
+    console.log('Additional tools: init, new, check, doctor, iterate, theme, security, deploy, clean');
     console.log('Create a Page: edgepress new pages "Page title" [--lang en] [--slug page-slug]');
   }
-  else if (command === 'build' || command === 'generate') await buildSite();
+  else if (command === 'build' || command === 'generate' || command === 'g') await buildSite();
   else if (command === 'init') await initializeProject();
-  else if (command === 'preview' || command === 'dev' || command === 'server') await import('./preview.js');
-  else if (command === 'editor') {
-    const portText = args[0] === '--port' ? args[1] : args[0]?.startsWith('--port=') ? args[0].slice(7) : args.length ? null : '4178';
-    if (!/^\d{1,5}$/.test(portText || '') || Number(portText) < 1 || Number(portText) > 65535) throw new Error('Usage: edgepress editor [--port 4178]');
-    const editorConfig = await loadConfig();
-    const editor = await startPageEditor({ port: Number(portText), root: editorConfig.root, locales: editorConfig.i18n.locales, defaultLocale: editorConfig.i18n.defaultLocale });
-    console.log('Local Pages editor: ' + editor.url + ' (Ctrl+C to stop)');
+  else if (['preview', 'dev', 'server', 's', 'editor', 'edit'].includes(command)) {
+    const options = command === 'editor' && /^\d+$/.test(args[0] || '') ? ['--port', ...args] : args;
+    await (await import('./preview.js')).startPreview(options);
   }
   else if (command === 'deploy') {
     const platform = args[0] && !args[0].startsWith('-') ? args.shift() : 'cloudflare';
@@ -398,7 +394,7 @@ try {
     const compatibilityReport = await checkCompatibility(config);
     const plan = await writeIterationPlan(config, pageReport, compatibilityReport);
     await showReport('Safe iteration plan', plan, resolve(config.resolvedPaths.cache, 'reports/iteration-plan.md'));
-  } else throw new Error('Commands: init, build|generate, server, editor [--port 4178], deploy, new, clean, check, doctor, iterate, theme list|create|install|use, security');
+  } else throw new Error('Generate: edgepress generate|g. Preview and edit: edgepress server|s. Tools: init, deploy, new, clean, check, doctor, iterate, theme list|create|install|use, security');
 } catch (error) {
   console.error(error?.stack || error);
   process.exitCode = 1;

@@ -37,7 +37,9 @@ This explicit operator update supersedes older lockfile/pin instructions below.
 
 EdgePress builds static websites from Markdown articles and JSON Pages. Follow these rules when changing the project.
 
-- The Pages visual editor runs only on loopback via `edgepress editor`. Keep it entirely local (no hosted editor endpoints, no authentication or database). Preserve unknown JSON block properties on save, reject external origins, symlinks and stale revisions, and test the actual browser workflow before shipping.\n\n## Source files
+- The Pages visual editor runs only on loopback inside `edgepress server` (`edgepress s`) at `/__edgepress/`. Keep it entirely local (no hosted editor endpoints, no authentication or database). Preserve unknown JSON block properties on save, reject external origins, symlinks and stale revisions, and test the actual browser workflow before shipping.
+
+## Source files
 
 - Put published project guides and site copy under `content/`, using JSON for Pages and Markdown for articles and standalone guides.
 - Put page media and other content-owned files under `content/assets/`; the builder publishes them at matching site-root paths.
@@ -77,8 +79,8 @@ EdgePress builds static websites from Markdown articles and JSON Pages. Follow t
 
 - `npm ci`: install locked dependencies.
 - `npm link`: expose the CLI when developing from this source checkout.
-- `edgepress build`: generate the website in `dist/`.
-- `edgepress server`: build, preview static assets with Wrangler locally, watch sources, and refresh the audit report.
+- `edgepress generate` (`edgepress g`): generate the website in `dist/`; `build` remains a compatibility alias.
+- `edgepress server` (`edgepress s`): build, preview static assets with Wrangler locally, open the local Pages editor from the preview, watch sources, and refresh the audit report.
 - `edgepress check`: build, generate accessibility and agent-friendliness reports, capture screenshots, and write the PDF under `tools/`.
 - `edgepress doctor`: run Worker compatibility checks.
 

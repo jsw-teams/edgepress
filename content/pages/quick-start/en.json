@@ -200,7 +200,7 @@
                   "Edit site title, description, canonical URL, agent SEO, site navigation, footer text, and privacy controller details in config.yml. Theme colors live in theme CSS.",
                   "Change the selected theme with edgepress theme list and edgepress theme use <theme-name>. Theme paths are stored in edgepress.config.mjs.",
                   "Install a theme package with edgepress theme install <npm-package> or start with a blank theme using edgepress theme create <name>.",
-                  "edgepress server starts a local Wrangler server, watches source files, rebuilds changed pages, reloads the browser, and refreshes tools/reports/page-check.pdf. Screenshots are embedded in the PDF and temporary files are removed after generation."
+                  "Use edgepress generate (edgepress g) to generate the static site and edgepress server (edgepress s) to preview. Open http://127.0.0.1:8787/ and choose Edit Pages to edit Pages on the same local server. Saving triggers a rebuild; the server watches source files, reloads the browser, and refreshes tools/reports/page-check.pdf. Screenshots are embedded in the PDF and temporary files are removed after generation."
                 ]
               },
               {

@@ -377,7 +377,26 @@ export async function generateBuiltinRoutes(site, config, extensions) {
   routes.push(fileRoute('robots.txt', robots, 'text/plain; charset=utf-8'));
   if (config.preview) {
     routes.push(fileRoute('__edgepress_preview.json', JSON.stringify({ buildId: config.previewBuildId }), 'application/json; charset=utf-8'));
-    routes.push(fileRoute('__edgepress_preview.js', '(()=>{let seen="";const poll=async()=>{try{const response=await fetch("/__edgepress_preview.json?ts="+Date.now(),{cache:"no-store"});if(!response.ok)return;const state=await response.json();if(seen&&state.buildId!==seen){window.location.reload();return}seen=state.buildId}catch{}};void poll();window.setInterval(poll,1000)})();', 'text/javascript; charset=utf-8'));
+    routes.push(fileRoute('__edgepress_preview.js', `(() => {
+      const editor = document.createElement('a');
+      editor.href = '/__edgepress/';
+      editor.textContent = document.documentElement.lang.startsWith('zh') ? '编辑 Pages' : 'Edit Pages';
+      editor.id = 'edgepress-preview-editor';
+      Object.assign(editor.style, {position:'fixed',bottom:'1rem',left:'1rem',zIndex:'2147483647',padding:'.75rem 1rem',background:'#17202a',color:'#fff',borderRadius:'.5rem',font:'16px system-ui',textDecoration:'underline'});
+      document.body.append(editor);
+      let seen = '';
+      const poll = async () => {
+        try {
+          const response = await fetch('/__edgepress_preview.json?ts=' + Date.now(), {cache:'no-store'});
+          if (!response.ok) return;
+          const state = await response.json();
+          if (seen && state.buildId !== seen) { window.location.reload(); return; }
+          seen = state.buildId;
+        } catch {}
+      };
+      void poll();
+      window.setInterval(poll, 1000);
+    })();`, 'text/javascript; charset=utf-8'));
   }
   if (config.site.agentSeo.enabled && config.site.agentSeo.llmsTxt) {
     const sections = [...site.pages.filter((page) => !page.draft), ...site.posts.slice(0, 30)];

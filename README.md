@@ -44,14 +44,14 @@ For a separate API or origin firewall, [EdgeAegis](https://github.com/jsw-teams/
 
 ## Quick start
 
-The commands below install the published npm release and initialize a new project directory. For the latest GitHub changes, use the deployment buttons or clone this repository, then run `npm install` and `npm run deploy:local` from its root:
+The commands below install the published npm release and initialize a new project directory. For the latest GitHub changes, use the deployment buttons or clone this repository, then run `npm install`, `npm link` and `edgepress s` from its root:
 
     mkdir my-edgepress-site
     cd my-edgepress-site
     npm install edgepress
     npx edgepress init
     npm install
-    npm run dev
+    npx edgepress s
 
 Use Node.js 22.12 or newer. Set the real site URL and operator contact in config.yml before publishing. Deploy with `npm run deploy:cloudflare`, `npm run deploy:vercel`, `npm run deploy:netlify`, `npm run deploy:esa` or `npm run deploy:edgeone`. `npm run deploy:local` starts the loopback preview without uploading a site. When developing EdgePress itself, use `npm install`, then `npm link` to expose the local CLI.
 
@@ -69,7 +69,7 @@ To publish new source, a repository maintainer opens **Actions → Publish npm a
 
 ## Visual Pages editor / 可视化页面编辑器
 
-Run `npm run editor` (or `npx edgepress editor` in an initialized site), then open **http://127.0.0.1:4178/**. The editor now supports **＋ 新建页面**: choose a title, optional URL slug and configured language; the new JSON Page opens immediately in the visual canvas. Existing Pages can still be selected, arranged into 1–4 columns and edited without touching JSON.
+Run `edgepress s` (or `npx edgepress s` in an initialized site), open **http://127.0.0.1:8787/** and choose **Edit Pages / 编辑 Pages**. The editor opens at **http://127.0.0.1:8787/__edgepress/** on the same local preview server; use **返回网站预览** to return to the actual themed site. Saving a Page triggers the preview rebuild. Choose **＋ 新建页面** to create a Page with a title, optional URL slug and configured language. Existing Pages can be selected, arranged into 1–4 columns and edited without touching JSON.
 
 从命令行也可以新建页面：
 
@@ -78,7 +78,7 @@ edgepress new pages "About our project" --lang en --slug about
 edgepress new pages "关于我们" --lang zh-cn --slug about
 ```
 
-The shortcut `edgepress new page` is also accepted. By default, the CLI creates `content/pages/<slug>/<locale>.json` in the site's default language. Existing pages, legacy `.md` equivalents, and symlinked directories cannot be overwritten. The generated `$schema` reference points to the installed framework (or the local development schema). Run `npm run editor` to continue editing, and `npm run build` to validate the actual generated site.
+The shortcut `edgepress new page` is also accepted. By default, the CLI creates `content/pages/<slug>/<locale>.json` in the site's default language. Existing pages, legacy `.md` equivalents, and symlinked directories cannot be overwritten. The generated `$schema` reference points to the installed framework (or the local development schema). Use `edgepress s` to continue editing and previewing, and `edgepress generate` (or `edgepress g`) to generate the static site.
 
 **Shared block catalog:** `src/page-block-catalog.json` ships with the npm package and defines starter templates for **all 30 supported Pages block types**. This includes site-reusable `link-directory`, `media-text`, `feature-grid`, `privacy-controller`, `document`, `media-viewer` and consent-controlled integrations used by other frontends. Reuse the public EdgePress catalog from site projects (including private ones); do not copy private pages or integrate site-specific services into the framework. Third-party service, CAPTCHA, ad and local-tool blocks are available as templates but **require site configuration and valid resource URLs** before a build; inserting the template does not activate a service.
 
@@ -125,9 +125,9 @@ Theme developers can reuse the [public formatting and data-saving verification t
 
 After the one-time site setup, create an article with `npm run new -- post "My first article"`. Open the printed file path and write Markdown below the second `---` line. The command fills the title, date, and language; the theme supplies the page title, article list, contents, search, and feed.
 
-Use `##` for sections, lists, links, and fenced code blocks as needed. Put article images in `content/assets/images/` and link to `/images/filename.png`. Run `npm run dev` while writing, then `npm run build` before publishing through your existing deployment workflow. Page layouts and theme development are optional for everyday writing.
+Use `##` for sections, lists, links, and fenced code blocks as needed. Put article images in `content/assets/images/` and link to `/images/filename.png`. Run `edgepress s` while writing, then `edgepress g` before publishing through your existing deployment workflow. Page layouts and theme development are optional for everyday writing.
 
-日常发文：运行 `npm run new -- post "我的第一篇文章"`，打开输出的文件，在第二个 `---` 后写 Markdown 正文。标题、日期和语言自动填写。运行 `npm run dev` 预览，发布前运行 `npm run build`。页面布局和主题开发可以在需要调整设计时再了解。
+日常发文：运行 `npm run new -- post "我的第一篇文章"`，打开输出的文件，在第二个 `---` 后写 Markdown 正文。标题、日期和语言自动填写。运行 `edgepress s` 预览并编辑 Pages，发布前运行 `edgepress generate`（或 `edgepress g`）。页面布局和主题开发可以在需要调整设计时再了解。
 
 ## Link directories
 
@@ -179,10 +179,12 @@ Brand image derivatives can be exported from the saved masters with `tools/asset
 
 ## Commands
 
+Everyday use needs two commands: `edgepress generate` (`edgepress g`) generates `dist/`; `edgepress server` (`edgepress s`) previews the site and includes the Pages editor.
+
 - edgepress init: scaffold a new site in a project directory.
 - edgepress new post "Article title": create a Markdown post.
-- edgepress build and edgepress generate: run the same generator and write static files to dist/ for Cloudflare Workers or static hosting.
-- edgepress server: start live local preview, rebuild on source changes, and refresh the PDF audit report.
+- edgepress generate (edgepress g): generate static files in dist/ for Cloudflare Workers or static hosting.
+- edgepress server (edgepress s): start live local preview with the Pages editor, rebuild on source changes, and refresh the PDF audit report. The legacy build, dev, preview, edit and editor commands remain compatibility aliases.
 - edgepress check: build, audit page structure, agent-friendliness, and Markdown rendering, simulate device profiles, inspect the browser accessibility tree and sample keyboard navigation, capture screenshots temporarily, and write only the PDF report under tools/.
 - edgepress doctor: verify static publishing configuration; a pure static project requires no Worker entry or backend bindings.
 - edgepress theme list and edgepress theme use <name>: inspect or select an installed theme.
@@ -305,6 +307,6 @@ Weekly automatic dependency maintenance resolves compatible updates, audits and 
 
 EdgePress 的中文名称是写文建站。使用 Markdown 写文章、JSON Pages 排版页面，构建静态站点并发布到 Cloudflare、Vercel、Netlify、EdgeOne 或 ESA；不需要文章数据库。多媒体查看器使用本地打包的 Video.js 10，文档预览使用独立的 document-viewer。英文说明为默认内容，完整中文入门见 [中文指南](content/guides/zh-cn.md)。
 
-安装依赖使用 `npm install`，本地预览使用 `npm run dev`，构建使用 `npm run build`，发布使用 `npm run deploy:cloudflare` 或相应平台命令。平台账号仍需先完成认证。上方 GIF 是真实隔离虚拟机中的终端、编辑器及浏览器录制；演示媒体按需播放，不默认自动播放。
+安装依赖使用 `npm install`，日常只需 `edgepress generate`（`edgepress g`）生成、`edgepress s` 启动本地预览；预览内点击“编辑 Pages”即可编辑页面。发布使用 `npm run deploy:cloudflare` 或相应平台命令。平台账号仍需先完成认证。上方 GIF 是真实隔离虚拟机中的终端、编辑器及浏览器录制；演示媒体按需播放，不默认自动播放。
 
 欢迎 Vibe Coding、AI 辅助开发和 Agent 安全报告。先读 [AGENTS.md](AGENTS.md) 与 [贡献规范](CONTRIBUTING.md)，**运行相关测试后再上传代码**，说明命令、结果和未执行项。涉及公共运行时的修改应执行 `npm test`、`npm run build` 和 `npm run audit`，不得把生成的预期输出当作测试证据。敏感问题按 [安全政策](SECURITY.md) 私密报告，注明版本、前提、脱敏复现、预期与实际行为、影响和真实验证结果，明确区分已复现问题与推测；不要公开凭据、用户数据或攻击未获授权的生产环境。

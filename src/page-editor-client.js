@@ -75,7 +75,7 @@ function move(list, index, difference) {
   changed();
 }
 async function request(path, options) {
-  const response = await fetch(path, { cache: 'no-store', ...options });
+  const response = await fetch('.' + path, { cache: 'no-store', ...options });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || 'HTTP ' + response.status);
   return data;
@@ -366,7 +366,7 @@ async function save() {
       body: JSON.stringify({ page: state.page, revision: state.revision })
     });
     state.revision = result.revision; state.dirty = false;
-    info('已安全保存到 ' + state.path + '。运行 npm run build 检查最终网页。', false, true);
+    info('已安全保存到 ' + state.path + '。返回网站预览查看自动重建结果；edgepress g 生成静态网站。', false, true);
   } catch (error) { info('保存失败：' + error.message, true); }
   finally { $('save').disabled = false; }
 }

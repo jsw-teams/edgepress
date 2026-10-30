@@ -80,7 +80,8 @@ async function requestBody(req) {
 }
 
 /** Starts a loopback-only editor. Never deploy this server. */
-export async function startPageEditor({ root = process.cwd(), port = 4178, locales = ['en', 'zh-CN'], defaultLocale = 'en' } = {}) {
+export async function startPageEditor({ root = process.cwd(), port = 4178, locales = ['en', 'zh-CN'], defaultLocale = 'en', basePath = '/', fallback } = {}) {
+  if (!/^\/(?:[a-zA-Z0-9_-]+\/)*$/.test(basePath)) throw new Error('Invalid editor base path');
   const contentRoot = resolve(root, 'content/pages');
   const typeSchema = JSON.parse(await readFile(resolve(editorRoot, '../schemas/pages.schema.json'), 'utf8'));
   const typeNames = new Set(typeSchema.definitions.element.properties.type.enum);
@@ -99,13 +100,25 @@ export async function startPageEditor({ root = process.cwd(), port = 4178, local
   const server = createServer(async (req, res) => {
     try {
       if (req.headers.host !== '127.0.0.1:' + serverPort) return respond(res, 403, { error: 'Localhost only' });
+      const url = new URL(req.url, 'http://127.0.0.1:' + serverPort);
+      if (basePath !== '/' && url.pathname === basePath.slice(0, -1)) {
+        res.writeHead(302, { Location: basePath, 'Cache-Control': 'no-store' });
+        return res.end();
+      }
+      if (!url.pathname.startsWith(basePath)) {
+        if (fallback) return fallback(req, res);
+        return respond(res, 404, { error: 'Not found' });
+      }
+      url.pathname = '/' + url.pathname.slice(basePath.length);
       res.setHeader('Content-Security-Policy', "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'");
       res.setHeader('X-Frame-Options', 'DENY');
-      const url = new URL(req.url, 'http://127.0.0.1:' + serverPort);
       if (req.method === 'GET' && staticFiles.has(url.pathname)) {
         const item = staticFiles.get(url.pathname);
         res.writeHead(200, { 'Content-Type': item.type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
         const bytes = await readFile(resolve(editorRoot, item.file));
+        if (url.pathname === '/' && basePath !== '/') {
+          return res.end(bytes.toString('utf8').replace('<div class="actions">', '<div class="actions"><a href="/">返回网站预览</a>'));
+        }
         // The optional editor extension shares the same module scope as the original
         // editor to reuse its loaded page and revision state without a second copy.
         if (url.pathname === '/editor.js') {
@@ -174,5 +187,5 @@ export async function startPageEditor({ root = process.cwd(), port = 4178, local
   });
   await new Promise((ok, fail) => { server.once('error', fail); server.listen(port, '127.0.0.1', ok); });
   serverPort = server.address().port;
-  return { server, url: 'http://127.0.0.1:' + serverPort + '/', close: () => new Promise((ok, fail) => server.close(error => error ? fail(error) : ok())) };
+  return { server, url: 'http://127.0.0.1:' + serverPort + basePath, close: () => new Promise((ok, fail) => server.close(error => error ? fail(error) : ok())) };
 }

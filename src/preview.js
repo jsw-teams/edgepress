@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { buildSite } from './build.js';
 import { loadConfig } from './config.js';
 import { checkPages } from './page-check.js';
+import { availablePreviewPort, previewOptions, startPreviewServer } from './preview-server.js';
 
 const watchedDirectories = ['content', 'languages', 'plugins', 'src', 'static', 'themes'];
 const watchedFiles = ['config.yml', 'edgepress.config.mjs', 'wrangler.jsonc'];
@@ -40,14 +41,8 @@ async function sourceSnapshot(root) {
   return values.join('\n');
 }
 
-function cliArgs(args) {
-  const options = [...args];
-  if (!options.some((value) => value === '--ip' || value.startsWith('--ip='))) options.push('--ip', '127.0.0.1');
-  if (!options.some((value) => value === '--port' || value.startsWith('--port='))) options.push('--port', '8787');
-  return options;
-}
-
-async function main() {
+export async function startPreview(options = []) {
+  const { port, forwarded } = previewOptions(options);
   const config = await loadConfig();
   const root = config.root;
   const wrangler = resolve(root, 'node_modules/wrangler/bin/wrangler.js');
@@ -63,8 +58,12 @@ async function main() {
 
   await rebuild();
   let snapshot = await sourceSnapshot(root);
-  const commandOffset = ['preview', 'dev', 'server'].includes(process.argv[2]) ? 3 : 2;
-  const args = [wrangler, 'dev', ...cliArgs(process.argv.slice(commandOffset))];
+  let upstreamPort;
+  do { upstreamPort = await availablePreviewPort(); } while (upstreamPort === port);
+  const args = [wrangler, 'dev', ...forwarded, '--ip', '127.0.0.1', '--port', String(upstreamPort)];
+  const preview = await startPreviewServer({ root, port, upstreamPort, locales: config.i18n.locales, defaultLocale: config.i18n.defaultLocale });
+  console.log('Local preview: http://127.0.0.1:' + port + '/');
+  console.log('Pages editor: ' + preview.url + ' (Ctrl+C to stop both)');
   let child;
   let stopped = false;
   let restarting = false;
@@ -104,7 +103,11 @@ async function main() {
         clearTimeout(timeout);
         resolveExit();
       });
-      current.kill();
+      if (process.platform === 'win32') {
+        // Terminate only this preview's tree, including Wrangler's workerd child.
+        const terminator = spawn('taskkill', ['/PID', String(current.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true });
+        terminator.once('error', () => current.kill());
+      } else current.kill();
     });
   }
 
@@ -150,18 +153,17 @@ async function main() {
     }
   }, 900);
 
-  function stop() {
+  async function stop() {
     if (stopped) return;
     stopped = true;
+    process.removeListener('SIGINT', stop);
+    process.removeListener('SIGTERM', stop);
     clearInterval(poll);
     clearTimeout(debounce);
-    void stopWrangler();
+    await Promise.all([stopWrangler(), preview.close()]);
+    while (rebuilding || scanning) await new Promise(done => setTimeout(done, 50));
   }
   process.once('SIGINT', stop);
   process.once('SIGTERM', stop);
+  return { url: 'http://127.0.0.1:' + port + '/', editorUrl: preview.url, close: stop };
 }
-
-main().catch((error) => {
-  console.error(error?.stack || error);
-  process.exitCode = 1;
-});

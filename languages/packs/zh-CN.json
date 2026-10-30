@@ -90,7 +90,7 @@
   "postStarter": "在这里写第一段正文。需要时可使用 ## 小标题、列表、链接和代码块。",
   "postCreated": "已创建 {file}",
   "postNextSteps": "打开这个文件，在第二个 --- 后用 Markdown 写正文。标题、日期和语言已经填好。",
-  "postPreview": "运行 npm run dev 预览，npm run build 构建，再通过已有部署流程发布。",
+  "postPreview": "运行 edgepress s 预览并编辑 Pages，edgepress generate（或 edgepress g）生成，再通过已有部署流程发布。",
   "postReadingTime": "约 {minutes} 分钟阅读",
   "categoryBlog": "博客",
   "categoryUncategorized": "未分类",
