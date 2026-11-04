@@ -4,6 +4,7 @@ import { readFile, readdir, lstat, realpath, open, rename, unlink } from 'node:f
 import { resolve, relative, dirname, basename, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createPage } from './page-scaffold.js';
+import {listImages, openImage, uploadImage, maxImageBytes} from './page-editor-images.js';
 
 const editorRoot = dirname(fileURLToPath(import.meta.url));
 const maxDocumentBytes = 2 * 1024 * 1024;
@@ -92,7 +93,8 @@ export async function startPageEditor({ root = process.cwd(), port = 4178, local
   const staticFiles = new Map([
     ['/', { file: 'page-editor.html', type: 'text/html; charset=utf-8' }],
     ['/editor.js', { file: 'page-editor-client.js', type: 'text/javascript; charset=utf-8' }],
-    ['/editor.css', { file: 'page-editor.css', type: 'text/css; charset=utf-8' }]
+    ['/editor.css', { file: 'page-editor.css', type: 'text/css; charset=utf-8' }],
+    ['/editor-model.js', { file: 'page-editor-model.js', type: 'text/javascript; charset=utf-8' }]
   ]);
   // Serialize writes so two browser tabs cannot commit the same revision.
   let pendingWrite = Promise.resolve();
@@ -117,7 +119,7 @@ export async function startPageEditor({ root = process.cwd(), port = 4178, local
         res.writeHead(200, { 'Content-Type': item.type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
         const bytes = await readFile(resolve(editorRoot, item.file));
         if (url.pathname === '/' && basePath !== '/') {
-          return res.end(bytes.toString('utf8').replace('<div class="actions">', '<div class="actions"><a href="/">返回网站预览</a>'));
+          return res.end(bytes.toString('utf8').replace('id="site-preview" hidden', 'id="site-preview"'));
         }
         // The optional editor extension shares the same module scope as the original
         // editor to reuse its loaded page and revision state without a second copy.
@@ -132,6 +134,30 @@ export async function startPageEditor({ root = process.cwd(), port = 4178, local
       }
       if (req.method === 'GET' && url.pathname === '/api/locales') {
         return respond(res, 200, { locales, defaultLocale });
+      }
+      if (req.method === 'GET' && url.pathname === '/api/images') {
+        const offset=Number(url.searchParams.get('offset')||0),search=url.searchParams.get('q')||'';
+        if(!Number.isInteger(offset)||offset<0||search.length>128)throw new Error('Invalid image search');
+        return respond(res,200,await listImages(root,search,offset));
+      }
+      if (req.method === 'GET' && url.pathname === '/api/image') {
+        const image=await openImage(root,url.searchParams.get('path'));
+        res.writeHead(200,{'Content-Type':image.type,'Content-Length':image.size,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+        const stream=image.handle.createReadStream();
+        stream.once('error',()=>res.destroy());res.once('close',()=>stream.destroy());
+        return stream.pipe(res);
+      }
+      if (req.method === 'POST' && url.pathname === '/api/images') {
+        if(req.headers.origin!=='http://127.0.0.1:'+serverPort)return respond(res,403,{error:'Invalid editor origin'});
+        if(req.headers['content-type']!=='application/octet-stream')throw new Error('Expected application/octet-stream');
+        if(Number(req.headers['content-length'])>maxImageBytes)return respond(res,413,{error:'Image exceeds 10 MB'});
+        const chunks=[];let size=0;
+        for await(const chunk of req){size+=chunk.length;if(size>maxImageBytes){respond(res,413,{error:'Image exceeds 10 MB'});req.resume();return;}chunks.push(chunk);}
+        let name;
+        try{name=decodeURIComponent(req.headers['x-file-name']||'image');}catch{throw new Error('Invalid image name');}
+        const bytes=Buffer.concat(chunks);
+        const image=await(pendingWrite=pendingWrite.catch(()=>{}).then(()=>uploadImage(root,name,bytes)));
+        return respond(res,201,image);
       }
       if (req.method === 'POST' && url.pathname === '/api/pages') {
         if (req.headers.origin !== 'http://127.0.0.1:' + serverPort) return respond(res, 403, { error: 'Invalid editor origin' });

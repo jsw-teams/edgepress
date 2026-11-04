@@ -97,6 +97,19 @@ export async function chooseFiles(page, input) {
   // Click Open explicitly; Enter can activate GTK's Cancel default.
   await move(geometry.X + geometry.WIDTH - 53, geometry.Y + geometry.HEIGHT - 43);
 }
+export async function chooseFile(page, input, path) {
+  await pointAt(page,input);
+  await guest(['xdotool','click','1']);
+  await new Promise(done=>setTimeout(done,800));
+  await activate('Open File');
+  await guest(['xdotool','key','ctrl+l']);
+  await guest(['xdotool','type','--clearmodifiers','--delay','25',guestPath(path)]);
+  await new Promise(done=>setTimeout(done,700));
+  const id=(await guest(['xdotool','search','--onlyvisible','--name','Open File'])).split(/\s+/).at(-1);
+  const bounds=Object.fromEntries((await guest(['xdotool','getwindowgeometry','--shell',id])).split('\n').map(line=>line.split('=')).map(([key,value])=>[key,Number(value)]));
+  // GTK can make Cancel the Enter default even while its location entry is active.
+  await guest(['xdotool','mousemove',String(bounds.X+bounds.WIDTH-53),String(bounds.Y+bounds.HEIGHT-43),'click','1']);
+}
 export async function typeCommand(root, title, command) {
   const path = resolve(root, '.recording-command.txt');
   await writeFile(path, command);

@@ -1,396 +1,262 @@
-const $ = id => document.getElementById(id);
-const state = { path: '', page: null, revision: '', selected: null, dirty: false };
-const labels = {
-  hero: '横幅 / Hero', section: '分区', heading: '标题', text: '文字', image: '图片',
-  quote: '引用', cta: '操作按钮', 'link-list': '链接列表', 'feature-grid': '功能卡片',
-  faq: '问答', code: '代码', notice: '提示', 'data-table': '数据表',
-  'post-list': '文章列表', 'latest-posts': '最新文章', document: '文档',
-  'media-text': '图文', 'media-viewer': '媒体浏览器', 'display-text': '展示文字',
-  list: '列表', steps: '步骤', 'link-directory': '链接目录', oembed: '外部嵌入',
-  service: '第三方服务', 'local-tool': '本地工具', 'privacy-services': '服务隐私',
-  'privacy-consent': '隐私同意', 'privacy-controller': '隐私设置',
-  captcha: '验证码', 'ad-slot': '广告位'
-};
-const templates = {
-  heading: { type: 'heading', level: 2, text: '新标题' },
-  text: { type: 'text', text: '在这里输入文字' },
-  hero: { type: 'hero', title: '页面标题', text: '介绍一下这个页面' },
-  section: { type: 'section', title: '新分区', blocks: [{ type: 'text', text: '分区内容' }] },
-  image: { type: 'image', src: '/images/example.png', alt: '图片描述' },
-  quote: { type: 'quote', text: '引用内容' },
-  cta: { type: 'cta', label: '了解更多', url: '/quick-start/' },
-  'link-list': { type: 'link-list', title: '相关链接', items: [{ label: '查看内容', url: '/quick-start/' }] },
-  code: { type: 'code', language: 'text', code: '示例代码' },
-  notice: { type: 'notice', title: '提示', text: '提示内容' },
-  'post-list': { type: 'post-list', title: '文章列表', count: 3 },
-  'latest-posts': { type: 'latest-posts', title: '最新文章', count: 3 },
-  document: { type: 'document', title: '文档预览', src: '/documents/sample.pdf' },
-  'feature-grid': { type: 'feature-grid', title: '功能列表', items: [{ title: '功能', text: '功能介绍', icon: 'check' }] },
-  faq: { type: 'faq', title: '常见问题', items: [{ question: '问题', answer: '答案' }] }
-};
-const suggestions = {
-  hero: { eyebrow: '', cta: { label: '了解更多', url: '/' }, highlights: ['亮点'] },
-  image: { title: '', caption: '', width: 800, height: 450 },
-  heading: { id: '' }, text: { paragraphs: ['新段落'] },
-  section: { tone: 'soft', id: '' }, quote: { author: '' },
-  'media-text': { title: '', text: '', src: '', alt: '', placement: 'left' },
-  code: { title: '' }, document: { caption: '' }
-};
+import {containers, locate, moveElement, resizeRow, emptyContainers} from './editor-model.js';
 
-function el(tag, text, cssClass) {
-  const node = document.createElement(tag);
-  if (text !== undefined && text !== null) node.textContent = String(text);
-  if (cssClass) node.className = cssClass;
-  return node;
-}
-function button(label, onClick, cssClass) {
-  const node = el('button', label, cssClass);
-  node.type = 'button';
-  node.addEventListener('click', onClick);
-  return node;
-}
-function info(message, error = false, saved = false) {
-  $('status').textContent = message;
-  $('status').className = error ? 'error' : saved ? 'saved' : '';
-}
-function changed() {
-  state.dirty = true;
-  info('有尚未保存的更改');
-}
-function guarded(next) {
-  if (!state.dirty || window.confirm('有未保存的更改，确定放弃吗？')) next();
-}
-function selectedBlock() {
-  const s = state.selected;
-  return s && state.page?.blocks[s.row]?.cells[s.cell]?.[s.block];
-}
-function selection(row, cell, block) {
-  state.selected = { row, cell, block };
-  repaint();
-}
-function move(list, index, difference) {
-  const next = index + difference;
-  if (next < 0 || next >= list.length) return;
-  [list[index], list[next]] = [list[next], list[index]];
-  changed();
-}
-async function request(path, options) {
-  const response = await fetch('.' + path, { cache: 'no-store', ...options });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || 'HTTP ' + response.status);
-  return data;
-}
-async function reloadPages() {
-  const data = await request('/api/pages');
-  const picker = $('page-picker');
-  picker.replaceChildren();
-  data.pages.forEach(path => {
-    const option = el('option', path); option.value = path; picker.append(option);
-  });
-  if (!data.pages.length) {
-    info('没有找到 JSON 页面。请先在 content/pages/ 下创建页面。', true);
-    return;
-  }
-  if (state.path && data.pages.includes(state.path)) picker.value = state.path;
+const $ = id => document.getElementById(id);
+const state = {path:'', page:null, revision:'', selected:null, dirty:false, undo:[], redo:[], cards:new Map(), outline:new Map(), drag:null};
+const labels = {}, templates = {};
+const suggestions = {
+  hero:{eyebrow:'',cta:{label:'了解更多',url:'/'},highlights:['亮点']},
+  image:{title:'',caption:'',width:800,height:450},heading:{id:''},text:{paragraphs:['新段落']},
+  section:{tone:'soft',id:''},quote:{author:''},'media-text':{title:'',text:'',src:'',alt:'',placement:'left'},
+  code:{title:''},document:{caption:''}
+};
+const names = {title:'标题',text:'正文',src:'资源地址',alt:'图片说明',caption:'图注',url:'链接地址',label:'按钮文字',eyebrow:'引题',paragraphs:'段落',level:'标题级别',id:'锚点',items:'项目',blocks:'子元素',author:'作者',language:'代码语言',code:'代码',width:'宽度',height:'高度',placement:'图片位置',tone:'样式',icon:'图标',question:'问题',answer:'答案',description:'描述',count:'数量',mediaType:'媒体类型'};
+
+function el(tag,text,cssClass){const node=document.createElement(tag);if(text!==undefined&&text!==null)node.textContent=String(text);if(cssClass)node.className=cssClass;return node;}
+function button(label,onClick,cssClass){const node=el('button',label,cssClass);node.type='button';node.addEventListener('click',onClick);return node;}
+function info(message,error=false,saved=false){$('status').textContent=message;$('status').className=error?'error':saved?'saved':'';}
+function changed(){state.dirty=true;$('save').textContent='保存更改';info('尚未保存');}
+function selectedBlock(){return state.selected&&state.page&&locate(state.page,state.selected)?state.selected:null;}
+function revealSelection(){state.cards.get(state.selected)?.scrollIntoView({block:'nearest'});}
+function select(block){state.selected=block;repaint();revealSelection();$('fields').scrollTop=0;state.cards.get(block)?.querySelector('.pick').focus({preventScroll:true});}
+function checkpoint(){if(!state.page)return;state.undo.push(JSON.stringify(state.page));if(state.undo.length>20)state.undo.shift();state.redo=[];updateHistory();}
+function updateHistory(){$('undo').disabled=!state.undo.length;$('redo').disabled=!state.redo.length;}
+function edit(action){checkpoint();try{action();changed();repaint();revealSelection();}catch(error){state.page=JSON.parse(state.undo.pop());state.selected=null;repaint();updateHistory();info(error.message,true);}}
+function history(direction){const from=state[direction],to=state[direction==='undo'?'redo':'undo'];if(!from.length)return;to.push(JSON.stringify(state.page));state.page=JSON.parse(from.pop());state.selected=null;changed();syncMeta();repaint();updateHistory();}
+function guarded(next){if(!state.dirty||window.confirm('有未保存的更改，确定放弃吗？'))next();}
+function syncMeta(){$('title').value=state.page.title||'';$('description').value=state.page.description||'';$('page-name').textContent=state.page.title||'未命名页面';}
+async function request(path,options){const response=await fetch('.'+path,{cache:'no-store',...options});const data=await response.json();if(!response.ok)throw new Error(data.error||'HTTP '+response.status);return data;}
+async function reloadPages(){
+  const {pages}=await request('/api/pages'),picker=$('page-picker');picker.replaceChildren();
+  for(const path of pages){const option=el('option',path);option.value=path;picker.append(option);}
+  if(!pages.length){info('点击“新建页面”，开始设计你的第一个页面。');return;}
+  if(pages.includes(state.path))picker.value=state.path;
   await loadPage(picker.value);
 }
-async function loadPage(path) {
-  if (!path) return;
-  try {
-    const data = await request('/api/page?path=' + encodeURIComponent(path));
-    state.path = path;
-    state.page = data.page;
-    state.revision = data.revision;
-    state.selected = null;
-    state.dirty = false;
-    $('page-picker').value = path;
-    $('title').value = data.page.title || '';
-    $('description').value = data.page.description || '';
-    $('page-name').textContent = data.page.title || path;
-    $('page-path').textContent = path + ' · ' + (data.page.lang || '');
-    repaint();
-    info('已载入 ' + path, false, true);
-  } catch (error) { info('无法载入页面：' + error.message, true); }
+async function loadPage(path){
+  if(!path)return;
+  try{
+    const data=await request('/api/page?path='+encodeURIComponent(path));
+    Object.assign(state,{path,page:data.page,revision:data.revision,selected:null,dirty:false,undo:[],redo:[]});
+    $('page-picker').value=path;$('page-path').textContent=path+' · '+(data.page.lang||'');syncMeta();repaint();updateHistory();info('已载入 · '+data.page.title,false,true);
+  }catch(error){info('无法载入页面：'+error.message,true);}
 }
-function snippet(block) {
-  const value = block.title || block.text || block.code || block.src || block.label || block.type;
-  return String(value).replace(/\s+/g, ' ').slice(0, 44);
-}
-function repaint() {
-  if (!state.page) return;
-  drawOutline();
-  drawCanvas();
-  drawInspector();
-}
-function drawOutline() {
-  const nav = $('outline'); nav.replaceChildren();
-  state.page.blocks.forEach((row, rowIndex) => {
-    const group = el('div', null, 'outline-row');
-    group.append(el('strong', '第 ' + (rowIndex + 1) + ' 行 · ' + row.columns + ' 栏'));
-    row.cells.forEach((cell, cellIndex) => {
-      const section = el('div', null, 'outline-cell');
-      section.append(el('small', '栏 ' + (cellIndex + 1)));
-      cell.forEach((block, blockIndex) => {
-        const item = button((labels[block.type] || block.type) + ' · ' + snippet(block), () => selection(rowIndex, cellIndex, blockIndex), 'outline-button');
-        if (state.selected?.row === rowIndex && state.selected?.cell === cellIndex && state.selected?.block === blockIndex) item.setAttribute('aria-current', 'true');
-        section.append(item);
-      });
-      group.append(section);
-    });
-    nav.append(group);
-  });
-}
-function addBlock(rowIndex, cellIndex, type) {
-  const cell = state.page.blocks[rowIndex].cells[cellIndex];
-  cell.push(structuredClone(templates[type]));
-  changed();
-  selection(rowIndex, cellIndex, cell.length - 1);
-}
-function drawCanvas() {
-  const canvas = $('canvas'); canvas.replaceChildren();
-  state.page.blocks.forEach((row, rowIndex) => {
-    const wrap = el('section', null, 'canvas-row');
-    const toolbar = el('div', null, 'row-actions');
-    const title = el('strong', '行 ' + (rowIndex + 1));
-    const operations = el('div', null, 'row-actions');
-    const count = el('select'); count.setAttribute('aria-label', '第 ' + (rowIndex + 1) + ' 行的栏数');
-    for (let n = 1; n <= 4; n++) {
-      const opt = el('option', n + ' 栏'); opt.value = String(n);
-      count.append(opt);
+function snippet(block){return String(block.title||block.text||block.alt||block.code||block.src||block.label||'').replace(/\s+/g,' ').slice(0,44);}
+function repaint(){if(!state.page)return;drawOutline();drawCanvas();drawInspector();$('row-count').textContent=state.page.blocks.length+' 行';}
+
+function drawOutline(){
+  const nav=$('outline');nav.replaceChildren();state.outline.clear();
+  function branch(list,parent){
+    for(const block of list){
+      const item=button('',()=>select(block),'outline-button');
+      item.append(el('span',labels[block.type]||block.type,'outline-type'),el('span',snippet(block)||'未填写内容','outline-snippet'));
+      if(state.selected===block)item.setAttribute('aria-current','true');
+      parent.append(item);state.outline.set(block,item);
+      if(Array.isArray(block.blocks)){const nested=el('div',null,'outline-nested');branch(block.blocks,nested);parent.append(nested);}
     }
-    count.value = String(row.columns);
-    count.addEventListener('change', () => {
-      const next = Number(count.value);
-      // Reducing columns reflows all existing elements into the last kept cell.
-      // Never discard content merely because the editor layout changes.
-      if (next < row.columns) {
-        for (const extra of row.cells.slice(next)) row.cells[next - 1].push(...extra);
-      }
-      while (row.cells.length < next) row.cells.push([{ type: 'text', text: '新栏内容' }]);
-      row.cells.length = next;
-      row.columns = next;
-      state.selected = null;
-      changed(); repaint();
-    });
-    operations.append(count,
-      button('↑', () => { move(state.page.blocks, rowIndex, -1); state.selected = null; repaint(); }),
-      button('↓', () => { move(state.page.blocks, rowIndex, 1); state.selected = null; repaint(); }),
-      button('删除行', () => {
-        if (state.page.blocks.length === 1) return info('页面至少需要一行。', true);
-        if (!window.confirm('确定删除整行及其所有元素？')) return;
-        state.page.blocks.splice(rowIndex, 1); state.selected = null; changed(); repaint();
-      }, 'danger')
-    );
-    toolbar.append(title, operations); wrap.append(toolbar);
-    const cells = el('div', null, 'cells columns-' + row.columns);
-    row.cells.forEach((blocks, cellIndex) => {
-      const cell = el('div', null, 'canvas-cell');
-      const tools = el('div', null, 'cell-actions');
-      tools.append(el('strong', '栏 ' + (cellIndex + 1)));
-      const select = el('select'); select.setAttribute('aria-label', '选择要添加的元素类型');
-      for (const [key, value] of Object.entries(templates)) {
-        const option = el('option', labels[key] || key); option.value = key; select.append(option);
-      }
-      tools.append(select, button('＋ 添加', () => addBlock(rowIndex, cellIndex, select.value)));
-      cell.append(tools);
-      blocks.forEach((block, blockIndex) => {
-        const selected = state.selected?.row === rowIndex && state.selected?.cell === cellIndex && state.selected?.block === blockIndex;
-        const card = el('article', null, 'element' + (selected ? ' active' : ''));
-        const head = el('div', null, 'element-head');
-        const choose = button(labels[block.type] || block.type, () => selection(rowIndex, cellIndex, blockIndex), 'pick');
-        choose.setAttribute('aria-pressed', String(Boolean(selected)));
-        const operations = el('div', null, 'element-actions');
-        operations.append(
-          button('↑', () => { move(blocks, blockIndex, -1); selection(rowIndex, cellIndex, Math.max(0, blockIndex - 1)); }),
-          button('↓', () => { move(blocks, blockIndex, 1); selection(rowIndex, cellIndex, Math.min(blocks.length - 1, blockIndex + 1)); }),
-          button('×', () => {
-            if (blocks.length === 1) return info('每栏至少保留一个元素。可直接修改这个元素。', true);
-            blocks.splice(blockIndex, 1); state.selected = null; changed(); repaint();
-          }, 'danger')
-        );
-        head.append(choose, operations); card.append(head, preview(block));
-        card.addEventListener('click', event => { if (!event.target.closest('button')) selection(rowIndex, cellIndex, blockIndex); });
-        cell.append(card);
-      });
-      cells.append(cell);
-    });
-    wrap.append(cells); canvas.append(wrap);
+  }
+  state.page.blocks.forEach((row,r)=>{
+    const group=el('div',null,'outline-row');group.append(el('strong','第 '+(r+1)+' 行','outline-row-name'));
+    row.cells.forEach((list,c)=>{const cell=el('div',null,'outline-cell');cell.append(el('small','栏 '+(c+1)));branch(list,cell);group.append(cell);});nav.append(group);
   });
 }
-function preview(block) {
-  const box = el('div', null, 'element-preview');
-  const heading = block.title || (block.type === 'heading' ? block.text : '');
-  if (heading) box.append(el(block.type === 'hero' ? 'h2' : 'h3', heading));
-  if (block.eyebrow) box.prepend(el('small', block.eyebrow));
-  if (block.type === 'image' || block.type === 'document' || block.type === 'media-viewer') {
-    box.append(el('div', (block.type === 'image' ? '▧ 图片 · ' : '▤ 资源 · ') + (block.src || block.alt || '选择资源'), 'placeholder'));
-  } else if (block.type === 'quote') {
-    box.append(el('blockquote', block.text || '引用'));
-  } else if (block.type === 'code') {
-    const code = el('code', block.code || '代码');
-    const pre = el('pre'); pre.append(code); box.append(pre);
-  } else if (block.type === 'link-list' && Array.isArray(block.items)) {
-    for (const item of block.items.slice(0, 6)) box.append(el('p', '↗ ' + (item.label || item.title || '链接')));
-  } else if (block.type === 'section' && Array.isArray(block.blocks)) {
-    for (const nested of block.blocks.slice(0, 4)) box.append(el('p', '└ ' + (nested.title || nested.text || nested.type)));
-  } else if (block.type === 'feature-grid' && Array.isArray(block.items)) {
-    for (const item of block.items.slice(0, 4)) box.append(el('p', '▪ ' + (item.title || item.text || '功能')));
-  } else if (block.type === 'faq' && Array.isArray(block.items)) {
-    for (const item of block.items.slice(0, 4)) box.append(el('p', '❔ ' + (item.question || item.title || '问题')));
-  } else if (block.type !== 'heading' && block.type !== 'cta' && block.text) {
-    box.append(el('p', block.text));
-  }
-  if (Array.isArray(block.paragraphs)) box.append(el('p', block.paragraphs.slice(0, 3).join('\n')));
-  if (block.type === 'cta') box.append(el('p', '↗ ' + (block.label || block.cta?.label || block.url || '操作按钮')));
-  if (!box.childNodes.length) box.append(el('p', '点击上方元素名称，编辑 ' + (labels[block.type] || block.type), 'muted'));
-  return box;
+
+function moveTo(block,list,index){
+  const source=locate(state.page,block),target=containers(state.page).find(item=>item.list===list);
+  if(!source||!target)return;
+  if(target.ancestors.includes(block))return info('不能把分区移入它自己或自己的子分区。',true);
+  checkpoint();
+  try{moveElement(state.page,block,list,index);state.selected=block;changed();repaint();revealSelection();info('已移动至 '+locate(state.page,block).label+' · 尚未保存');}
+  catch(error){state.undo.pop();updateHistory();info(error.message,true);}
 }
-function drawInspector() {
-  const fields = $('fields'); fields.replaceChildren();
-  const block = selectedBlock();
-  if (!block) {
-    $('selected-label').textContent = '尚未选择';
-    fields.append(el('p', '请在画布或页面结构中选择元素。', 'empty'));
-    return;
-  }
-  $('selected-label').textContent = (state.selected.row + 1) + ' 行 · ' + (state.selected.cell + 1) + ' 栏';
-  fields.append(el('h3', labels[block.type] || block.type));
-  const form = el('form'); form.addEventListener('submit', event => event.preventDefault());
-  objectFields(form, block, 0, true);
-  fields.append(form);
+function draggable(handle,data){
+  handle.draggable=true;handle.classList.add('drag-handle');handle.title='拖动调整位置';
+  handle.addEventListener('dragstart',event=>{state.drag=data;event.dataTransfer.effectAllowed='move';event.dataTransfer.setData('application/x-edgepress','local');});
+  handle.addEventListener('dragend',()=>{state.drag=null;document.querySelectorAll('.drop-active').forEach(node=>node.classList.remove('drop-active'));});
 }
-function fieldLabel(key, note) {
-  const label = el('label', key, 'field');
-  if (note) label.append(el('small', note, 'type-hint'));
-  return label;
+function dropTarget(node,accept,drop){
+  node.addEventListener('dragover',event=>{if(state.drag&&accept(state.drag)){event.preventDefault();event.stopPropagation();event.dataTransfer.dropEffect='move';node.classList.add('drop-active');}});
+  node.addEventListener('dragleave',event=>{if(!node.contains(event.relatedTarget))node.classList.remove('drop-active');});
+  node.addEventListener('drop',event=>{node.classList.remove('drop-active');if(!state.drag||!accept(state.drag))return;event.preventDefault();event.stopPropagation();const data=state.drag;state.drag=null;drop(data,event);});
 }
-function replaceValue(target, key, value) {
-  target[key] = value; changed(); drawOutline(); drawCanvas();
+function addBlock(list,type){
+  if(list.length>=100)return info('每个容器最多放置 100 个元素。',true);
+  if(type==='image')return imageLibrary(image=>edit(()=>{const block={type:'image',src:image.path,alt:'',...(image.width?{width:image.width,height:image.height}:{})};list.push(block);state.selected=block;}));
+  edit(()=>{const block=structuredClone(templates[type]);list.push(block);state.selected=block;});
 }
-function objectFields(container, obj, depth, root = false) {
-  for (const [key, value] of Object.entries(obj)) {
-    if (root && key === 'type') continue;
-    const field = fieldLabel(key);
-    if (typeof value === 'string') {
-      const control = key === 'text' || key === 'code' || key === 'fallback' || value.length > 130 ? el('textarea') : el('input');
-      if (control.tagName === 'INPUT') control.type = 'text';
-      control.value = value;
-      control.setAttribute('aria-label', key);
-      control.addEventListener('input', () => replaceValue(obj, key, control.value));
-      field.append(control);
-    } else if (typeof value === 'number') {
-      const control = el('input'); control.type = 'number'; control.value = value;
-      control.addEventListener('change', () => { if (Number.isFinite(control.valueAsNumber)) replaceValue(obj, key, control.valueAsNumber); });
-      field.append(control);
-    } else if (typeof value === 'boolean') {
-      field.classList.add('checkbox');
-      const control = el('input'); control.type = 'checkbox'; control.checked = value;
-      control.addEventListener('change', () => replaceValue(obj, key, control.checked));
-      field.append(control);
-    } else if (Array.isArray(value)) {
-      field.append(arrayEditor(value, obj, key, depth));
-    } else if (value && typeof value === 'object' && depth < 5) {
-      const group = el('div', null, 'object-editor');
-      objectFields(group, value, depth + 1);
-      field.append(group);
-    } else {
-      const control = el('textarea'); control.value = JSON.stringify(value, null, 2);
-      control.addEventListener('change', () => {
-        try { replaceValue(obj, key, JSON.parse(control.value)); }
-        catch { info('字段 ' + key + ' 不是有效 JSON', true); }
-      });
-      field.append(control);
+function addControls(list,nested=false){
+  const tools=el('div',null,'cell-actions'),select=el('select');select.setAttribute('aria-label','选择要添加的元素类型');
+  for(const [type] of Object.entries(templates)){const option=el('option',labels[type]||type);option.value=type;select.append(option);}
+  tools.append(select,button(nested?'＋ 子元素':'＋ 添加',()=>addBlock(list,select.value)),button('图片',()=>addBlock(list,'image'),'image-add'));
+  return tools;
+}
+function drawCanvas(){
+  const canvas=$('canvas');canvas.replaceChildren();state.cards.clear();
+  state.page.blocks.forEach((row,r)=>{
+    const wrap=el('section',null,'canvas-row'),toolbar=el('div',null,'row-actions'),heading=el('div',null,'row-name');
+    const grip=button('⠿',()=>{},'row-grip');grip.setAttribute('aria-label','拖动第 '+(r+1)+' 行');draggable(grip,{row});heading.append(grip,el('strong','行 '+(r+1)));
+    const actions=el('div',null,'row-actions'),count=el('select');count.setAttribute('aria-label','第 '+(r+1)+' 行的栏数');
+    for(let n=1;n<=4;n++){const option=el('option',n+' 栏');option.value=n;count.append(option);}count.value=row.columns;
+    count.addEventListener('change',()=>edit(()=>resizeRow(row,Number(count.value))));
+    const shift=offset=>{if(r+offset<0||r+offset>=state.page.blocks.length)return;edit(()=>{const rows=state.page.blocks;[rows[r],rows[r+offset]]=[rows[r+offset],rows[r]];});};
+    actions.append(count,button('↑',()=>shift(-1)),button('↓',()=>shift(1)),button('删除行',()=>{if(state.page.blocks.length===1)return info('页面至少需要一行。',true);if(window.confirm('删除这一行及其中的元素？'))edit(()=>{state.page.blocks.splice(r,1);state.selected=null;});},'danger'));
+    toolbar.append(heading,actions);wrap.append(toolbar);
+    dropTarget(toolbar,data=>Boolean(data.row&&data.row!==row),data=>edit(()=>{const rows=state.page.blocks,from=rows.indexOf(data.row);rows.splice(from,1);rows.splice(rows.indexOf(row),0,data.row);}));
+    const cells=el('div',null,'cells columns-'+row.columns);
+    row.cells.forEach((list,c)=>{
+      const cell=el('div',null,'canvas-cell'),label=el('div',null,'cell-label');label.append(el('span','栏 '+(c+1)));
+      if(!list.length)label.append(button('移除空栏',()=>{if(row.columns===1)return info('请添加元素，或使用“删除行”移除这一行。',true);edit(()=>{row.cells.splice(c,1);row.columns--;});},'danger'));
+      cell.append(label);renderElements(list,cell);cell.append(addControls(list));cells.append(cell);
+    });
+    wrap.append(cells);canvas.append(wrap);
+  });
+}
+function renderElements(list,parent){
+  list.forEach((block,index)=>{
+    const card=el('article',null,'element'+(state.selected===block?' active':''));card.dataset.type=block.type;state.cards.set(block,card);
+    const head=el('div',null,'element-head'),grip=button('⠿',()=>{},'element-grip');grip.setAttribute('aria-label','拖动'+(labels[block.type]||block.type));draggable(grip,{block});
+    const pick=button(labels[block.type]||block.type,()=>select(block),'pick');pick.setAttribute('aria-pressed',String(state.selected===block));
+    const actions=el('div',null,'element-actions');
+    actions.append(button('↑',()=>{if(index>0)moveTo(block,list,index-1);}),button('↓',()=>{if(index<list.length-1)moveTo(block,list,index+2);}),button('×',()=>edit(()=>{list.splice(index,1);if(state.selected===block)state.selected=null;}),'danger'));
+    head.append(grip,pick,actions);card.append(head,preview(block));
+    card.addEventListener('click',event=>{if(!event.target.closest('button,input,select,textarea')&&event.target.closest('.element')===card)select(block);});
+    dropTarget(head,data=>Boolean(data.block&&data.block!==block),data=>moveTo(data.block,list,list.indexOf(block)));
+    if(Array.isArray(block.blocks)){
+      const children=el('div',null,'nested-elements');children.append(el('span','分区内的元素','container-caption'));renderElements(block.blocks,children);children.append(addControls(block.blocks,true));card.append(children);
+    }
+    parent.append(card);
+  });
+  const end=el('div',list.length?'拖放到这里，放在末尾':'空容器 · 拖入或添加元素','drop-zone'+(!list.length?' is-empty':''));
+  dropTarget(end,data=>Boolean(data.block),data=>moveTo(data.block,list,list.length));parent.append(end);
+}
+function imageUrl(path){return './api/image?path='+encodeURIComponent(path);}
+function preview(block){
+  const box=el('div',null,'element-preview');
+  const heading=block.title||(block.type==='heading'||block.type==='display-text'?block.text:'');
+  if(block.eyebrow)box.append(el('small',block.eyebrow));if(heading)box.append(el(block.type==='hero'?'h2':'h3',heading));
+  if(['image','media-text'].includes(block.type)&&block.src){
+    if(block.src.startsWith('/')&&!block.src.startsWith('//')){const image=el('img');image.src=imageUrl(block.src);image.alt=block.alt||'';image.loading='lazy';image.decoding='async';image.addEventListener('error',()=>{image.replaceWith(el('span','图片暂不可用，请从图片库重新选择。','placeholder'));},{once:true});box.append(image);}
+    else box.append(el('p','外部图片 · '+block.src,'placeholder'));
+    if(block.caption)box.append(el('small',block.caption));
+  }else if(block.type==='document'||block.type==='media-viewer')box.append(el('p',block.src||'选择资源','placeholder'));
+  if(block.type==='code'){const pre=el('pre');pre.append(el('code',block.code||''));box.append(pre);}
+  else if(block.type==='quote')box.append(el('blockquote',block.text||'引用内容'));
+  else if(block.text&&!['heading','display-text'].includes(block.type))box.append(el('p',block.text));
+  if(Array.isArray(block.paragraphs))box.append(el('p',block.paragraphs.slice(0,3).join('\n\n')));
+  if(Array.isArray(block.items))for(const item of block.items.slice(0,4))box.append(el('p',typeof item==='string'?item:item.title||item.question||item.label||item.text||''));
+  if(block.type==='cta')box.append(el('span',block.label||'了解更多','preview-cta'));
+  if(!box.childNodes.length)box.append(el('p','选择元素，编辑它的内容。','muted'));return box;
+}
+function relationshipControls(block){
+  const source=locate(state.page,block),details=el('details',null,'relationship'),summary=el('summary','移动到其他行、栏或分区');details.append(summary);
+  const targets=containers(state.page).filter(item=>!item.ancestors.includes(block));
+  const chooser=el('select');chooser.setAttribute('aria-label','目标容器');
+  targets.forEach((item,index)=>{const option=el('option',item.label);option.value=index;chooser.append(option);});
+  chooser.value=targets.findIndex(item=>item.list===source.list);
+  const position=el('select');position.setAttribute('aria-label','插入位置');
+  const positions=()=>{position.replaceChildren();const target=targets[Number(chooser.value)];for(let index=0;index<=target.list.length;index++){const option=el('option',index===target.list.length?'末尾':index===0?'首位':'第 '+(index+1)+' 位之前');option.value=index;position.append(option);}position.value=target.list.length;};
+  chooser.addEventListener('change',positions);positions();
+  details.append(chooser,position,button('移动到这里',()=>moveTo(block,targets[Number(chooser.value)].list,Number(position.value)),'primary'));
+  return details;
+}
+function drawInspector(){
+  const fields=$('fields');fields.replaceChildren();const block=selectedBlock();
+  if(!block){$('selected-label').textContent='选择一个元素';fields.append(el('div','点击画布中的元素，编辑内容或调整它所属的行、栏和分区。','empty'));return;}
+  const location=locate(state.page,block);$('selected-label').textContent=location.label;
+  const title=el('div',null,'inspector-title');title.append(el('h3',labels[block.type]||block.type),button('复制',()=>{if(location.list.length>=100)return info('每个容器最多放置 100 个元素。',true);edit(()=>{const clone=structuredClone(block);location.list.splice(location.index+1,0,clone);state.selected=clone;});}));
+  fields.append(title,relationshipControls(block));
+  if(['image','media-text'].includes(block.type))fields.append(button('选择或上传图片',()=>imageLibrary(image=>edit(()=>{block.src=image.path;if(image.width){block.width=image.width;block.height=image.height;}state.selected=block;})),'choose-image'));
+  const form=el('form');form.addEventListener('submit',event=>event.preventDefault());objectFields(form,block,0,true,block);fields.append(form);
+}
+let refreshTimer;
+function refreshPreview(block){
+  clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{
+    const card=state.cards.get(block);if(card)card.querySelector(':scope > .element-preview')?.replaceWith(preview(block));
+    const item=state.outline.get(block);if(item)item.querySelector('.outline-snippet').textContent=snippet(block)||'未填写内容';
+  },120);
+}
+function replaceValue(target,key,value,block){target[key]=value;changed();refreshPreview(block);}
+function fieldLabel(key,note){const label=el('label',names[key]||key,'field');if(note)label.append(el('small',note,'type-hint'));return label;}
+function track(control,apply){let started=false;control.addEventListener('blur',()=>{started=false;});control.addEventListener('input',()=>{if(!started){checkpoint();started=true;}apply();});}
+function objectFields(container,obj,depth,root=false,block=obj){
+  for(const [key,value] of Object.entries(obj)){
+    if(root&&(key==='type'||key==='blocks'))continue;
+    const grouped=Array.isArray(value)||(value&&typeof value==='object');
+    const field=grouped?el('div',null,'field'):fieldLabel(key);
+    if(grouped)field.append(el('span',names[key]||key,'field-caption'));
+    if(typeof value==='string'){
+      const control=el(['text','code','fallback'].includes(key)||value.length>130?'textarea':'input');if(control.tagName==='INPUT')control.type='text';control.value=value;control.setAttribute('aria-label',key);
+      track(control,()=>replaceValue(obj,key,control.value,block));field.append(control);
+    }else if(typeof value==='number'){
+      const control=el('input');control.type='number';control.value=value;control.setAttribute('aria-label',key);control.addEventListener('change',()=>{if(Number.isFinite(control.valueAsNumber)){checkpoint();replaceValue(obj,key,control.valueAsNumber,block);}});field.append(control);
+    }else if(typeof value==='boolean'){
+      field.classList.add('checkbox');const control=el('input');control.type='checkbox';control.checked=value;control.addEventListener('change',()=>{checkpoint();replaceValue(obj,key,control.checked,block);});field.append(control);
+    }else if(Array.isArray(value))field.append(arrayEditor(value,obj,key,depth,block));
+    else if(value&&typeof value==='object'&&depth<5){const group=el('div',null,'object-editor');objectFields(group,value,depth+1,false,block);field.append(group);}
+    else{
+      const control=el('textarea');control.value=JSON.stringify(value,null,2);control.addEventListener('change',()=>{try{const next=JSON.parse(control.value);checkpoint();replaceValue(obj,key,next,block);}catch{info('字段 '+key+' 不是有效 JSON',true);}});field.append(control);
     }
     container.append(field);
   }
-  if (root) {
-    const allowed = suggestions[obj.type] || {};
-    const missing = Object.keys(allowed).filter(key => !(key in obj));
-    if (missing.length) {
-      const chooser = el('select'); chooser.setAttribute('aria-label', '添加可选字段');
-      missing.forEach(key => { const option = el('option', key); option.value = key; chooser.append(option); });
-      container.append(chooser, button('＋ 添加属性', () => {
-        const key = chooser.value;
-        obj[key] = structuredClone(allowed[key]);
-        changed(); repaint();
-      }));
-    }
+  if(root){
+    const allowed=suggestions[obj.type]||{},missing=Object.keys(allowed).filter(key=>!(key in obj));
+    if(missing.length){const chooser=el('select');chooser.setAttribute('aria-label','添加可选字段');for(const key of missing){const option=el('option',names[key]||key);option.value=key;chooser.append(option);}const tools=el('div',null,'optional-fields');tools.append(chooser,button('＋ 添加属性',()=>edit(()=>{obj[chooser.value]=structuredClone(allowed[chooser.value]);})));container.append(tools);}
   }
 }
-function arrayEditor(value, owner, key, depth) {
-  const box = el('div', null, 'array-editor');
-  if (value.every(v => typeof v === 'string')) {
-    const control = el('textarea');
-    control.value = value.join('\n');
-    control.setAttribute('aria-label', key + ' 每行一项');
-    control.addEventListener('input', () => replaceValue(owner, key, control.value ? control.value.split('\n') : []));
-    box.append(el('small', '每行一项', 'type-hint'), control);
-  } else if (depth < 4 && value.every(v => v && typeof v === 'object' && !Array.isArray(v))) {
-    for (const [index, item] of value.entries()) {
-      const card = el('div', null, 'array-item');
-      const head = el('div', null, 'item-head');
-      head.append(el('strong', '项目 ' + (index + 1)), button('移除', () => {
-        if (value.length <= 1 && key === 'blocks') return info('分区至少保留一个子元素', true);
-        value.splice(index, 1); changed(); repaint();
-      }, 'danger'));
-      card.append(head);
-      objectFields(card, item, depth + 1, false);
-      box.append(card);
-    }
-    box.append(button('＋ 添加项目', () => {
-      const sample = value.length ? structuredClone(value[0]) : key === 'blocks' ? structuredClone(templates.text) : { label: '', url: '/' };
-      for (const [name, v] of Object.entries(sample)) {
-        if (name === 'type') continue;
-        if (typeof v === 'string') sample[name] = '';
-        else if (typeof v === 'number') sample[name] = 1;
-      }
-      value.push(sample); changed(); repaint();
-    }));
-  } else {
-    const control = el('textarea'); control.value = JSON.stringify(value, null, 2);
-    control.setAttribute('aria-label', key + ' 高级 JSON');
-    control.addEventListener('change', () => {
-      try { const next = JSON.parse(control.value); if (!Array.isArray(next)) throw Error(); replaceValue(owner, key, next); }
-      catch { info('字段 ' + key + ' 必须是 JSON 数组', true); }
-    });
-    box.append(el('small', '复杂嵌套数组 · 高级编辑', 'type-hint'), control);
+function arrayEditor(value,owner,key,depth,block){
+  const box=el('div',null,'array-editor');
+  const objectItems=key==='items'&&['feature-grid','faq','steps','link-list','link-directory'].includes(block.type);
+  if(value.every(item=>typeof item==='string')&&(!objectItems||value.length)){
+    const control=el('textarea');control.value=value.join('\n');control.setAttribute('aria-label',key+' 每行一项');track(control,()=>replaceValue(owner,key,control.value?control.value.split('\n'):[],block));box.append(el('small','每行一项','type-hint'),control);
+  }else if(depth<4&&value.every(item=>item&&typeof item==='object'&&!Array.isArray(item))){
+    value.forEach((item,index)=>{const card=el('div',null,'array-item'),head=el('div',null,'item-head');head.append(el('strong','项目 '+(index+1)),button('移除',()=>edit(()=>value.splice(index,1)),'danger'));card.append(head);objectFields(card,item,depth+1,false,block);box.append(card);});
+    box.append(button('＋ 添加项目',()=>edit(()=>{const sample=structuredClone(value[0]||templates[block.type]?.[key]?.[0]||{label:'',url:'/'});for(const [name,item] of Object.entries(sample)){if(name==='type')continue;if(typeof item==='string')sample[name]='';else if(typeof item==='number')sample[name]=1;}value.push(sample);})));
+  }else{
+    const control=el('textarea');control.value=JSON.stringify(value,null,2);control.setAttribute('aria-label',key+' 高级 JSON');control.addEventListener('change',()=>{try{const next=JSON.parse(control.value);if(!Array.isArray(next))throw Error();checkpoint();replaceValue(owner,key,next,block);}catch{info('字段 '+key+' 必须是 JSON 数组',true);}});box.append(el('small','高级编辑','type-hint'),control);
   }
   return box;
 }
-async function save() {
-  if (!state.page || !state.dirty) return info('没有需要保存的更改。');
-  $('save').disabled = true;
-  try {
-    const result = await request('/api/page?path=' + encodeURIComponent(state.path), {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ page: state.page, revision: state.revision })
-    });
-    state.revision = result.revision; state.dirty = false;
-    info('已安全保存到 ' + state.path + '。返回网站预览查看自动重建结果；edgepress g 生成静态网站。', false, true);
-  } catch (error) { info('保存失败：' + error.message, true); }
-  finally { $('save').disabled = false; }
+
+async function imageLibrary(choose){
+  const dialog=el('dialog',null,'image-dialog'),header=el('div',null,'dialog-header');header.append(el('div','图片库','dialog-title'),button('关闭',()=>dialog.close()));
+  const intro=el('p','选择项目已有图片，或上传 JPG、PNG、WebP、GIF。单张不超过 10 MB。','help');
+  const tools=el('div',null,'library-tools'),search=el('input');search.type='search';search.placeholder='搜索图片文件名';search.setAttribute('aria-label','搜索图片');
+  const upload=el('input');upload.type='file';upload.accept='image/jpeg,image/png,image/webp,image/gif';upload.id='image-upload';const uploadLabel=el('label','上传图片','upload-button');uploadLabel.htmlFor=upload.id;uploadLabel.append(upload);
+  tools.append(search,uploadLabel);
+  const status=el('p','','library-status');status.setAttribute('role','status');const grid=el('div',null,'image-grid'),pager=el('div',null,'library-pager');
+  let offset=0,sequence=0,searchTimer,closed=false;
+  const insert=image=>{try{choose(image);dialog.close();}catch(error){status.textContent=error.message;}};
+  async function load(){
+    const token=++sequence;status.textContent='正在读取图片…';
+    try{
+      const data=await request('/api/images?q='+encodeURIComponent(search.value)+'&offset='+offset);if(closed||token!==sequence)return;
+      grid.replaceChildren();status.textContent=data.total?data.total+' 张图片':'没有找到图片，可以上传一张。';
+      for(const image of data.images){const thumb=el('img');const item=button('',async()=>{try{await thumb.decode();if(!closed)insert({...image,width:thumb.naturalWidth,height:thumb.naturalHeight});}catch{status.textContent='图片无法读取，请选择其他图片。';}},'image-choice');thumb.src=imageUrl(image.path);thumb.alt='';thumb.loading='lazy';thumb.decoding='async';item.append(thumb,el('span',image.name));item.title=image.path;grid.append(item);}
+      const previous=button('上一页',()=>{offset-=12;void load();}),next=button('下一页',()=>{offset+=12;void load();});previous.disabled=offset===0;next.disabled=offset+12>=data.total;pager.replaceChildren(previous,el('span',data.total?Math.floor(offset/12)+1+' / '+Math.ceil(data.total/12):'0 / 0'),next);
+    }catch(error){if(!closed)status.textContent='无法读取图片：'+error.message;}
+  }
+  search.addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>{offset=0;void load();},200);});
+  upload.addEventListener('change',async()=>{
+    const file=upload.files[0];if(!file)return;
+    if(file.size>10*1024*1024){status.textContent='图片超过 10 MB，请选择较小的图片。';upload.value='';return;}
+    upload.disabled=true;status.textContent='正在保存图片…';
+    try{const image=await request('/api/images',{method:'POST',headers:{'Content-Type':'application/octet-stream','X-File-Name':encodeURIComponent(file.name)},body:file});if(!closed)insert(image);}
+    catch(error){status.textContent='上传失败：'+error.message;upload.disabled=false;upload.value='';}
+  });
+  dialog.append(header,intro,tools,status,grid,pager);document.body.append(dialog);const focus=document.activeElement;
+  dialog.addEventListener('close',()=>{closed=true;clearTimeout(searchTimer);dialog.remove();if(focus?.isConnected)focus.focus();else state.cards.get(state.selected)?.querySelector('.pick')?.focus({preventScroll:true});},{once:true});dialog.showModal();search.focus();await load();
 }
 
-$('save').addEventListener('click', save);
-$('reload').addEventListener('click', () => guarded(() => loadPage(state.path)));
-$('page-picker').addEventListener('change', event => {
-  const path = event.target.value;
-  guarded(() => loadPage(path));
-  if (state.dirty) $('page-picker').value = state.path;
-});
-$('add-row').addEventListener('click', () => {
-  if (!state.page) return;
-  if (state.page.blocks.length >= 100) return info('最多允许 100 行', true);
-  state.page.blocks.push({ columns: 1, cells: [[structuredClone(templates.text)]] });
-  changed(); selection(state.page.blocks.length - 1, 0, 0);
-});
-for (const key of ['title', 'description']) {
-  $(key).addEventListener('input', () => {
-    if (!state.page) return;
-    state.page[key] = $(key).value;
-    $('page-name').textContent = state.page.title || '未命名页面';
-    changed();
-  });
+async function save(){
+  if(!state.page||!state.dirty)return info('没有需要保存的更改。');
+  const empty=emptyContainers(state.page);if(empty.length)return info(empty[0].label+' 为空。请添加元素，或移除空栏、空行或空分区后保存。',true);
+  $('save').disabled=true;
+  try{const result=await request('/api/page?path='+encodeURIComponent(state.path),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({page:state.page,revision:state.revision})});state.revision=result.revision;state.dirty=false;$('save').textContent='已保存';info('已安全保存到 '+state.path+'。返回网站预览查看自动重建结果；edgepress g 生成静态网站。',false,true);}
+  catch(error){info('保存失败：'+error.message,true);}finally{$('save').disabled=false;}
 }
-window.addEventListener('beforeunload', event => { if (state.dirty) event.preventDefault(); });
-reloadPages().catch(error => info('无法启动编辑器：' + error.message, true));
+$('save').addEventListener('click',save);$('undo').addEventListener('click',()=>history('undo'));$('redo').addEventListener('click',()=>history('redo'));
+$('reload').addEventListener('click',()=>guarded(()=>loadPage(state.path)));
+$('page-picker').addEventListener('change',event=>{const path=event.target.value;guarded(()=>loadPage(path));if(state.dirty)$('page-picker').value=state.path;});
+$('add-row').addEventListener('click',()=>{if(!state.page)return;if(state.page.blocks.length>=100)return info('最多允许 100 行',true);edit(()=>{const block=structuredClone(templates.text);state.page.blocks.push({columns:1,cells:[[block]]});state.selected=block;});$('canvas').lastElementChild?.scrollIntoView({block:'nearest'});});
+for(const key of ['title','description']){track($(key),()=>{if(!state.page)return;state.page[key]=$(key).value;$('page-name').textContent=state.page.title||'未命名页面';changed();});}
+document.addEventListener('keydown',event=>{if(document.querySelector('dialog[open]'))return;if((event.ctrlKey||event.metaKey)&&!event.target.closest('input,textarea,select')){if(event.key.toLowerCase()==='z'){event.preventDefault();history(event.shiftKey?'redo':'undo');}else if(event.key.toLowerCase()==='y'){event.preventDefault();history('redo');}}});
+window.addEventListener('beforeunload',event=>{if(state.dirty)event.preventDefault();});

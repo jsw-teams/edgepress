@@ -37,6 +37,7 @@ test('preview and editor share one origin, save Pages in the browser and preserv
     await page.goto(origin);
     await page.getByRole('link', { name: 'Edit Pages' }).click();
     await page.waitForFunction(() => document.querySelector('#page-name')?.textContent === 'Preview home');
+    await page.locator('.page-settings summary').click();
     await page.locator('#title').fill('Saved in preview');
     await page.locator('#save').click();
     await page.locator('#status.saved').waitFor();

@@ -83,4 +83,4 @@ async function showNewPageDialog() {
 $('new-page').addEventListener('click', () => guarded(() => {
   showNewPageDialog().catch(error => info('无法打开新建页面：' + error.message, true));
 }));
-initializeBlockCatalog().catch(error => info('无法载入全部元素模板：' + error.message, true));
+initializeBlockCatalog().then(reloadPages).catch(error => info('无法载入页面编辑器：' + error.message, true));

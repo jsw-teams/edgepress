@@ -24,11 +24,11 @@
           {
             "type": "media-text",
             "mediaType": "image",
-            "src": "/images/previews/edgepress-pages-editor.388c0aaed5c6451f.webp",
-            "animationSrc": "/images/previews/edgepress-pages-editor.702bfc887bb28711.mp4",
+            "src": "/images/previews/edgepress-pages-editor.3e649f5fae8fc7e0.webp",
+            "animationSrc": "/images/previews/edgepress-pages-editor.2b4829ca4a581ba3.mp4",
             "alt": "Real Pages editor: two columns, element reordering, nested card fields and saved preview.",
             "title": "Edit a Page with visual elements",
-            "text": "Run edgepress s and choose Edit Pages in the local preview. This 81-second recording creates a Page, arranges two columns, adds headings and notices, reorders elements, edits nested feature-card fields, saves and opens the themed result. Start playback manually and seek to any step. Run edgepress g to generate the static website before publishing."
+            "text": "Run edgepress s and choose Edit Pages in the local preview. This 107-second recording creates a Page, arranges two columns, moves a notice into a section in another column, edits feature-card fields and uploads a picture through the system file chooser. Save and inspect the themed result. Start playback manually and seek to any step. Run edgepress g to generate the static website before publishing."
           }
         ]
       ]

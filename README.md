@@ -69,11 +69,17 @@ To publish new source, a repository maintainer opens **Actions → Publish npm a
 
 ## Visual Pages editor / 可视化页面编辑器
 
-[Watch the 81-second Pages editor recording / 观看元素块页面编辑实录](content/assets/images/previews/edgepress-pages-editor.702bfc887bb28711.mp4) — create a Page, set two columns, insert and reorder elements, edit nested card fields, save, and view the themed result.
+[Watch the 107-second Pages editor recording / 观看元素块页面编辑实录](content/assets/images/previews/edgepress-pages-editor.2b4829ca4a581ba3.mp4) — create a Page, set two columns, move elements across columns into a section, edit card fields, upload a picture, save, and view the themed result.
 
-![Real Pages element editing in the isolated desktop](content/assets/images/previews/edgepress-pages-editor.cfde295d08ef3ffd.gif)
+![Real Pages element editing in the isolated desktop](content/assets/images/previews/edgepress-pages-editor.8e25a707554f45d0.gif)
 
 Run `edgepress s` (or `npx edgepress s` in an initialized site), open **http://127.0.0.1:8787/** and choose **Edit Pages / 编辑 Pages**. The editor opens at **http://127.0.0.1:8787/__edgepress/** on the same local preview server; use **返回网站预览** to return to the actual themed site. Saving a Page triggers the preview rebuild. Choose **＋ 新建页面** to create a Page with a title, optional URL slug and configured language. Existing Pages can be selected, arranged into 1–4 columns and edited without touching JSON.
+
+Drag an element's **⠿** handle to reorder it, move it to another column, or place it inside a section. The inspector's **移动到其他行、栏或分区** controls provide the same operation with explicit destination and position choices. Nested sections appear in both the structure tree and canvas; copying, undo and redo preserve unknown element fields. Empty containers remain visible while arranging a draft and must be filled or explicitly removed before saving. Reducing the column count keeps the existing elements.
+
+Choose **图片** in a column, or **选择或上传图片** on an image or media-text element. Search existing project images or upload a JPG, PNG, WebP or GIF up to 10 MB; uploaded files go into `content/assets/uploads/` with content hashes, without replacing originals. The canvas previews local pictures without fetching remote images. Structure, canvas and inspector scroll independently on desktop; typing updates only the current element preview.
+
+中文：拖动 **⠿** 可跨栏移动元素、调整顺序或放进分区，也可在属性面板里指定目标和位置。图片按钮支持从项目图片库选择或上传文件，再填写说明与图注。撤销、重做和复制可恢复调整；空栏或空分区需补充内容或明确移除后再保存。
 
 从命令行也可以新建页面：
 
