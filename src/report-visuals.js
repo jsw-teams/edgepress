@@ -6,6 +6,7 @@ import { basename, extname, relative, resolve, sep } from 'node:path';
 import { tmpdir } from 'node:os';
 import { startHeadlessBrowser } from './headless-browser.js';
 import { deviceProfiles } from './browser-audit.js';
+import {recordConsentDefaults, finalizeConsentChecks} from './consent-audit.js';
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -132,7 +133,7 @@ function reportHtml(report, screenshots) {
   const markdownDetails = (report.markdownRendering?.documents || []).map((document) => '<section><h3>' + escapeHtml(document.path) +
     '</h4><ul>' + document.checks.map((item) => '<li>' + (item.passed ? 'Pass' : 'Fail') + ' — ' + escapeHtml(item.feature) + '</li>').join('') + '</ul></section>').join('');
   const consentDetails = [...(report.consentUi?.results || []), ...(report.consentUi?.visualChecks || [])]
-    .map((item) => '<li>' + (item.passed ? 'Pass' : 'Fail') + ' — ' + escapeHtml(item.name ||
+    .map((item) => '<li>' + (item.passed === null ? 'Not verified' : item.passed ? 'Pass' : 'Fail') + ' — ' + escapeHtml(item.name ||
       (item.page + ' at ' + item.viewport + ' viewport')) + '</li>').join('');
   return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">' +
     '<title>EdgePress accessibility and content report</title><style>@page{size:A4;margin:15mm}*{box-sizing:border-box}html{scroll-behavior:smooth}body{font:12px/1.55 Arial,sans-serif;color:#202520;background:#fff;margin:0 auto;padding:16px;max-width:1100px}header,main,footer{display:block}h1{font-size:25px;line-height:1.2}h2{font-size:19px;margin:26px 0 8px}h3{font-size:15px;margin:20px 0 8px}h4{font-size:12px;margin:16px 0 6px}p{margin:6px 0}a{color:#174c35;text-decoration:underline;text-underline-offset:2px}a:focus-visible{outline:3px solid #9a481e;outline-offset:3px}.skip-link{position:absolute;left:-10000px;top:auto}.skip-link:focus{left:16px;top:16px;padding:8px;background:#fff;border:2px solid #174c35;z-index:2}.report-nav ul{display:flex;gap:18px;flex-wrap:wrap;padding-left:20px}table{width:100%;border-collapse:collapse;margin:10px 0 20px;table-layout:fixed}caption{text-align:left;font-weight:bold;padding:0 0 6px}th,td{padding:7px;border:1px solid #879188;text-align:left;vertical-align:top;overflow-wrap:anywhere}thead th{background:#e9eee9}tbody th{background:#f5f6f3}li{margin:4px 0;overflow-wrap:anywhere}code{overflow-wrap:anywhere}.status{font-weight:bold;text-transform:uppercase}.appendix{break-before:page}figure{margin:0 0 20px;break-inside:avoid}figure img{display:block;max-width:100%;max-height:220mm;width:auto;height:auto;margin:0 auto;border:1px solid #879188;object-fit:contain}figcaption{font-size:10px;color:#39443b;margin-top:5px}section{break-inside:auto}footer{border-top:1px solid #879188;margin-top:24px;padding-top:10px}@media(max-width:600px){body{padding:12px}.report-nav ul{display:block}table{font-size:11px}th,td{padding:5px}}@media print{body{max-width:none;padding:0}.report-nav{display:none}a{color:#202520}.appendix{break-before:page}h2,h3,h4{break-after:avoid}figure{break-inside:avoid}}</style></head>' +
@@ -381,12 +382,14 @@ export async function addVisualEvidence(config, report) {
     const captureEvidence = async (browserSession, screenshot, dimensions) => {
       const viewport = screenshot.viewport === 'mobile' ? mobile : desktop;
       if (screenshot.capture === 'consent') {
+        const expectedServices = config.browserPlugins.services.filter(service => service.enabled !== false).length;
+        recordConsentDefaults(report, dimensions, expectedServices);
         report.consentUi.visualChecks ||= [];
         const checks = [
           ['component stays inside the viewport', dimensions.consentExists && dimensions.consentWithinViewport],
           ['component content stays inside its own box', dimensions.consentExists && dimensions.consentInnerNoOverflow],
           ['accept and reject actions have equal visual weight', dimensions.consentExists && dimensions.consentActionsBalanced],
-          ['optional services begin unchecked', dimensions.consentExists && dimensions.consentOptInDefault],
+          ['optional services begin unchecked', dimensions.consentExists && dimensions.consentServiceCount === expectedServices && dimensions.consentOptInDefault],
           ['expanded service details disclose all configured fields', dimensions.consentExists && dimensions.consentServiceDisclosures && dimensions.consentDetails]
         ];
         report.consentUi.visualChecks.push(...checks.map(([name, passed]) => ({ page: screenshot.page, viewport: viewport.name,
@@ -441,12 +444,7 @@ export async function addVisualEvidence(config, report) {
     });
     // PDF printing can be memory intensive. Release the other worker first.
     await Promise.all(browserSessions.splice(1).map(session => session.close()));
-    if (report.consentUi?.visualChecks) {
-      const visualChecks = report.consentUi.visualChecks;
-      report.consentUi.checks += visualChecks.length;
-      report.consentUi.passed += visualChecks.filter((item) => item.passed).length;
-      report.consentUi.status = report.consentUi.passed === report.consentUi.checks ? 'pass' : 'fail';
-    }
+    finalizeConsentChecks(report);
     report.errors = report.issues.filter((item) => item.severity === 'error').length;
     report.warnings = report.issues.filter((item) => item.severity === 'warning').length;
     report.status = report.errors ? 'fail' : report.warnings ? 'warning' : 'pass';

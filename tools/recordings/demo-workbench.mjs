@@ -10,9 +10,10 @@ import {parse,stringify} from 'yaml';
 
 export async function workbench({artifact,packageRoot,photoPath,locale,context,embedding=false}){
  const upstream=resolve(packageRoot),root=resolve(artifact,(embedding?'embedding-example-':'edgepress-example-')+locale);
+ const toolsRoot=process.env.RECORDING_TOOL_ROOT||'/opt/recording';
  assert.ok(root.startsWith(resolve(artifact)+sep));await rm(root,{recursive:true,force:true});await mkdir(root,{recursive:true});
  const cli=resolve(upstream,'src/cli.js');
- async function run(args){return new Promise((done,reject)=>{const child=spawn(process.execPath,[cli,...args],{cwd:root,windowsHide:true,env:{...process.env,WRANGLER_SEND_METRICS:'false'}});let output='';child.stdout.on('data',value=>output+=value);child.stderr.on('data',value=>output+=value);child.once('error',reject);child.once('exit',code=>code===0?done(output):reject(Error(output)));});}
+ async function run(args){if(process.env.RECORDING_TOOL_ROOT)return guest(['env','-C',guestPath(root),'node',toolsRoot+'/node_modules/edgepress/src/cli.js',...args]);return new Promise((done,reject)=>{const child=spawn(process.execPath,[cli,...args],{cwd:root,windowsHide:true,env:{...process.env,WRANGLER_SEND_METRICS:'false'}});let output='';child.stdout.on('data',value=>output+=value);child.stderr.on('data',value=>output+=value);child.once('error',reject);child.once('exit',code=>code===0?done(output):reject(Error(output)));});}
  await run(['init']);
  const chinese=locale!=='en',title=embedding?(chinese?'散步中的瞬间':'Photos from our walk'):(chinese?'海边的下午':'An afternoon by the water');
  const settings=parse(await readFile(resolve(root,'config.yml'),'utf8'));settings.site.title=chinese?'我的写作空间':'My writing space';settings.site.description=chinese?'用文字和照片记录生活。':'Stories and photographs from everyday life.';settings.site.navigation=settings.site.navigation.filter(item=>['home','posts','search'].includes(item.key));settings.site.footerNavigation=[];settings.plugins.consent.services=[];await writeFile(resolve(root,'config.yml'),stringify(settings));
@@ -29,8 +30,8 @@ export async function workbench({artifact,packageRoot,photoPath,locale,context,e
  const {loadConfig}=await import(pathToFileURL(resolve(upstream,'src/config.js')));const {readDocuments}=await import(pathToFileURL(resolve(upstream,'src/content.js')));
  const rc=resolve(root,'.recording-bashrc');
  const shellRoot="'"+guestPath(root).replaceAll("'","'\\''")+"'";
- await writeFile(rc,'export PATH=/opt/recording/node_modules/.bin:/usr/local/bin:/usr/bin:/bin\ncd -- '+shellRoot+'\nexport WRANGLER_SEND_METRICS=false\nexport PS1="❯ "\n');
- await guest(['ln','-s','/opt/recording/node_modules',guestPath(resolve(root,'node_modules'))]);
+ await writeFile(rc,'export PATH='+toolsRoot+'/node_modules/.bin:/usr/local/bin:/usr/bin:/bin\ncd -- '+shellRoot+'\nexport WRANGLER_SEND_METRICS=false\nexport PS1="❯ "\n');
+ await guest(['ln','-s',toolsRoot+'/node_modules',guestPath(resolve(root,'node_modules'))]);
  await openApp(['xterm','-T',terminalTitle,'-fa','Monospace','-fs','16','-bg','#17212c','-fg','#e8edf2','-geometry','106x30+60+40','-e','bash','--rcfile',guestPath(rc)],terminalTitle);
  await new Promise(done=>setTimeout(done,800));
  async function findPost(){const documents=await readDocuments(await loadConfig(root));const article=documents.find(item=>item.kind==='posts'&&item.title===title);if(article)file=article.file;return article;}
@@ -43,7 +44,7 @@ export async function workbench({artifact,packageRoot,photoPath,locale,context,e
   await new Promise(done=>setTimeout(done,1600));
   await omitWait(async()=>{for(let attempt=0;attempt<180;attempt++){try{const response=await fetch('http://127.0.0.1:'+port+'/',{signal:AbortSignal.timeout(1200)});if(response.ok)return;}catch{}await new Promise(done=>setTimeout(done,500));}throw Error('Guest preview did not become ready');});
  }
- async function dispose(){for(const title of [terminalTitle,'Geany']){try{const ids=await guest(['xdotool','search','--onlyvisible','--name',title]);for(const id of ids.split(/\s+/)){const pid=await guest(['xdotool','getwindowpid',id]);if(/^\d+$/.test(pid))await guest(['kill','-TERM',pid]);}}catch{}}}
+ async function dispose(){try{await activate(terminalTitle);await guest(['xdotool','key','ctrl+c']);}catch{}for(const title of [terminalTitle,'Geany']){try{const ids=await guest(['xdotool','search','--onlyvisible','--name',title]);for(const id of ids.split(/\s+/)){const pid=await guest(['xdotool','getwindowpid',id]);if(/^\d+$/.test(pid))await guest(['kill','-TERM',pid]);}}catch{}}}
  const content=chinese?'## 海边的下午\n\n走到海边时，雨刚停。潮水很轻，远处的山还藏在云里。\n\n![雨后的海岸](/photos/seaside.jpg)\n\n下次还想沿着这条路走远一点。':'## An afternoon by the water\n\nThe rain had just stopped. Small waves reached the shore, and the mountains were still tucked into the clouds.\n\n![The coast after the rain](/photos/seaside.jpg)\n\nNext time, I want to follow this path a little farther.';
  await context.route('https://edgepress-demo.test/**',async route=>{
   try{
@@ -53,5 +54,6 @@ export async function workbench({artifact,packageRoot,photoPath,locale,context,e
   return await route.fulfill({status:response.status,headers,body:Buffer.from(await response.arrayBuffer())});
   }catch(error){if(!route.request().isNavigationRequest())return route.abort();throw error;}
  });
- return {title,content,createPost,newPost,editPost,startServer,dispose,activateTerminal:()=>activate(terminalTitle),async publishedPath(){const article=await findPost();assert.ok(article);return article.path;}};
+ async function generate(){await typeCommand(root,terminalTitle,'edgepress g');for(let attempt=0;attempt<180;attempt++){try{await readFile(resolve(root,'dist/index.html'));await new Promise(done=>setTimeout(done,1000));return;}catch{}await new Promise(done=>setTimeout(done,500));}throw Error('Guest generate did not finish');}
+ return {root,title,content,createPost,newPost,editPost,generate,startServer,dispose,get previewUrl(){assert.ok(port);return 'http://127.0.0.1:'+port;},activateTerminal:()=>activate(terminalTitle),async publishedPath(){const article=await findPost();assert.ok(article);return article.path;}};
 }

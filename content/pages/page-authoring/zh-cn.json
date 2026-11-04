@@ -22,6 +22,22 @@
       "cells": [
         [
           {
+            "type": "media-text",
+            "mediaType": "image",
+            "src": "/images/previews/edgepress-pages-editor.388c0aaed5c6451f.webp",
+            "animationSrc": "/images/previews/edgepress-pages-editor.702bfc887bb28711.mp4",
+            "alt": "真实 Pages 编辑器：双栏布局、元素排序、卡片字段编辑与保存预览。",
+            "title": "用元素块编辑页面",
+            "text": "运行 edgepress s，在本地预览里点击“编辑 Pages”。这段约 81 秒的实录展示新建页面、双栏排版、添加标题和提示、调整元素顺序、编辑功能卡片子字段，然后保存并查看主题效果。点击播放，可拖动进度条定位。发布前运行 edgepress g 生成静态网站。"
+          }
+        ]
+      ]
+    },
+    {
+      "columns": 1,
+      "cells": [
+        [
+          {
             "type": "code",
             "title": "完整的双栏 JSON 页面",
             "language": "json",

@@ -69,6 +69,10 @@ To publish new source, a repository maintainer opens **Actions → Publish npm a
 
 ## Visual Pages editor / 可视化页面编辑器
 
+[Watch the 81-second Pages editor recording / 观看元素块页面编辑实录](content/assets/images/previews/edgepress-pages-editor.702bfc887bb28711.mp4) — create a Page, set two columns, insert and reorder elements, edit nested card fields, save, and view the themed result.
+
+![Real Pages element editing in the isolated desktop](content/assets/images/previews/edgepress-pages-editor.cfde295d08ef3ffd.gif)
+
 Run `edgepress s` (or `npx edgepress s` in an initialized site), open **http://127.0.0.1:8787/** and choose **Edit Pages / 编辑 Pages**. The editor opens at **http://127.0.0.1:8787/__edgepress/** on the same local preview server; use **返回网站预览** to return to the actual themed site. Saving a Page triggers the preview rebuild. Choose **＋ 新建页面** to create a Page with a title, optional URL slug and configured language. Existing Pages can be selected, arranged into 1–4 columns and edited without touching JSON.
 
 从命令行也可以新建页面：
@@ -203,6 +207,8 @@ The only persisted page-audit report is the accessible PDF at tools/reports/page
 When Edge, Chrome or Chromium is installed, the audit runs desktop (1440px), phone (390px) and tablet (820px) profiles in light and dark modes. Phone/tablet profiles emulate pixel density and touch capability. It checks main/heading semantics and accessible names through the [Chromium DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/), and sends real Tab, Shift+Tab and Enter events to the isolated headless browser. Keyboard checks sample at most 12 focus stops, verify focus visibility and backward navigation, and activate the skip-to-main link. Browser failures affect the check result; missing browser support is reported as unavailable, never as a pass.
 
 The audit reuses one software-rendered browser with at most two isolated page workers. It caches fingerprinted local resources for the run, waits for document/font rendering rather than a fixed delay, and shares page loads for content and consent screenshots at the same size. The spare worker closes before PDF printing to reduce peak memory. All device and color profiles, screenshots and the PDF remain part of the check.
+
+Default optional-service choices are checked in fresh browser contexts against the configured service count and actual unchecked controls, independently of JavaScript minification. If the browser cannot verify those choices, the report marks the check incomplete and warns instead of claiming a pass.
 
 These are browser simulations, not physical-device or screen-reader tests. The tool launches no visible browser window, mutes its own browser audio and disables notifications, does not send keyboard input to your desktop, and never starts Narrator, NVDA, VoiceOver or TalkBack. Physical devices and actual assistive technology require a separate, authorized test environment. The PDF labels this limitation explicitly.
 

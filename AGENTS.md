@@ -83,6 +83,7 @@ EdgePress builds static websites from Markdown articles and JSON Pages. Follow t
 - `edgepress server` (`edgepress s`): build, preview static assets with Wrangler locally, open the local Pages editor from the preview, and watch sources. Never run browser audits, screenshots or PDF generation automatically during preview; reserve them for explicit `edgepress check`.
 - `edgepress check`: build, generate accessibility and agent-friendliness reports, capture screenshots, and write the PDF under `tools/`.
 - Audits use one software-rendered browser with at most two isolated page workers; preserve every existing device/color profile and evidence capture. Cache only fingerprinted resources and release unused workers before PDF printing. Never start multiple full browser instances for parallel checks.
+- Verify default optional-service choices against fresh-browser DOM state and the configured service count, never an exact source-code string in minified JavaScript. Checked or missing controls must fail; an unavailable browser leaves the behavioral check incomplete with a warning.
 - `edgepress doctor`: run Worker compatibility checks.
 
 Read the guides in `content/pages/` before extending themes, page blocks, or plugins.

@@ -1,9 +1,13 @@
-import test from 'node:test';
+import test, {mock} from 'node:test';
 import assert from 'node:assert/strict';
 import { access, mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import childProcess from 'node:child_process';
+import {syncBuiltinESMExports} from 'node:module';
+import {transformSync} from 'esbuild';
+import {parse, stringify} from 'yaml';
 import { spawnSync } from 'node:child_process';
 import { createServer } from 'node:http';
 import { chromium } from 'playwright';
@@ -33,6 +37,62 @@ async function cleanup(root) {
   assert.ok(basename(root).startsWith('edgepress-audit-test-'));
   await rm(root, { recursive: true, force: true });
 }
+
+async function consentFixture(mode = 'off') {
+  const root = await fixture();
+  const settings = parse(await readFile(resolve(root, 'config.yml'), 'utf8'));
+  settings.privacy = {controller:{name:'Fixture',contact:'fixture@example.org'},policyUrl:'/privacy-policy/'};
+  settings.plugins.consent.enabled = true;
+  settings.plugins.consent.services = [{id:'discussion',provider:'external-widget',moduleUrl:'https://optional.example.org/widget.js',backendUrl:'https://optional.example.org',placement:'posts',name:'Discussion',purpose:'Read discussion.',dataCategories:'Comments',recipient:'Fixture',retention:'Until removed',privacyUrl:'https://optional.example.org/privacy'}];
+  await writeFile(resolve(root, 'config.yml'), stringify(settings));
+  await mkdir(resolve(root, 'plugins'), {recursive:true});
+  await writeFile(resolve(root, 'plugins/consent.mjs'), 'export {default} from ' + JSON.stringify(pathToFileURL(resolve(project, 'plugins/consent/index.js')).href) + ';');
+  await writeFile(resolve(root, 'edgepress.config.mjs'), 'export default {paths:{theme:"themes/fixture"},i18n:{defaultLocale:"en",languagePacks:[]},plugins:["plugins/consent.mjs"]};');
+  await writeFile(resolve(root, 'themes/fixture/assets/style.css'), await readFile(resolve(project, 'themes/default/assets/style.css')));
+  let manager = await readFile(resolve(project, 'static/edgepress/plugins/consent/manager.js'), 'utf8');
+  if (mode === 'checked') manager = manager.replace('checkbox.checked = Boolean(saved?.allowed.includes(id))', 'checkbox.checked = true');
+  if (mode === 'missing') manager = manager.replace('for (const integration of integrations)', 'for (const integration of [])');
+  await mkdir(resolve(root, 'static/edgepress/plugins/consent'), {recursive:true});
+  await writeFile(resolve(root, 'static/edgepress/plugins/consent/manager.js'), transformSync(manager, {loader:'js',format:'esm',minifyWhitespace:true,minifySyntax:true,minifyIdentifiers:false}).code);
+  const built = spawnSync(process.execPath, [resolve(project, 'src/cli.js'), 'generate'], {cwd:root,encoding:'utf8',timeout:60000});
+  assert.equal(built.status, 0, built.stderr);
+  return root;
+}
+
+test('consent audit checks actual fresh-browser defaults despite minification and rejects checked or missing controls', {timeout:120000}, async () => {
+  for (const mode of ['off','checked','missing']) {
+    const root = await consentFixture(mode);
+    try {
+      const report = await checkPages(await loadConfig(root));
+      assert.equal(report.visualEvidence.status, 'complete', JSON.stringify(report.visualEvidence));
+      const defaults = report.consentUi.results.find(check => check.method === 'fresh-browser');
+      assert.equal(defaults.passed, mode === 'off', JSON.stringify({mode,defaults}));
+      const findings = report.issues.filter(issue => issue.category === 'consent-ui' && issue.message.includes('new visitors start with every optional service off'));
+      assert.equal(findings.length, mode === 'off' ? 0 : 1);
+      assert.equal(report.consentUi.status, mode === 'off' ? 'pass' : 'fail', JSON.stringify(report.consentUi));
+      if (mode !== 'off') assert.ok(report.errors > 0);
+    } finally { await cleanup(root); }
+  }
+});
+
+test('consent defaults stay unverified when the audit browser cannot start', {timeout:60000}, async () => {
+  const root = await consentFixture();
+  const originalSpawn = childProcess.spawn;
+  const spy = mock.method(childProcess, 'spawn', (executable, args, options) => {
+    if (args.includes('--headless=new')) throw new Error('Browser unavailable in fixture');
+    return originalSpawn(executable, args, options);
+  });
+  syncBuiltinESMExports();
+  try {
+    const report = await checkPages(await loadConfig(root));
+    assert.equal(report.consentUi.results.find(check => check.method === 'fresh-browser').passed, null);
+    assert.equal(report.consentUi.status, 'incomplete');
+    assert.ok(report.issues.some(issue => issue.category === 'consent-ui' && issue.severity === 'warning' && issue.message.includes('not verified')));
+  } finally {
+    spy.mock.restore(); syncBuiltinESMExports();
+    await cleanup(root);
+  }
+});
 
 test('Markdown self-check covers the renderer without any published article', async () => {
   const report = await markdownFeatureCoverage();

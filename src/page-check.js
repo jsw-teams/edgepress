@@ -4,6 +4,7 @@ import { addVisualEvidence } from './report-visuals.js';
 import { renderMarkdown, renderMarkdownExcerpt } from './markdown.js';
 import { markdownFixture } from './markdown-fixture.js';
 import {reportDirectory} from './report-path.js';
+import {defaultConsentCheck, finalizeConsentChecks} from './consent-audit.js';
 
 async function htmlFiles(directory) {
   let entries;
@@ -303,7 +304,7 @@ export async function checkPages(config) {
       managerScript.includes('integration.privacyUrl'));
     consentCheck('stored choices are tied to proposed and effective dates',
       managerScript.includes('makeChoice(') && /proposedDate:\s*consent\.proposedDate/.test(choicesScript) && /effectiveDate:\s*consent\.effectiveDate/.test(choicesScript));
-    consentCheck('new visitors start with every optional service off', managerScript.includes('checkbox.checked = false'));
+    consentUiChecks.push({name: defaultConsentCheck, passed: null, method: 'fresh-browser'});
     consentCheck('accept and reject controls share the same component styling',
       /\.privacy-manager \.privacy-panel \.privacy-accept\s*,\s*\.privacy-manager \.privacy-panel \.privacy-reject\s*\{[^}]*background:[^}]*\}/.test(styles));
     const componentClass = /(?:^|[\s>+~])\.privacy-(?:manager|panel|settings-button|close|intro|essential|details|category|service-settings|service-setting|service-toggle|service-toggle-text|service-purpose|service-disclosures|actions|accept|reject|save|empty|policy-link|footer|controller)(?=$|[^\w-])/;
@@ -316,13 +317,13 @@ export async function checkPages(config) {
   }
   const consentUi = consentConfig.enabled
     ? {
-        status: consentUiChecks.every((item) => item.passed) ? 'pass' : 'fail',
+        status: consentUiChecks.some(item => item.passed === false) ? 'fail' : 'incomplete',
         checks: consentUiChecks.length,
         passed: consentUiChecks.filter((item) => item.passed).length,
         results: consentUiChecks
       }
     : { status: 'not enabled', checks: 0, passed: 0, results: [] };
-  for (const check of consentUiChecks.filter((item) => !item.passed)) {
+  for (const check of consentUiChecks.filter((item) => item.passed === false)) {
     issues.push({ severity: 'error', category: 'consent-ui', page: 'privacy manager', message: 'Consent UI requirement failed: ' + check.name + '.' });
   }
 
@@ -417,6 +418,7 @@ export async function checkPages(config) {
     report.visualEvidence = { status: 'failed', reason: error.message };
     issues.push({ severity: 'warning', category: 'visual-evidence', page: 'report', message: 'Screenshot or PDF generation failed: ' + error.message });
   }
+  finalizeConsentChecks(report);
   report.errors = issues.filter((issue) => issue.severity === 'error').length;
   report.warnings = issues.filter((issue) => issue.severity === 'warning').length;
   report.status = report.errors ? 'fail' : report.warnings ? 'warning' : 'pass';
