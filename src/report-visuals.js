@@ -26,6 +26,12 @@ function isAbsolutePath(value) {
 async function browserPath() {
   const candidates = [];
   if (process.env.EDGEPRESS_BROWSER) candidates.push(process.env.EDGEPRESS_BROWSER);
+  // CI and local development often install Playwright's browser in its cache
+  // rather than in a system-wide location. Prefer that known compatible build.
+  try {
+    const { chromium } = await import('playwright');
+    candidates.push(chromium.executablePath());
+  } catch { /* Playwright is optional for users with a system browser. */ }
   const programFiles = process.env['PROGRAMFILES'];
   const programFilesX86 = process.env['PROGRAMFILES(X86)'];
   const localAppData = process.env['LOCALAPPDATA'];
