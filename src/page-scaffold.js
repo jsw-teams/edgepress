@@ -55,7 +55,7 @@ export async function createPage(root, {
     description: '', blocks: [
       { columns: 1, cells: [[
         { type: 'heading', level: 2, text: title.trim() },
-        { type: 'text', text: 'Write your page content here.' }
+        { type: 'text', text: locale === 'en' ? 'Write your page content here.' : '在这里编写页面内容。' }
       ]] }
     ]
   };
