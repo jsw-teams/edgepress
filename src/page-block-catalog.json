@@ -2,15 +2,6 @@
   "version": 1,
   "description": "Shared, public EdgePress page-block presets. Templates are examples, not configuration-specific integrations.",
   "blocks": {
-    "hero": {
-      "label": "横幅 Hero",
-      "category": "layout",
-      "template": {
-        "type": "hero",
-        "title": "页面横幅",
-        "text": "介绍页面内容"
-      }
-    },
     "section": {
       "label": "分区 Section",
       "category": "layout",

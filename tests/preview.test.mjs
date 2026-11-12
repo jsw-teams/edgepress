@@ -43,7 +43,7 @@ test('preview and editor share one origin, save Pages in the browser and preserv
     await page.locator('#status.saved').waitFor();
     pageSource = await readFile(file, 'utf8');
     assert.deepEqual(JSON.parse(pageSource).custom, { keep: true });
-    await page.getByRole('link', { name: '返回网站预览' }).click();
+    await page.locator('#site-preview').click();
     await page.getByRole('heading', { name: 'Saved in preview' }).waitFor();
     await page.goto(preview.url);
     await page.locator('#new-page').click();

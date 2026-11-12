@@ -33,7 +33,7 @@ test('local visual editor serves a content-safe interface and lists JSON Pages',
     const response = await fetch(url);
     assert.equal(response.status, 200);
     assert.match(response.headers.get('content-security-policy'), /frame-ancestors 'none'/);
-    assert.match(await response.text(), /可视化 Pages 编辑器/);
+    assert.match(await response.text(), /元素块编辑器/);
     const pages = await (await fetch(url + 'api/pages')).json();
     assert.deepEqual(pages.pages, ['home/en.json']);
     const script = await fetch(url + 'editor.js');
@@ -159,7 +159,11 @@ test('browser moves across columns and nested sections, undoes, uploads and reus
     try{
       const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',error=>errors.push(error.message));
       await page.goto(url);await page.locator('#status.saved').waitFor();
+      await page.locator('#ui-language').selectOption('en');
+      assert.equal(await page.locator('.inspector-tabs [data-inspector-tab="content"]').innerText(),'Content');
+      await page.locator('#ui-language').selectOption('zh-CN');
       await page.locator('.canvas-cell').first().locator('.pick').first().click();
+      await page.locator('[data-inspector-tab="layout"]').click();
       await page.locator('.relationship summary').click();
       await page.getByRole('combobox',{name:'目标容器'}).selectOption({label:'第 1 行 › 栏 2 › Other'});
       await page.getByRole('button',{name:'移动到这里',exact:true}).click();
@@ -172,6 +176,7 @@ test('browser moves across columns and nested sections, undoes, uploads and reus
       await page.locator('.canvas-cell').first().getByRole('button',{name:'图片',exact:true}).click();
       await page.locator('#image-upload').setInputFiles({name:'studio.png',mimeType:'image/png',buffer:png});
       await page.locator('.image-dialog').waitFor({state:'detached'});
+      await page.locator('[data-inspector-tab="content"]').click();
       await page.locator('#fields [aria-label=alt]').fill('Uploaded studio');
       await page.waitForFunction(()=>document.querySelector('.canvas-cell img')?.naturalWidth===1);
       await page.locator('.canvas-cell').first().getByRole('button',{name:'图片',exact:true}).click();
@@ -190,6 +195,7 @@ test('browser moves across columns and nested sections, undoes, uploads and reus
       await page.locator('#fields [aria-label=text]').fill('A revised heading');
       assert.equal(await handle.evaluate(node=>node.isConnected),true);
       await page.locator('.nested-elements [data-type=text] .pick').click();
+      await page.locator('[data-inspector-tab="layout"]').click();
       await page.locator('.relationship summary').click();
       await page.getByRole('combobox',{name:'目标容器'}).selectOption({label:'第 1 行 › 栏 1'});
       await page.getByRole('button',{name:'移动到这里',exact:true}).click();
@@ -199,6 +205,7 @@ test('browser moves across columns and nested sections, undoes, uploads and reus
       await page.getByRole('button',{name:'撤销',exact:true}).click();
       await page.locator('.canvas-cell').first().locator(':scope > .cell-actions select').selectOption('feature-grid');
       await page.locator('.canvas-cell').first().locator(':scope > .cell-actions').getByRole('button',{name:'＋ 添加',exact:true}).click();
+      await page.locator('[data-inspector-tab="content"]').click();
       assert.equal(await page.locator('#fields .array-item').count(),1,JSON.stringify({status:await page.locator('#status').innerText(),fields:await page.locator('#fields').innerText(),errors}));
       await page.locator('#fields .array-item').getByRole('button',{name:'移除',exact:true}).click();
       await page.locator('#fields').getByRole('button',{name:'＋ 添加项目',exact:true}).click();

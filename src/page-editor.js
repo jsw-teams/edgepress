@@ -81,19 +81,37 @@ async function requestBody(req) {
 }
 
 /** Starts a loopback-only editor. Never deploy this server. */
-export async function startPageEditor({ root = process.cwd(), port = 4178, locales = ['en', 'zh-CN'], defaultLocale = 'en', basePath = '/', fallback } = {}) {
+export async function startPageEditor({ root = process.cwd(), port = 4178, locales = ['en', 'zh-CN'], defaultLocale = 'en', basePath = '/', fallback, blockCatalog = {}, editorTranslations = {} } = {}) {
   if (!/^\/(?:[a-zA-Z0-9_-]+\/)*$/.test(basePath)) throw new Error('Invalid editor base path');
   const contentRoot = resolve(root, 'content/pages');
   const typeSchema = JSON.parse(await readFile(resolve(editorRoot, '../schemas/pages.schema.json'), 'utf8'));
   const typeNames = new Set(typeSchema.definitions.element.properties.type.enum);
   const catalog = JSON.parse(await readFile(resolve(editorRoot, 'page-block-catalog.json'), 'utf8'));
-  if (typeNames.size !== Object.keys(catalog.blocks).length || [...typeNames].some(type => !catalog.blocks[type]?.template || catalog.blocks[type].template.type !== type)) {
-    throw new Error('The visual editor block catalog is out of sync with the Pages schema');
+  const translations = {};
+  const languageFiles = await readdir(resolve(editorRoot, 'editor-languages'), { withFileTypes: true });
+  for (const file of languageFiles) {
+    if (!file.isFile() || !/^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*\.json$/.test(file.name)) continue;
+    const locale = basename(file.name, '.json');
+    const dictionary = JSON.parse(await readFile(resolve(editorRoot, 'editor-languages', file.name), 'utf8'));
+    if (!isObject(dictionary) || Object.entries(dictionary).some(([key, value]) => key.length > 200 || typeof value !== 'string' || value.length > 500)) throw new Error('Invalid editor language pack: ' + file.name);
+    translations[locale] = dictionary;
+  }
+  for (const [type, entry] of Object.entries(blockCatalog)) {
+    if (!typeNames.has(type) || !entry || entry.template?.type !== type) throw new Error('Invalid visual editor block extension: ' + type);
+    catalog.blocks[type] = structuredClone(entry);
+  }
+  if (!isObject(editorTranslations) || Object.entries(editorTranslations).some(([locale, dictionary]) => !/^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(locale) || !isObject(dictionary) || Object.entries(dictionary).some(([key, value]) => key.length > 200 || typeof value !== 'string' || value.length > 500))) {
+    throw new Error('Invalid visual editor translations');
+  }
+  for (const [locale, dictionary] of Object.entries(editorTranslations)) translations[locale] = { ...translations[locale], ...dictionary };
+  if ([...Object.entries(catalog.blocks)].some(([type, entry]) => !typeNames.has(type) || !entry?.template || entry.template.type !== type)) {
+    throw new Error('The visual editor block catalog contains an unsupported block type');
   }
   const staticFiles = new Map([
     ['/', { file: 'page-editor.html', type: 'text/html; charset=utf-8' }],
     ['/editor.js', { file: 'page-editor-client.js', type: 'text/javascript; charset=utf-8' }],
     ['/editor.css', { file: 'page-editor.css', type: 'text/css; charset=utf-8' }],
+    ['/editor-redesign.css', { file: 'page-editor-redesign.css', type: 'text/css; charset=utf-8' }],
     ['/editor-model.js', { file: 'page-editor-model.js', type: 'text/javascript; charset=utf-8' }]
   ]);
   // Serialize writes so two browser tabs cannot commit the same revision.
@@ -131,6 +149,9 @@ export async function startPageEditor({ root = process.cwd(), port = 4178, local
       }
       if (req.method === 'GET' && url.pathname === '/api/block-catalog') {
         return respond(res, 200, catalog);
+      }
+      if (req.method === 'GET' && url.pathname === '/api/editor-languages') {
+        return respond(res, 200, { translations });
       }
       if (req.method === 'GET' && url.pathname === '/api/locales') {
         return respond(res, 200, { locales, defaultLocale });

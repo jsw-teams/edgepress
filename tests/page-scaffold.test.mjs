@@ -22,7 +22,7 @@ test('createPage scaffolds valid localized JSON Pages without overwriting existi
     assert.equal(created.page.title, 'About This Site');
     assert.equal(created.page.lang, 'en');
     assert.equal(created.page.$schema, '../../../schemas/pages.schema.json');
-    assert.equal(created.page.blocks[0].cells[0][0].type, 'hero');
+    assert.equal(created.page.blocks[0].cells[0][0].type, 'heading');
     assert.deepEqual(JSON.parse(await readFile(created.file, 'utf8')), created.page);
     await assert.rejects(createPage(root, { title: 'About This Site' }), /already exists/);
     const translated = await createPage(root, {
@@ -52,12 +52,13 @@ test('createPage refuses to use a symlink as a page folder', async () => {
   });
 });
 
-test('public editor catalog covers every supported Pages type and reusable website components', async () => {
+test('editor catalog contains reusable blocks and omits the legacy hero preset', async () => {
   const source = JSON.parse(await readFile('src/page-block-catalog.json', 'utf8'));
   const schema = JSON.parse(await readFile('schemas/pages.schema.json', 'utf8'));
   const types = schema.definitions.element.properties.type.enum;
   assert.equal(types.length, 30);
-  assert.deepEqual(Object.keys(source.blocks).sort(), [...types].sort());
+  assert.equal(Object.keys(source.blocks).length, 29);
+  assert.equal(source.blocks.hero, undefined);
   for (const [key, definition] of Object.entries(source.blocks)) {
     assert.equal(definition.template.type, key);
     assert.ok(definition.label && definition.category);
@@ -72,7 +73,9 @@ test('public editor catalog covers every supported Pages type and reusable websi
 
 test('page API creates a page and enforces local-origin, duplicate and path restrictions', async () => {
   await sandbox(async root => {
-    const editor = await startPageEditor({ root, port: 0, locales: ['en', 'zh-CN'] });
+    const editor = await startPageEditor({ root, port: 0, locales: ['en', 'zh-CN'], blockCatalog: {
+      notice: { label: { zh: '自定义提示', en: 'Custom notice' }, category: 'text', template: { type: 'notice', title: '自定义', text: '自定义内容', tone: 'info' } }
+    }, editorTranslations: { ja: { '内容': 'コンテンツ' } } });
     try {
       const request = (body, origin) => fetch(editor.url + 'api/pages', {
         method: 'POST',
@@ -91,7 +94,11 @@ test('page API creates a page and enforces local-origin, duplicate and path rest
       const onDisk = JSON.parse(await readFile(resolve(root, 'content/pages/my-new-page/en.json'), 'utf8'));
       assert.equal(onDisk.title, 'New Page');
       const registry = await (await fetch(editor.url + 'api/block-catalog')).json();
-      assert.equal(Object.keys(registry.blocks).length, 30);
+      assert.equal(Object.keys(registry.blocks).length, 29);
+      assert.equal(registry.blocks.notice.label.en, 'Custom notice');
+      assert.equal(registry.blocks.notice.template.title, '自定义');
+      const languages = await (await fetch(editor.url + 'api/editor-languages')).json();
+      assert.equal(languages.translations.ja['内容'], 'コンテンツ');
     } finally { await editor.close(); }
   });
 });
@@ -117,9 +124,9 @@ test('browser creates a Page and adds a specialized shared block without editing
       await page.locator('#status.saved').waitFor();
       const saved = JSON.parse(await readFile(resolve(root, 'content/pages/site-info/en.json'), 'utf8'));
       assert.equal(saved.title, 'Site Information');
-      assert.equal(saved.blocks[0].cells[0][1].type, 'privacy-controller');
-      assert.equal(saved.blocks[0].cells[0][1].contactLabel, '联系方式');
-      assert.equal(saved.blocks[0].cells[0][0].type, 'hero');
+      assert.equal(saved.blocks[0].cells[0][2].type, 'privacy-controller');
+      assert.equal(saved.blocks[0].cells[0][2].contactLabel, '联系方式');
+      assert.equal(saved.blocks[0].cells[0][0].type, 'heading');
     } finally { await browser.close(); await editor.close(); }
   });
 });

@@ -2,10 +2,19 @@
 async function initializeBlockCatalog() {
   const definition = await request('/api/block-catalog');
   for (const [type, entry] of Object.entries(definition.blocks)) {
-    labels[type] = entry.label + (entry.requiresSetup ? ' · 需配置' : '');
+    const blockLabel=typeof entry.label==='string'?entry.label:(entry.label?.[editorLanguage]||entry.label?.zh||Object.values(entry.label||{})[0]||type);
+    labels[type] = blockLabel + (entry.requiresSetup ? (editorLanguage==='en'?' · setup':' · 需配置') : '');
     templates[type] = structuredClone(entry.template);
+    blockCategories[type] = entry.category;
+    catalogIcons[type] = entry.icon || '◇';
   }
-  repaint();
+  drawCatalog();repaint();
+}
+async function initializeEditorLanguages(){
+  const {translations}=await request('/api/editor-languages');for(const [locale,dictionary] of Object.entries(translations))editorTranslations[locale]=dictionary;
+  const picker=$('ui-language'),current=editorLanguage;picker.replaceChildren();
+  for(const language of Object.keys(editorTranslations)){const option=el('option',language);option.value=language;picker.append(option);}
+  picker.value=editorTranslations[current]?current:Object.keys(editorTranslations)[0];setEditorLanguage(picker.value);
 }
 
 async function showNewPageDialog() {
@@ -83,4 +92,16 @@ async function showNewPageDialog() {
 $('new-page').addEventListener('click', () => guarded(() => {
   showNewPageDialog().catch(error => info('无法打开新建页面：' + error.message, true));
 }));
-initializeBlockCatalog().then(reloadPages).catch(error => info('无法载入页面编辑器：' + error.message, true));
+$('ui-language').value=editorLanguage;
+$('ui-language').addEventListener('change',event=>{setEditorLanguage(event.target.value);initializeBlockCatalog().then(()=>{drawCatalog();if(state.page)repaint();});});
+initializeEditorLanguages().then(()=>initializeBlockCatalog()).then(reloadPages).catch(error=>info('无法载入页面编辑器：'+error.message,true));
+$('block-search').addEventListener('input',drawCatalog);
+document.querySelectorAll('.rail-button').forEach(item=>item.addEventListener('click',()=>{
+  document.querySelector('.workspace').dataset.activePanel=item.dataset.panel;
+  document.querySelectorAll('.rail-button').forEach(button=>{const active=button===item;button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));});
+  document.querySelector('.palette').hidden=item.dataset.panel!=='palette';document.querySelector('.side').hidden=item.dataset.panel!=='structure';
+  if(item.dataset.panel==='assets'){const list=activeList||state.page?.blocks[0]?.cells[0];if(list)imageLibrary(image=>insertLibraryImage(list,image));}
+  if(item.dataset.panel==='settings')document.querySelector('.page-settings').open=true;
+}));
+$('palette-close').addEventListener('click',()=>document.querySelector('.palette').hidden=true);
+function insertLibraryImage(list,image){edit(()=>{const block={type:'image',src:image.path,alt:'',...(image.width?{width:image.width,height:image.height}:{})};list.push(block);state.selected=block;});}

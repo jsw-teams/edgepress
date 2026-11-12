@@ -57,7 +57,8 @@
               "The blocks array holds rows in order. A row sets columns from 1 to 4 and contains that many arrays in cells. Each cell is an array containing at least one element. Elements appear from top to bottom.",
               "JSON keys and strings use double quotes. Objects use braces and arrays use brackets; commas separate siblings. Do not add an elements field: the innermost arrays directly contain the elements.",
               "A section’s blocks hold child elements, not new rows. For prose use text or paragraphs; for code use a code string with \\n for line breaks. Articles remain Markdown under content/posts.",
-              "A local $schema reference enables field help and validation in VS Code. The editor can fold each object and array and show its children in Outline. Legacy .md YAML Pages remain readable, but do not keep both formats for the same locale."
+              "A local $schema reference enables field help and validation in VS Code. The editor can fold each object and array and show its children in Outline. Legacy .md YAML Pages remain readable, but do not keep both formats for the same locale.",
+              "The visual editor includes Chinese and English UI text. Register another language with startPageEditor({ editorTranslations: { ja: { \"内容\": \"コンテンツ\" } } }); missing translations fall back to their source labels. The block library comes from the shared catalog. Localized label objects and startPageEditor’s blockCatalog option let extensions replace templates for existing schema types. A new element type also needs a Pages schema entry, validated renderer and regression tests."
             ]
           }
         ]

@@ -53,7 +53,10 @@ export async function createPage(root, {
     $schema: schema.startsWith('.') ? schema : './' + schema,
     title: title.trim(), lang: locale, slug: name,
     description: '', blocks: [
-      { columns: 1, cells: [[{ type: 'hero', title: title.trim(), text: 'Describe this page.' }]] }
+      { columns: 1, cells: [[
+        { type: 'heading', level: 2, text: title.trim() },
+        { type: 'text', text: 'Write your page content here.' }
+      ]] }
     ]
   };
   const source = JSON.stringify(page, null, 2) + '\n';

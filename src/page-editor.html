@@ -4,24 +4,38 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <title>写文建站 · 可视化 Pages 编辑器</title>
+  <title>写文建站 · 元素块编辑器</title>
   <link rel="stylesheet" href="./editor.css">
+  <link rel="stylesheet" href="./editor-redesign.css">
   <script type="module" src="./editor.js"></script>
 </head>
 <body>
   <header class="topbar">
-    <div class="brand"><span class="brand-icon" aria-hidden="true">◧</span><div><strong>写文建站</strong><small>Pages 页面编辑器</small></div></div>
-    <div class="page-switch"><label class="sr-only" for="page-picker">选择页面</label><select id="page-picker" aria-label="选择页面"></select><button id="new-page" type="button" class="subtle">＋ 新建页面</button></div>
+    <div class="brand"><span class="brand-icon" aria-hidden="true">E</span><div><strong data-i18n="写文建站">写文建站</strong><small data-i18n="元素块编辑器">元素块编辑器</small></div></div>
+    <div class="page-switch"><label class="sr-only" for="page-picker" data-i18n="选择页面">选择页面</label><select id="page-picker" aria-label="选择页面"></select><button id="new-page" type="button" class="subtle" data-i18n="＋ 新建页面">＋ 新建页面</button></div>
     <div class="actions">
+      <label class="sr-only" for="ui-language">编辑器语言</label><select id="ui-language" class="language-select" aria-label="编辑器语言"><option value="zh-CN">中文</option><option value="en">English</option></select>
       <div class="history-controls"><button id="undo" type="button" disabled title="撤销 (Ctrl+Z)" aria-label="撤销">↶</button><button id="redo" type="button" disabled title="重做 (Ctrl+Shift+Z)" aria-label="重做">↷</button></div>
-      <button id="reload" type="button" class="subtle">重新载入</button>
-      <a id="site-preview" hidden href="/">返回网站预览 ↗</a>
-      <button id="save" type="button" class="primary">保存更改</button>
+      <a id="site-preview" hidden href="/" data-i18n="◉ 预览">◉ 预览</a>
+      <button id="save" type="button" class="primary" data-i18n="保存发布⌄">保存发布⌄</button>
+      <button id="reload" type="button" class="subtle" aria-label="重新载入" data-i18n-aria="重新载入">···</button>
     </div>
   </header>
   <main class="workspace">
+    <nav class="tool-rail" aria-label="编辑工具">
+      <button type="button" class="rail-button active" data-panel="palette" aria-pressed="true"><span>◇</span><span data-i18n="元素块">元素块</span></button>
+      <button type="button" class="rail-button" data-panel="structure" aria-pressed="false"><span>☷</span><span data-i18n="页面结构">页面结构</span></button>
+      <button type="button" class="rail-button" data-panel="assets" aria-pressed="false"><span>▧</span><span data-i18n="素材库">素材库</span></button>
+      <button type="button" class="rail-button" data-panel="settings" aria-pressed="false"><span>⚙</span><span data-i18n="页面设置">页面设置</span></button>
+    </nav>
+    <aside class="palette panel" aria-label="添加元素块">
+      <div class="panel-header"><h2 data-i18n="添加元素块">添加元素块</h2><button id="palette-close" type="button" aria-label="收起元素库" data-i18n-aria="收起元素库">×</button></div>
+      <label class="palette-search"><span aria-hidden="true">⌕</span><input id="block-search" type="search" placeholder="搜索元素块…" aria-label="搜索元素块" data-i18n-placeholder="搜索元素块…" data-i18n-aria="搜索元素块"></label>
+      <div id="block-catalog" class="block-catalog"></div>
+      <p class="palette-hint">点击元素即可添加到当前选中栏。</p>
+    </aside>
     <aside class="side panel" aria-label="页面结构">
-      <div class="panel-header"><h2>页面结构</h2><button id="add-row" type="button" title="添加页面行">＋ 行</button></div>
+      <div class="panel-header"><h2 data-i18n="页面结构">页面结构</h2><button id="add-row" type="button" title="添加页面行">＋</button></div>
       <p class="help">页面 → 行 → 栏 → 元素<br>拖动 ⠿ 调整顺序与所属位置</p>
       <nav id="outline" aria-label="页面结构导航"></nav>
       <div class="side-foot"><span id="row-count">0 行</span><span>1–4 栏布局</span></div>
@@ -29,10 +43,11 @@
     <section class="center panel" aria-label="可视化页面画布">
       <div class="canvas-header"><div><span class="eyebrow">页面画布</span><h1 id="page-name">选择页面</h1></div><span class="preview-label">结构预览</span></div>
       <details class="page-settings"><summary>页面标题与摘要</summary><div class="page-meta"><label>页面标题<input id="title" maxlength="500" type="text"></label><label>摘要<input id="description" type="text"></label></div><p id="page-path" class="muted"></p></details>
-      <div class="canvas-scroll"><div id="canvas" class="canvas" aria-label="页面内容预览"><div class="empty">选择或新建页面，开始添加元素。</div></div><p class="help note">在这里调整结构与内容，保存后返回网站查看主题效果。</p></div>
+      <div class="canvas-scroll"><div id="canvas" class="canvas" aria-label="页面内容预览"><div class="empty">选择或新建页面，开始添加元素。</div></div><p class="help note">拖动元素调整结构，点击元素编辑属性。</p></div>
     </section>
     <aside class="inspector panel" aria-label="元素设置">
       <div class="panel-header"><div><h2>元素属性</h2><p id="selected-label" class="muted">选择一个元素</p></div></div>
+      <div class="inspector-tabs" role="tablist" aria-label="属性分类"><button type="button" role="tab" aria-selected="true" data-inspector-tab="content" data-i18n="内容">内容</button><button type="button" role="tab" aria-selected="false" data-inspector-tab="layout" data-i18n="布局">布局</button><button type="button" role="tab" aria-selected="false" data-inspector-tab="style" data-i18n="样式">样式</button></div>
       <div id="fields"><div class="empty">选择画布中的元素，编辑它的内容。</div></div>
     </aside>
   </main>
