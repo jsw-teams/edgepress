@@ -23,12 +23,12 @@ export async function openApp(args, title) {
   }
   child.kill();throw new Error(args[0] + ' did not open: ' + errors);
 }
-export async function guest(args) {
+export async function guest(args, timeoutSeconds=30) {
   return new Promise((done, reject) => {
     // UTF-8 stdin avoids Windows/WSL command-line reparsing of paths and quotes.
-    const child = guestProcess(['timeout', '15s', ...args]);
+    const child = guestProcess(['timeout', timeoutSeconds+'s', ...args]);
     let output = ''; child.stdout.on('data', chunk => output += chunk); child.stderr.on('data', chunk => output += chunk);
-    child.once('error', reject); child.once('exit', code => code === 0 ? done(output.trim()) : reject(new Error(args[0] + ' exited ' + code + ': ' + output)));
+    child.once('error', reject); child.once('exit', code => code === 0 ? done(output.trim()) : reject(new Error(args[0] + ' ' + args.slice(1).join(' ') + ' exited ' + code + ': ' + output)));
   });
 }
 export async function activate(title) {

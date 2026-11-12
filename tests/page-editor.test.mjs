@@ -159,6 +159,8 @@ test('browser moves across columns and nested sections, undoes, uploads and reus
     try{
       const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',error=>errors.push(error.message));
       await page.goto(url);await page.locator('#status.saved').waitFor();
+      assert.equal(await page.locator('.catalog-item[data-block-type="hero"]').count(),0);
+      assert.ok(await page.locator('.catalog-item[data-block-type="heading"]').getAttribute('aria-label'));
       await page.locator('#ui-language').selectOption('en');
       assert.equal(await page.locator('.inspector-tabs [data-inspector-tab="content"]').innerText(),'Content');
       await page.locator('#ui-language').selectOption('zh-CN');

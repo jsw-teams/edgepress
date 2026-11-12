@@ -69,9 +69,9 @@ To publish new source, a repository maintainer opens **Actions → Publish npm a
 
 ## Visual Pages editor / 可视化页面编辑器
 
-[Watch the 107-second Pages editor recording / 观看元素块页面编辑实录](content/assets/images/previews/edgepress-pages-editor.2b4829ca4a581ba3.mp4) — create a Page, set two columns, move elements across columns into a section, edit card fields, upload a picture, save, and view the themed result.
+[Watch the 119-second Pages editor recording / 观看元素块页面编辑实录](content/assets/images/previews/edgepress-pages-editor.ff8bca7c33103715.mp4) — switch the editor language, use the block library and structure tree, arrange columns and nested sections, edit card fields, upload an image, save, and preview the themed result.
 
-![Real Pages element editing in the isolated desktop](content/assets/images/previews/edgepress-pages-editor.8e25a707554f45d0.gif)
+![Real Pages element editing in the redesigned editor](content/assets/images/previews/edgepress-pages-editor.05c7a382fee4f0a9.gif)
 
 Run `edgepress s` (or `npx edgepress s` in an initialized site), open **http://127.0.0.1:8787/** and choose **Edit Pages / 编辑 Pages**. The editor opens at **http://127.0.0.1:8787/__edgepress/** on the same local preview server; use **返回网站预览** to return to the actual themed site. Saving a Page triggers the preview rebuild. Choose **＋ 新建页面** to create a Page with a title, optional URL slug and configured language. Existing Pages can be selected, arranged into 1–4 columns and edited without touching JSON.
 

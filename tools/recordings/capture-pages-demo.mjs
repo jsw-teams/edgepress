@@ -25,7 +25,8 @@ try{
  const row=index=>page.locator('.canvas-row').nth(index);
  const cell=(r,c)=>row(r).locator(':scope > .cells > .canvas-cell').nth(c);
  const field=name=>page.locator('#fields').getByRole('textbox',{name,exact:true}).first();
- async function add(r,c,type){const tools=cell(r,c).locator(':scope > .cell-actions');await pointAt(page,tools.getByRole('combobox'));await tools.getByRole('combobox').selectOption(type);await pause(600);await click(tools.getByRole('button',{name:'＋ 添加',exact:true}));}
+ async function add(r,c,type){const tools=cell(r,c).locator(':scope > .cell-actions');await pointAt(page,tools.getByRole('combobox'));await tools.getByRole('combobox').selectOption(type);await pause(500);await click(tools.getByRole('button',{name:/添加|Add/}));}
+ async function paletteAdd(r,c,type){await pointAt(page,cell(r,c).locator('.cell-label'));await click(page.locator('.catalog-item[data-block-type="'+type+'"]'));}
  await record(page,'edgepress-pages-editor',async({omitWait})=>{
   await bench.generate();await pause(1500);
   await bench.startServer({omitWait,command:'edgepress s'});
@@ -33,41 +34,45 @@ try{
   await click(page.getByRole('link',{name:'编辑 Pages',exact:true}));
   assert.equal(new URL(page.url()).pathname,'/__edgepress/');
   await page.locator('#status.saved').waitFor();await pause(1400);
+  const language=page.locator('#ui-language');await pointAt(page,language);await language.selectOption('en');await pause(1400);
+  assert.equal(await page.locator('.inspector-tabs [data-inspector-tab="content"]').innerText(),'Content');
+  await pointAt(page,language);await language.selectOption('zh-CN');await pause(1000);
   await click(page.getByRole('button',{name:'＋ 新建页面',exact:true}));
   await type(page.locator('#create-title'),'周末工作室');
   await type(page.locator('#create-slug'),'weekend-studio');
   await click(page.getByRole('button',{name:'创建并编辑',exact:true}));
   await page.locator('#page-name').filter({hasText:'周末工作室'}).waitFor();
   await click(row(0).locator('.pick').first());
-  await type(field('title'),'从灵感开始');
+  await type(field('text'),'从灵感开始');
   await type(field('text'),'把喜欢的事，做成一个小小的网站。');
-  await click(page.getByRole('button',{name:'＋ 行',exact:true}));
+  await click(page.locator('#add-row'));
   await pointAt(page,row(1).getByRole('combobox',{name:'第 2 行的栏数'}));
   await row(1).getByRole('combobox',{name:'第 2 行的栏数'}).selectOption('2');await pause(1000);
   await click(cell(1,0).locator('.pick').first());
   await type(field('text'),'记录灵感，分享每一次小小的进展。');
-  await add(1,0,'heading');await type(field('text'),'关于工作室');
+  await paletteAdd(1,0,'heading');await type(field('text'),'关于工作室');
   await click(cell(1,0).locator('.element').last().getByRole('button',{name:'↑',exact:true}));
   await click(cell(1,1).locator('.pick').first());
   await type(field('text'),'写作、摄影与网页设计，从这里开始。');
-  await add(1,1,'notice');await type(field('title'),'每周更新');
+  await paletteAdd(1,1,'notice');await type(field('title'),'每周更新');
   await type(field('text'),'每个周末，发布一个新的小作品。');
   await add(1,0,'section');await type(field('title'),'最新消息');
   await click(cell(1,0).locator('.nested-elements .pick').first());
   await type(field('text'),'近期安排与灵感清单。');
   await click(cell(1,1).locator('[data-type=notice] .pick'));
+  await click(page.locator('[data-inspector-tab="layout"]'));
   await click(page.locator('.relationship summary'));
   await pointAt(page,page.getByRole('combobox',{name:'目标容器'}));
   await page.getByRole('combobox',{name:'目标容器'}).selectOption({label:'第 2 行 › 栏 1 › 最新消息'});await pause(700);
   await click(page.getByRole('button',{name:'移动到这里',exact:true}));await pause(1500);
-  await click(page.getByRole('button',{name:'＋ 行',exact:true}));
-  await add(2,0,'feature-grid');await type(field('title'),'我们在做什么');
+  await click(page.locator('#add-row'));
+  await add(2,0,'feature-grid');await click(page.locator('[data-inspector-tab="content"]'));await type(field('title'),'我们在做什么');
   await click(cell(2,0).locator('.element').first().getByRole('button',{name:'×',exact:true}));
   await click(cell(2,0).locator('.pick').first());
   const item=page.locator('#fields .array-item').first();
   await type(item.getByRole('textbox',{name:'title',exact:true}),'记录与分享');
   await type(item.getByRole('textbox',{name:'text',exact:true}),'用文章与页面整理创作，让每一个想法都有自己的位置。');
-  await click(page.getByRole('button',{name:'＋ 行',exact:true}));
+  await click(page.locator('#add-row'));
   await click(cell(3,0).getByRole('button',{name:'图片',exact:true}));
   await chooseFile(page,page.locator('#image-upload'),resolve(root,'content/assets/edgepress/brand/home-hero.png'));
   await page.locator('.image-dialog').waitFor({state:'detached'});
@@ -89,7 +94,7 @@ try{
    await pause(500);
   }
   assert.ok(rebuilt,'Saving must rebuild the real themed page');
-  await click(page.getByRole('link',{name:/返回网站预览/}));
+  await click(page.locator('#site-preview'));
   await page.goto(bench.previewUrl+'/weekend-studio/');
   await page.getByRole('heading',{name:'周末工作室',level:1,exact:true}).waitFor();
   await pause(2500);
@@ -100,6 +105,6 @@ try{
   await page.getByRole('heading',{name:'周末工作室',level:1,exact:true}).scrollIntoViewIfNeeded();await pause(3500);
  },{foreground:()=>bench.activateTerminal()});
  assert.deepEqual(errors,[]);
- const entries=await closeRecording(context,{artifact,output,source:'tools/recordings/capture-pages-demo.mjs',kind:'FFmpeg recording of the private X11 desktop; real edgepress g and edgepress s, Pages creation, columns, cross-column nesting, card fields, native image upload, save and themed preview; preview startup wait shortened'});
+ const entries=await closeRecording(context,{artifact,output,source:'tools/recordings/capture-pages-demo.mjs',kind:'FFmpeg recording of the private X11 desktop; real edgepress g and edgepress s, redesigned Pages editor, language-pack switch, block library, structure tree, columns, cross-column nesting, card fields, native image upload, save and themed preview; preview startup wait shortened'});
  await writeFile(resolve(artifact,'result.json'),JSON.stringify(entries,null,2)+'\n');
 }finally{await bench?.dispose();await context.close().catch(()=>{});await browser.close();}

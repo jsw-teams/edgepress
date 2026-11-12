@@ -98,7 +98,7 @@ function drawCatalog(){
     const items=filtered.filter(([type])=>(blockCategories[type]||'text')===category);
     const summary=el('summary');summary.append(el('span',translate('category.'+category)),el('small',translate('category.blockCount').replace('{count}',String(items.length))));details.append(summary);
     const grid=el('div',null,'catalog-grid');
-    for(const [type] of items){const tile=button('',()=>{const list=activeList&&containers(state.page).some(entry=>entry.list===activeList)?activeList:(selectedBlock()?locate(state.page,state.selected).list:state.page.blocks[0].cells[0]);addBlock(list,type);},'catalog-item');const label=labels[type]||type;tile.append(el('span',catalogIcons[type]||defaultCatalogIcons[type]||'◇','catalog-icon'),el('span',label.replace(/\s+[^ ]+$/,''),'catalog-label'));grid.append(tile);}
+    for(const [type] of items){const tile=button('',()=>{const list=activeList&&containers(state.page).some(entry=>entry.list===activeList)?activeList:(selectedBlock()?locate(state.page,state.selected).list:state.page.blocks[0].cells[0]);addBlock(list,type);},'catalog-item');tile.dataset.blockType=type;const label=labels[type]||type;tile.setAttribute('aria-label',label);tile.append(el('span',catalogIcons[type]||defaultCatalogIcons[type]||'◇','catalog-icon'),el('span',label.replace(/\s+[^ ]+$/,''),'catalog-label'));grid.append(tile);}
     details.append(grid);root.append(details);
   }
 }

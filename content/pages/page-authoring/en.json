@@ -24,11 +24,11 @@
           {
             "type": "media-text",
             "mediaType": "image",
-            "src": "/images/previews/edgepress-pages-editor.3e649f5fae8fc7e0.webp",
-            "animationSrc": "/images/previews/edgepress-pages-editor.2b4829ca4a581ba3.mp4",
-            "alt": "Real Pages editor: two columns, element reordering, nested card fields and saved preview.",
+            "src": "/images/previews/edgepress-pages-editor.b37051380827f799.webp",
+            "animationSrc": "/images/previews/edgepress-pages-editor.ff8bca7c33103715.mp4",
+            "alt": "Real recording of the redesigned bilingual Pages editor, with a block library, structure tree, content, layout and style tabs, image upload and themed preview.",
             "title": "Edit a Page with visual elements",
-            "text": "Run edgepress s and choose Edit Pages in the local preview. This 107-second recording creates a Page, arranges two columns, moves a notice into a section in another column, edits feature-card fields and uploads a picture through the system file chooser. Save and inspect the themed result. Start playback manually and seek to any step. Run edgepress g to generate the static website before publishing."
+            "text": "Run edgepress s and choose Edit Pages in the local preview. This 119-second real desktop recording switches the editor language pack, creates a Page, uses the block library, arranges two columns, moves a notice into a nested section, edits card content and layouts, uploads a picture through the system file chooser, saves and inspects the themed result. Start playback manually and seek to any step. Run edgepress g to generate the static website before publishing."
           }
         ]
       ]

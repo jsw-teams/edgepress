@@ -24,11 +24,11 @@
           {
             "type": "media-text",
             "mediaType": "image",
-            "src": "/images/previews/edgepress-pages-editor.3e649f5fae8fc7e0.webp",
-            "animationSrc": "/images/previews/edgepress-pages-editor.2b4829ca4a581ba3.mp4",
-            "alt": "真实 Pages 编辑器：双栏布局、元素排序、卡片字段编辑与保存预览。",
+            "src": "/images/previews/edgepress-pages-editor.b37051380827f799.webp",
+            "animationSrc": "/images/previews/edgepress-pages-editor.ff8bca7c33103715.mp4",
+            "alt": "新版双语 Pages 编辑器实录：元素库、页面结构、内容与布局属性、图片上传和主题预览。",
             "title": "用元素块编辑页面",
-            "text": "运行 edgepress s，在本地预览里点击“编辑 Pages”。这段约 107 秒的实录展示新建页面、双栏排版、添加与排序元素、把提示块跨栏移进分区、编辑卡片字段，再通过系统文件选择器上传图片，保存并查看主题效果。点击播放，可拖动进度条定位。发布前运行 edgepress g 生成静态网站。"
+            "text": "运行 edgepress s，在本地预览里点击“编辑 Pages”。这段约 119 秒的实录展示语言切换、新建页面、使用元素库、双栏排版、把提示块跨栏移入分区、编辑卡片内容与布局、通过系统文件选择器上传图片，保存并查看主题效果。点击播放，可拖动进度条定位。发布前运行 edgepress g 生成静态网站。"
           }
         ]
       ]
