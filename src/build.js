@@ -17,6 +17,8 @@ import { dataSaverHtml, configureDataSaver } from './data-saver.js';
 
 const RENDER_CACHE_VERSION = 3;
 const MARKDOWN_SECURITY_POLICY_VERSION = 5;
+const DOCUMENT_ELEMENTS = new Set(['document']);
+const MEDIA_ELEMENTS = new Set(['media-viewer']);
 
 async function readCache(file) {
   try {
@@ -28,6 +30,59 @@ async function readCache(file) {
     if (error.code === 'ENOENT' || error instanceof SyntaxError) return {};
     throw error;
   }
+}
+
+async function writeJsonString(handle, value) {
+  await handle.write('"');
+  for (let offset = 0; offset < value.length;) {
+    let end = Math.min(offset + 64 * 1024, value.length);
+    if (end < value.length && /[\uD800-\uDBFF]/.test(value[end - 1])) end -= 1;
+    await handle.write(JSON.stringify(value.slice(offset, end)).slice(1, -1));
+    offset = end;
+  }
+  await handle.write('"');
+}
+
+async function writeRenderCache(file, rendered) {
+  const handle = await open(file, 'wx');
+  try {
+    await handle.write('{"version":' + RENDER_CACHE_VERSION + ',"rendered":{');
+    let first = true;
+    for (const key of Object.keys(rendered)) {
+      if (!first) await handle.write(',');
+      first = false;
+      await handle.write(JSON.stringify(key) + ':');
+      await writeJsonString(handle, rendered[key]);
+    }
+    await handle.write('}}');
+  } finally {
+    await handle.close();
+  }
+}
+
+function containsElementType(value, types) {
+  const pending = [value];
+  const visited = new Set();
+  while (pending.length) {
+    const current = pending.pop();
+    if (!current || typeof current !== 'object' || visited.has(current)) continue;
+    visited.add(current);
+    if (!Array.isArray(current) && types.has(current.type)) return true;
+    for (const child of Object.values(current)) {
+      if (child && typeof child === 'object') pending.push(child);
+    }
+  }
+  return false;
+}
+
+function needsDocumentViewer(document) {
+  return typeof document.markdown === 'string' && /!document\[/.test(document.markdown) ||
+    containsElementType(document.blocks, DOCUMENT_ELEMENTS);
+}
+
+function needsMediaViewer(document) {
+  return Boolean(document.video) || typeof document.markdown === 'string' && /!video\[/.test(document.markdown) ||
+    containsElementType(document.blocks, MEDIA_ELEMENTS);
 }
 
 async function markdownRuntimeVersion(root) {
@@ -221,12 +276,16 @@ export async function buildSite(root = process.cwd(), options = {}) {
     const sourceDocuments = await readDocuments(config);
     const loadedDocuments = await extensions.filter('content:loaded', sourceDocuments, { config });
     if (!Array.isArray(loadedDocuments)) throw new Error('content:loaded filters must return an array');
-    const assetBundle = await collectAssets(config, { documentViewer: loadedDocuments.some(document => /!document\[|"type":"document"/.test(JSON.stringify(document))), mediaViewer: loadedDocuments.some(document => document.video || hasMarkdownVideo(document.markdown) || /"type":"media-viewer"/.test(JSON.stringify(document))) });
+    const assetBundle = await collectAssets(config, {
+      documentViewer: loadedDocuments.some(needsDocumentViewer),
+      mediaViewer: loadedDocuments.some(document => needsMediaViewer(document) || hasMarkdownVideo(document.markdown))
+    });
 
     const cacheFile = resolve(config.resolvedPaths.cache, 'render-cache.json');
     const oldCache = await readCache(cacheFile);
     const nextCache = Object.create(null);
     const runtimeVersion = await markdownRuntimeVersion(config.root);
+    const browserPluginsVersion = JSON.stringify(config.browserPlugins);
     const renderer = extensions.renderer('.md');
     if (!renderer) throw new Error('No renderer is registered for Markdown files');
 
@@ -236,7 +295,7 @@ export async function buildSite(root = process.cwd(), options = {}) {
       }
       const signature = createHash('sha256')
         .update(document.markdown + '\n' + JSON.stringify(config.markdown) + '\n' + document.locale + '\n' +
-          MARKDOWN_SECURITY_POLICY_VERSION + '\n' + runtimeVersion + '\n' + JSON.stringify(config.browserPlugins) + '\n' + config.site.url)
+          MARKDOWN_SECURITY_POLICY_VERSION + '\n' + runtimeVersion + '\n' + browserPluginsVersion + '\n' + config.site.url)
         .digest('hex');
       let html = renderer.cacheable ? oldCache[signature] : undefined;
       if (html === undefined) html = await renderer.render(document.markdown, { config, document });
@@ -285,7 +344,7 @@ export async function buildSite(root = process.cwd(), options = {}) {
 
     const cacheTemporary = cacheFile + '.tmp-' + randomUUID();
     try {
-      await writeFile(cacheTemporary, JSON.stringify({ version: RENDER_CACHE_VERSION, rendered: nextCache }), 'utf8');
+      await writeRenderCache(cacheTemporary, nextCache);
       await rename(cacheTemporary, cacheFile);
     } catch (error) {
       await rm(cacheTemporary, { force: true }).catch(() => {});
