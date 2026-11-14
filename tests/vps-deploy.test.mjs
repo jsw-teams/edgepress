@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
+import { Writable } from 'node:stream';
 import { join, posix } from 'node:path';
 import { inventorySite, uploadStaticSite, validateVpsSettings } from '../src/vps-deploy.js';
 
@@ -42,7 +43,7 @@ test('inventory enumerates generated files and rejects symlinks', async () => {
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 
-function fakeSftp({ failPublish = false } = {}) {
+function fakeSftp({ failPublish = false, corruptUpload = false } = {}) {
   const items = new Map([
     ['/var', 'dir'],
     ['/var/www', 'dir'],
@@ -50,6 +51,7 @@ function fakeSftp({ failPublish = false } = {}) {
     ['/var/www/example/old.html', 'file']
   ]);
   const actions = [];
+  const sizes = new Map();
   let publishFailed = false;
   const missing = () => Object.assign(new Error('No such file'), { code: 2 });
   function callback(cb, error, value) { queueMicrotask(() => cb(error, value)); }
@@ -57,7 +59,7 @@ function fakeSftp({ failPublish = false } = {}) {
     actions, items,
     lstat(path, cb) {
       const type = items.get(path);
-      callback(cb, type ? null : missing(), type ? { isDirectory: () => type === 'dir', isSymbolicLink: () => false } : undefined);
+      callback(cb, type ? null : missing(), type ? { isDirectory: () => type === 'dir', isSymbolicLink: () => false, size: sizes.get(path) ?? 0 } : undefined);
     },
     readdir(path, cb) {
       const names = [...items.keys()].filter(p => p !== path && posix.dirname(p) === path)
@@ -65,7 +67,18 @@ function fakeSftp({ failPublish = false } = {}) {
       callback(cb, null, names);
     },
     mkdir(path, cb) { actions.push(['mkdir', path]); items.set(path, 'dir'); callback(cb, null); },
-    fastPut(local, remote, options, cb) { actions.push(['put', remote]); items.set(remote, 'file'); callback(cb, null); },
+    createWriteStream(remote) {
+      let size = 0;
+      return new Writable({
+        write(chunk, encoding, cb) { size += chunk.length; cb(); },
+        final(cb) {
+          actions.push(['put', remote]);
+          items.set(remote, 'file');
+          sizes.set(remote, corruptUpload ? size + 1 : size);
+          cb();
+        }
+      });
+    },
     rename(from, to, cb) {
       actions.push(['rename', from, to]);
       if (failPublish && !publishFailed && from.includes('edgepress-stage')) {
@@ -74,12 +87,17 @@ function fakeSftp({ failPublish = false } = {}) {
         return;
       }
       const moved = [...items.entries()].filter(([path]) => path === from || path.startsWith(from + '/'));
-      for (const [path] of moved) items.delete(path);
-      for (const [path, type] of moved) items.set(to + path.slice(from.length), type);
+      const oldSizes = moved.map(([path]) => sizes.get(path));
+      for (const [path] of moved) { items.delete(path); sizes.delete(path); }
+      moved.forEach(([path, type], i) => {
+        const destination = to + path.slice(from.length);
+        items.set(destination, type);
+        if (oldSizes[i] !== undefined) sizes.set(destination, oldSizes[i]);
+      });
       callback(cb, null);
     },
-    unlink(path, cb) { actions.push(['unlink', path]); items.delete(path); callback(cb, null); },
-    rmdir(path, cb) { actions.push(['rmdir', path]); items.delete(path); callback(cb, null); }
+    unlink(path, cb) { actions.push(['unlink', path]); items.delete(path); sizes.delete(path); callback(cb, null); },
+    rmdir(path, cb) { actions.push(['rmdir', path]); items.delete(path); sizes.delete(path); callback(cb, null); }
   };
   return api;
 }
@@ -106,6 +124,17 @@ test('SFTP restores the original site when publication rename fails', async () =
     await assert.rejects(uploadStaticSite(sftp, root, '/var/www/example'), /simulated publish failure/);
     assert.equal(sftp.items.get('/var/www/example/old.html'), 'file');
     assert.equal(sftp.items.has('/var/www/example/index.html'), false);
+    assert.equal([...sftp.items.keys()].some(path => path.includes('edgepress-stage')), false);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test('SFTP prevents a site swap when a streamed file has the wrong size', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'edgepress-deploy-test-'));
+  try {
+    await writeFile(join(root, 'index.html'), 'new site');
+    const sftp = fakeSftp({ corruptUpload: true });
+    await assert.rejects(uploadStaticSite(sftp, root, '/var/www/example'), /size mismatch/);
+    assert.equal(sftp.items.get('/var/www/example/old.html'), 'file');
     assert.equal([...sftp.items.keys()].some(path => path.includes('edgepress-stage')), false);
   } finally { await rm(root, { recursive: true, force: true }); }
 });

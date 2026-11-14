@@ -1,4 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
+import { createReadStream } from 'node:fs';
+import { pipeline } from 'node:stream/promises';
 import { lstat, readFile, readdir } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { isAbsolute, join, posix, resolve } from 'node:path';
@@ -99,7 +101,7 @@ export async function inventorySite(output) {
         directories.push(child);
         await visit(fullPath, child);
       } else if (attributes.isFile()) {
-        files.push({ local: fullPath, remote: child });
+        files.push({ local: fullPath, remote: child, bytes: attributes.size });
         bytes += attributes.size;
       } else {
         throw new Error('Unsupported generated output entry: ' + child);
@@ -148,7 +150,8 @@ async function removeRemoteTree(sftp, path) {
   }
 }
 
-export async function uploadStaticSite(sftp, output, remotePath, inventory = await inventorySite(output)) {
+export async function uploadStaticSite(sftp, output, remotePath, inventory = null) {
+  inventory ??= await inventorySite(output);
   const parent = posix.dirname(remotePath);
   if (!isDirectory(await remoteStat(sftp, parent))) {
     throw new Error('VPS destination parent must already be a writable directory: ' + parent);
@@ -167,9 +170,10 @@ export async function uploadStaticSite(sftp, output, remotePath, inventory = awa
       await sftpCall(sftp, 'mkdir', posix.join(stage, directory));
     }
     for (const file of inventory.files) {
-      await sftpCall(sftp, 'fastPut', file.local, posix.join(stage, file.remote), {
-        concurrency: 4, chunkSize: 32768
-      });
+      const destination = posix.join(stage, file.remote);
+      await pipeline(createReadStream(file.local), sftp.createWriteStream(destination, { flags: 'w', mode: 0o644 }));
+      const uploaded = await remoteStat(sftp, destination);
+      if (!uploaded || uploaded.size !== file.bytes) throw new Error('SFTP upload size mismatch: ' + file.remote);
     }
     if (existing) {
       await sftpCall(sftp, 'rename', remotePath, backup);
