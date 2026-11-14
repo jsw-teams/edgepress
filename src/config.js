@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 import { parse as parseYaml } from 'yaml';
 import {validateServiceCsp} from './consent-csp.js';
 import {linkOrigin} from '../static/edgepress/external-links-policy.js';
+import { recommendedConcurrency } from './concurrency.js';
 
 const defaults = {
   site: {
@@ -36,7 +37,7 @@ const defaults = {
   pagination: { perPage: 10 },
   markdown: { gfm: true, breaks: false },
   i18n: { defaultLocale: 'en', languagePacks: [] },
-  concurrency: 8,
+  concurrency: 0,
   plugins: []
 };
 
@@ -391,6 +392,7 @@ export async function loadConfig(root = process.cwd()) {
   }
 
   const config = merge(defaults, userConfig);
+  if (config.concurrency === 0) config.concurrency = await recommendedConcurrency();
   validateTimeZone(config.site.timeZone);
   const siteYaml = await readSiteYaml(root);
   if (siteYaml.site !== undefined && (!siteYaml.site || typeof siteYaml.site !== 'object' || Array.isArray(siteYaml.site))) {
