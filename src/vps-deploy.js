@@ -34,8 +34,10 @@ export function validateVpsSettings(input) {
       posix.normalize(remotePath.replace(/\/+$/, '')) !== remotePath.replace(/\/+$/, '')) {
     throw new Error('deploy.vps.remotePath must be an absolute, normalized VPS directory other than /');
   }
-  const hostKeySha256 = nonempty(input.hostKeySha256, 'hostKeySha256');
-  if (!FINGERPRINT.test(hostKeySha256)) throw new Error('deploy.vps.hostKeySha256 must be an SSH SHA256 host-key fingerprint');
+  const hostKeySha256 = input.hostKeySha256 === undefined ? undefined : nonempty(input.hostKeySha256, 'hostKeySha256');
+  if (hostKeySha256 !== undefined && !FINGERPRINT.test(hostKeySha256)) {
+    throw new Error('deploy.vps.hostKeySha256 must be an SSH SHA256 host-key fingerprint');
+  }
   const auth = ['password', 'passwordEnv', 'privateKey'].filter(key => input[key] !== undefined);
   if (auth.length !== 1) throw new Error('Set exactly one of deploy.vps.password, passwordEnv or privateKey');
   for (const key of [...auth, 'passphrase', 'passphraseEnv']) {
@@ -48,6 +50,15 @@ export function validateVpsSettings(input) {
     throw new Error('Private-key passphrases require deploy.vps.privateKey');
   }
   return { ...input, host, username, port, remotePath: remotePath.replace(/\/+$/, ''), hostKeySha256 };
+}
+
+export function createHostKeyVerifier(fingerprint) {
+  if (fingerprint === undefined) return undefined;
+  if (typeof fingerprint !== 'string' || !FINGERPRINT.test(fingerprint)) {
+    throw new Error('deploy.vps.hostKeySha256 must be an SSH SHA256 host-key fingerprint');
+  }
+  const expected = fingerprint.replace(/=+$/, '');
+  return publicKey => 'SHA256:' + createHash('sha256').update(publicKey).digest('base64').replace(/=+$/, '') === expected;
 }
 
 export async function loadVpsDeploymentConfig(root = process.cwd()) {
@@ -213,6 +224,9 @@ export async function deployVps(output, settings, { dryRun = false, root = proce
       ' to ' + settings.username + '@' + settings.host + ':' + settings.remotePath + '; no connection or upload');
     return { files: inventory.files.length, bytes: inventory.bytes };
   }
+  if (!settings.hostKeySha256) {
+    console.warn('VPS SSH host key is not verified; set deploy.vps.hostKeySha256 to enable server identity checking.');
+  }
   const auth = await credentials(settings, root);
   const ssh2 = await import('ssh2');
   const Client = ssh2.Client ?? ssh2.default.Client;
@@ -230,8 +244,7 @@ export async function deployVps(output, settings, { dryRun = false, root = proce
         ...auth,
         readyTimeout: 20000,
         keepaliveInterval: 10000,
-        hostVerifier: publicKey => 'SHA256:' + createHash('sha256').update(publicKey).digest('base64').replace(/=+$/, '') ===
-          settings.hostKeySha256.replace(/=+$/, '')
+        ...(settings.hostKeySha256 ? { hostVerifier: createHostKeyVerifier(settings.hostKeySha256) } : {})
       });
     });
     const sftp = await new Promise((resolvePromise, reject) =>

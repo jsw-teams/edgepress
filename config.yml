@@ -1,4 +1,4 @@
-# Site configuration (site, theme, privacy, optional consent services).
+# Site configuration (site, theme, privacy, optional consent services and VPS deployment).
 # Build paths and enabled locales belong to edgepress.config.mjs.
 site:
   timeZone: Asia/Taipei
@@ -180,16 +180,17 @@ plugins:
         embedScripts:
           - https://platform.x.com/widgets.js
 
-# Optional VPS deployment (uncomment and set real values for edgepress d).
-# Keep credentials out of Git: prefer passwordEnv or an SSH private-key path.
+# Optional VPS deployment: uncomment in a PRIVATE site's config.yml.
+# This example repository tracks config.yml. Never commit real passwords.
 # deploy:
 #   vps:
 #     host: 203.0.113.10
 #     port: 22
 #     username: deploy
 #     remotePath: /var/www/example.org
-#     hostKeySha256: SHA256:REPLACE_WITH_VERIFIED_SERVER_FINGERPRINT
-#     privateKey: ~/.ssh/id_ed25519
-#     # Or use passwordEnv: EDGEPRESS_VPS_PASSWORD instead of privateKey.
-#     # Literal password: ... is supported but should not be committed.
+#     password: "replace-with-your-password"
+#     # Optional host verification, only with a verified fingerprint:
+#     # hostKeySha256: "SHA256:REPLACE_WITH_VERIFIED_SERVER_FINGERPRINT"
+#     # Alternative auth: passwordEnv: EDGEPRESS_VPS_PASSWORD
+#     # or privateKey: ~/.ssh/id_ed25519. Choose exactly one auth method.
 #     # For encrypted keys: passphraseEnv: EDGEPRESS_VPS_KEY_PASSPHRASE

@@ -14,7 +14,7 @@
 
 ## 本地开始
 
-需要 Node.js 22.12 或更新版本。以下命令安装已发布的 npm 版本；最新 GitHub 改动可通过 README 的仓库模板部署，或克隆本仓库后在根目录运行 `npm ci`、`npm run dev`。在新目录中安装 npm 版本：
+需要 Node.js 22.12 或更新版本。以下命令安装已发布的 npm 版本；最新 GitHub 改动可通过 README 的仓库模板部署，或克隆本仓库后在根目录运行 `npm install`、`npm run dev`。在新目录中安装 npm 版本：
 
 ```sh
 npm install edgepress
@@ -41,7 +41,7 @@ README 提供五个平台的部署按钮。Cloudflare、Vercel、Netlify 和 Edg
 | Netlify | `netlify.toml` | `npm run deploy:netlify` |
 | 阿里云 ESA Pages | `esa.jsonc` | `npm run deploy:esa -- --name my-site` |
 
-构建命令统一为 `npm run build`，输出目录统一为 `dist`。平台账号与域名授权仍需由运营者完成。GitHub 手动部署工作流也可选择平台；Netlify 使用仓库 Secret `NETLIFY_AUTH_TOKEN` 和 `NETLIFY_SITE_ID`。
+构建命令统一为 `npm run build`，输出目录统一为 `dist`。平台账号与域名授权仍需由运营者完成。要部署自有 VPS，可在私有 `config.yml` 中配置 `deploy.vps`，直接填写 `password`，然后运行 `edgepress d`。`hostKeySha256` 为选填。详见仓库根目录的 [Agent VPS 部署指南](../../agent.md) 和 [部署页面](../pages/deployment/zh-cn.json)。GitHub Actions 只负责依赖审计与兼容性验证，不自动部署生产网站。
 
 ## 可选服务、隐私与缓存
 

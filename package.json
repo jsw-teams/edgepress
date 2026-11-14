@@ -20,6 +20,7 @@
     "project-compatibility.json",
     "wrangler.jsonc",
     "README.md",
+    "agent.md",
     "vercel.json",
     "edgeone.json",
     "esa.jsonc",

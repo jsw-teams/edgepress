@@ -38,7 +38,7 @@ const siteReadme = [
   'Push this source repository to GitHub, then connect the repository to Cloudflare Workers Builds. The `build` and `deploy` scripts in `package.json` generate and deploy the static files. Set a unique Worker name in `wrangler.jsonc` first.',
   '',
   'Authenticate with the chosen platform, then run `edgepress deploy cloudflare`, `edgepress deploy vercel`, `edgepress deploy edgeone -n my-site`, `edgepress deploy netlify`, or `edgepress deploy esa --name my-site`.',
-  'For an SSH/SFTP VPS, configure deploy.vps in config.yml and run `edgepress d` (or `npm run deploy:vps`). Password or private-key authentication and an SSH host fingerprint are supported.',
+  'For an SSH/SFTP VPS, set host, username, remotePath and password (or a private key) in private config.yml under deploy.vps. Run `edgepress d` (or `npm run deploy:vps`). hostKeySha256 is optional.',
   '',
   '## Use another static web server',
   '',

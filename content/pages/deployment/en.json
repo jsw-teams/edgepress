@@ -3,7 +3,7 @@
   "title": "Static deployment and optional services",
   "lang": "en",
   "slug": "deployment",
-  "description": "Deploy static output on Cloudflare, Vercel, EdgeOne Pages or ESA Pages and register optional external services through consent.",
+  "description": "Deploy static output on Cloudflare, Vercel, Netlify, EdgeOne, ESA or your own VPS, and register optional external services through consent.",
   "blocks": [
     {
       "columns": 1,
@@ -12,22 +12,31 @@
           {
             "type": "hero",
             "eyebrow": "Deployment",
-            "title": "Publish the same static site on five platforms.",
+            "title": "Publish the same static site on hosted platforms or your own VPS.",
             "text": "Build with npm run build. Every platform serves dist/. Page rendering, search and local JavaScript work without a website backend."
           },
           {
             "type": "text",
             "heading": "Platform configuration",
             "paragraphs": [
-              "Cloudflare reads wrangler.jsonc and serves static assets without a Worker script. Vercel reads vercel.json. Tencent EdgeOne Pages reads edgeone.json. Alibaba Cloud ESA Pages reads esa.jsonc.",
-              "Vercel and EdgeOne support repository deployment buttons. ESA uses repository import or the native deployment CLI. Authenticate in your chosen platform and run one deployment command locally. GitHub Actions runs dependency security audits only."
+              "Cloudflare reads wrangler.jsonc and serves static assets without a Worker script. Vercel reads vercel.json; Netlify reads netlify.toml; Tencent EdgeOne Pages reads edgeone.json; Alibaba Cloud ESA Pages reads esa.jsonc. For a VPS, configure deploy.vps in a private config.yml.",
+              "Use each hosted platform's own authentication; use SSH/SFTP with direct password or private-key authentication on a VPS. GitHub Actions runs dependency security and compatibility checks, not production deployment."
             ]
           },
           {
             "type": "code",
             "title": "Choose a deployment platform",
             "language": "sh",
-            "code": "npm run deploy:cloudflare\nnpm run deploy:vercel\nnpm run deploy:netlify\nnpm run deploy:edgeone -- -n my-site\nnpm run deploy:esa -- --name my-site\n"
+            "code": "npm run deploy:cloudflare\nnpm run deploy:vercel\nnpm run deploy:netlify\nnpm run deploy:edgeone -- -n my-site\nnpm run deploy:esa -- --name my-site\nedgepress d --dry-run\nedgepress d\n"
+          },
+          {
+            "type": "text",
+            "heading": "Deploy to a VPS with edgepress d",
+            "paragraphs": [
+              "In a private config.yml, set deploy.vps.host, username, remotePath and password, or choose passwordEnv or privateKey instead. port defaults to 22. Never publish real credentials to GitHub.",
+              "hostKeySha256 is optional. When set, it verifies the SSH server key fingerprint; without it, EdgePress warns and connects without server identity verification. Run edgepress d --dry-run to validate local output first. The SSH user needs SFTP and permission to write and rename directories in the parent of remotePath.",
+              "EdgePress stages dist/ and swaps directories after upload. It removes old content and attempts to restore the original directory if the final swap fails. The VPS needs a static web server, not Node.js. Agent instructions are at the root in agent.md."
+            ]
           },
           {
             "type": "text",

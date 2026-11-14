@@ -281,7 +281,7 @@ Multiple post lists on the same page share a displayed-article set: an article a
 
 ## VPS deployment over SSH
 
-EdgePress can upload its generated static site to your own VPS using the short command `edgepress d`. Configure the deployment destination in the site's root `config.yml` (the output directory itself remains configured by `paths.output` in `edgepress.config.mjs`):
+Run `edgepress d` to generate the static website and publish the contents of `dist/` to your own VPS over SSH/SFTP. Configure `deploy.vps` in your **private** site's root `config.yml`:
 
 ```yaml
 deploy:
@@ -290,22 +290,24 @@ deploy:
     port: 22
     username: deploy
     remotePath: /var/www/example.org
-    hostKeySha256: SHA256:REPLACE_WITH_VERIFIED_SERVER_FINGERPRINT
-    privateKey: ~/.ssh/id_ed25519
+    password: "your-private-password"
+    # Optional server identity verification:
+    # hostKeySha256: "SHA256:YOUR_VERIFIED_HOST_FINGERPRINT"
 ```
 
-Use **exactly one** of `privateKey`, `passwordEnv`, or `password` for authentication. For password login, replace `privateKey` with `passwordEnv: EDGEPRESS_VPS_PASSWORD` and set that environment variable locally. A literal `password` is also accepted, but it must not be committed to a repository. Encrypted private keys accept `passphraseEnv` (or `passphrase`). The key path may be absolute, home-relative (`~/`) or relative to the project. All secrets remain on the CLI side and are never published in `dist/`.
+**Direct password configuration is supported.** No environment variable or key file is required. Choose exactly one authentication method: `password`, `passwordEnv`, or `privateKey`. Encrypted private keys also support `passphrase` or `passphraseEnv`. Keep passwords private: this example repository tracks its `config.yml`, and `.gitignore` does not protect changes to a file already tracked by Git. Do not commit a real password; use a private, uncommitted site config, or prefer `passwordEnv` or `privateKey` on version-controlled sites.
 
-Verify the VPS SSH host-key fingerprint with your hosting provider or another trusted channel, then set `hostKeySha256` to the matching `SHA256:` fingerprint. SSH/SFTP connection is refused if the fingerprint does not match; never copy an unverified fingerprint solely from a network connection.
+`hostKeySha256` is **optional**. When omitted, EdgePress warns and connects without verifying the SSH server's identity. When set to a trusted SHA256 fingerprint, mismatches stop the connection. SSH traffic remains encrypted in both cases, but omitting the fingerprint weakens protection against server impersonation.
 
-```bash
-edgepress d --dry-run     # build and check local files without network access
-edgepress d               # build and publish to the VPS
-# equivalent: npm run deploy:vps
-# equivalent: edgepress deploy vps
+```sh
+edgepress d --dry-run    # build and inspect output without connecting
+edgepress d              # build and publish to the configured VPS
+# equivalents: edgepress deploy vps / npm run deploy:vps
 ```
 
-Deployment requires the configured SSH user to have SFTP permission and write access to the **parent** of `remotePath`. EdgePress uploads the contents of `dist/` to a unique sibling staging directory, replaces the destination after upload succeeds, and attempts to restore the previous directory if the final swap fails. On success it removes the old directory, including obsolete static files. A failed cleanup leaves a named backup directory for manual inspection. The remote destination must be an absolute path other than `/`; remote shell commands and a server-side Node.js installation are not required. Configure your web server (such as Nginx or OpenResty) to serve `remotePath` as its static document root.
+The SFTP user needs write and rename permission in the **parent** of `remotePath`. Deployment stages the new `dist/`, swaps the finished directory into place, removes obsolete content, and attempts to restore the original site if final publication fails. No server-side Node.js or remote shell command is required. Configure Nginx/OpenResty to serve `remotePath`.
+
+See the [Agent deployment playbook](agent.md) for setup, verification and recovery.
 
 ## Static platform deployment
 

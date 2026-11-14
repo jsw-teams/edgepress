@@ -1,31 +1,44 @@
 import test from 'node:test';
+import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { Writable } from 'node:stream';
 import { join, posix } from 'node:path';
-import { inventorySite, uploadStaticSite, validateVpsSettings } from '../src/vps-deploy.js';
+import { createHostKeyVerifier, inventorySite, uploadStaticSite, validateVpsSettings } from '../src/vps-deploy.js';
 
 const fingerprint = 'SHA256:' + 'A'.repeat(43);
 const example = { host: '203.0.113.42', username: 'deploy', remotePath: '/var/www/example', passwordEnv: 'DEPLOY_PASSWORD', hostKeySha256: fingerprint };
 
 test('VPS configuration permits password, environment password and private key', () => {
   assert.equal(validateVpsSettings(example).port, 22);
-  assert.equal(validateVpsSettings({ ...example, passwordEnv: undefined, password: 'secret' }).password, 'secret');
+  assert.equal(validateVpsSettings({ ...example, passwordEnv: undefined, password: 'secret', hostKeySha256: undefined }).password, 'secret');
+  assert.equal(validateVpsSettings({ ...example, passwordEnv: undefined, password: 'p:@# $: 中文', hostKeySha256: undefined }).password, 'p:@# $: 中文');
   assert.equal(validateVpsSettings({ ...example, passwordEnv: undefined, privateKey: '~/.ssh/id_ed25519' }).privateKey, '~/.ssh/id_ed25519');
   assert.equal(validateVpsSettings({ ...example, port: 2222 }).port, 2222);
 });
 
-test('VPS configuration rejects unsafe targets, missing credentials and unpinned hosts', () => {
+test('VPS configuration rejects unsafe targets, missing credentials and invalid pins', () => {
   for (const remotePath of ['/', '/var/../etc', 'relative/path', '//server/share', '/var/./www', '/var/site\nbad']) {
     assert.throws(() => validateVpsSettings({ ...example, remotePath }), /remotePath/);
   }
-  assert.throws(() => validateVpsSettings({ ...example, hostKeySha256: undefined }), /hostKeySha256/);
+  assert.equal(validateVpsSettings({ ...example, hostKeySha256: undefined }).hostKeySha256, undefined);
+  assert.throws(() => validateVpsSettings({ ...example, hostKeySha256: 'SHA256:invalid' }), /hostKeySha256/);
   assert.throws(() => validateVpsSettings({ ...example, passwordEnv: undefined }), /exactly one/);
   assert.throws(() => validateVpsSettings({ ...example, password: 'also-secret' }), /exactly one/);
   assert.throws(() => validateVpsSettings({ ...example, host: 'hostname;id' }), /host/);
   assert.throws(() => validateVpsSettings({ ...example, passwordEnv: 'INVALID-NAME' }), /passwordEnv/);
   assert.throws(() => validateVpsSettings({ ...example, other: 123 }), /Unsupported/);
+});
+
+test('optional host-key verification accepts only the pinned SSH key', () => {
+  assert.equal(createHostKeyVerifier(undefined), undefined);
+  const key = Buffer.from('sample SSH server public key');
+  const fingerprint = 'SHA256:' + createHash('sha256').update(key).digest('base64').replace(/=+$/, '');
+  const verifier = createHostKeyVerifier(fingerprint);
+  assert.equal(verifier(key), true);
+  assert.equal(verifier(Buffer.from('different key')), false);
+  assert.throws(() => createHostKeyVerifier('invalid'), /hostKeySha256/);
 });
 
 test('inventory enumerates generated files and rejects symlinks', async () => {
