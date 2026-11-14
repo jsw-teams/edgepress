@@ -8,6 +8,22 @@ import { readSiteYaml } from './config.js';
 
 const ENV_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const FINGERPRINT = /^SHA256:[A-Za-z0-9+/]{43}=?$/;
+const UPLOAD_CONCURRENCY = 8;
+
+async function mapConcurrent(items, concurrency, operation) {
+  let next = 0;
+  let failure;
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (!failure) {
+      const index = next++;
+      if (index >= items.length) return;
+      try { await operation(items[index], index); }
+      catch (error) { failure ??= error; }
+    }
+  });
+  await Promise.all(workers);
+  if (failure) throw failure;
+}
 
 function nonempty(value, name) {
   if (typeof value !== 'string' || !value.trim()) throw new Error('deploy.vps.' + name + ' must be a non-empty string');
@@ -208,12 +224,17 @@ export async function uploadStaticSite(sftp, output, remotePath, inventory = nul
     for (const directory of inventory.directories) {
       await sftpCall(sftp, 'mkdir', posix.join(stage, directory));
     }
-    for (const file of inventory.files) {
+    let uploadedCount = 0;
+    await mapConcurrent(inventory.files, UPLOAD_CONCURRENCY, async file => {
       const destination = posix.join(stage, file.remote);
       await pipeline(createReadStream(file.local), sftp.createWriteStream(destination, { flags: 'w', mode: 0o644 }));
       const uploaded = await remoteStat(sftp, destination);
       if (!uploaded || uploaded.size !== file.bytes) throw new Error('SFTP upload size mismatch: ' + file.remote);
-    }
+      uploadedCount++;
+      if (uploadedCount % 50 === 0 || uploadedCount === inventory.files.length) {
+        console.log('VPS upload progress: ' + uploadedCount + '/' + inventory.files.length + ' files');
+      }
+    });
     if (existing) {
       await sftpCall(sftp, 'rename', remotePath, backup);
       movedOriginal = true;

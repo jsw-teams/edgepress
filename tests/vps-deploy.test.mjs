@@ -97,7 +97,7 @@ test('inventory enumerates generated files and rejects symlinks', async () => {
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 
-function fakeSftp({ failPublish = false, corruptUpload = false } = {}) {
+function fakeSftp({ failPublish = false, corruptUpload = false, uploadDelay = 0 } = {}) {
   const items = new Map([
     ['/var', 'dir'],
     ['/var/www', 'dir'],
@@ -107,10 +107,13 @@ function fakeSftp({ failPublish = false, corruptUpload = false } = {}) {
   const actions = [];
   const sizes = new Map();
   let publishFailed = false;
+  let activeUploads = 0;
+  let maxActiveUploads = 0;
   const missing = () => Object.assign(new Error('No such file'), { code: 2 });
   function callback(cb, error, value) { queueMicrotask(() => cb(error, value)); }
   const api = {
     actions, items,
+    get maxActiveUploads() { return maxActiveUploads; },
     lstat(path, cb) {
       const type = items.get(path);
       callback(cb, type ? null : missing(), type ? { isDirectory: () => type === 'dir', isSymbolicLink: () => false, size: sizes.get(path) ?? 0 } : undefined);
@@ -123,13 +126,20 @@ function fakeSftp({ failPublish = false, corruptUpload = false } = {}) {
     mkdir(path, cb) { actions.push(['mkdir', path]); items.set(path, 'dir'); callback(cb, null); },
     createWriteStream(remote) {
       let size = 0;
+      activeUploads++;
+      maxActiveUploads = Math.max(maxActiveUploads, activeUploads);
       return new Writable({
         write(chunk, encoding, cb) { size += chunk.length; cb(); },
         final(cb) {
-          actions.push(['put', remote]);
-          items.set(remote, 'file');
-          sizes.set(remote, corruptUpload ? size + 1 : size);
-          cb();
+          const finish = () => {
+            actions.push(['put', remote]);
+            items.set(remote, 'file');
+            sizes.set(remote, corruptUpload ? size + 1 : size);
+            activeUploads--;
+            cb();
+          };
+          if (uploadDelay) setTimeout(finish, uploadDelay);
+          else finish();
         }
       });
     },
@@ -190,5 +200,18 @@ test('SFTP prevents a site swap when a streamed file has the wrong size', async 
     await assert.rejects(uploadStaticSite(sftp, root, '/var/www/example'), /size mismatch/);
     assert.equal(sftp.items.get('/var/www/example/old.html'), 'file');
     assert.equal([...sftp.items.keys()].some(path => path.includes('edgepress-stage')), false);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test('SFTP deploys several files concurrently while verifying each completed upload', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'edgepress-deploy-test-'));
+  try {
+    await Promise.all(Array.from({ length: 20 }, (_, index) => writeFile(join(root, 'file-' + index + '.txt'), 'file ' + index)));
+    const sftp = fakeSftp({ uploadDelay: 15 });
+    const result = await uploadStaticSite(sftp, root, '/var/www/example');
+    assert.equal(result.files, 20);
+    assert.ok(sftp.maxActiveUploads > 1);
+    assert.ok(sftp.maxActiveUploads <= 8);
+    assert.equal([...sftp.items.keys()].filter(path => path.startsWith('/var/www/example/file-')).length, 20);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
