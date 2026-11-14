@@ -69,7 +69,35 @@ export async function loadVpsDeploymentConfig(root = process.cwd()) {
   if (site.deploy && Object.keys(site.deploy).some(key => key !== 'vps')) {
     throw new Error('config.yml deploy only supports deploy.vps');
   }
-  return validateVpsSettings(site.deploy?.vps);
+  const input = site.deploy?.vps;
+  if (input && typeof input === 'object' && !Array.isArray(input) && Object.hasOwn(input, 'targets')) {
+    if (Object.keys(input).some(key => key !== 'targets')) {
+      throw new Error('When deploy.vps.targets is used, put connection settings on each target');
+    }
+    if (!Array.isArray(input.targets) || input.targets.length === 0) {
+      throw new Error('deploy.vps.targets must be a non-empty list');
+    }
+    const names = new Set();
+    const destinations = new Set();
+    const targets = input.targets.map((target, index) => {
+      if (!target || typeof target !== 'object' || Array.isArray(target)) {
+        throw new Error('deploy.vps.targets[' + index + '] must be an object');
+      }
+      const name = nonempty(target.name, 'targets[' + index + '].name');
+      if (!/^[A-Za-z0-9_-]+$/.test(name) || names.has(name)) {
+        throw new Error('deploy.vps target names must be unique and use letters, numbers, _ or -');
+      }
+      names.add(name);
+      const { name: _name, ...connection } = target;
+      const settings = validateVpsSettings(connection);
+      const destination = settings.host + ':' + settings.remotePath;
+      if (destinations.has(destination)) throw new Error('deploy.vps targets must have unique host and remotePath pairs');
+      destinations.add(destination);
+      return { name, ...settings };
+    });
+    return { targets };
+  }
+  return validateVpsSettings(input);
 }
 
 async function credentials(settings, root) {

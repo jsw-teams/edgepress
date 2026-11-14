@@ -356,7 +356,18 @@ async function deployConfiguredVps(args) {
   if (args.length && !dryRun) throw new Error('Usage: edgepress d [--dry-run] (or edgepress deploy vps [--dry-run])');
   const settings = await loadVpsDeploymentConfig();
   const built = await buildSite();
-  await deployVps(built.output, settings, { dryRun });
+  const targets = settings.targets || [{ name: settings.host, ...settings }];
+  const failures = [];
+  for (const target of targets) {
+    const { name, ...connection } = target;
+    try {
+      console.log('VPS target ' + name + (dryRun ? ' (dry run)' : ''));
+      await deployVps(built.output, connection, { dryRun });
+    } catch (error) {
+      failures.push(new Error(name + ': ' + (error?.message || String(error)), { cause: error }));
+    }
+  }
+  if (failures.length) throw new AggregateError(failures, failures.length + ' VPS deployment target(s) failed');
 }
 
 const [command, ...args] = process.argv.slice(2);
@@ -368,7 +379,7 @@ try {
     console.log('Generate: edgepress generate (edgepress g)');
     console.log('Preview and edit Pages: edgepress server (edgepress s)');
     console.log('Additional tools: init, new, check, doctor, iterate, theme, security, deploy, clean');
-    console.log('VPS via SSH: edgepress d [--dry-run] (or edgepress deploy vps)');
+    console.log('VPS via SSH: edgepress d [--dry-run] deploys each target in config.yml (or edgepress deploy vps)');
     console.log('Create a Page: edgepress new pages "Page title" [--lang en] [--slug page-slug]');
   }
   else if (command === 'build' || command === 'generate' || command === 'g') await buildSite();

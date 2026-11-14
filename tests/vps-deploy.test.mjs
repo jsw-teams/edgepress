@@ -5,7 +5,7 @@ import { mkdtemp, mkdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { Writable } from 'node:stream';
 import { join, posix } from 'node:path';
-import { createHostKeyVerifier, inventorySite, uploadStaticSite, validateVpsSettings } from '../src/vps-deploy.js';
+import { createHostKeyVerifier, inventorySite, loadVpsDeploymentConfig, uploadStaticSite, validateVpsSettings } from '../src/vps-deploy.js';
 
 const fingerprint = 'SHA256:' + 'A'.repeat(43);
 const example = { host: '203.0.113.42', username: 'deploy', remotePath: '/var/www/example', passwordEnv: 'DEPLOY_PASSWORD', hostKeySha256: fingerprint };
@@ -29,6 +29,47 @@ test('VPS configuration rejects unsafe targets, missing credentials and invalid 
   assert.throws(() => validateVpsSettings({ ...example, host: 'hostname;id' }), /host/);
   assert.throws(() => validateVpsSettings({ ...example, passwordEnv: 'INVALID-NAME' }), /passwordEnv/);
   assert.throws(() => validateVpsSettings({ ...example, other: 123 }), /Unsupported/);
+});
+
+test('VPS config loads named multi-node targets with unique destinations', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'edgepress-vps-targets-'));
+  try {
+    await writeFile(join(root, 'config.yml'), [
+      'deploy:',
+      '  vps:',
+      '    targets:',
+      '      - name: NYC',
+      '        host: 192.0.2.10',
+      '        username: root',
+      '        remotePath: /var/www/site',
+      '        passwordEnv: NYC_PASSWORD',
+      '      - name: LAX',
+      '        host: 192.0.2.11',
+      '        username: root',
+      '        remotePath: /var/www/site',
+      '        passwordEnv: LAX_PASSWORD',
+      ''
+    ].join('\n'));
+    const config = await loadVpsDeploymentConfig(root);
+    assert.deepEqual(config.targets.map(({ name, host }) => [name, host]), [['NYC', '192.0.2.10'], ['LAX', '192.0.2.11']]);
+    await writeFile(join(root, 'config.yml'), [
+      'deploy:',
+      '  vps:',
+      '    targets:',
+      '      - name: NYC',
+      '        host: 192.0.2.10',
+      '        username: root',
+      '        remotePath: /var/www/site',
+      '        passwordEnv: NYC_PASSWORD',
+      '      - name: NYC',
+      '        host: 192.0.2.11',
+      '        username: root',
+      '        remotePath: /var/www/site',
+      '        passwordEnv: LAX_PASSWORD',
+      ''
+    ].join('\n'));
+    await assert.rejects(loadVpsDeploymentConfig(root), /target names must be unique/);
+  } finally { await rm(root, { recursive: true, force: true }); }
 });
 
 test('optional host-key verification accepts only the pinned SSH key', () => {
