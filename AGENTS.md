@@ -77,7 +77,7 @@ EdgePress builds static websites from Markdown articles and JSON Pages. Follow t
 
 ## Commands
 
-- `npm ci`: install locked dependencies.
+- `npm install`: resolve compatible dependencies; this repository does not retain a package-lock.json.
 - `npm link`: expose the CLI when developing from this source checkout.
 - `edgepress generate` (`edgepress g`): generate the website in `dist/`; `build` remains a compatibility alias.
 - `edgepress server` (`edgepress s`): build, preview static assets with Wrangler locally, open the local Pages editor from the preview, and watch sources. Never run browser audits, screenshots or PDF generation automatically during preview; reserve them for explicit `edgepress check`.
