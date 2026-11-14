@@ -65,7 +65,8 @@
     "deploy:netlify": "node src/cli.js deploy netlify",
     "fonts:sync": "node tools/assets/sync-fonts.mjs",
     "audit": "node tools/maintenance/audit-dependencies.mjs low",
-    "deploy:local": "node src/cli.js server"
+    "deploy:local": "node src/cli.js server",
+    "deploy:vps": "node src/cli.js d"
   },
   "dependencies": {
     "@jsw-teams/document-viewer": "git+https://github.com/jsw-teams/document-viewer.git#semver:^2026.10.2",
@@ -76,7 +77,8 @@
     "marked": "^18.1.3",
     "postcss": "^8.5.32",
     "sanitize-html": "^2.18.1",
-    "yaml": "^2.9.1"
+    "yaml": "^2.9.1",
+    "ssh2": "^1.17.0"
   },
   "overrides": {
     "@file-viewer/doc": {

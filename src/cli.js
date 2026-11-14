@@ -15,6 +15,7 @@ import { checkCompatibility, writeIterationPlan } from './maintenance.js';
 import { loadLanguagePacks, translate } from './i18n.js';
 import { postTemplate } from './post-template.js';
 import {deploySite} from './deploy.js';
+import { deployVps, loadVpsDeploymentConfig } from './vps-deploy.js';
 import {formatPages} from '../tools/assets/format-pages.mjs';
 
 const siteGitignore = ['node_modules/', 'dist/', '.edgepress/', '.wrangler/', '.dev.vars', '.vercel/', '.netlify/', '.edgeone/', '.esa/', '.env', '.env.*', '!.env.example', '*.tgz', ''].join('\n');
@@ -37,6 +38,7 @@ const siteReadme = [
   'Push this source repository to GitHub, then connect the repository to Cloudflare Workers Builds. The `build` and `deploy` scripts in `package.json` generate and deploy the static files. Set a unique Worker name in `wrangler.jsonc` first.',
   '',
   'Authenticate with the chosen platform, then run `edgepress deploy cloudflare`, `edgepress deploy vercel`, `edgepress deploy edgeone -n my-site`, `edgepress deploy netlify`, or `edgepress deploy esa --name my-site`.',
+  'For an SSH/SFTP VPS, configure deploy.vps in config.yml and run `edgepress d` (or `npm run deploy:vps`). Password or private-key authentication and an SSH host fingerprint are supported.',
   '',
   '## Use another static web server',
   '',
@@ -91,6 +93,7 @@ async function initializeProject() {
       'deploy:vercel': 'edgepress deploy vercel',
       'deploy:edgeone': 'edgepress deploy edgeone',
       'deploy:esa': 'edgepress deploy esa',
+      'deploy:vps': 'edgepress d',
       'deploy:local': 'edgepress server'
     },
     overrides: {
@@ -348,6 +351,14 @@ function showStatus(title, report) {
   for (const issue of report.issues) console.log('- ' + issue.severity + ': ' + issue.message);
 }
 
+async function deployConfiguredVps(args) {
+  const dryRun = args.length === 1 && args[0] === '--dry-run';
+  if (args.length && !dryRun) throw new Error('Usage: edgepress d [--dry-run] (or edgepress deploy vps [--dry-run])');
+  const settings = await loadVpsDeploymentConfig();
+  const built = await buildSite();
+  await deployVps(built.output, settings, { dryRun });
+}
+
 const [command, ...args] = process.argv.slice(2);
 try {
   const config = command === 'new' || command === 'clean' || command === 'check' || command === 'doctor' || command === 'iterate'
@@ -357,6 +368,7 @@ try {
     console.log('Generate: edgepress generate (edgepress g)');
     console.log('Preview and edit Pages: edgepress server (edgepress s)');
     console.log('Additional tools: init, new, check, doctor, iterate, theme, security, deploy, clean');
+    console.log('VPS via SSH: edgepress d [--dry-run] (or edgepress deploy vps)');
     console.log('Create a Page: edgepress new pages "Page title" [--lang en] [--slug page-slug]');
   }
   else if (command === 'build' || command === 'generate' || command === 'g') await buildSite();
@@ -365,10 +377,14 @@ try {
     const options = command === 'editor' && /^\d+$/.test(args[0] || '') ? ['--port', ...args] : args;
     await (await import('./preview.js')).startPreview(options);
   }
+  else if (command === 'd') await deployConfiguredVps(args);
   else if (command === 'deploy') {
     const platform = args[0] && !args[0].startsWith('-') ? args.shift() : 'cloudflare';
-    const built = process.env.WORKERS_CI === '1' ? {output:(await loadConfig()).resolvedPaths.output} : await buildSite();
-    await deploySite(platform, built.output, args);
+    if (platform === 'vps') await deployConfiguredVps(args);
+    else {
+      const built = process.env.WORKERS_CI === '1' ? {output:(await loadConfig()).resolvedPaths.output} : await buildSite();
+      await deploySite(platform, built.output, args);
+    }
   }
   else if (command === 'theme') await manageTheme(args, await loadConfig());
   else if (command === 'security') await runSecurityAudit();
@@ -394,7 +410,7 @@ try {
     const compatibilityReport = await checkCompatibility(config);
     const plan = await writeIterationPlan(config, pageReport, compatibilityReport);
     await showReport('Safe iteration plan', plan, resolve(config.resolvedPaths.cache, 'reports/iteration-plan.md'));
-  } else throw new Error('Generate: edgepress generate|g. Preview and edit: edgepress server|s. Tools: init, deploy, new, clean, check, doctor, iterate, theme list|create|install|use, security');
+  } else throw new Error('Generate: edgepress generate|g. Preview and edit: edgepress server|s. Tools: init, deploy, d, new, clean, check, doctor, iterate, theme list|create|install|use, security');
 } catch (error) {
   console.error(error?.stack || error);
   process.exitCode = 1;

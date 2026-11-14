@@ -85,6 +85,7 @@ EdgePress builds static websites from Markdown articles and JSON Pages. Follow t
 - Audits use one software-rendered browser with at most two isolated page workers; preserve every existing device/color profile and evidence capture. Cache only fingerprinted resources and release unused workers before PDF printing. Never start multiple full browser instances for parallel checks.
 - Verify default optional-service choices against fresh-browser DOM state and the configured service count, never an exact source-code string in minified JavaScript. Checked or missing controls must fail; an unavailable browser leaves the behavioral check incomplete with a warning.
 - `edgepress doctor`: run Worker compatibility checks.
+- `edgepress d`: build and publish static dist/ over pinned-host-key SSH/SFTP to deploy.vps in config.yml. Never commit real VPS credentials or execute a real deployment as a regression test; --dry-run stays local.
 
 Read the guides in `content/pages/` before extending themes, page blocks, or plugins.
 

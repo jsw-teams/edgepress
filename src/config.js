@@ -97,7 +97,7 @@ const integrationProviders = {
   'hcaptcha': { credential: 'siteKey', pattern: /^[A-Za-z0-9_-]{20,256}$/ }
 };
 
-async function readSiteYaml(root) {
+export async function readSiteYaml(root) {
   const file = resolve(root, 'config.yml');
   const realRoot = await realpath(root);
   let realFile;
@@ -110,7 +110,7 @@ async function readSiteYaml(root) {
   try { parsed = parseYaml(source.toString('utf8'), { uniqueKeys: true, maxAliasCount: 20 }) ?? {}; }
   catch (error) { throw new Error('Invalid YAML in config.yml: ' + error.message, { cause: error }); }
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('config.yml must contain an object');
-  for (const key of Object.keys(parsed)) if (!['theme', 'site', 'privacy', 'plugins'].includes(key)) throw new Error('Unsupported config.yml section: ' + key);
+  for (const key of Object.keys(parsed)) if (!['theme', 'site', 'privacy', 'plugins', 'deploy'].includes(key)) throw new Error('Unsupported config.yml section: ' + key);
   if (parsed.theme !== undefined && (typeof parsed.theme !== 'string' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(parsed.theme))) {
     throw new Error('config.yml theme must be a lowercase theme name such as lumen');
   }

@@ -53,7 +53,7 @@ The commands below install the published npm release and initialize a new projec
     npm install
     npx edgepress s
 
-Use Node.js 22.12 or newer. Set the real site URL and operator contact in config.yml before publishing. Deploy with `npm run deploy:cloudflare`, `npm run deploy:vercel`, `npm run deploy:netlify`, `npm run deploy:esa` or `npm run deploy:edgeone`. `npm run deploy:local` starts the loopback preview without uploading a site. When developing EdgePress itself, use `npm install`, then `npm link` to expose the local CLI.
+Use Node.js 22.12 or newer. Set the real site URL and operator contact in config.yml before publishing. Deploy with `npm run deploy:cloudflare`, `npm run deploy:vercel`, `npm run deploy:netlify`, `npm run deploy:esa` or `npm run deploy:edgeone`; for an SSH VPS, configure deploy.vps then run `npm run deploy:vps`. `npm run deploy:local` starts the loopback preview without uploading a site. When developing EdgePress itself, use `npm install`, then `npm link` to expose the local CLI.
 
 Run `edgepress init` in a new project directory to scaffold a site pinned to the installed EdgePress release. The initializer keeps the existing package name and adds the site's CLI scripts.
 
@@ -202,7 +202,8 @@ Everyday use needs two commands: `edgepress generate` (`edgepress g`) generates 
 - edgepress theme list and edgepress theme use <name>: inspect or select an installed theme.
 - edgepress theme install <npm-package>[@version]: install a theme package from npm without running its install scripts.
 - edgepress theme create <name>: make an empty, accessible HTML theme skeleton with editable partials and a blank stylesheet.
-- edgepress deploy [cloudflare|vercel|edgeone|esa]: build and deploy static output using the chosen platform CLI.
+- edgepress deploy [cloudflare|vercel|netlify|edgeone|esa]: build and deploy static output using the chosen platform CLI.
+- edgepress d (or edgepress deploy vps): build and deploy dist/ to the configured VPS using SSH/SFTP; --dry-run builds and validates locally without connecting.
 - Connect a GitHub repository to Cloudflare Workers Builds to deploy on pushes to main. Set root directory `/`, build command `npm run build`, deploy command `npx wrangler deploy`, and leave build variables empty. See the [Cloudflare build troubleshooting guide](content/pages/quick-start/) if initialization stalls before commands run.
 - edgepress clean: remove generated site and report files.
 - edgepress iterate: create a report-only maintenance plan.
@@ -277,6 +278,34 @@ Set `pinned: true` in the selected article translations to place them first in `
 
 Multiple post lists on the same page share a displayed-article set: an article already shown in a pinned list is omitted from the following recent list, which fills its remaining slots with other articles. Each new page starts a fresh set.
 
+
+## VPS deployment over SSH
+
+EdgePress can upload its generated static site to your own VPS using the short command `edgepress d`. Configure the deployment destination in the site's root `config.yml` (the output directory itself remains configured by `paths.output` in `edgepress.config.mjs`):
+
+```yaml
+deploy:
+  vps:
+    host: 203.0.113.10
+    port: 22
+    username: deploy
+    remotePath: /var/www/example.org
+    hostKeySha256: SHA256:REPLACE_WITH_VERIFIED_SERVER_FINGERPRINT
+    privateKey: ~/.ssh/id_ed25519
+```
+
+Use **exactly one** of `privateKey`, `passwordEnv`, or `password` for authentication. For password login, replace `privateKey` with `passwordEnv: EDGEPRESS_VPS_PASSWORD` and set that environment variable locally. A literal `password` is also accepted, but it must not be committed to a repository. Encrypted private keys accept `passphraseEnv` (or `passphrase`). The key path may be absolute, home-relative (`~/`) or relative to the project. All secrets remain on the CLI side and are never published in `dist/`.
+
+Verify the VPS SSH host-key fingerprint with your hosting provider or another trusted channel, then set `hostKeySha256` to the matching `SHA256:` fingerprint. SSH/SFTP connection is refused if the fingerprint does not match; never copy an unverified fingerprint solely from a network connection.
+
+```bash
+edgepress d --dry-run     # build and check local files without network access
+edgepress d               # build and publish to the VPS
+# equivalent: npm run deploy:vps
+# equivalent: edgepress deploy vps
+```
+
+Deployment requires the configured SSH user to have SFTP permission and write access to the **parent** of `remotePath`. EdgePress uploads the contents of `dist/` to a unique sibling staging directory, replaces the destination after upload succeeds, and attempts to restore the previous directory if the final swap fails. On success it removes the old directory, including obsolete static files. A failed cleanup leaves a named backup directory for manual inspection. The remote destination must be an absolute path other than `/`; remote shell commands and a server-side Node.js installation are not required. Configure your web server (such as Nginx or OpenResty) to serve `remotePath` as its static document root.
 
 ## Static platform deployment
 
