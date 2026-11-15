@@ -190,18 +190,35 @@ function isDirectory(attributes) {
 async function removeRemoteTree(sftp, path) {
   const attributes = await remoteStat(sftp, path);
   if (!attributes) return;
-  if (isDirectory(attributes)) {
-    const entries = await sftpCall(sftp, 'readdir', path);
+  if (!isDirectory(attributes)) return sftpCall(sftp, 'unlink', path);
+  const files = [];
+  const directories = [path];
+  async function collect(directory) {
+    const entries = await sftpCall(sftp, 'readdir', directory);
+    const childDirectories = [];
     for (const entry of entries) {
       if (entry.filename === '.' || entry.filename === '..') continue;
       if (!entry.filename || entry.filename.includes('/') || entry.filename.includes('\\')) {
-        throw new Error('Invalid SFTP directory entry in ' + path);
+        throw new Error('Invalid SFTP directory entry in ' + directory);
       }
-      await removeRemoteTree(sftp, posix.join(path, entry.filename));
+      const child = posix.join(directory, entry.filename);
+      const childAttributes = entry.attrs ?? await remoteStat(sftp, child);
+      if (!childAttributes) continue;
+      if (isDirectory(childAttributes)) {
+        directories.push(child);
+        childDirectories.push(child);
+      } else {
+        files.push(child);
+      }
     }
-    await sftpCall(sftp, 'rmdir', path);
-  } else {
-    await sftpCall(sftp, 'unlink', path);
+    await mapConcurrent(childDirectories, UPLOAD_CONCURRENCY, collect);
+  }
+  await collect(path);
+  await mapConcurrent(files, 32, file => sftpCall(sftp, 'unlink', file));
+  const depths = [...new Set(directories.map(directory => directory.split('/').length))].sort((a, b) => b - a);
+  for (const depth of depths) {
+    await mapConcurrent(directories.filter(directory => directory.split('/').length === depth), UPLOAD_CONCURRENCY,
+      directory => sftpCall(sftp, 'rmdir', directory));
   }
 }
 

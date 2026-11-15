@@ -120,7 +120,7 @@ function fakeSftp({ failPublish = false, corruptUpload = false, uploadDelay = 0 
     },
     readdir(path, cb) {
       const names = [...items.keys()].filter(p => p !== path && posix.dirname(p) === path)
-        .map(p => ({ filename: posix.basename(p) }));
+        .map(p => ({ filename: posix.basename(p), attrs: { isDirectory: () => items.get(p) === 'dir', isSymbolicLink: () => false } }));
       callback(cb, null, names);
     },
     mkdir(path, cb) { actions.push(['mkdir', path]); items.set(path, 'dir'); callback(cb, null); },
