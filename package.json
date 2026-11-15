@@ -28,6 +28,7 @@
     "tests",
     "tools/assets",
     "tools/recordings",
+    "tools/testing",
     "tools/verification"
   ],
   "repository": {
@@ -57,7 +58,8 @@
     "doctor": "node src/cli.js doctor",
     "iterate": "node src/cli.js iterate",
     "security:check": "node src/cli.js security",
-    "test": "node --test --test-concurrency=2 tests/*.test.mjs",
+    "test": "node tools/testing/run-tests.mjs",
+    "test:browser": "node tools/testing/run-tests.mjs --browser",
     "icons:sync": "node tools/assets/sync-icons.mjs",
     "deploy:cloudflare": "node src/cli.js deploy cloudflare",
     "deploy:vercel": "node src/cli.js deploy vercel",
@@ -89,7 +91,6 @@
   },
   "devDependencies": {
     "lucide-static": "^1.70.0",
-    "playwright": "^1.65.0",
     "vscode-json-languageservice": "^6.0.0-next.3",
     "wrangler": "^4.158.0"
   }

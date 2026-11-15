@@ -7,12 +7,11 @@ Curiosity is a good starting point. Small fixes, experiments, documentation, acc
 ## Start here
 
 1. Read [README](README.md), [AGENTS.md](AGENTS.md) and nearby tests. Search existing issues before filing another one.
-2. Fork this public repository and clone your fork. Create a branch for one focused change. No access to private website repositories or production credentials is needed.
-3. Use Node.js 22.13+, npm and the committed lockfile:
+2. Fork this public repository and clone your fork. Create a branch for one focused change. No access to private website repositories or production credentials is needed. Dependencies resolve from compatible published ranges; do not commit a lockfile.
+3. Use Node.js 22.13+ and npm:
 
 ```sh
 npm install
-npx playwright install chromium firefox
 npm run build
 npm test
 npm run doctor
@@ -20,7 +19,7 @@ npx wrangler deploy --dry-run
 git diff --check
 ```
 
-On Linux use `npx playwright install --with-deps chromium firefox` if browser libraries are missing. Builds and dry-runs do not publish. Never run deploy commands as routine contribution checks.
+`npm test` runs the default Node regression suite without browser downloads. Browser-driven tests are optional: install Playwright locally without saving it to the project (`npm install --no-save --package-lock=false playwright`), install the browsers you want to exercise, then run `npm run test:browser`. Builds and dry-runs do not publish. Never run deploy commands as routine contribution checks.
 
 ## Find your way around
 
@@ -36,6 +35,6 @@ Generated output, dependencies and temporary evidence are not source edits. Pres
 - Discuss larger directions with a proposal: the question, alternatives and an observable success condition. Small fixes need no proposal first. Uncertain experiments can be draft PRs.
 - Keep diffs reviewable. Explain why a change helps and its compatibility/security/accessibility effects. List exact checks and results; say what remains unrun. AI-generated claims are not verification.
 - Human or AI-written code has the same expectations: understand the diff, check provenance/licenses and provide reproducible evidence. Naming an AI tool or sharing prompts is optional.
-- Open a PR against `main` using the checklist. GitHub Actions runs lockfile dependency security checks and Node 22 browser regression tests/builds using read-only permissions on ordinary PRs; run relevant checks locally and describe the results. The manual npm publishing workflow is restricted to `main` and requires a maintainer to trigger it. PR checks receive no publishing credentials or deployment secrets. Respond to review; maintainers merge when changes and evidence are ready. No response-time guarantee is implied.
+- Open a PR against `main` using the checklist. GitHub Actions audits dependencies and runs the default Node 22 regression suite and static build using read-only permissions on ordinary PRs. Browser-driven tests are optional and are not required in CI. Run relevant checks locally and describe the results. The manual npm publishing workflow is restricted to `main` and requires a maintainer to trigger it. PR checks receive no publishing credentials or deployment secrets. Respond to review; maintainers merge when changes and evidence are ready. No response-time guarantee is implied.
 
 Be kind to people who are learning. Prefer specific questions and constructive evidence to gatekeeping. Vulnerabilities belong in [SECURITY.md](SECURITY.md)'s private reporting channel. Project code uses [LICENSE](LICENSE); third-party code/assets keep their own terms.

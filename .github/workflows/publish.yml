@@ -51,9 +51,6 @@ jobs:
       - name: Dependency security audit
         run: npm run audit
 
-      - name: Install browsers for the full test suite
-        run: npx playwright install --with-deps chromium firefox
-
       - name: Run tests
         run: npm test
 

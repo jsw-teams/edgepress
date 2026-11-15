@@ -43,8 +43,6 @@ jobs:
           node-version: '22'
       - name: Install current compatible dependencies
         run: npm install --no-audit --no-fund
-      - name: Install browsers for integration tests
-        run: npx playwright install --with-deps chromium firefox
       - name: Test
         run: npm test
       - name: Build

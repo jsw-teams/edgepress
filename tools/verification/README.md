@@ -1,6 +1,6 @@
 # Theme verification
 
-Run these optional development tools from a built EdgePress site's root. They use isolated Playwright Chromium with extensions disabled and local static fixtures. Install Playwright in the site's development dependencies and run `npx playwright install chromium` first. No live service accounts or deployments are verified.
+Run these optional development tools from a built EdgePress site's root. They use isolated Playwright Chromium with extensions disabled and local static fixtures. Playwright is not an EdgePress dependency; install it locally without saving it to the site's package manifest (`npm install --no-save --package-lock=false playwright`), then run `npx playwright install chromium` if you want to use these tools. No live service accounts or deployments are verified.
 
 For a theme that declares `dataSaver` in `theme.json`, create `tests/data-saver-site.test.mjs`:
 
