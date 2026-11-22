@@ -91,6 +91,6 @@
     "lucide-static": "^1.73.0",
     "playwright": "^1.65.1",
     "vscode-json-languageservice": "^6.0.0-next.3",
-    "wrangler": "^4.162.0"
+    "wrangler": "^4.165.0"
   }
 }
