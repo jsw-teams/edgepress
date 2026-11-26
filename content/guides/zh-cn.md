@@ -1,39 +1,45 @@
-# 写文建站
+# 写文建站（EdgePress）中文说明
 
-写文建站把 Markdown 文章和 JSON 页面布局构建为静态网站。英文界面使用官方名称 EdgePress。首页、文章、搜索、多语言切换和本地 JavaScript 交互都随静态产物发布。
+EdgePress 把 Markdown 文章和 JSON 页面生成静态网站，英文界面使用 EdgePress，中文界面使用“写文建站”。首页、文章页、目录、本地搜索和多语言路由都打包在静态产物里，不需要数据库。
 
 ![网站界面实拍](../assets/images/previews/edgepress-zh.webp)
 
-构建器自动识别并展示文章最近一次内容调整，无需手写修正说明。界面按“修改前／修改后”“新增／移除”展示具体文字及实际图片，支持 Markdown 排版，窄屏自动纵向排列，颜色跟随主题。封面替换、正文换图及同一路径图片内容被更新均计入变动；改动涉及的本地图片从 Git 恢复成哈希快照，旧文件移除后仍可比较。仅生成最近一次变动需要的图片，按内容去重，缓存一年。设置 `showChanges: false` 可关闭单篇文章的面板。
+## 零依赖与加载优化
+
+- **零运行时依赖**：构建器直接运行在 Node.js 22.12+，自带 YAML、Markdown、HTML 清理、CSS/JS 压缩、图片尺寸检测、版本对比和本地预览服务器。云平台不用花时间装一堆第三方依赖包。
+- **按用字裁剪字体**：构建时扫描全站实际出现的字符，只保留用到的本地 Noto `.woff2` 字体子集，大幅减少部署体积和传输流量。
+- **按页面按需注入脚本**：代码复制、图片灯箱、语言切换等脚本只在页面确实用到时才引入。
+- **自动展示最近一次修改**：结合 Git 历史自动生成“修改前／修改后”对比卡片，并给变动的本地图片生成哈希快照。如果不想在某篇文章显示，在前置属性里加上 `showChanges: false`。
 
 ![文章变动卡片的真实组件预览](../assets/images/previews/edgepress-revisions-en.png)
 
-文章正文使用独立一行的 `!embed[ishare](https://ishare.js.gripe/s/0123456789abcdef0123456789abcdef)`；YouTube 示例为 `!embed[youtube](https://www.youtube.com/watch?v=jNQXAC9IVRw)`。Pages 的 text 区块也使用相同语法，普通文字继续转义，不需要在文章属性添加 embeds。服务在 config.yml 注册并逐项披露；构建器保留主题占位区，访客同意后才按可见区域加载。
-
-历史对比需要完整 Git 历史，GitHub Actions 使用 `fetch-depth: 0`。缺少历史时不编造变动；缺少图片历史文件时保留说明，不请求失效地址。不会为重建历史主动访问外部图片地址，也不会发布草稿的图片快照。
-
 ## 本地开始
 
-需要 Node.js 22.12 或更新版本。以下命令安装已发布的 npm 版本；最新 GitHub 改动可通过 README 的仓库模板部署，或克隆本仓库后在根目录运行 `npm install`、`npm run dev`。在新目录中安装 npm 版本：
+先确认本机安装了 Node.js 22.12 或更新版本：
 
 ```sh
+mkdir my-edgepress-site
+cd my-edgepress-site
 npm install edgepress
 npx edgepress init
-npm install
-npm run dev
+npx edgepress s
 ```
 
-运行 `npm run new -- post "我的第一篇文章"`，打开命令输出的文件，在第二个 `---` 后撰写 Markdown。文章放在 `content/posts/<文章目录>/`；页面放在 `content/pages/<页面目录>/`，内容全部写入前置数据的 `blocks`，正文留空。页面先声明栏数，再定义各栏元素。图片放在 `content/assets/`，例如 `content/assets/images/photo.webp` 对应公开地址 `/images/photo.webp`。
+日常写作只需要几条命令：
 
-发布前在 `config.yml` 填写真实站点 URL、名称、隐私责任人和联系方式；在 `edgepress.config.mjs` 选择主题、路由及语言包。不要编辑生成的 `dist/`。
+- `edgepress status`：查看当前站点、主题、语言和文章数量。
+- `edgepress new "我的第一篇文章"`：在 `content/posts/` 新建文章，打开输出路径并在第二个 `---` 后面写 Markdown。
+- `edgepress s`：启动内置本地预览，在 `http://127.0.0.1:8787/` 点击“编辑 Pages”即可拖拽调整页面布局。
+- `edgepress g`：生成静态文件到 `dist/`（不要手动修改 `dist/`）。
+- `edgepress theme list` / `edgepress theme use <主题名>`：查看或切换 `default`、`atelier`、`signal`、`folio` 四套主题。
 
-## 免费额度优先的部署选择
+图片放进 `content/assets/images/`，在文章里直接引用 `/images/photo.webp`。发布前记得在 `config.yml` 里填好你自己的网址、站点名称和隐私联系信息。
 
-完整数值与官方来源见 [平台比较](platforms.md)，核对日期为 2026-10-04。静态站优先选择 Cloudflare，其次腾讯 EdgeOne Pages；个人非商业网站可选 Vercel，之后是共享积分较少的 Netlify。阿里云 ESA Pages 的静态流量使用站点套餐额度，需先在控制台确认，不能用函数免费请求数代替流量额度。
+## 免费平台与 VPS 部署
 
-README 提供五个平台的部署按钮。Cloudflare、Vercel、Netlify 和 EdgeOne 打开仓库模板部署；ESA 按钮打开官方导入页，需要授权 GitHub 并选择仓库。按钮创建新项目，更新已有网站应使用其已连接的仓库。
+完整额度来源见 [平台比较](platforms.md)。静态网站优先选 Cloudflare Workers 或腾讯 EdgeOne Pages；个人非商业站点也可选 Vercel；Netlify 免费额度按积分扣费；阿里云 ESA Pages 需先在控制台核对静态流量套餐。
 
-| 平台 | 仓库内配置 | 部署命令 |
+| 平台 | 仓库配置文件 | 本地部署命令 |
 | --- | --- | --- |
 | Cloudflare | `wrangler.jsonc` | `npm run deploy:cloudflare` |
 | 腾讯 EdgeOne Pages | `edgeone.json` | `npm run deploy:edgeone -- -n my-site` |
@@ -41,22 +47,8 @@ README 提供五个平台的部署按钮。Cloudflare、Vercel、Netlify 和 Edg
 | Netlify | `netlify.toml` | `npm run deploy:netlify` |
 | 阿里云 ESA Pages | `esa.jsonc` | `npm run deploy:esa -- --name my-site` |
 
-构建命令统一为 `npm run build`，输出目录统一为 `dist`。平台账号与域名授权仍需由运营者完成。要部署自有 VPS，可在私有 `config.yml` 中配置 `deploy.vps`，直接填写 `password`，然后运行 `edgepress d`。`hostKeySha256` 为选填。详见仓库根目录的 [Agent VPS 部署指南](../../agent.md) 和 [部署页面](../pages/deployment/zh-cn.json)。GitHub Actions 只负责依赖审计与兼容性验证，不自动部署生产网站。
+统一使用 `npm run build` 构建，输出目录为 `dist/`。要部署到自己的 VPS，在私有 `config.yml` 中配置 `deploy.vps`（多节点用 `deploy.vpsTargets`），先跑 `edgepress d --dry-run` 检查文件，确认无误再跑 `edgepress d`（详见 [agent.md](../../agent.md)）。
 
-## 可选服务、隐私与缓存
+## 可选外部服务与隐私
 
-在 `config.yml` 的 `plugins.consent.services` 逐项注册服务，填写服务名、真实 HTTPS 地址、用途、数据类别、接收者、保留期限与隐私链接，覆盖全部启用语言。授权列表直接显示服务名，不使用预设分类或分类标签。访客同意后，服务仍按页面需要或访客操作调用；更换服务地址会使旧授权失效。
-
-评论使用独立的 [我提问](https://github.com/jsw-teams/iask/blob/main/docs/zh-CN.md)，网站只提供通用服务插槽。首页不放评论插槽；需要讨论的页面可增加 `type: service` 和 `integration: github-comments`。文章由构建器生成讨论上下文。服务端密钥只存放在独立服务平台。
-
-接口使用固定 URL 和 HTTP 请求头传递操作与上下文。CSS、JavaScript 及依赖使用内容哈希名称，缓存一年；HTML 和未版本化元数据保持可更新。ESA 需在控制台配置对应缓存规则。布局支持响应式、键盘操作、可见焦点、语义结构和多语言，新增内容仍需填写有意义的图片替代文本。
-
-## 看看生成的网站
-
-![创建海边的下午、编辑正文、运行 edgepress server，从首页点击进入文章](../assets/images/previews/edgepress-workflow-zh.41f1e0a685f47267.gif)
-
-示例展示由写文建站生成的实际页面。网站使用静态封面搭配按需加载 MP4，提供观看、暂停、定位和重播；GIF 用于项目文档，见[演示配置](product-demos.md)。
-
-## 项目演示与图标
-
-演示通过 `edgepress new post '海边的下午'` 新建文章，在代码编辑器修改后运行 `edgepress server`，从首页点击进入文章。录制工作台位于 `tools/recordings/demo-workbench.mjs`，临时录制内容放在忽略的 `tools/.recordings/`。网站演示由访客手动播放，支持拖动进度和键盘操作，保留暂停位置。导航与页面图标使用本地打包的 Lucide 1.52，并保留许可证。
+文章正文支持独立一行写 `!embed[youtube](https://www.youtube.com/watch?v=jNQXAC9IVRw)` 或 `!embed[ishare](...)`。在 `config.yml` 的 `plugins.consent.services` 登记对应服务后，页面会先显示占位提示，等访客点击同意后才加载第三方内容。评论系统可使用独立的 [iask（我提问）](https://github.com/jsw-teams/iask/blob/main/docs/zh-CN.md)，私钥只保留在独立后端里。

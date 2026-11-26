@@ -2,7 +2,7 @@ import {readdir, lstat, realpath, mkdir, open} from 'node:fs/promises';
 import {resolve, relative, sep, extname} from 'node:path';
 import {createHash} from 'node:crypto';
 import {constants} from 'node:fs';
-import {imageSize} from 'image-size';
+import {imageSize} from './lib/image-size.js';
 
 export const maxImageBytes = 10 * 1024 * 1024;
 const types = {jpg:'image/jpeg', jpeg:'image/jpeg', png:'image/png', webp:'image/webp', gif:'image/gif', avif:'image/avif'};

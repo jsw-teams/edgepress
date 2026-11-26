@@ -1,6 +1,6 @@
 {
   "name": "edgepress",
-  "installCommand": "npm ci",
+  "installCommand": "npm install --omit=dev --no-audit --no-fund",
   "buildCommand": "npm run build",
   "assets": {
     "directory": "./dist",

@@ -1,14 +1,21 @@
 {
   "name": "edgepress",
   "license": "MIT",
-  "version": "2026.10.16",
-  "description": "Static websites from Markdown and editable pages, with themes, consent-controlled embeds and readable article updates.",
+  "version": "2026.11.1",
+  "description": "Zero-dependency static website builder for Markdown articles, editable JSON pages, themes, and consent-controlled embeds.",
   "type": "module",
   "bin": {
     "edgepress": "src/cli.js"
   },
   "files": [
-    "content",
+    "content/pages",
+    "content/assets/edgepress/icons",
+    "content/assets/edgepress/brand/avatar.png",
+    "content/assets/edgepress/brand/home-hero-768.webp",
+    "content/assets/edgepress/brand/home-hero.webp",
+    "content/assets/edgepress/brand/home-hero.png",
+    "content/assets/edgepress/brand/og-image.png",
+    "content/assets/edgepress/favicon",
     "languages",
     "plugins",
     "src",
@@ -25,9 +32,7 @@
     "edgeone.json",
     "esa.jsonc",
     "netlify.toml",
-    "tests",
-    "tools/assets",
-    "tools/recordings",
+    "tools/assets/format-pages.mjs",
     "tools/verification"
   ],
   "repository": {
@@ -37,6 +42,7 @@
   "homepage": "https://github.com/jsw-teams/edgepress#readme",
   "keywords": [
     "static-site-generator",
+    "zero-dependency",
     "cloudflare-workers",
     "markdown",
     "website-builder",
@@ -51,6 +57,7 @@
     "generate": "node src/cli.js generate",
     "dev": "node src/cli.js server",
     "preview": "node src/cli.js server",
+    "status": "node src/cli.js status",
     "deploy": "node src/cli.js deploy",
     "clean": "node src/cli.js clean",
     "check": "node src/cli.js check",
@@ -69,28 +76,7 @@
     "deploy:local": "node src/cli.js server",
     "deploy:vps": "node src/cli.js d"
   },
-  "dependencies": {
-    "@jsw-teams/document-viewer": "git+https://github.com/jsw-teams/document-viewer.git#semver:^2026.10.2",
-    "@jsw-teams/media-viewer": "git+https://github.com/jsw-teams/media-viewer.git#semver:^2026.10.2",
-    "esbuild": "^0.28.2",
-    "htmlparser2": "^12.0.0",
-    "image-size": "^2.1.0",
-    "marked": "^18.2.0",
-    "postcss": "^8.5.33",
-    "sanitize-html": "^2.18.2",
-    "yaml": "^2.9.1",
-    "ssh2": "^1.17.0"
-  },
-  "overrides": {
-    "@file-viewer/doc": {
-      "dompurify": "^3.4.17"
-    },
-    "undici": "^7.30.1"
-  },
-  "devDependencies": {
-    "lucide-static": "^1.73.0",
-    "playwright": "^1.65.1",
-    "vscode-json-languageservice": "^6.0.0-next.3",
-    "wrangler": "^4.162.0"
-  }
+  "dependencies": {},
+  "optionalDependencies": {},
+  "devDependencies": {}
 }

@@ -15,6 +15,5 @@ jobs:
       directory: .
       audit-level: low
       verify: |
-        npx playwright install --with-deps chromium firefox
         npm test
         npm run build

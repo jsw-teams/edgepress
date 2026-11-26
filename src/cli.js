@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import {reportDirectory} from './report-path.js';
-import {publicationTimestamp} from './publication-time.js';
+import { reportDirectory } from './report-path.js';
+import { publicationTimestamp } from './publication-time.js';
 import { access, cp, lstat, mkdir, mkdtemp, open, readFile, readdir, realpath, rm, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -8,43 +8,58 @@ import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { acquireBuildLock, buildSite } from './build.js';
 import { loadConfig } from './config.js';
-import { slugify } from './content.js';
+import { readDocuments, slugify } from './content.js';
 import { createPage } from './page-scaffold.js';
 import { checkPages } from './page-check.js';
 import { checkCompatibility, writeIterationPlan } from './maintenance.js';
 import { loadLanguagePacks, translate } from './i18n.js';
 import { postTemplate } from './post-template.js';
-import {deploySite} from './deploy.js';
+import { deploySite } from './deploy.js';
 import { deployVps, loadVpsDeploymentConfig } from './vps-deploy.js';
-import {formatPages} from '../tools/assets/format-pages.mjs';
+import { formatPages } from '../tools/assets/format-pages.mjs';
 
 const siteGitignore = ['node_modules/', 'dist/', '.edgepress/', '.wrangler/', '.dev.vars', '.vercel/', '.netlify/', '.edgeone/', '.esa/', '.env', '.env.*', '!.env.example', '*.tgz', ''].join('\n');
 const siteReadme = [
   '# My EdgePress site',
   '',
-  'Static site source built with EdgePress. Use Node.js 22.12 or newer.',
+  'Static site source built with EdgePress (zero runtime dependencies, Node.js 22.12+).',
   '',
-  '## Start locally',
+  '## Quick start',
   '',
   '    npm install',
   '    npx edgepress s',
   '',
-  'Create an article with `npm run new -- post "My first article"`. Open the printed file path and write Markdown below the second `---` line. The command fills the title, date, and language. Run `edgepress s` to preview and edit Pages, and `edgepress generate` (or `edgepress g`) before publishing.',
+  'Create an article with `npx edgepress new "My first article"`. Open the printed file and write Markdown below the second `---` line.',
+  'Run `npx edgepress s` to preview your site and edit Pages at `http://127.0.0.1:8787/__edgepress/`.',
+  'Run `npx edgepress g` to build static files into `dist/`.',
   '',
-  'Run `edgepress s`, open http://127.0.0.1:8787/ and choose Edit Pages to create and edit Pages visually in the same local preview. Or run `npx edgepress new pages "About us" --lang en` to create a JSON Page from the CLI. All Page blocks use shared framework templates; articles remain Markdown.',
+  '## Deploy',
   '',
-  '## Deploy a static website',
-  '',
-  'Push this source repository to GitHub, then connect the repository to Cloudflare Workers Builds. The `build` and `deploy` scripts in `package.json` generate and deploy the static files. Set a unique Worker name in `wrangler.jsonc` first.',
-  '',
-  'Authenticate with the chosen platform, then run `edgepress deploy cloudflare`, `edgepress deploy vercel`, `edgepress deploy edgeone -n my-site`, `edgepress deploy netlify`, or `edgepress deploy esa --name my-site`.',
-  'For an SSH/SFTP VPS, set host, username, remotePath and password (or a private key) in private config.yml under deploy.vps. Run `edgepress d` (or `npm run deploy:vps`). hostKeySha256 is optional.',
-  '',
-  '## Use another static web server',
-  '',
-  'Run `edgepress generate` and upload the contents of `dist/` to the server document root. OpenResty and Nginx can serve the generated directories as static files. Optional backends live in separate projects and are registered under plugins.consent.services in config.yml.',
+  'Push this repository to GitHub and connect it to Cloudflare, Vercel, Netlify, EdgeOne Pages, or ESA Pages.',
+  'Use `npm run build` as the build command and `dist` as the output directory.',
+  'For an SSH/SFTP VPS, configure `deploy.vps` in your private `config.yml` and run `npx edgepress d`.',
   ''
 ].join('\n');
+
+function printHelp() {
+  console.log([
+    'EdgePress — zero-dependency static site builder',
+    '',
+    'Everyday commands:',
+    '  edgepress s [--port 8787]           Preview locally and open the Pages editor',
+    '  edgepress g                         Build static files into dist/',
+    '  edgepress new "Title"               Create a new Markdown post',
+    '  edgepress new page "Title" [opts]   Create a new JSON page (--lang, --slug)',
+    '  edgepress d [--dry-run] [--target]  Build and deploy to configured VPS targets',
+    '',
+    'Site management:',
+    '  edgepress init                      Create a new EdgePress site in this folder',
+    '  edgepress status                    Show active theme, locales, and content counts',
+    '  edgepress theme list|use|create|install',
+    '  edgepress deploy [cloudflare|vercel|netlify|edgeone|esa|vps]',
+    '  edgepress check | doctor | clean | iterate | security'
+  ].join('\n'));
+}
 
 async function initializeProject() {
   const packageRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -72,6 +87,15 @@ async function initializeProject() {
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
   }
+  const overrides = {
+    ...(packageData.overrides || {}),
+    ...(existingManifest.overrides || {})
+  };
+  const dependencies = {
+    ...(existingManifest.dependencies || {}),
+    edgepress: packageData.version,
+    ...(existingManifest.dependencies?.wrangler ? { wrangler: existingManifest.dependencies.wrangler } : packageData.devDependencies?.wrangler ? { wrangler: packageData.devDependencies.wrangler } : {})
+  };
   const projectManifest = {
     ...existingManifest,
     name: existingManifest.name || 'my-edgepress-site',
@@ -85,6 +109,7 @@ async function initializeProject() {
       build: 'edgepress build',
       dev: 'edgepress server',
       preview: 'edgepress server',
+      status: 'edgepress status',
       check: 'edgepress check',
       doctor: 'edgepress doctor',
       deploy: 'edgepress deploy',
@@ -96,18 +121,11 @@ async function initializeProject() {
       'deploy:vps': 'edgepress d',
       'deploy:local': 'edgepress server'
     },
-    overrides: {
-      ...(packageData.overrides || {}),
-      ...(existingManifest.overrides || {})
-    },
-    dependencies: {
-      ...(existingManifest.dependencies || {}),
-      edgepress: packageData.version,
-      wrangler: existingManifest.dependencies?.wrangler ?? packageData.devDependencies?.wrangler ?? '^4.129.1'
-    }
+    ...(Object.keys(overrides).length ? { overrides } : {}),
+    dependencies
   };
   for (const directory of directories) await cp(resolve(packageRoot, directory), resolve(root, directory), { recursive: true, errorOnExist: true });
-  await formatPages(root, {write: true, schemaPath: resolve(root, 'node_modules/edgepress/schemas/pages.schema.json')});
+  await formatPages(root, { write: true, schemaPath: resolve(root, 'node_modules/edgepress/schemas/pages.schema.json') });
   for (const file of files) {
     const destination = resolve(root, file);
     await mkdir(dirname(destination), { recursive: true });
@@ -116,7 +134,7 @@ async function initializeProject() {
     else await cp(resolve(packageRoot, file), destination, { errorOnExist: true });
   }
   await writeFile(resolve(root, 'package.json'), JSON.stringify(projectManifest, null, 2) + '\n', { flag: packageManifestExists ? 'w' : 'wx' });
-  console.log('Created an EdgePress site. Next run npm install, then npx edgepress s. Create an article with npm run new -- post "My first article".');
+  console.log('Created an EdgePress site. Run npm install, then npx edgepress s.');
 }
 
 async function runSecurityAudit() {
@@ -146,7 +164,7 @@ async function manageTheme(args, config) {
       if (error.code !== 'ENOENT' && !(error instanceof SyntaxError)) throw error;
     }
   }
-  if (action === 'list') {
+  if (action === 'list' || !action) {
     for (const theme of installed) console.log((config.resolvedPaths.theme === resolve(config.root, theme.path) ? '* ' : '  ') + theme.id + ' (' + theme.name + ')');
     return;
   }
@@ -174,13 +192,12 @@ async function manageTheme(args, config) {
     };
     await writeFile(packageManifestPath, JSON.stringify(packageManifest, null, 2) + '\n', 'utf8');
     const readmePath = resolve(destination, 'README.md');
-    const readme = '# ' + id + '\n\nAn EdgePress theme package. Edit the shared layout and partials under `layouts/` and add theme styles and assets under `assets/`.\n\n' +
-      'To install this theme in another EdgePress site, publish the package to npm and run:\n\n' +
-      '    edgepress theme install edgepress-theme-' + id + '\n\n' +
-      'Keep the skip link, one main landmark, labeled navigation, visible keyboard focus, and a page-level `h1` in the layout.\n';
+    const readme = '# ' + id + '\n\nAn EdgePress theme package. Edit layouts under `layouts/` and styles under `assets/`.\n\n' +
+      'To install this theme in another EdgePress site, publish it to npm and run:\n\n' +
+      '    edgepress theme install edgepress-theme-' + id + '\n';
     await writeFile(readmePath, readme, 'utf8');
-    await writeFile(resolve(destination, 'assets/style.css'), '/* Add the colors, typography, spacing, and responsive rules for this theme here. */\n', 'utf8');
-    console.log('Created an empty theme at themes/' + id + '. Edit its HTML partials and assets, then run edgepress theme use ' + id + '.');
+    await writeFile(resolve(destination, 'assets/style.css'), '/* Add colors, typography, spacing, and responsive rules here. */\n', 'utf8');
+    console.log('Created theme at themes/' + id + '. Select it with: edgepress theme use ' + id);
     return;
   }
   if (action === 'install') {
@@ -230,15 +247,33 @@ async function manageTheme(args, config) {
       try { await lstat(destination); throw new Error('Theme already exists: ' + id); }
       catch (error) { if (error.code !== 'ENOENT') throw error; }
       await cp(themeRoot, destination, { recursive: true, errorOnExist: true, dereference: false });
-      console.log('Installed ' + (metadata.name || packageName) + ' to themes/' + id + '. Select it with edgepress theme use ' + id + '.');
+      console.log('Installed ' + (metadata.name || packageName) + ' to themes/' + id + '. Select it with: edgepress theme use ' + id);
     } finally {
       await rm(tempDirectory, { recursive: true, force: true });
     }
     return;
   }
-  if (action !== 'use' || !requested) throw new Error('Usage: edgepress theme list | edgepress theme create <name> | edgepress theme install <npm-package>[@version] | edgepress theme use <theme-name>');
+  if (action !== 'use' || !requested) throw new Error('Usage: edgepress theme list | create <name> | install <npm-package>[@version] | use <theme-name>');
   const selected = installed.find((theme) => theme.id === requested);
   if (!selected) throw new Error('Theme not found. Run edgepress theme list to see installed themes.');
+
+  // If config.yml defines top-level `theme:`, update it directly so both config files stay consistent.
+  const yamlFile = resolve(config.root, 'config.yml');
+  try {
+    const yamlInfo = await lstat(yamlFile);
+    if (yamlInfo.isFile() && !yamlInfo.isSymbolicLink()) {
+      const yamlSource = await readFile(yamlFile, 'utf8');
+      if (/^theme\s*:/m.test(yamlSource)) {
+        const updatedYaml = yamlSource.replace(/^theme\s*:.*$/m, 'theme: ' + selected.id);
+        await writeFile(yamlFile, updatedYaml, 'utf8');
+        console.log('Selected theme ' + selected.id + ' in config.yml.');
+        return;
+      }
+    }
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+
   const configFile = resolve(config.root, 'edgepress.config.mjs');
   const info = await lstat(configFile);
   if (info.isSymbolicLink() || !info.isFile()) throw new Error('Refusing to edit an unsafe edgepress.config.mjs path');
@@ -341,6 +376,17 @@ async function clean(config) {
   console.log('Removed generated output and reports.');
 }
 
+async function showSiteStatus(config) {
+  const docs = await readDocuments(config);
+  const posts = docs.filter(d => d.kind === 'posts').length;
+  const pages = docs.filter(d => d.kind === 'pages').length;
+  console.log('Site: ' + config.site.title + (config.site.url ? ' (' + config.site.url + ')' : ''));
+  console.log('Theme: ' + relative(config.root, config.resolvedPaths.theme).replace(/\\/g, '/'));
+  console.log('Locales: ' + config.i18n.locales.join(', '));
+  console.log('Content: ' + pages + ' page files, ' + posts + ' post files');
+  console.log('Node.js: ' + process.versions.node + ' (concurrency: ' + config.concurrency + ')');
+}
+
 async function showReport(title, report, reportPath) {
   console.log(title + ': ' + report.status);
   console.log('Report: ' + reportPath);
@@ -352,13 +398,30 @@ function showStatus(title, report) {
 }
 
 async function deployConfiguredVps(args) {
-  const dryRun = args.length === 1 && args[0] === '--dry-run';
-  if (args.length && !dryRun) throw new Error('Usage: edgepress d [--dry-run] (or edgepress deploy vps [--dry-run])');
+  let dryRun = false;
+  const requestedTargets = [];
+  for (let i = 0; i < args.length; i += 1) {
+    const arg = args[i];
+    if (arg === '--dry-run') dryRun = true;
+    else if (arg === '--target') {
+      if (!args[i + 1] || args[i + 1].startsWith('--')) throw new Error('Missing value for --target');
+      requestedTargets.push(...args[++i].split(',').map(v => v.trim()).filter(Boolean));
+    } else if (arg.startsWith('--target=')) {
+      requestedTargets.push(...arg.slice('--target='.length).split(',').map(v => v.trim()).filter(Boolean));
+    } else {
+      throw new Error('Usage: edgepress d [--dry-run] [--target NAME] (or edgepress deploy vps)');
+    }
+  }
   const settings = await loadVpsDeploymentConfig();
   const built = await buildSite();
-  const targets = settings.targets || [{ name: settings.host, ...settings }];
+  let targets = settings.targets || [{ name: settings.host, ...settings }];
+  if (requestedTargets.length) {
+    const wanted = new Set(requestedTargets.map(n => n.toLowerCase()));
+    targets = targets.filter(t => wanted.has(t.name.toLowerCase()));
+    if (!targets.length) throw new Error('No matching VPS target found for: ' + requestedTargets.join(', '));
+  }
   const failures = [];
-  for (const target of targets) {
+  await Promise.all(targets.map(async (target) => {
     const { name, ...connection } = target;
     try {
       console.log('VPS target ' + name + (dryRun ? ' (dry run)' : ''));
@@ -366,24 +429,21 @@ async function deployConfiguredVps(args) {
     } catch (error) {
       failures.push(new Error(name + ': ' + (error?.message || String(error)), { cause: error }));
     }
-  }
+  }));
   if (failures.length) throw new AggregateError(failures, failures.length + ' VPS deployment target(s) failed');
 }
 
 const [command, ...args] = process.argv.slice(2);
 try {
-  const config = command === 'new' || command === 'clean' || command === 'check' || command === 'doctor' || command === 'iterate'
+  const config = ['new', 'clean', 'check', 'doctor', 'iterate', 'status'].includes(command)
     ? await loadConfig()
     : null;
-  if (command === '--help' || command === '-h' || command === 'help') {
-    console.log('Generate: edgepress generate (edgepress g)');
-    console.log('Preview and edit Pages: edgepress server (edgepress s)');
-    console.log('Additional tools: init, new, check, doctor, iterate, theme, security, deploy, clean');
-    console.log('VPS via SSH: edgepress d [--dry-run] deploys each target in config.yml (or edgepress deploy vps)');
-    console.log('Create a Page: edgepress new pages "Page title" [--lang en] [--slug page-slug]');
+  if (!command || command === '--help' || command === '-h' || command === 'help') {
+    printHelp();
   }
   else if (command === 'build' || command === 'generate' || command === 'g') await buildSite();
   else if (command === 'init') await initializeProject();
+  else if (command === 'status') await showSiteStatus(config);
   else if (['preview', 'dev', 'server', 's', 'editor', 'edit'].includes(command)) {
     const options = command === 'editor' && /^\d+$/.test(args[0] || '') ? ['--port', ...args] : args;
     await (await import('./preview.js')).startPreview(options);
@@ -393,7 +453,7 @@ try {
     const platform = args[0] && !args[0].startsWith('-') ? args.shift() : 'cloudflare';
     if (platform === 'vps') await deployConfiguredVps(args);
     else {
-      const built = process.env.WORKERS_CI === '1' ? {output:(await loadConfig()).resolvedPaths.output} : await buildSite();
+      const built = process.env.WORKERS_CI === '1' ? { output: (await loadConfig()).resolvedPaths.output } : await buildSite();
       await deploySite(platform, built.output, args);
     }
   }
@@ -421,7 +481,11 @@ try {
     const compatibilityReport = await checkCompatibility(config);
     const plan = await writeIterationPlan(config, pageReport, compatibilityReport);
     await showReport('Safe iteration plan', plan, resolve(config.resolvedPaths.cache, 'reports/iteration-plan.md'));
-  } else throw new Error('Generate: edgepress generate|g. Preview and edit: edgepress server|s. Tools: init, deploy, d, new, clean, check, doctor, iterate, theme list|create|install|use, security');
+  } else {
+    console.error('Unknown command: ' + command + '\n');
+    printHelp();
+    process.exitCode = 1;
+  }
 } catch (error) {
   console.error(error?.stack || error);
   process.exitCode = 1;

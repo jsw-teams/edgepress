@@ -8,7 +8,7 @@ import { postTemplate } from '../src/post-template.js';
 import { readDocuments } from '../src/content.js';
 import { renderMarkdown } from '../src/markdown.js';
 import { renderIcon } from '../src/icons.js';
-import { parse, stringify } from 'yaml';
+import { parse, stringify } from '../src/lib/yaml.js';
 
 test('new post metadata round-trips quotes and Markdown titles, with one page title', async () => {
   const root = await mkdtemp(resolve(tmpdir(), 'edgepress-writing-'));
@@ -82,9 +82,8 @@ test('CLI initialization carries root security overrides without discarding oper
     assert.equal(result.status, 0, result.stderr);
     const manifest = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'));
     const framework = JSON.parse(await readFile(resolve('package.json'), 'utf8'));
-    assert.deepEqual(manifest.overrides['@file-viewer/doc'], framework.overrides['@file-viewer/doc']);
     assert.equal(manifest.overrides['operator-package'], '2.0.0');
-    assert.equal(manifest.dependencies.wrangler, framework.devDependencies.wrangler);
+    assert.equal(manifest.dependencies.edgepress, framework.version);
     assert.equal(manifest.scripts.verify, 'node verify.mjs');
     assert.equal(manifest.name, 'operator-site');
     const home = JSON.parse(await readFile(resolve(root, 'content/pages/home/en.json'), 'utf8'));

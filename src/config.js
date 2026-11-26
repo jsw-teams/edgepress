@@ -3,7 +3,7 @@ import { categoryFilter, safeAvatar } from './post-details.js';
 import { access, readFile, realpath, stat } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { parse as parseYaml } from 'yaml';
+import { parse as parseYaml } from './lib/yaml.js';
 import {validateServiceCsp} from './consent-csp.js';
 import {linkOrigin} from '../static/edgepress/external-links-policy.js';
 import { recommendedConcurrency } from './concurrency.js';

@@ -1,7 +1,7 @@
 import {createHash} from 'node:crypto';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
-import sanitizeHtml from 'sanitize-html';
+import sanitizeHtml from './lib/html-sanitize.js';
 
 export function sourceOrigins(service) { return service.sourceOrigins || [new URL(service.backendUrl).origin]; }
 export function mediaOrigins(service) { return service.embedOrigins || [new URL(service.backendUrl).origin]; }

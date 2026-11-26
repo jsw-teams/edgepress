@@ -6,7 +6,6 @@ import { mkdtemp, mkdir, writeFile, readFile, cp, rm, access } from 'node:fs/pro
 import { tmpdir } from 'node:os';
 import { resolve, join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { stop as stopEsbuild } from 'esbuild';
 
 test('preview starts and rebuilds without audit browsers or PDF work', { timeout: 30000 }, async () => {
   const project = fileURLToPath(new URL('../', import.meta.url));
@@ -65,7 +64,7 @@ test('preview starts and rebuilds without audit browsers or PDF work', { timeout
     await waitForTitle('Saved');
     assert.equal(JSON.parse(await readFile(file, 'utf8')).title, 'Saved');
     await assert.rejects(access(resolve(root, 'tools/reports/page-check.pdf')), { code: 'ENOENT' });
-    assert.equal(executables.filter(executable => executable === process.execPath).length, 2, 'Only the initial preview and rebuild launch a child runtime');
+    assert.equal(executables.filter(executable => executable === process.execPath).length, 0, 'Built-in preview server needs no child runtime');
     const url = preview.url;
     await preview.close(); preview = null;
     await assert.rejects(fetch(url));
@@ -73,7 +72,6 @@ test('preview starts and rebuilds without audit browsers or PDF work', { timeout
     await preview?.close();
     spy.mock.restore(); syncBuiltinESMExports();
     process.chdir(originalCwd);
-    stopEsbuild();
     await rm(root, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
   }
 });

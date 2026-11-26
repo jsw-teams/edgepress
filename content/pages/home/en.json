@@ -4,12 +4,12 @@
   "lang": "en",
   "slug": "home",
   "homepage": true,
-  "description": "Build static websites with Markdown, editable pages and consent-controlled services on five hosting platforms.",
+  "description": "Build fast static websites with zero runtime dependencies using Markdown posts, JSON pages, and lightweight themes.",
   "keywords": [
-    "website builder",
-    "Cloudflare Workers",
-    "page elements",
-    "website plugins"
+    "static site generator",
+    "zero dependencies",
+    "Markdown",
+    "Cloudflare Workers"
   ],
   "blocks": [
     {
@@ -18,9 +18,9 @@
         [
           {
             "type": "hero",
-            "eyebrow": "A project built for the edge",
-            "title": "Build a fast website from clear, editable source files.",
-            "text": "EdgePress turns Markdown articles, page layouts, themes and optional services into static websites for Cloudflare, Vercel, Netlify, Tencent EdgeOne Pages and Alibaba Cloud ESA Pages.",
+            "eyebrow": "Zero-dependency static site builder",
+            "title": "Build a fast website from plain source files.",
+            "text": "Write posts in Markdown, lay out pages in JSON, pick a built-in theme, and publish dist/ to Cloudflare, Vercel, Netlify, EdgeOne Pages, ESA Pages, or your own VPS.",
             "mascotSrc": "/edgepress/brand/home-hero.png",
             "mascotAlt": "A giant panda and Taiwanese black bear standing together with friendly smiles; the bear has a clear pale V chest marking.",
             "mascotWidth": 1536,
@@ -37,13 +37,13 @@
               }
             ],
             "cta": {
-              "label": "Start with the quick guide",
+              "label": "Open the quick start",
               "url": "/quick-start/"
             },
             "highlights": [
-              "Editable pages in localized JSON files",
-              "Articles written in Markdown",
-              "Shared layouts and theme-defined palettes"
+              "Zero runtime npm dependencies on Node.js 22+",
+              "Automatic font subsetting and minified static assets",
+              "Built-in preview server and visual Pages editor"
             ]
           }
         ]
@@ -55,30 +55,30 @@
         [
           {
             "type": "feature-grid",
-            "title": "A clear place for each part of a site",
+            "title": "How a site is organized",
             "items": [
               {
-                "title": "Pages use editable elements",
+                "title": "Structured JSON pages",
                 "icon": "layout-grid",
-                "text": "Set the number of columns first, then choose elements and edit their content in each page file.",
-                "url": "/theme-development/"
+                "text": "Arrange 1 to 4 columns per row and place text, images, tables, or post lists inside each cell.",
+                "url": "/page-authoring/"
               },
               {
-                "title": "Posts use Markdown",
+                "title": "Plain Markdown posts",
                 "icon": "file-text",
-                "text": "Write long-form articles in Markdown and let the built-in renderer sanitize and format them.",
+                "text": "Write articles in Markdown. EdgePress sanitizes HTML, builds feeds, and creates local search indexes.",
                 "url": "/project-introduction/"
               },
               {
-                "title": "Themes own the design",
+                "title": "Lightweight themes",
                 "icon": "palette",
-                "text": "Build layouts with HTML partials and keep each theme's color palette in its stylesheet.",
+                "text": "Edit HTML partials and CSS tokens in themes/ without hunting through duplicate style overrides.",
                 "url": "/theme-development/"
               },
               {
-                "title": "Integrations wait for consent",
+                "title": "Consent-gated services",
                 "icon": "shield-check",
-                "text": "Add tracking, statistics, advertising, or CAPTCHA services with provider details in configuration.",
+                "text": "Configure analytics, comments, or oEmbed providers in config.yml. The browser loads them only after a visitor agrees.",
                 "url": "/plugin-development/"
               }
             ]
@@ -92,18 +92,18 @@
         [
           {
             "type": "section",
-            "title": "Learn the project",
+            "title": "Get started",
             "tone": "soft",
             "blocks": [
               {
                 "type": "text",
                 "paragraphs": [
-                  "Start with the project introduction and quick start. The guides cover the feature lifecycle, supported runtimes, and the recommended publishing workflow."
+                  "Read the project overview and quick start to install EdgePress, create your first post, and deploy to a static host."
                 ]
               },
               {
                 "type": "link-list",
-                "title": "Project guides",
+                "title": "Core guides",
                 "items": [
                   {
                     "label": "Project introduction",
@@ -121,19 +121,19 @@
         [
           {
             "type": "section",
-            "title": "Extend the project",
+            "title": "Customize your site",
             "tone": "soft",
             "blocks": [
               {
                 "type": "text",
                 "paragraphs": [
-                  "Use theme partials for shared head metadata, navigation, footer, and error-page layout. Page-specific rows and element content stay in localized page files.",
-                  "Build plugins run in Node. Browser services wait for explicit consent before requesting vendor code."
+                  "Edit shared headers, footers, and CSS palettes inside your theme folder, and keep per-page blocks in content/pages/.",
+                  "Write build-time plugins in Node.js and register optional browser integrations in config.yml."
                 ]
               },
               {
                 "type": "link-list",
-                "title": "Development guides",
+                "title": "Developer guides",
                 "items": [
                   {
                     "label": "Theme development",
@@ -156,7 +156,7 @@
         [
           {
             "type": "latest-posts",
-            "title": "Latest project updates",
+            "title": "Latest posts",
             "count": 3,
             "paginate": true
           }
@@ -171,11 +171,11 @@
             "type": "media-text",
             "mediaType": "image",
             "src": "/images/previews/edgepress-en.webp",
-            "alt": "Actual local EdgePress website preview.",
-            "caption": "Interface preview captured locally.",
+            "alt": "Local EdgePress website preview.",
+            "caption": "Generated static site preview.",
             "placement": "left",
-            "title": "See what your source becomes",
-            "text": "Posts, navigation, search and language routes publish together. Choose a theme and keep everyday writing in Markdown."
+            "title": "Preview changes immediately",
+            "text": "Run edgepress s to start the built-in local server. Save a Markdown post or a JSON page, and the preview rebuilds right away."
           }
         ]
       ]
@@ -186,7 +186,7 @@
         [
           {
             "type": "data-table",
-            "title": "Free hosting priority (2026-10-04)",
+            "title": "Free hosting comparison (2026-10-04)",
             "headers": [
               "Priority",
               "Platform",
@@ -229,7 +229,7 @@
         [
           {
             "type": "link-list",
-            "title": "Deployment and quota sources",
+            "title": "Deployment references",
             "items": [
               {
                 "label": "Chinese guide",

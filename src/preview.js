@@ -1,9 +1,8 @@
-import { access, readdir, stat } from 'node:fs/promises';
-import { spawn } from 'node:child_process';
+import { readdir, stat } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { buildSite } from './build.js';
 import { loadConfig } from './config.js';
-import { availablePreviewPort, previewOptions, startPreviewServer } from './preview-server.js';
+import { previewOptions, startPreviewServer } from './preview-server.js';
 
 const watchedDirectories = ['content', 'languages', 'plugins', 'src', 'static', 'themes'];
 const watchedFiles = ['config.yml', 'edgepress.config.mjs', 'wrangler.jsonc'];
@@ -41,11 +40,10 @@ async function sourceSnapshot(root) {
 }
 
 export async function startPreview(options = []) {
-  const { port, forwarded } = previewOptions(options);
+  const { port } = previewOptions(options);
   const config = await loadConfig();
   const root = config.root;
-  const wrangler = resolve(root, 'node_modules/wrangler/bin/wrangler.js');
-  await access(wrangler);
+  const outputDir = config.resolvedPaths.output;
 
   async function rebuild() {
     await buildSite(root, { preview: true });
@@ -53,60 +51,20 @@ export async function startPreview(options = []) {
 
   await rebuild();
   let snapshot = await sourceSnapshot(root);
-  let upstreamPort;
-  do { upstreamPort = await availablePreviewPort(); } while (upstreamPort === port);
-  const args = [wrangler, 'dev', ...forwarded, '--ip', '127.0.0.1', '--port', String(upstreamPort)];
-  const preview = await startPreviewServer({ root, port, upstreamPort, locales: config.i18n.locales, defaultLocale: config.i18n.defaultLocale });
+  const preview = await startPreviewServer({
+    root,
+    port,
+    outputDir,
+    locales: config.i18n.locales,
+    defaultLocale: config.i18n.defaultLocale
+  });
   console.log('Local preview: http://127.0.0.1:' + port + '/');
-  console.log('Pages editor: ' + preview.url + ' (Ctrl+C to stop both)');
-  let child;
+  console.log('Pages editor: ' + preview.url + ' (Ctrl+C to stop)');
   let stopped = false;
-  let restarting = false;
   let scanning = false;
   let rebuilding = false;
   let rebuildAgain = false;
   let debounce;
-
-  function startWrangler() {
-    if (stopped) return;
-    child = spawn(process.execPath, args, { cwd: root, env: process.env, stdio: 'inherit', windowsHide: true });
-    const started = child;
-    started.once('error', (error) => {
-      console.error('Could not start Wrangler preview: ' + error.message);
-      if (!restarting) stop();
-      process.exitCode = 1;
-    });
-    started.once('exit', (code) => {
-      if (child === started) child = null;
-      if (stopped || restarting) return;
-      console.error('Wrangler preview exited' + (code === null ? '' : ' with code ' + code) + '.');
-      stop();
-      if (code !== 0) process.exitCode = code ?? 1;
-    });
-  }
-
-  async function stopWrangler() {
-    const current = child;
-    child = null;
-    if (!current || current.exitCode !== null || current.signalCode !== null) return;
-    await new Promise((resolveExit) => {
-      const timeout = setTimeout(() => {
-        if (current.exitCode === null) current.kill('SIGKILL');
-        resolveExit();
-      }, 5000);
-      current.once('exit', () => {
-        clearTimeout(timeout);
-        resolveExit();
-      });
-      if (process.platform === 'win32') {
-        // Terminate only this preview's tree, including Wrangler's workerd child.
-        const terminator = spawn('taskkill', ['/PID', String(current.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true });
-        terminator.once('error', () => current.kill());
-      } else current.kill();
-    });
-  }
-
-  startWrangler();
 
   async function scheduleBuild() {
     if (stopped) return;
@@ -117,15 +75,10 @@ export async function startPreview(options = []) {
     rebuilding = true;
     do {
       rebuildAgain = false;
-      restarting = true;
       try {
-        await stopWrangler();
         await rebuild();
       } catch (error) {
         console.error('Preview rebuild failed; the last successful output remains available.\n' + (error?.stack || error));
-      } finally {
-        restarting = false;
-        startWrangler();
       }
     } while (rebuildAgain && !stopped);
     rebuilding = false;
@@ -139,14 +92,14 @@ export async function startPreview(options = []) {
       if (next !== snapshot) {
         snapshot = next;
         clearTimeout(debounce);
-        debounce = setTimeout(scheduleBuild, 400);
+        debounce = setTimeout(scheduleBuild, 300);
       }
     } catch (error) {
       console.error('Preview source scan failed: ' + error.message);
     } finally {
       scanning = false;
     }
-  }, 900);
+  }, 800);
 
   async function stop() {
     if (stopped) return;
@@ -155,7 +108,7 @@ export async function startPreview(options = []) {
     process.removeListener('SIGTERM', stop);
     clearInterval(poll);
     clearTimeout(debounce);
-    await Promise.all([stopWrangler(), preview.close()]);
+    await preview.close();
     while (rebuilding || scanning) await new Promise(done => setTimeout(done, 50));
   }
   process.once('SIGINT', stop);

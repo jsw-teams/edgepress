@@ -262,7 +262,13 @@
           const rectangle = image.getBoundingClientRect();
           if (rectangle.width > 0 && rectangle.height > 0 && rectangle.top < innerHeight && rectangle.bottom > 0) visibleImages.add(image);
         }
-        for (const image of visibleImages) if (image.loading === 'lazy' && !image.complete) image.loading = 'eager';
+        for (const image of visibleImages) {
+          if (image.loading === 'lazy' && !image.complete) image.loading = 'eager';
+          if (!image.complete) {
+            image.addEventListener('load', checkFirstScreen, { once: true });
+            image.addEventListener('error', checkFirstScreen, { once: true });
+          }
+        }
         checkFirstScreen();
       };
       void Promise.all([...loading, ...controls]).then(results => {

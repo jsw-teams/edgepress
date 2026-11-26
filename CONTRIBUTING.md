@@ -8,19 +8,16 @@ Curiosity is a good starting point. Small fixes, experiments, documentation, acc
 
 1. Read [README](README.md), [AGENTS.md](AGENTS.md) and nearby tests. Search existing issues before filing another one.
 2. Fork this public repository and clone your fork. Create a branch for one focused change. No access to private website repositories or production credentials is needed.
-3. Use Node.js 22.13+, npm and the committed lockfile:
+3. Use Node.js 22.12+ (EdgePress requires zero runtime or dev dependencies):
 
 ```sh
-npm install
-npx playwright install chromium firefox
 npm run build
 npm test
 npm run doctor
-npx wrangler deploy --dry-run
 git diff --check
 ```
 
-On Linux use `npx playwright install --with-deps chromium firefox` if browser libraries are missing. Builds and dry-runs do not publish. Never run deploy commands as routine contribution checks.
+Builds and dry-runs do not publish. Never run deploy commands as routine contribution checks.
 
 ## Find your way around
 

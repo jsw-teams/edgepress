@@ -3,7 +3,7 @@
   "title": "Static deployment and optional services",
   "lang": "en",
   "slug": "deployment",
-  "description": "Deploy static output on Cloudflare, Vercel, Netlify, EdgeOne, ESA or your own VPS, and register optional external services through consent.",
+  "description": "Publish dist/ to Cloudflare, Vercel, Netlify, EdgeOne, ESA, or your own VPS, and register optional external services in config.yml.",
   "blocks": [
     {
       "columns": 1,
@@ -12,68 +12,53 @@
           {
             "type": "hero",
             "eyebrow": "Deployment",
-            "title": "Publish the same static site on hosted platforms or your own VPS.",
-            "text": "Build with npm run build. Every platform serves dist/. Page rendering, search and local JavaScript work without a website backend."
+            "title": "Publish one dist/ folder to cloud platforms or your own VPS.",
+            "text": "Run npm run build to generate dist/. Because EdgePress has zero runtime dependencies, cloud platforms skip heavy installs and deploy static files directly."
           },
           {
             "type": "text",
-            "heading": "Platform configuration",
+            "heading": "Cloud hosting configuration",
             "paragraphs": [
-              "Cloudflare reads wrangler.jsonc and serves static assets without a Worker script. Vercel reads vercel.json; Netlify reads netlify.toml; Tencent EdgeOne Pages reads edgeone.json; Alibaba Cloud ESA Pages reads esa.jsonc. For a VPS, configure deploy.vps in a private config.yml.",
-              "Use each hosted platform's own authentication; use SSH/SFTP with direct password or private-key authentication on a VPS. GitHub Actions runs dependency security and compatibility checks, not production deployment."
+              "Each static host reads its own config file: wrangler.jsonc for Cloudflare, vercel.json for Vercel, netlify.toml for Netlify, edgeone.json for Tencent EdgeOne Pages, and esa.jsonc for Alibaba Cloud ESA Pages.",
+              "Log in with your chosen platform CLI before running a local deploy command. GitHub Actions checks security and compatibility rather than deploying production sites."
             ]
           },
           {
             "type": "code",
-            "title": "Choose a deployment platform",
+            "title": "Deploy to a platform or VPS",
             "language": "sh",
-            "code": "npm run deploy:cloudflare\nnpm run deploy:vercel\nnpm run deploy:netlify\nnpm run deploy:edgeone -- -n my-site\nnpm run deploy:esa -- --name my-site\nedgepress d --dry-run\nedgepress d\n"
+            "code": "npm run deploy:cloudflare\nnpm run deploy:vercel\nnpm run deploy:netlify\nnpm run deploy:edgeone -- -n my-site\nnpm run deploy:esa -- --name my-site\nedgepress d --dry-run\nedgepress d\nedgepress d --target prod-eu\n"
           },
           {
             "type": "text",
-            "heading": "Deploy to a VPS with edgepress d",
+            "heading": "Deploy to one or more VPS nodes with edgepress d",
             "paragraphs": [
-              "In a private config.yml, set deploy.vps.host, username, remotePath and password, or choose passwordEnv or privateKey instead. port defaults to 22. Never publish real credentials to GitHub.",
-              "hostKeySha256 is optional. When set, it verifies the SSH server key fingerprint; without it, EdgePress warns and connects without server identity verification. Run edgepress d --dry-run to validate local output first. The SSH user needs SFTP and permission to write and rename directories in the parent of remotePath.",
-              "EdgePress stages dist/ and swaps directories after upload. It removes old content and attempts to restore the original directory if the final swap fails. The VPS needs a static web server, not Node.js. Agent instructions are at the root in agent.md."
+              "In a private, uncommitted config.yml, configure deploy.vps (or deploy.vpsTargets for multiple nodes) with host, username, remotePath, and one auth option (password, passwordEnv, or privateKey). Install the optional ssh2 package when uploading directly over SFTP.",
+              "Add hostKeySha256 if you want EdgePress to verify the SSH server fingerprint before uploading. Run edgepress d --dry-run first to inspect the generated files without connecting.",
+              "When you deploy to multiple targets, EdgePress uploads them concurrently and stages files before swapping them into remotePath. Your VPS only needs SSH/SFTP and a static web server such as Nginx or OpenResty. See agent.md for the full checklist."
             ]
           },
           {
             "type": "text",
-            "heading": "Optional APIs and widgets",
+            "heading": "Optional external APIs and widgets",
             "paragraphs": [
-              "Register external services in config.yml under plugins.consent.services. Use external-api with backendUrl for visitor-triggered API calls, or external-widget with backendUrl and a same-service moduleUrl exporting mount for an isolated interface.",
-              "Each service needs a unique ID, name, purpose, dataCategories, recipient, retention and HTTPS privacyUrl. Localized disclosure maps must cover every enabled site language. Do not put operator secrets in browser configuration.",
-              "Enable the group only after setting real service URLs and the privacy controller. The browser imports no service module and makes no API call before explicit per-service consent. Endpoint changes invalidate previous consent."
+              "Register third-party tools in config.yml under plugins.consent.services. Use external-api with backendUrl for user-triggered requests, or external-widget with backendUrl and moduleUrl for an isolated UI.",
+              "Fill in a unique ID, name, purpose, dataCategories, recipient, retention, and HTTPS privacyUrl for every enabled locale. Never place API secrets in client config.",
+              "Browsers load registered modules only after the visitor grants consent. If you change a service URL, visitors must review and approve it again."
             ]
           },
           {
             "type": "code",
-            "title": "Call a registered API from a theme asset",
+            "title": "Call a registered API from theme JS",
             "language": "js",
-            "code": "import {callService} from '/edgepress/services.js';\n// Run this in response to the visitor's action after consent.\nconst response = await callService('lookup', 'query', {headers: {'X-Service-Context': 'example'}});\n"
+            "code": "import {callService} from '/edgepress/services.js';\n// Call after the visitor clicks an action and grants consent.\nconst response = await callService('lookup', 'query', {headers: {'X-Service-Context': 'example'}});\n"
           },
           {
             "type": "text",
-            "heading": "Comment service ownership",
-            "text": "iask owns its entire interface, translations, styles, authentication, uploads, storage and API. The website supplies only a generic service slot and published content context. Its deployment and credentials are managed separately."
-          },
-          {
-            "type": "link-list",
-            "title": "iask integration",
-            "items": [
-              {
-                "label": "Independent service setup",
-                "url": "https://github.com/jsw-teams/iask/blob/main/docs/edgepress.md"
-              }
-            ]
-          },
-          {
-            "type": "text",
-            "heading": "Cache policy",
+            "heading": "Cache headers",
             "paragraphs": [
-              "CSS and JavaScript names include a content hash, including local module dependencies. Cloudflare, Vercel and EdgeOne cache these immutable URLs for one year. HTML and unversioned metadata revalidate so a rebuild can publish new references immediately.",
-              "ESA serves the same hashed assets. Configure its browser and edge cache rules for CSS and JS to one year, while leaving HTML and unversioned JSON short-lived. esa.jsonc configures the build and asset directory; it has no documented equivalent of Vercel custom headers."
+              "EdgePress adds content hashes to CSS and JavaScript filenames so Cloudflare, Vercel, Netlify, and EdgeOne can cache them for one year. HTML and unversioned JSON stay short-lived so rebuilds take effect immediately.",
+              "On Alibaba Cloud ESA Pages, configure one-year caching for hashed CSS and JS in the dashboard while keeping HTML revalidated."
             ]
           }
         ]

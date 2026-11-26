@@ -2,15 +2,24 @@ import { createHash } from 'node:crypto';
 import { copyFile, readdir, readFile, writeFile, mkdir, stat } from 'node:fs/promises';
 import { dirname, extname, relative, resolve, sep } from 'node:path';
 import * as posix from 'node:path/posix';
-import {fileURLToPath} from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { mapLimit } from './concurrency.js';
-import {extendConsentPolicy,serializeConsentHeaders} from './consent-csp.js';
-import {imageViewerAssets, mediaViewerAssets} from './media-assets.js';
-import {documentViewerAssets} from '@jsw-teams/document-viewer/assets';
-import {collectImageDimensions} from './image-dimensions.js';
-import {collectVideoMetadata} from './video-metadata.js';
-import {dataSaverLayout} from './data-saver.js';
-import { build, transform } from 'esbuild';
+import { extendConsentPolicy, serializeConsentHeaders } from './consent-csp.js';
+import { imageViewerAssets, mediaViewerAssets } from './media-assets.js';
+import { builtinDocumentViewerAssets } from './lib/viewers.js';
+import { collectImageDimensions } from './image-dimensions.js';
+import { collectVideoMetadata } from './video-metadata.js';
+import { dataSaverLayout } from './data-saver.js';
+import { minifyCss } from './lib/css-tools.js';
+import { minifyJs, bundleLocalEsm } from './lib/js-tools.js';
+
+async function loadDocumentViewerAssets(prefix) {
+  try {
+    const pkg = await import('@jsw-teams/document-viewer/assets');
+    if (typeof pkg.documentViewerAssets === 'function') return await pkg.documentViewerAssets(prefix);
+  } catch {}
+  return builtinDocumentViewerAssets(prefix);
+}
 
 async function walk(directory) {
   let entries;
@@ -85,7 +94,112 @@ function rewriteCodeReferences(item, text, outputByOriginal) {
   });
 }
 
-export async function collectAssets(config, { documentViewer = false, mediaViewer = false } = {}) {
+function parseUnicodeRange(rangeSpec) {
+  const ranges = [];
+  for (const part of rangeSpec.split(',')) {
+    const trimmed = part.trim().toUpperCase();
+    if (!trimmed.startsWith('U+')) continue;
+    const body = trimmed.slice(2);
+    if (body.includes('-')) {
+      const [lo, hi] = body.split('-');
+      const start = parseInt(lo, 16);
+      const end = parseInt(hi, 16);
+      if (Number.isFinite(start) && Number.isFinite(end)) ranges.push([start, end]);
+    } else if (body.includes('?')) {
+      const start = parseInt(body.replace(/\?/g, '0'), 16);
+      const end = parseInt(body.replace(/\?/g, 'F'), 16);
+      if (Number.isFinite(start) && Number.isFinite(end)) ranges.push([start, end]);
+    } else {
+      const point = parseInt(body, 16);
+      if (Number.isFinite(point)) ranges.push([point, point]);
+    }
+  }
+  return ranges;
+}
+
+function matchesAnyCodePoint(ranges, codePoints) {
+  if (!ranges.length) return true;
+  for (const [lo, hi] of ranges) {
+    if (hi - lo <= 64) {
+      for (let cp = lo; cp <= hi; cp += 1) if (codePoints.has(cp)) return true;
+    } else {
+      for (const cp of codePoints) if (cp >= lo && cp <= hi) return true;
+    }
+  }
+  return false;
+}
+
+// Prune unused WOFF2 font subsets from a build bundle based on the characters and locales
+// actually used on the site. Cuts deployment file count and upload size by 60–95%.
+export function pruneUnusedFonts(bundle, routes, config) {
+  const facesOut = bundle.urlMap['/edgepress/fonts/faces.css'];
+  const fontsOut = bundle.urlMap['/edgepress/fonts.css'];
+  if (!facesOut || !fontsOut) return bundle;
+  const facesAsset = bundle.assets.find(asset => '/' + asset.path === facesOut);
+  const fontsAsset = bundle.assets.find(asset => '/' + asset.path === fontsOut);
+  if (!facesAsset?.content || !fontsAsset?.content) return bundle;
+
+  const codePoints = new Set();
+  for (let cp = 0x20; cp <= 0x7e; cp += 1) codePoints.add(cp);
+  for (const route of routes) {
+    if (typeof route.body !== 'string') continue;
+    for (const ch of route.body) codePoints.add(ch.codePointAt(0));
+  }
+  const locales = (config.i18n?.locales || []).map(l => l.toLowerCase());
+  const needsTrad = locales.some(l => /^zh-(?:tw|hk|mo|hant)/.test(l));
+  const needsSimp = locales.some(l => /^zh-(?:cn|sg|hans)/.test(l)) || (!needsTrad && [...codePoints].some(cp => cp >= 0x4e00 && cp <= 0x9fff));
+
+  const facesCss = facesAsset.content.toString('utf8');
+  const keptBlocks = [];
+  const keptWoff2 = new Set();
+
+  const faceRe = /@font-face\s*\{[^}]*\}/gi;
+  let match;
+  let foundAny = false;
+  while ((match = faceRe.exec(facesCss)) !== null) {
+    foundAny = true;
+    const block = match[0];
+    const family = block.match(/font-family\s*:\s*['"]?([^'";}]+)/i)?.[1]?.trim() || '';
+    if (family === 'Noto Sans TC Variable' && !needsTrad) continue;
+    if (family === 'Noto Sans SC Variable' && !needsSimp) continue;
+    const rangeStr = block.match(/unicode-range\s*:\s*([^;}]+)/i)?.[1] || '';
+    const ranges = parseUnicodeRange(rangeStr);
+    if (!matchesAnyCodePoint(ranges, codePoints)) continue;
+    keptBlocks.push(block);
+    for (const urlMatch of block.matchAll(/url\(\s*['"]?([^'")\s]+)['"]?\s*\)/gi)) {
+      const target = urlMatch[1].replace(/^\//, '');
+      keptWoff2.add(target);
+    }
+  }
+  if (!foundAny) return bundle;
+
+  const newFacesContent = Buffer.from(keptBlocks.join(''), 'utf8');
+  const newFacesDigest = createHash('sha256').update(newFacesContent).digest('hex').slice(0, 16);
+  const newFacesPath = 'edgepress/fonts/faces.' + newFacesDigest + '.css';
+
+  const oldFacesRel = facesOut.slice(1);
+  const fontsCss = fontsAsset.content.toString('utf8').replaceAll(oldFacesRel, newFacesPath).replaceAll(posix.basename(oldFacesRel), posix.basename(newFacesPath));
+  const newFontsContent = Buffer.from(fontsCss, 'utf8');
+  const newFontsDigest = createHash('sha256').update(newFontsContent).update('\n').update(newFacesDigest).digest('hex').slice(0, 16);
+  const newFontsPath = 'edgepress/fonts.' + newFontsDigest + '.css';
+
+  bundle.assets = bundle.assets.filter(asset => {
+    if (asset.path.startsWith('edgepress/fonts/') && asset.path.endsWith('.woff2')) {
+      return keptWoff2.has(asset.path);
+    }
+    return true;
+  });
+  facesAsset.path = newFacesPath;
+  facesAsset.content = newFacesContent;
+  fontsAsset.path = newFontsPath;
+  fontsAsset.content = newFontsContent;
+  bundle.urlMap['/edgepress/fonts/faces.css'] = '/' + newFacesPath;
+  bundle.urlMap['/edgepress/fonts.css'] = '/' + newFontsPath;
+  config.assetManifest = bundle.urlMap;
+  return bundle;
+}
+
+export async function collectAssets(config, { documentViewer = false, mediaViewer = false, imageViewer = true } = {}) {
   const sources = [];
   const directories = [
     { root: config.resolvedPaths.static, name: 'static' },
@@ -101,21 +215,33 @@ export async function collectAssets(config, { documentViewer = false, mediaViewe
   }
   // Library consumers do not need to copy framework runtime source into their
   // repositories. Project-owned overrides keep precedence for existing sites.
-  const runtimeRoot=fileURLToPath(new URL('../static/edgepress/',import.meta.url));
-  const supplied=new Set(sources.map(item=>item.path));
-  if (documentViewer) for (const item of await documentViewerAssets('edgepress/document-viewer')) if (!supplied.has(item.path)) sources.push(item);
-  for(const item of await imageViewerAssets())if(!supplied.has(item.path))sources.push(item);
-  if (mediaViewer) for (const item of await mediaViewerAssets()) if (!supplied.has(item.path)) sources.push(item);
-  for(const source of await walk(runtimeRoot)) {
-    const path='edgepress/'+relative(runtimeRoot,source).split(sep).join('/');
-    if(!supplied.has(path))sources.push({source,path,sourceName:'EdgePress runtime'});
+  const runtimeRoot = fileURLToPath(new URL('../static/edgepress/', import.meta.url));
+  const supplied = new Set(sources.map(item => item.path));
+  if (documentViewer) {
+    for (const item of await loadDocumentViewerAssets('edgepress/document-viewer')) {
+      if (!supplied.has(item.path)) sources.push(item);
+    }
+  }
+  if (imageViewer) {
+    for (const item of await imageViewerAssets()) {
+      if (!supplied.has(item.path)) sources.push(item);
+    }
+  }
+  if (mediaViewer) {
+    for (const item of await mediaViewerAssets()) {
+      if (!supplied.has(item.path)) sources.push(item);
+    }
+  }
+  for (const source of await walk(runtimeRoot)) {
+    const path = 'edgepress/' + relative(runtimeRoot, source).split(sep).join('/');
+    if (!supplied.has(path)) sources.push({ source, path, sourceName: 'EdgePress runtime' });
   }
   // Built-in navigation and page icons live with the package's content assets,
   // not its browser scripts. Include only this library, not example-site media.
-  const iconsRoot=fileURLToPath(new URL('../content/assets/edgepress/icons/',import.meta.url));
-  for(const source of await walk(iconsRoot)) {
-    const path='edgepress/icons/'+relative(iconsRoot,source).split(sep).join('/');
-    if(!supplied.has(path))sources.push({source,path,sourceName:'EdgePress icons'});
+  const iconsRoot = fileURLToPath(new URL('../content/assets/edgepress/icons/', import.meta.url));
+  for (const source of await walk(iconsRoot)) {
+    const path = 'edgepress/icons/' + relative(iconsRoot, source).split(sep).join('/');
+    if (!supplied.has(path)) sources.push({ source, path, sourceName: 'EdgePress icons' });
   }
 
   const headers = [];
@@ -129,64 +255,32 @@ export async function collectAssets(config, { documentViewer = false, mediaViewe
     mapLimit(assetSources, config.concurrency, async (item) => {
       if (!isCodeAsset(item.path)) return { ...item, content: null };
       const source = item.content ?? await readFile(item.source);
-      const result = await transform(source.toString('utf8'), {
-        loader: item.path.endsWith('.css') ? 'css' : 'js',
-        minifyWhitespace: true,
-        minifySyntax: true,
-        minifyIdentifiers: item.path === 'edgepress/data-saver.js',
-        legalComments: 'inline',
-        charset: 'utf8',
-        sourcefile: item.path
-      });
-      return { ...item, content: Buffer.from(result.code) };
+      const rawText = source.toString('utf8');
+      const code = item.path.endsWith('.css') ? minifyCss(rawText) : minifyJs(rawText);
+      return { ...item, content: Buffer.from(code, 'utf8') };
     })
   ]);
   const coreEntries = ['edgepress/plugins/consent/manager.js', 'edgepress/external-links.js'];
   const sourceByPath = new Map(items.map(item => [item.path, item]));
-  const bundleControl = async entry => {
+  const bundleControl = (entry) => {
     const item = sourceByPath.get(entry);
     if (!item) return;
-    const output = await build({
-      entryPoints: [entry],
-      bundle: true,
-      write: false,
-      format: 'esm',
-      minifyWhitespace: true,
-      minifySyntax: true,
-      minifyIdentifiers: false,
-      legalComments: 'inline',
-      charset: 'utf8',
-      plugins: [{
-        name: 'local-core-controls',
-        setup(builder) {
-          builder.onResolve({filter:/.*/}, args => {
-            const target = args.kind === 'entry-point' ? args.path : args.path.startsWith('/') ? args.path.slice(1) : posix.normalize(posix.join(posix.dirname(args.importer),args.path));
-            if (args.kind === 'dynamic-import' || !sourceByPath.has(target)) {
-              const path = sourceByPath.has(target) ? '/' + target : args.path;
-              return {path,external:true};
-            }
-            return {path:target,namespace:'local-core-controls'};
-          });
-          builder.onLoad({filter:/.*/,namespace:'local-core-controls'}, args => ({contents:sourceByPath.get(args.path).content.toString('utf8'),loader:'js'}));
-        }
-      }]
-    });
-    item.content = Buffer.from(output.outputFiles[0].contents);
+    item.content = Buffer.from(bundleLocalEsm(entry, sourceByPath), 'utf8');
   };
-  for (const entry of coreEntries) await bundleControl(entry);
+  for (const entry of coreEntries) bundleControl(entry);
   if (config.site.dataSaver?.enabled) {
     const candidates = [...coreEntries, 'edgepress/language-select.js', 'edgepress/local-time.js', 'edgepress/navigation-select.js', 'edgepress/services-consent.js'];
     const scripts = candidates.filter(path => {
       const source = sourceByPath.get(path)?.source;
-      return source && relative(runtimeRoot,source).split(sep).join('/') === path.slice('edgepress/'.length);
+      return source && relative(runtimeRoot, source).split(sep).join('/') === path.slice('edgepress/'.length);
     });
     if (scripts.length) {
       const entry = 'edgepress/data-saver-controls.js';
-      const item = {path:entry,content:Buffer.from(scripts.map(path => 'import "/' + path + '";').join('\n')),sourceName:'Data-saving core controls'};
-      sourceByPath.set(entry,item);
+      const item = { path: entry, content: Buffer.from(scripts.map(path => 'import "/' + path + '";').join('\n')), sourceName: 'Data-saving core controls' };
+      sourceByPath.set(entry, item);
       items.push(item);
-      await bundleControl(entry);
-      config.dataSaverCore = {path:'/' + entry,scripts:scripts.map(path => '/' + path)};
+      bundleControl(entry);
+      config.dataSaverCore = { path: '/' + entry, scripts: scripts.map(path => '/' + path) };
     }
   }
   const layout = await dataSaverLayout(config, items);
@@ -242,7 +336,13 @@ export async function collectAssets(config, { documentViewer = false, mediaViewe
   const urlMap = Object.create(null);
   for (const item of items) urlMap['/' + item.path] = '/' + outputByOriginal.get(item.path);
   config.assetManifest = urlMap;
-  return { assets, urlMap, imageDimensions:await collectImageDimensions(assets), videoMetadata:await collectVideoMetadata(assets), existingHeaders: extendConsentPolicy(headerContents.join('\n\n'),config) };
+  return {
+    assets,
+    urlMap,
+    imageDimensions: await collectImageDimensions(assets),
+    videoMetadata: await collectVideoMetadata(assets),
+    existingHeaders: extendConsentPolicy(headerContents.join('\n\n'), config)
+  };
 }
 
 export async function writeAssets(bundle, output, concurrency = 8) {
@@ -273,9 +373,9 @@ export async function writeAssets(bundle, output, concurrency = 8) {
   for (const directory of fontDirectories) immutableRules.push('/' + (directory === '.' ? '' : directory + '/') + '*.woff2\n  Cache-Control: public, max-age=31536000, immutable');
   const documentDirectories = new Set(bundle.assets.map(asset => asset.path.match(/^(.*\/pdf-assets\.[a-f0-9]{16})\//)?.[1]).filter(Boolean));
   for (const directory of documentDirectories) immutableRules.push('/' + directory + '/*\n  Cache-Control: public, max-age=31536000, immutable');
-  const mediaRules = await Promise.all(bundle.assets.filter(asset=>/\.(mp4|webm)$/i.test(asset.path)).map(async asset=>{
-    const {size}=await stat(resolve(output,...asset.path.split('/')));
-    return '/'+asset.path+'\n  Content-Length: '+size+'\n  Accept-Ranges: bytes';
+  const mediaRules = await Promise.all(bundle.assets.filter(asset => /\.(mp4|webm)$/i.test(asset.path)).map(async asset => {
+    const { size } = await stat(resolve(output, ...asset.path.split('/')));
+    return '/' + asset.path + '\n  Content-Length: ' + size + '\n  Accept-Ranges: bytes';
   }));
   if (immutableRules.length + mediaRules.length > 85) {
     const immutablePath = /\.[a-f0-9]{16}\.(?:css|m?js|json|png|jpe?g|webp|avif|svg|gif|mp4|webm|woff2?)$/i;

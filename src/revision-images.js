@@ -1,7 +1,7 @@
 import {createHash} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {relative,resolve,sep,extname} from 'node:path';
-import {imageSize} from 'image-size';
+import {imageSize} from './lib/image-size.js';
 import {renderMarkdown} from './markdown.js';
 
 const decode=value=>value.replace(/&(?:amp|quot|apos|lt|gt);/g,entity=>({'&amp;':'&','&quot;':'"','&apos;':"'",'&lt;':'<','&gt;':'>'}[entity]));

@@ -1,4 +1,4 @@
-import { documentFormat, documentUrl } from '@jsw-teams/document-viewer';
+import { documentFormat, documentUrl } from './lib/viewers.js';
 import { translate, translateValue } from './i18n.js';
 
 const escape = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));

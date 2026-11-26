@@ -4,7 +4,7 @@ import {mkdtemp,writeFile,readFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {parse,stringify} from 'yaml';
+import {parse,stringify} from '../src/lib/yaml.js';
 import {loadConfig} from '../src/config.js';
 import {loadLanguagePacks} from '../src/i18n.js';
 import consentManager from '../plugins/consent/index.js';

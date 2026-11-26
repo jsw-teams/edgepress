@@ -1,7 +1,6 @@
-import { marked, Marked } from 'marked';
-import {parseEmbed} from './embed.js';
-import {parseDocument} from './document.js';
-import sanitizeHtml from 'sanitize-html';
+import sanitizeHtml from './lib/html-sanitize.js';
+import { lexMarkdown, parseMarkdownAsync, parseMarkdownSync, containsMarkdownVideo } from './lib/markdown-parser.js';
+import { decodeHtmlEntities } from './lib/html-parser.js';
 
 const allowedTags = [
   'a', 'abbr', 'address', 'article', 'aside', 'b', 'bdi', 'bdo', 'blockquote',
@@ -13,6 +12,21 @@ const allowedTags = [
   'table', 'tbody', 'td', 'tfoot', 'th', 'thead', 'time', 'track', 'tr', 'u', 'ul',
   'template', 'var', 'video', 'wbr'
 ];
+
+function safeVideoHref(value) {
+  const href = String(value ?? '').trim();
+  if (!href || /[\x00-\x20\\]/.test(href) || href.startsWith('//')) {
+    throw new Error('Markdown video sources must be safe relative paths or HTTP(S) URLs');
+  }
+  if (href.startsWith('/')) return href;
+  let url;
+  try { url = new URL(href, 'https://edgepress.invalid'); }
+  catch { throw new Error('Markdown video sources must be safe relative paths or HTTP(S) URLs'); }
+  if (url.username || url.password || !['http:', 'https:'].includes(url.protocol)) {
+    throw new Error('Markdown video sources must be safe relative paths or HTTP(S) URLs');
+  }
+  return href;
+}
 
 const sanitizeOptions = {
   allowedTags,
@@ -38,7 +52,13 @@ const sanitizeOptions = {
   allowProtocolRelative: false,
   nonTextTags: ['script', 'style', 'textarea', 'option', 'xmp'],
   transformTags: {
-    img: (_tagName,attributes)=>{if(attributes['data-original']){try{attributes['data-original']=safeVideoHref(attributes['data-original']);}catch{delete attributes['data-original'];}}return {tagName:'img',attribs:attributes};},
+    img: (_tagName, attributes) => {
+      if (attributes['data-original']) {
+        try { attributes['data-original'] = safeVideoHref(attributes['data-original']); }
+        catch { delete attributes['data-original']; }
+      }
+      return { tagName: 'img', attribs: attributes };
+    },
     a: (_tagName, attributes) => ({
       tagName: 'a',
       attribs: { ...attributes, rel: 'noopener noreferrer' }
@@ -46,163 +66,60 @@ const sanitizeOptions = {
   }
 };
 
-function videoMimeType(href) {
-  const path = String(href ?? '').split(/[?#]/, 1)[0].toLowerCase();
-  const extension = path.match(/\.(mp4|webm|ogv|ogg)$/)?.[1];
-  return ({ mp4: 'video/mp4', webm: 'video/webm', ogv: 'video/ogg', ogg: 'video/ogg' })[extension] || '';
-}
-
-function safeVideoHref(value) {
-  const href = String(value ?? '').trim();
-  if (!href || /[\x00-\x20\\]/.test(href) || href.startsWith('//')) {
-    throw new Error('Markdown video sources must be safe relative paths or HTTP(S) URLs');
-  }
-  if (href.startsWith('/')) return href;
-  let url;
-  try { url = new URL(href, 'https://edgepress.invalid'); }
-  catch { throw new Error('Markdown video sources must be safe relative paths or HTTP(S) URLs'); }
-  if (url.username || url.password || !['http:', 'https:'].includes(url.protocol)) {
-    throw new Error('Markdown video sources must be safe relative paths or HTTP(S) URLs');
-  }
-  return href;
-}
-
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[char]);
 }
 
-function markdownRenderer(options) {
-  const renderer = new marked.Renderer();
-  const renderLink=renderer.link;
-  renderer.link=function(token){return renderLink.call(this,{...token,href:options.linkResolver?options.linkResolver(token.href):token.href});};
-  const renderImage = renderer.image;
-  renderer.image = function(token) {
-    const mimeType = videoMimeType(token.href);
-    if (mimeType) {
-      const description = String(token.text ?? '').trim();
-      if (!description) throw new Error('Markdown videos need descriptive alternative text');
-      const href = escapeHtml(safeVideoHref(token.href));
-      if (options.allowVideo === false) return '<span>' + escapeHtml(description) + '</span>';
-      const caption = token.title ? '<figcaption>' + escapeHtml(token.title) + '</figcaption>' : '';
-      return '<figure class="markdown-video"><video data-edgepress-video controls playsinline preload="none" aria-label="' +
-        escapeHtml(description) + '"><source src="' + href + '" type="' + mimeType + '"><a href="' + href + '">' +
-        escapeHtml(description) + '</a></video>' + caption + '</figure>';
-    }
-    if (options.allowImages === false) return '<span>' + escapeHtml(token.text || '') + '</span>';
-    if(options.imageResolver){const href=options.imageResolver(token.href);if(!href)return '<span>'+escapeHtml(token.text||'')+'</span>';return renderImage.call(this,{...token,href});}
-    return renderImage.call(this,token);
-  };
-  return renderer;
-}
-
-const embedSyntax = {name:'embed',level:'block',
-  start:source=>{const offset=source.search(/\n {0,3}!embed\[/);return offset<0?undefined:offset+1;},
-  tokenizer:source=>{const embed=parseEmbed(source);return embed?{type:'embed',...embed}:undefined;},
-  renderer:()=>''
-};
-
-const documentSyntax = { name: 'document', level: 'block',
-  start: source => { const offset = source.search(/\n {0,3}!document\[/); return offset < 0 ? undefined : offset + 1; },
-  tokenizer: source => { const parsed = parseDocument(source); return parsed ? { type: 'document', ...parsed } : undefined; },
-  renderer: token => '<p>' + escapeHtml(token.title) + '</p>'
-};
-
-// CommonMark treats punctuation beside a CJK letter as an intraword delimiter.
-// Accept the bracket/punctuation forms authors use in CJK prose, while letting
-// the ordinary lexer handle escapes, code, links and non-CJK emphasis.
-const cjkStrong = {
-  name: 'cjkStrong', level: 'inline', childTokens: ['tokens'],
-  start: source => { const index = source.indexOf('**'); return index < 0 ? undefined : index; },
-  tokenizer(source) {
-    if (!source.startsWith('**') || source.startsWith('***') || /^\*\*\s/.test(source)) return;
-    for (let end = source.indexOf('**', 2); end >= 0; end = source.indexOf('**', end + 2)) {
-      const text = source.slice(2, end);
-      if (source[end + 2] === '*' || /\s$/.test(text) || !text) continue;
-      const escapes = text.match(/\\+$/)?.[0].length || 0;
-      if (escapes % 2) continue;
-      const cjk = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
-      const bracketed = /^[（《「『【]/u.test(text) || /[）》」』】]$/u.test(text);
-      const cjkBoundary = /\p{P}$/u.test(text) && cjk.test(source[end + 2] || '');
-      if (!bracketed && !cjkBoundary) return;
-      return { type: 'cjkStrong', raw: source.slice(0, end + 2), text, tokens: this.lexer.inlineTokens(text) };
-    }
-  },
-  renderer(token) { return '<strong>' + this.parser.parseInline(token.tokens) + '</strong>'; }
-};
-
-function markdownParser(options = {}) {
-  const parser = new Marked({ gfm: options.gfm !== false, breaks: options.breaks === true, renderer: markdownRenderer(options) });
-  parser.use({ extensions: [cjkStrong, { ...documentSyntax, renderer: token => options.documentRenderer ? options.documentRenderer(token) : documentSyntax.renderer(token) }] });
-  return parser;
-}
-
 export function hasMarkdownVideo(source) {
-  const parser = markdownParser();
-  let found = false;
-  parser.walkTokens(parser.lexer(String(source || '')), token => { if (token.type === 'image' && videoMimeType(token.href)) found = true; });
-  return found;
+  return containsMarkdownVideo(String(source || ''));
 }
 
 export async function renderMarkdown(source, options = {}) {
-  const parser = markdownParser(options);
-  if (options.embedRenderer) parser.use({
-    async: true,
-    extensions: [{...embedSyntax, renderer: token => token.html}],
-    walkTokens: async token => { if (token.type === 'embed') token.html = await options.embedRenderer(token); }
-  });
-  let html = await parser.parse(source);
+  let html = await parseMarkdownAsync(String(source ?? ''), options);
   // GFM task markers become named static status icons. They remain readable to
   // assistive technology without exposing disabled, unlabeled form controls.
   html = html.replace(/<input\b([^>]*)>/gi, (_match, attributes) => {
     const checked = /\bchecked(?:\s|=|$)/i.test(attributes);
     const label = checked ? (options.taskLabels?.complete || 'Task complete') :
       (options.taskLabels?.incomplete || 'Task incomplete');
-    const safeLabel = String(label).replace(/[&<>"']/g, (char) => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    })[char]);
+    const safeLabel = escapeHtml(label);
     return '<span class="markdown-task-status" role="img" aria-label="' +
       safeLabel + '">' + (checked ? '✓' : '□') + '</span>';
   });
-  return sanitizeHtml(html, options.imageResolver?{...sanitizeOptions,transformTags:{...sanitizeOptions.transformTags,img:(_tag,attributes)=>{
-    const src=options.imageResolver(attributes.src);
-    return src?{tagName:'img',attribs:{src,alt:attributes.alt||'',loading:'lazy'}}:{tagName:'span',attribs:{},text:attributes.alt||''};
-  }}}:sanitizeOptions);
+  return sanitizeHtml(html, options.imageResolver ? {
+    ...sanitizeOptions,
+    transformTags: {
+      ...sanitizeOptions.transformTags,
+      img: (_tag, attributes) => {
+        const src = options.imageResolver(attributes.src);
+        return src ? { tagName: 'img', attribs: { src, alt: attributes.alt || '', loading: 'lazy' } } : { tagName: 'span', attribs: {}, text: attributes.alt || '' };
+      }
+    }
+  } : sanitizeOptions);
 }
 
 export async function renderMarkdownExcerpt(source, options = {}) {
   const markdown = String(source ?? '');
-  const tokens = markdownParser(options).use({extensions:[{...embedSyntax}]}).lexer(markdown);
+  const { tokens } = lexMarkdown(markdown, options);
   const paragraph = tokens.find((token) => token.type === 'paragraph');
   if (!paragraph) return '<p>' + escapeHtml(plainText(markdown).slice(0, 220)) + '</p>';
   return renderMarkdown(paragraph.raw, { ...options, allowImages: false, allowVideo: false });
 }
 
 export function plainText(source) {
-  const html = markdownParser().use({extensions:[{...embedSyntax}]}).parse(String(source ?? ''));
-  const namedEntities = {
-    amp: '&', apos: "'", copy: '©', gt: '>', hellip: '…', ldquo: '“', lsquo: '‘',
-    lt: '<', mdash: '—', nbsp: ' ', ndash: '–', quot: '"', rdquo: '”', rsquo: '’'
-  };
-  return String(html)
-    .replace(/<!--[\s\S]*?-->/g, ' ')
-    .replace(/<(script|style|textarea|option|xmp)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ')
-    .replace(/<img\b([^>]*)>/gi, (_match, attributes) => {
-      const alt = attributes.match(/\balt\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i);
-      return alt ? ' ' + (alt[1] ?? alt[2] ?? alt[3]) + ' ' : ' ';
-    })
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&(#x[\da-f]+|#\d+|[a-z][a-z\d]+);/gi, (match, entity) => {
-      if (entity[0] === '#') {
-        const hex = entity[1]?.toLowerCase() === 'x';
-        const point = Number.parseInt(entity.slice(hex ? 2 : 1), hex ? 16 : 10);
-        return Number.isInteger(point) && point > 0 && point <= 0x10ffff && !(point >= 0xd800 && point <= 0xdfff)
-          ? String.fromCodePoint(point)
-          : match;
-      }
-      return namedEntities[entity.toLowerCase()] ?? match;
-    })
+  const html = parseMarkdownSync(String(source ?? ''));
+  return decodeHtmlEntities(
+    String(html)
+      .replace(/<!--[\s\S]*?-->/g, ' ')
+      .replace(/<(script|style|textarea|option|xmp)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ')
+      .replace(/<img\b([^>]*)>/gi, (_match, attributes) => {
+        const alt = attributes.match(/\balt\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i);
+        return alt ? ' ' + (alt[1] ?? alt[2] ?? alt[3]) + ' ' : ' ';
+      })
+      .replace(/<[^>]*>/g, ' ')
+  )
     .replace(/\s+/g, ' ')
     .trim();
 }

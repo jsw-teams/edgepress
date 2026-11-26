@@ -238,8 +238,15 @@ export async function uploadStaticSite(sftp, output, remotePath, inventory = nul
   let published = false;
   await sftpCall(sftp, 'mkdir', stage);
   try {
+    const byDepth = new Map();
     for (const directory of inventory.directories) {
-      await sftpCall(sftp, 'mkdir', posix.join(stage, directory));
+      const depth = directory.split('/').length;
+      if (!byDepth.has(depth)) byDepth.set(depth, []);
+      byDepth.get(depth).push(directory);
+    }
+    for (const depth of [...byDepth.keys()].sort((a, b) => a - b)) {
+      await mapConcurrent(byDepth.get(depth), UPLOAD_CONCURRENCY, directory =>
+        sftpCall(sftp, 'mkdir', posix.join(stage, directory)));
     }
     let uploadedCount = 0;
     await mapConcurrent(inventory.files, UPLOAD_CONCURRENCY, async file => {
@@ -294,7 +301,11 @@ export async function deployVps(output, settings, { dryRun = false, root = proce
     console.warn('VPS SSH host key is not verified; set deploy.vps.hostKeySha256 to enable server identity checking.');
   }
   const auth = await credentials(settings, root);
-  const ssh2 = await import('ssh2');
+  let ssh2;
+  try { ssh2 = await import('ssh2'); }
+  catch {
+    throw new Error('VPS SFTP upload requires the optional "ssh2" package. Install it with: npm install --no-save ssh2');
+  }
   const Client = ssh2.Client ?? ssh2.default.Client;
   const client = new Client();
   // Keep an error listener active after the connection becomes ready.

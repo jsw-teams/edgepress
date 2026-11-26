@@ -1,6 +1,6 @@
 {
   "buildCommand": "npm run build",
-  "installCommand": "npm ci",
+  "installCommand": "npm install --omit=dev --no-audit --no-fund",
   "outputDirectory": "dist",
   "nodeVersion": "22.16.0",
   "headers": [

@@ -1,10 +1,9 @@
-import { parseDocument } from 'htmlparser2';
+import { parseDocument } from './lib/html-parser.js';
+import { compileFontlessCss, minifyCss } from './lib/css-tools.js';
+import { minifyJs } from './lib/js-tools.js';
 import { localizedUrl, translate } from './i18n.js';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import * as posix from 'node:path/posix';
-import postcss from 'postcss';
-import { transform, transformSync } from 'esbuild';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 
@@ -12,10 +11,10 @@ let inlineAssets;
 export function dataSaverInlineAssets(config) {
   if (!config.site?.dataSaver?.enabled) return null;
   if (!inlineAssets) {
-    const script = transformSync(readFileSync(new URL('../static/edgepress/data-saver.js', import.meta.url), 'utf8'), { loader:'js', minify:true, charset:'utf8', legalComments:'inline' }).code;
-    const style = transformSync(readFileSync(new URL('../static/edgepress/data-saver.css', import.meta.url), 'utf8'), { loader:'css', minify:true, charset:'utf8', legalComments:'inline' }).code;
+    const script = minifyJs(readFileSync(new URL('../static/edgepress/data-saver.js', import.meta.url), 'utf8'));
+    const style = minifyCss(readFileSync(new URL('../static/edgepress/data-saver.css', import.meta.url), 'utf8'));
     const hash = value => "'sha256-" + createHash('sha256').update(value).digest('base64') + "'";
-    inlineAssets = { script, style, scriptHash:hash(script), styleHash:hash(style) };
+    inlineAssets = { script, style, scriptHash: hash(script), styleHash: hash(style) };
   }
   return inlineAssets;
 }
@@ -28,13 +27,19 @@ export async function configureDataSaver(config) {
   if (!config.site.dataSaver?.enabled) return;
   const theme = JSON.parse(await readFile(resolve(config.resolvedPaths.theme, 'theme.json'), 'utf8'));
   const variant = theme.dataSaver;
-  if (!variant || typeof variant !== 'object' || Array.isArray(variant) || typeof variant.stylesheet !== 'string' || !Array.isArray(variant.scripts) || variant.layoutStyles !== undefined && !Array.isArray(variant.layoutStyles) || Object.keys(variant).some(key => !['stylesheet', 'scripts', 'layoutStyles'].includes(key))) throw new Error('This theme must opt in with theme.json dataSaver: { stylesheet, scripts, layoutStyles? }');
+  if (!variant || typeof variant !== 'object' || Array.isArray(variant) || typeof variant.stylesheet !== 'string' || !Array.isArray(variant.scripts) || variant.layoutStyles !== undefined && !Array.isArray(variant.layoutStyles) || Object.keys(variant).some(key => !['stylesheet', 'scripts', 'layoutStyles'].includes(key))) {
+    throw new Error('This theme must opt in with theme.json dataSaver: { stylesheet, scripts, layoutStyles? }');
+  }
   for (const [file, extension] of [[variant.stylesheet, 'css'], ...variant.scripts.map(file => [file, 'js'])]) {
-    if (typeof file !== 'string' || !new RegExp('^[a-zA-Z0-9][a-zA-Z0-9_./-]*\\.' + extension + '$').test(file) || file.split('/').some(part => !part || part === '..' || part === '.')) throw new Error('Invalid data-saving theme asset');
+    if (typeof file !== 'string' || !new RegExp('^[a-zA-Z0-9][a-zA-Z0-9_./-]*\\.' + extension + '$').test(file) || file.split('/').some(part => !part || part === '..' || part === '.')) {
+      throw new Error('Invalid data-saving theme asset');
+    }
     await readFile(resolve(config.resolvedPaths.theme, 'assets', file));
   }
   for (const file of variant.layoutStyles || []) {
-    if (typeof file !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9_./-]*\.css$/.test(file) || file.split('/').some(part => !part || part === '..' || part === '.')) throw new Error('Invalid data-saving layout stylesheet');
+    if (typeof file !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9_./-]*\.css$/.test(file) || file.split('/').some(part => !part || part === '..' || part === '.')) {
+      throw new Error('Invalid data-saving layout stylesheet');
+    }
   }
   config.dataSaverTheme = variant;
 }
@@ -42,34 +47,13 @@ export async function configureDataSaver(config) {
 export async function dataSaverLayout(config, items) {
   if (!config.site.dataSaver?.enabled || !config.dataSaverTheme) return null;
   const assets = new Map(items.map(item => [item.path, item]));
-  const compile = (path, parents = new Set()) => {
-    if (parents.has(path)) throw new Error('Circular data-saving layout import: ' + path);
-    if (/^edgepress\/fonts(?:\/|\.css$)/.test(path)) return postcss.root();
-    const asset = assets.get(path);
-    if (!asset?.content) throw new Error('Missing data-saving layout stylesheet: ' + path);
-    const normalized = transformSync(asset.content.toString('utf8'), { loader: 'css', minify: true, legalComments: 'inline' }).code;
-    const tree = postcss.parse(normalized, { from: path });
-    const chain = new Set([...parents, path]);
-    tree.walkAtRules(rule => {
-      if (rule.name.toLowerCase() === 'font-face') rule.remove();
-      else if (rule.name.toLowerCase() === 'import') {
-        const match = rule.params.match(/^(?:url\(\s*)?(['"])([^'"]+)\1\s*\)?\s*$/);
-        if (!match || /^(?:[a-z]+:|\/\/)/i.test(match[2])) { rule.remove(); return; }
-        const source = match[2].split(/[?#]/, 1)[0];
-        const target = source.startsWith('/') ? source.slice(1) : posix.normalize(posix.join(posix.dirname(path), source));
-        if (target.startsWith('../') || !target.endsWith('.css')) throw new Error('Invalid data-saving layout import');
-        rule.replaceWith(...compile(target, chain).nodes);
-      }
-    });
-    tree.walkDecls(declaration => {
-      if (/url\s*\(/i.test(declaration.value)) declaration.remove();
-    });
-    return tree;
-  };
-  const paths = [...(config.dataSaverTheme.layoutStyles || []), config.dataSaverTheme.stylesheet, ...(assets.has('edgepress/external-links.css') ? ['edgepress/external-links.css'] : [])].filter(Boolean);
-  const css = paths.map(file => compile(file).toString()).join('\n');
-  const result = await transform(css, { loader: 'css', minify: true, legalComments: 'inline' });
-  return { path: 'edgepress/data-saver-layout.css', content: Buffer.from(result.code), sourceName: 'Data-saving theme layout' };
+  const paths = [
+    ...(config.dataSaverTheme.layoutStyles || []),
+    config.dataSaverTheme.stylesheet,
+    ...(assets.has('edgepress/external-links.css') ? ['edgepress/external-links.css'] : [])
+  ].filter(Boolean);
+  const css = minifyCss(paths.map(file => compileFontlessCss(file, assets)).join('\n'));
+  return { path: 'edgepress/data-saver-layout.css', content: Buffer.from(css), sourceName: 'Data-saving theme layout' };
 }
 
 function featureFor(source) {
@@ -101,9 +85,10 @@ export function dataSaverHtml(html, config, manifest = {}) {
     const language = html.match(/<html\b[^>]*\blang=["']([^"']+)/i)?.[1] || config.i18n.defaultLocale;
     const settings = JSON.stringify({ enabled: false, notFoundUrl: localizedUrl(config, language, '404.html') }).replace(/</g, '\\u003c');
     const source = escape(manifest['/edgepress/data-saver.js'] || '/edgepress/data-saver.js');
-    return html.replace(/(<meta\b[^>]*charset[^>]*>|<head\b[^>]*>)/i, '$1<script id="edgepress-data-saver-config" type="application/json">' + settings + '</script><script src="' + source + '"></script>');
+    // Use defer so disabled data-saver never blocks HTML parsing or first paint.
+    return html.replace(/(<meta\b[^>]*charset[^>]*>|<head\b[^>]*>)/i, '$1<script id="edgepress-data-saver-config" type="application/json">' + settings + '</script><script defer src="' + source + '"></script>');
   }
-  const document = parseDocument(html, { withStartIndices: true, withEndIndices: true });
+  const document = parseDocument(html);
   const patches = [];
   let head;
   let body;
@@ -125,22 +110,22 @@ export function dataSaverHtml(html, config, manifest = {}) {
     if (resource) {
       if (resource === 'style' && attributes.rel === 'stylesheet' && featureFor(attributes.href || '') !== 'fonts' && !essentialStyles.test(attributes.href)) {
         try {
-          if (new URL(attributes.href,config.site.url).origin === new URL(config.site.url).origin) fullStyles.push({href:attributes.href,rel:'preload',as:'style'});
+          if (new URL(attributes.href, config.site.url).origin === new URL(config.site.url).origin) fullStyles.push({ href: attributes.href, rel: 'preload', as: 'style' });
         } catch {}
       }
       const coreScripts = config.dataSaverCore?.scripts || [];
       if (resource === 'script' && coreScripts.some(path => (manifest[path] || path) === attributes.src)) {
-        patches.push({ start:node.startIndex, end:node.endIndex + 1, text:'<noscript>' + original + '</noscript>' });
+        patches.push({ start: node.startIndex, end: node.endIndex + 1, text: '<noscript>' + original + '</noscript>' });
         return;
       }
       if (resource === 'style' && essentialStyles.test(attributes.href)) {
-        patches.push({ start:node.startIndex, end:node.endIndex + 1, text:'<noscript>' + original + '</noscript>' });
+        patches.push({ start: node.startIndex, end: node.endIndex + 1, text: '<noscript>' + original + '</noscript>' });
         return;
       }
       const core = resource === 'script' && !optionalScripts.test(attributes.src) && attributes['data-data-optional'] === undefined || resource === 'style' && essentialStyles.test(attributes.href);
       if (core && resource === 'script') {
         try {
-          if (new URL(attributes.src,config.site.url).origin === new URL(config.site.url).origin) textScripts.push({href:attributes.src,rel:attributes.type === 'module' ? 'modulepreload' : 'preload',...(attributes.type === 'module' ? {} : {as:'script'})});
+          if (new URL(attributes.src, config.site.url).origin === new URL(config.site.url).origin) textScripts.push({ href: attributes.src, rel: attributes.type === 'module' ? 'modulepreload' : 'preload', ...(attributes.type === 'module' ? {} : { as: 'script' }) });
         } catch {}
       }
       patches.push({ start: node.startIndex, end: node.endIndex + 1, text: '<template data-edgepress-data-resource="' + resource + '" data-data-feature="' + (core ? 'core' : featureFor(attributes.src || attributes.href || '')) + '">' + original + '</template><noscript>' + original + '</noscript>' });
@@ -152,7 +137,7 @@ export function dataSaverHtml(html, config, manifest = {}) {
         const source = name === 'picture' ? node.children?.find(child => child.name === 'source')?.attribs : null;
         const href = source?.srcset?.split(',')[0].trim().split(/\s+/)[0] || candidate.src;
         try {
-          if (new URL(href,config.site.url).origin === new URL(config.site.url).origin) firstImage = {href,srcset:source?.srcset || candidate.srcset,sizes:source?.sizes || candidate.sizes,type:source?.type};
+          if (new URL(href, config.site.url).origin === new URL(config.site.url).origin) firstImage = { href, srcset: source?.srcset || candidate.srcset, sizes: source?.sizes || candidate.sizes, type: source?.type };
         } catch {}
       }
       const label = mediaLabel(node);
@@ -171,8 +156,8 @@ export function dataSaverHtml(html, config, manifest = {}) {
   if (!head || !body) return html;
   const keys = ['load', 'loading', 'loadingNotice', 'loadFailed', 'retry', 'progressStyles', 'progressControls', 'progressMedia', 'slowTitle', 'slowNotice', 'switchText', 'keepFull', 'returnFull', 'textNotice', 'missingDescription'];
   const labels = Object.fromEntries(keys.map(key => [key, translate(config, locale, 'dataSaver' + key[0].toUpperCase() + key.slice(1))]));
-  const textPreloads = [{href:manifest['/edgepress/data-saver-layout.css'] || '/edgepress/data-saver-layout.css',rel:'preload',as:'style'}, ...(config.dataSaverCore ? [{href:manifest[config.dataSaverCore.path] || config.dataSaverCore.path,rel:'modulepreload'}] : []), ...textScripts];
-  const settings = JSON.stringify({ ...config.site.dataSaver, labels, textPreloads, fullPreloads:[...fullStyles,...textPreloads], firstImage, notFoundUrl: localizedUrl(config, locale, '404.html') }).replace(/</g, '\\u003c');
+  const textPreloads = [{ href: manifest['/edgepress/data-saver-layout.css'] || '/edgepress/data-saver-layout.css', rel: 'preload', as: 'style' }, ...(config.dataSaverCore ? [{ href: manifest[config.dataSaverCore.path] || config.dataSaverCore.path, rel: 'modulepreload' }] : []), ...textScripts];
+  const settings = JSON.stringify({ ...config.site.dataSaver, labels, textPreloads, fullPreloads: [...fullStyles, ...textPreloads], firstImage, notFoundUrl: localizedUrl(config, locale, '404.html') }).replace(/</g, '\\u003c');
   const asset = path => escape(manifest[path] || path);
   const variant = config.dataSaverTheme;
   if (!variant) throw new Error('Missing data-saving theme variant');

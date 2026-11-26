@@ -3,7 +3,7 @@
   "title": "Project introduction",
   "lang": "en",
   "slug": "project-introduction",
-  "description": "EdgePress architecture, release policy, feature maturity, and supported runtime baseline.",
+  "description": "How EdgePress is structured, why it uses zero runtime dependencies, and what runtimes it supports.",
   "blocks": [
     {
       "columns": 1,
@@ -12,8 +12,8 @@
           {
             "type": "hero",
             "eyebrow": "Project overview",
-            "title": "A static site builder with editable pages and Markdown articles.",
-            "text": "EdgePress separates content, presentation, trusted build-time plugins, and Worker request handling so each part has a clear place to change."
+            "title": "A zero-dependency static site builder.",
+            "text": "EdgePress keeps content, themes, and build scripts separate so you know exactly which file to edit when you want to change text, layout, or deployment settings."
           }
         ]
       ]
@@ -24,19 +24,19 @@
         [
           {
             "type": "feature-grid",
-            "title": "Project boundaries",
+            "title": "Three clear folders",
             "items": [
               {
-                "title": "Pages",
-                "text": "Each localized page stores its metadata, ordered rows, column counts and elements in one JSON object."
+                "title": "Pages (content/pages/)",
+                "text": "Store page metadata, row column counts, and ordered blocks in one JSON file per language."
               },
               {
-                "title": "Posts",
-                "text": "Each article is a Markdown document rendered with the built-in sanitizing pipeline."
+                "title": "Posts (content/posts/)",
+                "text": "Write articles in Markdown. The built-in parser renders HTML and strips unsafe tags."
               },
               {
-                "title": "Themes",
-                "text": "HTML layouts, shared partials, and hard-coded CSS palettes control site presentation."
+                "title": "Themes (themes/)",
+                "text": "Keep HTML layouts, shared header/footer partials, and CSS palettes in one place."
               }
             ]
           }
@@ -54,7 +54,7 @@
             "blocks": [
               {
                 "type": "data-table",
-                "title": "Runtime and capability status for this release",
+                "title": "Runtime and feature status (2026.11.1)",
                 "headers": [
                   "Area",
                   "Baseline",
@@ -63,22 +63,22 @@
                 "rows": [
                   [
                     "Build CLI",
-                    "Node.js 22.12 or newer",
+                    "Node.js 22.12+ with zero runtime dependencies",
                     "Stable"
                   ],
                   [
-                    "Website runtime",
-                    "Static HTML and local browser JavaScript",
+                    "Generated website",
+                    "Static HTML, subsetted WOFF2 fonts, minified CSS and JS",
                     "Stable"
                   ],
                   [
-                    "Static publishing",
-                    "Cloudflare, Vercel, EdgeOne Pages and ESA Pages",
+                    "Static hosting",
+                    "Cloudflare, Vercel, Netlify, EdgeOne Pages, ESA Pages, VPS",
                     "Stable"
                   ],
                   [
-                    "Website backend",
-                    "Not required for static publishing",
+                    "Built-in preview",
+                    "Zero-dependency Node.js server + visual Pages editor",
                     "Stable"
                   ],
                   [
@@ -87,67 +87,15 @@
                     "Experimental"
                   ],
                   [
-                    "Page block builder",
-                    "Ordered rows, 1 to 4 columns, validated elements",
-                    "Experimental"
-                  ],
-                  [
                     "Optional external services",
-                    "config.yml consent registry and independent HTTPS endpoints",
-                    "Experimental"
+                    "Consent registry in config.yml with strict CSP",
+                    "Stable"
                   ]
                 ]
               },
               {
                 "type": "text",
-                "text": "The compatibility manifest is project-compatibility.json. The Worker compatibility date is pinned in wrangler.jsonc. Static page delivery does not require nodejs_compat."
-              }
-            ]
-          }
-        ]
-      ]
-    },
-    {
-      "columns": 1,
-      "cells": [
-        [
-          {
-            "type": "section",
-            "title": "Release and feature lifecycle",
-            "blocks": [
-              {
-                "type": "data-table",
-                "title": "Feature stages",
-                "headers": [
-                  "Stage",
-                  "Meaning"
-                ],
-                "rows": [
-                  [
-                    "Experimental",
-                    "Usable, with configuration or behavior that may change in a minor release."
-                  ],
-                  [
-                    "Stable",
-                    "Follows semantic versioning; breaking changes require a major release."
-                  ],
-                  [
-                    "Deprecated",
-                    "Remains available for at least two minor releases and is removed in a major release, except for urgent security issues."
-                  ],
-                  [
-                    "Removed",
-                    "No longer shipped; the compatibility manifest records the removal release."
-                  ]
-                ]
-              },
-              {
-                "type": "text",
-                "paragraphs": [
-                  "Monthly releases use the year.month.request format. This release is 2026.9.10: the tenth requested release update for September 2026.",
-                  "Ship a minor release when the monthly review is ready, and use patch releases for defects, security fixes, and dependency updates. Support the previous major release with security fixes for 12 months after a new major line begins.",
-                  "Before a release, update project-compatibility.json and this feature matrix together. Run edgepress doctor to review the local Node.js version, Worker entry, and configured compatibility date."
-                ]
+                "text": "Check project-compatibility.json for the pinned Node.js baseline, and run edgepress doctor to verify your local setup before publishing."
               }
             ]
           }

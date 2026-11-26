@@ -45,14 +45,8 @@ jobs:
           RELEASE_VERSION: ${{ steps.version.outputs.version }}
         run: npm version "$RELEASE_VERSION" --no-git-tag-version --ignore-scripts
 
-      - name: Install current compatible dependencies
-        run: npm install --no-audit --no-fund
-
       - name: Dependency security audit
         run: npm run audit
-
-      - name: Install browsers for the full test suite
-        run: npx playwright install --with-deps chromium firefox
 
       - name: Run tests
         run: npm test

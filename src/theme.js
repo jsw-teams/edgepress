@@ -30,24 +30,25 @@ function navigationItems(config, locale, items, currentPath = '', scope = 'prima
       item.url === '@archives' ? localizedUrl(config, locale, 'archives/') :
         item.url === '@feed' ? localizedUrl(config, locale, 'rss.xml') :
           item.url === '@search' ? localizedUrl(config, locale, 'search/') :
-          item.url.startsWith('/') ? localizedUrl(config, locale, item.url) : item.url;
+            item.url.startsWith('/') ? localizedUrl(config, locale, item.url) : item.url;
     const label = item.labels?.[locale] ?? item.labels?.[config.i18n.defaultLocale] ?? translate(config, locale, item.key);
     const iconName = item.icon || defaultNavigationIcons[item.key];
     const icon = isIconName(iconName) ? renderIcon(iconName, 'navigation-icon') : '';
     const attributes = item.target === '_blank' ? ' target="_blank" rel="noopener noreferrer"' : '';
+    const current = currentPath && path === currentPath ? ' aria-current="page"' : '';
     if (item.children?.length) {
-      const choices = [{ path, label, target:item.target }, ...item.children.map(child => ({
+      const choices = [{ path, label, target: item.target }, ...item.children.map(child => ({
         path: child.url === '@home' ? localizedUrl(config, locale, '') : child.url === '@archives' ? localizedUrl(config, locale, 'archives/') :
           child.url === '@feed' ? localizedUrl(config, locale, 'rss.xml') : child.url === '@search' ? localizedUrl(config, locale, 'search/') :
-          child.url.startsWith('/') ? localizedUrl(config, locale, child.url) : child.url,
-        label: child.labels?.[locale] ?? child.labels?.[config.i18n.defaultLocale] ?? translate(config, locale, child.key), target:child.target
+            child.url.startsWith('/') ? localizedUrl(config, locale, child.url) : child.url,
+        label: child.labels?.[locale] ?? child.labels?.[config.i18n.defaultLocale] ?? translate(config, locale, child.key), target: child.target
       }))];
       return '<span class="navigation-select" hidden>' + icon + '<select name="edgepress-navigation-' + scope + '-' + index + '" data-navigation-select aria-label="' + escapeHtml(label) + '">' +
         '<option value="" selected disabled hidden>' + escapeHtml(label) + '</option>' +
-        choices.map(choice => '<option value="' + escapeHtml(choice.path) + '"'+(choice.target==='_blank'?' data-target="_blank"':'')+'>' + escapeHtml(choice.label) + '</option>').join('') +
-        '</select></span><noscript>' + choices.map(choice => '<a href="' + escapeHtml(choice.path) + '"'+(choice.target==='_blank'?' target="_blank" rel="noopener noreferrer"':'')+'>' + escapeHtml(choice.label) + '</a>').join('') + '</noscript>';
+        choices.map(choice => '<option value="' + escapeHtml(choice.path) + '"' + (choice.target === '_blank' ? ' data-target="_blank"' : '') + '>' + escapeHtml(choice.label) + '</option>').join('') +
+        '</select></span><noscript>' + choices.map(choice => '<a href="' + escapeHtml(choice.path) + '"' + (choice.target === '_blank' ? ' target="_blank" rel="noopener noreferrer"' : '') + '>' + escapeHtml(choice.label) + '</a>').join('') + '</noscript>';
     }
-    return '<a href="' + escapeHtml(path) + '"'+attributes+'>' + icon + escapeHtml(label) + '</a>';
+    return '<a href="' + escapeHtml(path) + '"' + current + attributes + '>' + icon + escapeHtml(label) + '</a>';
   }).join('');
 }
 
@@ -96,6 +97,34 @@ async function loadLayout(config) {
     })();
   }
   return config.layoutPromise;
+}
+
+function lcpImagePreload(html, siteUrl) {
+  const pictureMatch = html.match(/<picture\b[^>]*>[\s\S]*?<\/picture>/i);
+  if (pictureMatch && /\bfetchpriority=["']high["']/i.test(pictureMatch[0])) {
+    const source = pictureMatch[0].match(/<source\b[^>]*>/i)?.[0] || '';
+    const img = pictureMatch[0].match(/<img\b[^>]*>/i)?.[0] || '';
+    const attr = (tag, name) => tag.match(new RegExp('\\s' + name + '=["\']([^"\']+)["\']', 'i'))?.[1];
+    const srcset = attr(source, 'srcset') || attr(img, 'srcset');
+    const sizes = attr(source, 'sizes') || attr(img, 'sizes');
+    const href = srcset ? srcset.split(',')[0].trim().split(/\s+/)[0] : attr(img, 'src');
+    const type = attr(source, 'type');
+    if (href && href.startsWith('/')) {
+      return '<link rel="preload" as="image" href="' + escapeHtml(href) + '"' +
+        (srcset ? ' imagesrcset="' + escapeHtml(srcset) + '"' : '') +
+        (sizes ? ' imagesizes="' + escapeHtml(sizes) + '"' : '') +
+        (type ? ' type="' + escapeHtml(type) + '"' : '') +
+        ' fetchpriority="high">';
+    }
+  }
+  const imgMatch = html.match(/<img\b[^>]*\bfetchpriority=["']high["'][^>]*>/i);
+  if (imgMatch) {
+    const src = imgMatch[0].match(/\ssrc=["']([^"']+)["']/i)?.[1];
+    if (src && src.startsWith('/')) {
+      return '<link rel="preload" as="image" href="' + escapeHtml(src) + '" fetchpriority="high">';
+    }
+  }
+  return '';
 }
 
 export async function renderLayout(config, extensions, page, body) {
@@ -178,38 +207,53 @@ export async function renderLayout(config, extensions, page, body) {
   const html = '<!doctype html>' + rendered;
   let filtered = await extensions.filter('html:afterLayout', html, context);
   if (typeof filtered !== 'string') throw new Error('html:afterLayout filters must return a string');
-  filtered = filtered.replace(/<\/head\s*>/i, '<link rel="stylesheet" href="/edgepress/fonts.css"></head>');
-  if (/class="link-directory-section"/.test(filtered)) filtered = filtered.replace(/<\/head\s*>/i, '<link rel="stylesheet" href="/edgepress/link-directory.css"></head>');
-  if(/<img\b[^>]*\sloading=["\']lazy["\']/i.test(filtered))filtered=filtered.replace(/<\/head\s*>/i, '<link rel="stylesheet" href="/edgepress/images.css"></head>');
-  if(/\b(?:post-content|image-block|media-text|data-edgepress-oembed)\b/.test(filtered)){
-    const keys=['openImage','closeImage','zoomIn','zoomOut','saveOriginal','retryMedia','loading','imageUnavailable'];
-    const labels=Object.fromEntries(keys.map(key=>[key,translate(config,locale,'imageViewer'+key[0].toUpperCase()+key.slice(1))]).filter(([key,value])=>value!=='imageViewer'+key[0].toUpperCase()+key.slice(1)));
-    filtered=filtered.replace('</head>','<link rel="stylesheet" href="/edgepress/image-viewer.css"></head>').replace('</body>','<script id="edgepress-image-viewer-config" type="application/json">'+JSON.stringify(labels).replace(/</g,'\\u003c')+'</script><script type="module" src="/edgepress/image-viewer.js"></script></body>');
+
+  // Preload faces.css alongside fonts.css to eliminate the CSS @import serial waterfall.
+  const headAdditions = [];
+  if (!config.site.dataSaver?.enabled) {
+    const heroPreload = lcpImagePreload(filtered, config.site.url);
+    if (heroPreload) headAdditions.push(heroPreload);
+    headAdditions.push('<link rel="preload" as="style" href="/edgepress/fonts/faces.css">');
   }
+  headAdditions.push('<link rel="stylesheet" href="/edgepress/fonts.css">');
+  if (/class="link-directory-section"/.test(filtered)) headAdditions.push('<link rel="stylesheet" href="/edgepress/link-directory.css">');
+  if (/<img\b[^>]*\sloading=["']lazy["']/i.test(filtered)) headAdditions.push('<link rel="stylesheet" href="/edgepress/images.css">');
+
+  const hasLightboxTarget = (/\b(?:post-content|post-change-content|image-block|media-text)\b/.test(filtered) && /<img\b/i.test(filtered)) || /\bdata-edgepress-oembed\b/.test(filtered);
+  if (hasLightboxTarget) {
+    const keys = ['openImage', 'closeImage', 'zoomIn', 'zoomOut', 'saveOriginal', 'retryMedia', 'loading', 'imageUnavailable'];
+    const labels = Object.fromEntries(keys.map(key => [key, translate(config, locale, 'imageViewer' + key[0].toUpperCase() + key.slice(1))]).filter(([key, value]) => value !== 'imageViewer' + key[0].toUpperCase() + key.slice(1)));
+    headAdditions.push('<link rel="stylesheet" href="/edgepress/image-viewer.css">');
+    filtered = filtered.replace(/<\/body\s*>/i, '<script id="edgepress-image-viewer-config" type="application/json">' + JSON.stringify(labels).replace(/</g, '\\u003c') + '</script><script type="module" src="/edgepress/image-viewer.js"></script></body>');
+  }
+
   const scripts = [];
   if (config.site.externalLinks?.enabled) {
     const labels = Object.fromEntries(['title', 'description', 'back', 'continue'].map(key => [key, translate(config, locale, 'externalLink' + key[0].toUpperCase() + key.slice(1))]));
     const settings = { ...config.site.externalLinks, siteUrl: config.site.url, labels };
-    filtered = filtered.replace(/<\/head\s*>/i, '<link rel="stylesheet" href="/edgepress/external-links.css"></head>');
+    headAdditions.push('<link rel="stylesheet" href="/edgepress/external-links.css">');
     scripts.push('<script id="edgepress-external-links-config" type="application/json">' + JSON.stringify(settings).replace(/</g, '\\u003c') + '</script><script type="module" src="/edgepress/external-links.js"></script>');
   }
   if (/<main\b/i.test(filtered)) scripts.push('<script type="module" src="/edgepress/webmcp.js"></script>');
   if (/data-edgepress-(?:media-viewer|video)(?:\s|=|>)/i.test(filtered)) {
-    filtered = filtered.replace(/<\/head\s*>/i, '<link rel="stylesheet" href="/edgepress/media-viewer.css"><link rel="stylesheet" href="/edgepress/image-viewer.css"></head>');
+    headAdditions.push('<link rel="stylesheet" href="/edgepress/media-viewer.css">');
+    if (!hasLightboxTarget) headAdditions.push('<link rel="stylesheet" href="/edgepress/image-viewer.css">');
     scripts.push('<script type="module" src="/edgepress/media-viewer.js"></script>');
     if (filtered.includes('data-media-service')) scripts.push('<script defer src="/edgepress/services-consent.js"></script>');
   }
   if (/data-edgepress-document(?:\s|=|>)/i.test(filtered)) {
     const keys = ['preview', 'close', 'loading', 'error', 'page', 'sheet'];
     const labels = Object.fromEntries(keys.map(key => [key, translate(config, locale, 'documentViewer' + key[0].toUpperCase() + key.slice(1))]));
-    filtered = filtered.replace(/<\/head\s*>/i, '<link rel="stylesheet" href="/edgepress/document-viewer/styles.css"></head>');
+    headAdditions.push('<link rel="stylesheet" href="/edgepress/document-viewer/styles.css">');
     scripts.push('<script id="edgepress-document-viewer-config" type="application/json">' + JSON.stringify(labels).replace(/</g, '\\u003c') + '</script><script type="module" src="/edgepress/document-viewer.js"></script>');
     if (filtered.includes('data-document-service')) scripts.push('<script defer src="/edgepress/services-consent.js"></script>');
   }
   if (filtered.includes('data-project-demo')) scripts.push('<script defer src="/edgepress/project-demo.js"></script>');
   if (filtered.includes('data-local-time')) scripts.push('<script defer src="/edgepress/local-time.js"></script>');
   if (filtered.includes('data-navigation-select')) scripts.push('<script defer src="/edgepress/navigation-select.js"></script>');
-  if (!/src=["']\/edgepress\/code-copy\.js["']/i.test(filtered)) scripts.push('<script defer src="/edgepress/code-copy.js"></script>');
+  if (/<pre\b/i.test(filtered) && !/src=["']\/edgepress\/code-copy\.js["']/i.test(filtered)) {
+    scripts.push('<script defer src="/edgepress/code-copy.js"></script>');
+  }
   if (/data-post-toc(?:\s|>)/i.test(filtered) && !/src=["']\/edgepress\/post-toc\.js["']/i.test(filtered)) {
     scripts.push('<script defer src="/edgepress/post-toc.js"></script>');
   }
@@ -222,6 +266,10 @@ export async function renderLayout(config, extensions, page, body) {
   if (/data-edgepress-service(?:\s|=|>)/i.test(filtered) && !/src=["']\/edgepress\/services-consent\.js["']/i.test(filtered)) {
     scripts.push('<script defer src="/edgepress/services-consent.js"></script>');
   }
+  if (config.i18n.locales.length <= 1) {
+    filtered = filtered.replace(/<script\s+defer\s+src=["']\/edgepress\/language-select\.js["']\s*><\/script>/gi, '');
+  }
+  filtered = filtered.replace(/<\/head\s*>/i, headAdditions.join('') + '</head>');
   if (!scripts.length) return filtered;
   const integration = scripts.join('');
   return /<\/body\s*>/i.test(filtered)

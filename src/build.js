@@ -7,16 +7,16 @@ import { loadConfig } from './config.js';
 import { readDocuments, sortPostsNewest } from './content.js';
 import { plainText, hasMarkdownVideo } from './markdown.js';
 import { createExtensions } from './plugin-api.js';
-import { collectAssets, rewriteAssetLinks, writeAssets } from './assets.js';
+import { collectAssets, pruneUnusedFonts, rewriteAssetLinks, writeAssets } from './assets.js';
 import { loadLanguagePacks } from './i18n.js';
 import { contentPermissions, extendConsentPolicy, injectConsentPolicy } from './consent-csp.js';
 import { generateBuiltinRoutes } from './generators.js';
-import {reserveImageDimensions,collectImageDimensions} from './image-dimensions.js';
-import {reserveVideoMetadata} from './video-metadata.js';
+import { reserveImageDimensions, enhanceImageAttributes, collectImageDimensions } from './image-dimensions.js';
+import { reserveVideoMetadata } from './video-metadata.js';
 import { dataSaverHtml, configureDataSaver } from './data-saver.js';
 
-const RENDER_CACHE_VERSION = 3;
-const MARKDOWN_SECURITY_POLICY_VERSION = 5;
+const RENDER_CACHE_VERSION = 4;
+const MARKDOWN_SECURITY_POLICY_VERSION = 6;
 const DOCUMENT_ELEMENTS = new Set(['document']);
 const MEDIA_ELEMENTS = new Set(['media-viewer']);
 
@@ -85,21 +85,14 @@ function needsMediaViewer(document) {
     containsElementType(document.blocks, MEDIA_ELEMENTS);
 }
 
-async function markdownRuntimeVersion(root) {
-  const lockPath = resolve(root, 'package-lock.json');
-  const rendererSources=await Promise.all(['markdown.js','embed.js','document.js','oembed.js','plugin-api.js','i18n.js'].map(file=>readFile(new URL('./'+file,import.meta.url))));
-  const digest=createHash('sha256');for(const source of rendererSources)digest.update(source);
-  const implementation=digest.digest('hex');
-  try {
-    const lock = JSON.parse(await readFile(lockPath, 'utf8'));
-    const marked = lock.packages?.['node_modules/marked']?.version;
-    const sanitizer = lock.packages?.['node_modules/sanitize-html']?.version;
-    if (typeof marked === 'string' && typeof sanitizer === 'string') return implementation + ':' + marked + ':' + sanitizer;
-    throw new Error('package-lock.json is missing the Markdown renderer or sanitizer version');
-  } catch (error) {
-    if (error.code !== 'ENOENT') throw error;
-    return implementation + ':unlocked';
-  }
+async function markdownRuntimeVersion() {
+  const rendererSources = await Promise.all([
+    'markdown.js', 'embed.js', 'document.js', 'oembed.js', 'plugin-api.js', 'i18n.js',
+    'lib/markdown-parser.js', 'lib/html-sanitize.js', 'lib/html-parser.js'
+  ].map(file => readFile(new URL('./' + file, import.meta.url))));
+  const digest = createHash('sha256');
+  for (const source of rendererSources) digest.update(source);
+  return digest.digest('hex') + ':builtin';
 }
 
 function routeSegments(routePath) {
@@ -204,11 +197,11 @@ export async function acquireBuildLock(directory) {
 }
 
 async function renameOutput(source, target) {
-  for(let attempt=0;;attempt++) {
-    try{return await rename(source,target);}
-    catch(error){
-      if(process.platform!=='win32'||!['EPERM','EBUSY'].includes(error.code)||attempt>=5)throw error;
-      await new Promise(resolve=>setTimeout(resolve,200*2**attempt));
+  for (let attempt = 0; ; attempt++) {
+    try { return await rename(source, target); }
+    catch (error) {
+      if (process.platform !== 'win32' || !['EPERM', 'EBUSY'].includes(error.code) || attempt >= 5) throw error;
+      await new Promise(resolve => setTimeout(resolve, 200 * 2 ** attempt));
     }
   }
 }
@@ -251,6 +244,7 @@ async function writeRoutes(routes, stage, assetBundle, extensions, site, config)
     if (typeof body !== 'string') throw new Error('route:body filters must return a string for ' + route.path);
     body = rewriteAssetLinks(body, assetBundle.urlMap);
     body = reserveImageDimensions(body, assetBundle.imageDimensions, route.path, site.config.site.url);
+    body = enhanceImageAttributes(body);
     body = reserveVideoMetadata(body, assetBundle.videoMetadata, route.path, site.config.site.url);
     body = dataSaverHtml(body, config, assetBundle.urlMap);
     body = injectConsentPolicy(body, assetBundle.existingHeaders);
@@ -282,9 +276,8 @@ export async function buildSite(root = process.cwd(), options = {}) {
     });
 
     const cacheFile = resolve(config.resolvedPaths.cache, 'render-cache.json');
-    const oldCache = await readCache(cacheFile);
+    const [oldCache, runtimeVersion] = await Promise.all([readCache(cacheFile), markdownRuntimeVersion()]);
     const nextCache = Object.create(null);
-    const runtimeVersion = await markdownRuntimeVersion(config.root);
     const browserPluginsVersion = JSON.stringify(config.browserPlugins);
     const renderer = extensions.renderer('.md');
     if (!renderer) throw new Error('No renderer is registered for Markdown files');
@@ -308,9 +301,9 @@ export async function buildSite(root = process.cwd(), options = {}) {
 
     const now = new Date();
     const visible = documents.filter((document) => !document.draft && publishedByLocalDate(document, now));
-    const revisionAssets=new Map(visible.flatMap(document=>document.revisionAssets??[]).map(asset=>[asset.path,asset]));
+    const revisionAssets = new Map(visible.flatMap(document => document.revisionAssets ?? []).map(asset => [asset.path, asset]));
     assetBundle.assets.push(...revisionAssets.values());
-    for(const [path,size] of await collectImageDimensions([...revisionAssets.values()]))assetBundle.imageDimensions.set(path,size);
+    for (const [path, size] of await collectImageDimensions([...revisionAssets.values()])) assetBundle.imageDimensions.set(path, size);
     let site = {
       config,
       posts: sortPostsNewest(visible.filter((document) => document.kind === 'posts')),
@@ -332,14 +325,20 @@ export async function buildSite(root = process.cwd(), options = {}) {
       routes.push(...(Array.isArray(generated) ? generated : [generated]));
     }
     routes = await extensions.filter('routes:created', routes, { site, config });
+
+    // Prune unused WOFF2 subsets so cloud platforms and VPS uploads stay fast and compact.
+    pruneUnusedFonts(assetBundle, routes, config);
+
     validateRoutes(routes, output, assetBundle);
     config.contentCsp = contentPermissions(routes);
     assetBundle.existingHeaders = extendConsentPolicy(assetBundle.existingHeaders, config);
 
     await mkdir(dirname(output), { recursive: true });
     await mkdir(stage, { recursive: false });
-    await writeAssets(assetBundle, stage, config.concurrency);
-    await writeRoutes(routes, stage, assetBundle, extensions, site, config);
+    await Promise.all([
+      writeAssets(assetBundle, stage, config.concurrency),
+      writeRoutes(routes, stage, assetBundle, extensions, site, config)
+    ]);
     await commitOutput(stage, output);
 
     const cacheTemporary = cacheFile + '.tmp-' + randomUUID();
@@ -351,8 +350,8 @@ export async function buildSite(root = process.cwd(), options = {}) {
       console.warn('Built the new site, but could not update the render cache: ' + error.message);
     }
 
-    console.log('Built ' + routes.length + ' routes from ' + documents.length + ' documents in ' + (Date.now() - started) + 'ms');
-    return { routes: routes.length, documents: documents.length, output };
+    console.log('Built ' + routes.length + ' routes and ' + assetBundle.assets.length + ' assets from ' + documents.length + ' documents in ' + (Date.now() - started) + 'ms');
+    return { routes: routes.length, assets: assetBundle.assets.length, documents: documents.length, output };
   } catch (error) {
     await rm(stage, { recursive: true, force: true }).catch(() => {});
     throw error;

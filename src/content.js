@@ -3,7 +3,7 @@ import { readPostRevision } from './revisions.js';
 import { normalizeCategory, safeAvatar, readingMinutes } from './post-details.js';
 import { readdir, readFile } from 'node:fs/promises';
 import { basename, dirname, extname, relative, resolve, sep } from 'node:path';
-import { parse as parseYaml } from 'yaml';
+import { parse as parseYaml } from './lib/yaml.js';
 import { mapLimit } from './concurrency.js';
 
 export function sortPostsNewest(posts) {

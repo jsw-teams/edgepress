@@ -2,358 +2,107 @@
 
 [中文说明](#中文说明)
 
-A static-site builder for independent writing, small websites and curious experiments. Keep content in plain files and use the host you already have.
+EdgePress builds static websites from Markdown posts, JSON pages, and HTML themes. You keep your files in Git and publish the generated `dist/` folder to Cloudflare Workers, Vercel, Netlify, Tencent EdgeOne Pages, Alibaba Cloud ESA Pages, or your own VPS.
 
-Curious about improving this project? Vibe Coding and AI-assisted contributions are welcome, with no tool restrictions. Start with [Contributing](CONTRIBUTING.md), follow [AGENTS.md](AGENTS.md), and share a small, understandable change with reproducible tests. [Report a bug or idea](https://github.com/jsw-teams/edgepress/issues/new/choose) · [Security](SECURITY.md) · [License](LICENSE).
-
-EdgePress automatically registers page-specific native WebMCP tools for reading visible page content, navigating existing same-origin page links and using available document-preview controls. It uses `document.modelContext` only when supported; otherwise it silently does nothing. No Cloudflare bridge, polyfill, AI provider request or script injection into document frames is needed. Document tools invoke the existing UI without bypassing consent or enabling downloads. Disable Cloudflare’s `webmcp_enabled` injection to avoid duplicate bridges; this is independent of WAF or bot protection.
-
-Document previews use the browser-only `document-viewer` package: PDF, DOC/DOCX, PPT/PPTX and XLS/XLSX render inside the page automatically without moving keyboard focus. Articles accept `!document[Report](/documents/report.docx)`; Pages support `type: document`. Remote direct-file URLs require a configured consent service and CORS. See the theme-development guide.
-
-Viewer dependencies use compatible published Git release ranges from the public [document-viewer](https://github.com/jsw-teams/document-viewer) and [media-viewer](https://github.com/jsw-teams/media-viewer) repositories. Cloud `npm install` needs no sibling checkout, copied implementation or Office conversion software. Publish and validate component releases before raising these ranges; downstream sites must update and verify their installed dependencies too.
+- **Zero runtime dependencies**: EdgePress runs directly on Node.js 22.12+. It includes built-in YAML, Markdown, HTML sanitization, CSS/JS minification, image-dimension inspection, diffing, and a local preview server. Cloud platforms skip heavy `npm install` steps.
+- **Fast static output**: The builder subsets local Noto fonts to the characters your site uses, minifies and fingerprints CSS and JS, preloads critical assets, and loads optional scripts only on pages that need them.
+- **Simple commands**: Use `edgepress new "Title"` to start a post, `edgepress s` to preview and edit pages locally, `edgepress g` to build `dist/`, and `edgepress d` to publish over SSH/SFTP.
+- **Four built-in themes**: `default`, `atelier`, `signal`, and `folio`, each supporting light/dark modes and optional text-only data-saving mode.
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/jsw-teams/edgepress)
-[![Deploy to EdgeOne Pages](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Fjsw-teams%2Fedgepress&build-command=npm%20run%20build&install-command=npm%20install&output-directory=dist)
+[![Deploy to EdgeOne Pages](https://cdnstatic.tencentcs.com/edgeone/pages/deploy.svg)](https://edgeone.ai/pages/new?repository-url=https%3A%2F%2Fgithub.com%2Fjsw-teams%2Fedgepress&build-command=npm%20run%20build&install-command=npm%20install%20--omit%3Ddev&output-directory=dist)
 [![Deploy to Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fjsw-teams%2Fedgepress)
 [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/jsw-teams/edgepress)
 [![Import into ESA Pages](content/assets/edgepress/brand/deploy-esa.svg)](https://esa.console.aliyun.com/edge/pages/creation)
 
-The Cloudflare button creates a copy of this repository in your GitHub account and a new Worker in your Cloudflare account. It is for creating a separate site, not updating an existing one. Choose unused destination repository and Worker names during setup. If `edgepress` already exists, choose a different name such as `my-edgepress-site`; to update an existing deployment, use that repository's connected Workers Builds integration instead of clicking the button again.
-
-EdgePress builds static websites for Cloudflare, Vercel, Netlify, Tencent EdgeOne Pages and Alibaba Cloud ESA Pages.
-
-Built-in themes include local Noto fonts for English and simplified/traditional Chinese. Unicode subsets load on demand, with no font CDN or requirement to install Chinese fonts. Custom themes can use the shared font variables described in the [theme guide](content/pages/theme-development/en.json).
-
-Content images open a zoomable, closable viewer. The [media-viewer component](https://github.com/jsw-teams/media-viewer) is bundled locally; original images load on click when an original URL is provided.
-
-The builder automatically explains the latest article edit. Readers see formatted **Previously / Now** passages, actual before-and-after local pictures, and clear additions or removals in responsive cards that inherit the theme palette. Changed pictures receive hashed snapshots from Git, so replacing or removing the original file does not break the comparison. Set `showChanges: false` to hide the panel for an article.
-
-![An article update rendered as readable before-and-after cards](content/assets/images/previews/edgepress-revisions-en.png)
-
-[中文说明：写文建站](content/guides/zh-cn.md) | [Free-tier comparison](content/guides/platforms.md)
-
-![EdgePress website preview](content/assets/images/previews/edgepress-en.webp)
-
-Buttons open repository setup. Cloudflare, Vercel, Netlify and EdgeOne support repository templates; ESA opens its official import screen, where you authorize GitHub and select the repository. Every static platform uses `npm run build` and `dist/`; no database or website Function is required. Write posts in Markdown, compose pages from editable rows and elements, choose a shared theme, and build the site into dist/.
-
-Real VM recording: the actual CLI creates a post, Geany saves its Markdown, and `npm run deploy:local` starts the preview before navigating from the homepage to the article.
-
-![Real CLI, editor and browser demonstration](content/assets/images/previews/edgepress-cli-local.9697a9de52bef936.gif)
-
-For a separate API or origin firewall, [EdgeAegis](https://github.com/jsw-teams/edgeaegis) executes native OWASP CRS across the same five cloud platforms and Node.js. Its README includes a real terminal GIF demonstrating multiple business functions, HTTPS origins, independent origin keys and actual blocked requests. EdgePress remains a static-site builder; this optional integration does not add a website Function or expose private origin configuration.
-
 ## Quick start
 
-The commands below install the published npm release and initialize a new project directory. For the latest GitHub changes, use the deployment buttons or clone this repository, then run `npm install`, `npm link` and `edgepress s` from its root:
-
-    mkdir my-edgepress-site
-    cd my-edgepress-site
-    npm install edgepress
-    npx edgepress init
-    npm install
-    npx edgepress s
-
-Use Node.js 22.12 or newer. Set the real site URL and operator contact in config.yml before publishing. Deploy with `npm run deploy:cloudflare`, `npm run deploy:vercel`, `npm run deploy:netlify`, `npm run deploy:esa` or `npm run deploy:edgeone`; for an SSH VPS, configure deploy.vps then run `npm run deploy:vps`. `npm run deploy:local` starts the loopback preview without uploading a site. When developing EdgePress itself, use `npm install`, then `npm link` to expose the local CLI.
-
-Run `edgepress init` in a new project directory to scaffold a site pinned to the installed EdgePress release. The initializer keeps the existing package name and adds the site's CLI scripts.
-
-## Maintainer npm and GitHub releases
-
-Releases use **year.month.number of updates in that month**, not the calendar day. For example, `2026.10.12` is the twelfth update in October 2026; `2026.10.13` follows it, and November starts at `2026.11.1`. The release workflow uses **UTC** for the month boundary and checks `package.json`, existing `vYYYY.M.N` tags and published npm versions to avoid reusing a version.
-
-Once the npm package owner has configured **Trusted Publishing** at [npmjs.com](https://www.npmjs.com/package/edgepress/access), choose GitHub Actions with owner `jsw-teams`, repository `edgepress`, workflow filename **`publish.yml`**, and allow **`npm publish`** (not only staging). No environment name is used. This is a one-time npm-side setup; no long-lived `NPM_TOKEN` is required. Restrict traditional publish tokens after confirming the first successful trusted publish.
-
-To publish new source, a repository maintainer opens **Actions → Publish npm and GitHub Release → Run workflow** on `main`. The manual-only job installs Node 22 and npm 11, determines the next monthly update number, updates both package manifests, audits dependencies, runs the full browser test suite, builds the project and packs the source. Only after all checks pass does it push a non-force release commit and tag, publish that exact archive to npm with provenance, and create a GitHub Release containing the same `.tgz` and SHA-256 checksum. Ordinary pushes and PRs cannot trigger a publish.
-
-**Recovery:** If a run fails *after* pushing its version tag, do not launch a new release blindly: check whether the tag, npm version or GitHub Release already exists and reconcile the incomplete publish first. npm versions cannot be overwritten. Protected branches must explicitly permit the GitHub Actions bot to create the release commit/tag or use a maintainer-approved release branch process.
-
-## Visual Pages editor / 可视化页面编辑器
-
-[Watch the 119-second Pages editor recording / 观看元素块页面编辑实录](content/assets/images/previews/edgepress-pages-editor.ff8bca7c33103715.mp4) — switch the editor language, use the block library and structure tree, arrange columns and nested sections, edit card fields, upload an image, save, and preview the themed result.
-
-![Real Pages element editing in the redesigned editor](content/assets/images/previews/edgepress-pages-editor.05c7a382fee4f0a9.gif)
-
-Run `edgepress s` (or `npx edgepress s` in an initialized site), open **http://127.0.0.1:8787/** and choose **Edit Pages / 编辑 Pages**. The editor opens at **http://127.0.0.1:8787/__edgepress/** on the same local preview server; use **返回网站预览** to return to the actual themed site. Saving a Page triggers the preview rebuild. Choose **＋ 新建页面** to create a Page with a title, optional URL slug and configured language. Existing Pages can be selected, arranged into 1–4 columns and edited without touching JSON.
-
-Drag an element's **⠿** handle to reorder it, move it to another column, or place it inside a section. The inspector's **移动到其他行、栏或分区** controls provide the same operation with explicit destination and position choices. Nested sections appear in both the structure tree and canvas; copying, undo and redo preserve unknown element fields. Empty containers remain visible while arranging a draft and must be filled or explicitly removed before saving. Reducing the column count keeps the existing elements.
-
-Choose **图片** in a column, or **选择或上传图片** on an image or media-text element. Search existing project images or upload a JPG, PNG, WebP or GIF up to 10 MB; uploaded files go into `content/assets/uploads/` with content hashes, without replacing originals. The canvas previews local pictures without fetching remote images. Structure, canvas and inspector scroll independently on desktop; typing updates only the current element preview.
-
-中文：拖动 **⠿** 可跨栏移动元素、调整顺序或放进分区，也可在属性面板里指定目标和位置。图片按钮支持从项目图片库选择或上传文件，再填写说明与图注。撤销、重做和复制可恢复调整；空栏或空分区需补充内容或明确移除后再保存。
-
-从命令行也可以新建页面：
+Install Node.js 22.12 or newer. Create a new site and open the local preview:
 
 ```sh
-edgepress new pages "About our project" --lang en --slug about
-edgepress new pages "关于我们" --lang zh-cn --slug about
+mkdir my-edgepress-site
+cd my-edgepress-site
+npm install edgepress
+npx edgepress init
+npx edgepress s
 ```
 
-The shortcut `edgepress new page` is also accepted. By default, the CLI creates `content/pages/<slug>/<locale>.json` in the site's default language. Existing pages, legacy `.md` equivalents, and symlinked directories cannot be overwritten. The generated `$schema` reference points to the installed framework (or the local development schema). Use `edgepress s` to continue editing and previewing, and `edgepress generate` (or `edgepress g`) to generate the static site.
+Open `http://127.0.0.1:8787/` to view your site. Click **Edit Pages** to arrange rows, columns, and blocks at `http://127.0.0.1:8787/__edgepress/`.
 
-**Shared block catalog:** `src/page-block-catalog.json` ships with the npm package and provides 29 reusable starter templates for the 30 schema-supported Pages types. The legacy `hero` renderer remains available to existing pages, but its fixed layout is no longer offered for new content; use headings, text, images and sections to compose a page. The catalog also includes reusable `link-directory`, `media-text`, `feature-grid`, `privacy-controller`, `document`, `media-viewer` and consent-controlled integrations. Third-party service, CAPTCHA, ad and local-tool blocks require site configuration and valid resource URLs before a build; inserting a template does not activate a service.
+Before you publish, update `site.url` and `privacy.controller` in `config.yml`.
 
-The loopback editor ships with Chinese and English interface text. `startPageEditor` accepts `editorTranslations: { ja: { '内容': 'コンテンツ' } }` to add interface languages; untranslated labels fall back to their source text. Block catalog labels may be localized objects such as `{ zh: '提示', en: 'Notice' }`, and `blockCatalog` may override templates for types already supported by the Page schema. A new block type also needs a schema definition, validated renderer and regression coverage.
+## Everyday commands
 
-The editor runs **only on 127.0.0.1**, never on deployed static sites. It enforces origin checks, path restrictions, revision-conflict detection and atomic saves. Unrecognized block properties are kept; complex nested fields can still be edited in the inspector's advanced JSON input. The canvas previews structure, not theme-perfect output. Articles remain Markdown.
+| Command | Shortcut | What it does |
+| --- | --- | --- |
+| `edgepress status` | — | Show site title, theme, locales, and document counts. |
+| `edgepress new "Title"` | `edgepress new post "Title"` | Create a Markdown post in `content/posts/`. |
+| `edgepress new page "Title"` | `edgepress new pages "Title"` | Create a JSON page in `content/pages/`. |
+| `edgepress server` | `edgepress s` | Start the built-in preview server and visual Pages editor. |
+| `edgepress generate` | `edgepress g` / `edgepress build` | Generate the static site in `dist/`. |
+| `edgepress theme list` | — | List installed themes. |
+| `edgepress theme use <name>` | — | Switch the active theme. |
+| `edgepress theme create <name>` | — | Create a blank theme scaffold in `themes/<name>/`. |
+| `edgepress deploy [platform]` | — | Build and deploy to `cloudflare`, `vercel`, `netlify`, `edgeone`, or `esa`. |
+| `edgepress d [--target name]` | `edgepress deploy vps` | Build and upload `dist/` to one or more VPS nodes via SFTP. |
+| `edgepress doctor` | — | Check Node.js version and static publishing settings. |
+| `edgepress check` | — | Run structural, Markdown, and headless browser audits (`tools/reports/page-check.pdf`). |
+| `edgepress clean` | — | Remove `dist/` and temporary report files. |
 
-## External link prompts
+## Writing posts and editing pages
 
-The optional local prompt shows the complete destination URL (including path, query and fragment) once, with no duplicate hostname, and lets the visitor return or continue. It makes no request to the destination before confirmation. Configure exact origins, not wildcard domains:
+- **Posts (`content/posts/<slug>/<locale>.md`)**: Write standard Markdown below the YAML front matter (`title`, `date`, `category`, `tags`, `pinned`). Put local images in `content/assets/images/` and link them as `/images/photo.webp`.
+- **Pages (`content/pages/<slug>/<locale>.json`)**: Compose pages from ordered rows (`columns: 1..4`) and `cells`. Each file references `schemas/pages.schema.json` for editor validation, and you can also edit pages visually from `edgepress s`.
+- **Automatic article updates**: When you edit a post in Git, EdgePress generates a **Previously / Now** comparison card for the latest content change. Set `showChanges: false` in front matter if you want to hide it.
+- **Built-in viewers**: Article images open in a lightweight `<dialog>` lightbox. Local videos (`!video[Caption](/media/clip.mp4)`) and documents (`!document[Report](/docs/report.pdf)`) use built-in zero-dependency players without pulling large external bundles.
 
-```yaml
-site:
-  url: https://example.com
-  externalLinks:
-    enabled: true
-    trustedOrigins:
-      - https://notes.example.com
-```
+## Themes, performance, and data-saving mode
 
-Site paths, anchors, mailto/tel links, downloads and modified/new-tab gestures keep their normal behavior. Ordinary `_blank` clicks show the prompt, then continue in a protected new tab. A trusted origin bypasses only this prompt, never service consent or CSP. Explicit `data-external-link-skip` is available on integration-owned OAuth/service navigation; it does not permit executable URL schemes. No redirect API, tracking or persistent preference is added. JavaScript-disabled browsers follow the original link normally. Theme variables and `--external-link-surface`, `--external-link-ink`, `--external-link-accent` customize the UI; labels use the normal language dictionaries.
+Built-in themes live in `themes/default/`, `themes/atelier/`, `themes/signal/`, and `themes/folio/`.
 
-Large hashed dependency graphs automatically group safe immutable cache rules, never mutable metadata. The build rejects more than 100 static header rules locally instead of discovering the error while publishing. Build and dry-run checks do not authorize deployment.
+- **Automatic font subsetting**: EdgePress scans the characters in your built HTML and keeps only the Noto `.woff2` subsets your site actually uses.
+- **Conditional scripts**: Copy buttons, image viewers, and language selectors load only on pages that need them.
+- **Data-saving mode**: Enable `site.dataSaver.enabled: true` in `config.yml` so visitors on slow links can switch to a lightweight text view that keeps your theme layout while deferring fonts and media.
 
-## Optional data-saving theme variants
+## Deploying
 
-This capability is off by default. Theme authors opt in through `theme.json` with `"dataSaver": { "stylesheet": "data-saver-theme.css", "scripts": [], "layoutStyles": ["style.css"] }`; the variant files live in the theme's `assets/` directory. Optional `layoutStyles` names published CSS assets: the builder creates a minified shared layout, resolves local imports and removes font faces and URL-bearing declarations. It preserves theme tokens, navigation, footer and component layout without downloading fonts or media. The small variant stylesheet then adapts image-heavy components into coherent text cards rather than flattening every grid. Alternatively provide a self-contained text stylesheet without `layoutStyles`. Optional scripts should contain only essential text-view interactions. A theme without this declaration remains unchanged unless its operator explicitly enables the feature, in which case the build explains the missing variant.
+Every static platform runs `npm run build` and serves `dist/`. Because EdgePress has zero runtime dependencies, cloud installs finish in seconds.
 
-Operators can set `site.dataSaver` to `{ enabled: true, debug: false, mode: auto, detectSlowConnection: true, respectBrowserPreference: false, promptAfterMs: 5000 }` in `config.yml`. The default is full view, even on a slow connection or with browser data-saving hints; text view requires an explicit visitor choice. Previously chosen views are remembered, and operators may separately opt into browser preferences with `respectBrowserPreference: true`. The localized waiting screen offers a bottom-right text-view action immediately, before document parsing finishes, and displays completed stylesheet, core-control script and first-screen image counts (not invented byte percentages). The configured 100–60000 ms threshold changes the notice to a slow-loading explanation. Full styles and core controls start only after parsing; reveal waits for those controls to bind, media follows styles, optional engines follow the first screen, and downloaded fonts never gate reading. A focused choice or slow-loading notice remains stable until the visitor decides. Switching navigates to the same page in text view, cancelling outstanding full-view transfers; it cannot recover bytes already received. Keep waiting or Escape never exposes an unfinished page: required styles and controls must finish first. Failed resources retain the waiting screen with a retry action. Text view retains theme layout, system CJK font fallbacks, a full-view return action near the footer and individually requested media/services. Consent alone does not download optional widgets; their Load action requests only the selected service and can resume after consent. Verify real throttled requests, screenshots, separate-page navigation/footer boundaries and early switching, not just unthrottled builds.
+- **Cloudflare Workers**: Connect your GitHub repository with build command `npm run build` and deploy command `npx wrangler deploy`, or run `npm run deploy:cloudflare` locally.
+- **Vercel / Netlify / EdgeOne / ESA**: Use the deploy buttons above or run `npm run deploy:<platform>`.
+- **VPS over SSH/SFTP**: Add `deploy.vps` (or `deploy.vpsTargets` for concurrent multi-node uploads) in a private, uncommitted `config.yml`. Install the optional `ssh2` package if you upload directly via SFTP, then run `edgepress d --dry-run` to check the output before running `edgepress d`. See [agent.md](agent.md) for deployment details.
 
-Build output minifies CSS and JavaScript while preserving source files, public names and license notices. The private waiting-screen runtime also minifies local identifiers and is embedded with its UI CSS under exact CSP hashes, removing two blocking round trips. Built-in text controls and fontless theme layouts each use a single hashed asset; custom script overrides keep their original loading contract. Both views preload their required same-origin styles and controls while parsing, without executing them before the document is ready. Full view can also preload its same-origin high-priority first image, but never optional providers. Web-font styles start after the first screen is revealed and never delay readable system-font text. With JavaScript disabled, noscript restores normal themed HTML, navigation, image content and styles without enabling consent services. Generated HTML places its UTF-8 declaration before CSP and loading assets, within the first 1024 bytes.
+## Privacy and external services
 
-`site.dataSaver.debug: true` enables `/?data-save` (also on localized/article paths) for deterministic text-preview testing without saving a preference. The default is false. Disabled, repeated or nonempty `data-save` parameters navigate to the existing localized static 404 page, not to the homepage. This is a client-side guard, not an HTTP-status or CDN-cache rule; pure static hosts ignore query parameters and operators must configure their host separately if they require a true HTTP 404 before JavaScript. Other query parameters, including OAuth and search, remain untouched. The validated `data-mode=text|full|auto` parameter remains a compatibility and blocked-storage fallback for actual visitor choices, not the debug entry.
+EdgePress ships with no tracking scripts. If you add analytics, comment widgets, or oEmbed providers (`youtube`, `x-posts`, `ishare`) under `plugins.consent.services` in `config.yml`, the browser loads them only after the visitor consents.
 
-Compare each text page with its full version: decorative illustrations may be omitted, but charts, screenshots and diagrams need useful text alternatives and retained captions/source context. Never invent data from a chart or assume missing alt text makes an image decorative. Unlabelled media retains a clear warning and an explicit load action; visitors can request a needed image or return to the full page. Article lists retain their actual headings, dates, excerpts and destinations rather than generic media links.
+## Contributing and license
 
-Text mode keeps readable content, core accessibility, navigation, search and the external-link/consent UI, while images, web fonts, document previews and optional services stay unloaded. Media can be requested individually without restoring the full theme. Full view and no-JavaScript links retain their original behavior. Dynamic theme content can use `window.edgepressDataSaver?.deferMedia(element, activate, accessibleDescription)` before assigning a media URL; it returns a placeholder in text mode and otherwise calls `activate`. Mark nonessential theme scripts with `data-data-optional`. Test actual request logs, not merely hidden pixels. See the theme-development guide for the contract and lightweight styles; the framework owns detection and loading, not a mandatory appearance.
+Bug reports, small pull requests, and AI-assisted edits are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) and [AGENTS.md](AGENTS.md) before opening a PR. See [SECURITY.md](SECURITY.md) for security reporting and [LICENSE](LICENSE) for license terms.
 
-## Readable Pages
-
-Pages are real JSON files such as `content/pages/home/en.json`. Page (rows) → row (columns, cells) → cell (ordered elements): `"cells": [[{"type": "text", "text": "Hello"}]]`. Keep `"columns": 1` beside this one-cell list. VS Code recognizes each object and array in Outline and can fold them independently. Each file points to the local [Pages schema](schemas/pages.schema.json), which checks rows, cell counts and element types and supplies field help. See the [complete authoring guide](content/pages/page-authoring/en.json) and [中文说明](content/pages/page-authoring/zh-cn.json). Legacy Markdown/YAML Pages remain readable; keep only one format per locale.
-
-Theme developers can reuse the [public formatting and data-saving verification tools](tools/verification/README.md). Each site owns its command entry and test paths; common implementations come from its pinned EdgePress dependency. The Pages formatter checks that every field value and element order survives formatting.
-
-## Everyday writing
-
-After the one-time site setup, create an article with `npm run new -- post "My first article"`. Open the printed file path and write Markdown below the second `---` line. The command fills the title, date, and language; the theme supplies the page title, article list, contents, search, and feed.
-
-Use `##` for sections, lists, links, and fenced code blocks as needed. Put article images in `content/assets/images/` and link to `/images/filename.png`. Run `edgepress s` while writing, then `edgepress g` before publishing through your existing deployment workflow. Page layouts and theme development are optional for everyday writing.
-
-日常发文：运行 `npm run new -- post "我的第一篇文章"`，打开输出的文件，在第二个 `---` 后写 Markdown 正文。标题、日期和语言自动填写。运行 `edgepress s` 预览并编辑 Pages，发布前运行 `edgepress generate`（或 `edgepress g`）。页面布局和主题开发可以在需要调整设计时再了解。
-
-## Link directories
-
-Use a `link-directory` block in a Pages layout to publish equal, unnumbered link cards. Each entry has a title, URL and optional description in the locale's page JSON; the renderer displays the hostname automatically for external HTTP(S) links. Links retain the site's existing external-departure prompt when enabled.
-
-```json
-{
-  "columns": 1,
-  "cells": [[{
-    "type": "link-directory",
-    "title": "Independent websites",
-    "items": [{
-      "title": "Example Journal",
-      "url": "https://example.org/journal/",
-      "text": "Notes on technology and design."
-    }]
-  }]]
-}
-```
-
-The responsive card grid follows theme variables and shows no numeric ranking. Each localized page supplies its own entries.
-
-## Page editing
-
-Each page has a folder under content/pages/ and one lowercase locale JSON file per language. Put metadata and ordered blocks in the same JSON object; reference the local Pages schema for editor validation:
-
-- Choose a row column count first.
-- Add one cell per column.
-- Choose element types inside each cell.
-- Edit each element's copy, media, links, and presentation options in that page file.
-
-Put images and other page media in content/assets/, preserving their public URL path. For example, content/assets/images/diagram.svg is published as /images/diagram.svg. Posts under content/posts/ use the Markdown renderer. Themes own shared head, navigation, footer, error-page layout, and their CSS color palettes.
-
-## Project files
-
-The shared project identity uses a giant panda and Taiwanese black bear. All content media and saved masters live in `content/assets/`. UI icons use 28 licensed Lucide SVGs, with the pinned source version and license in `content/assets/edgepress/icons/`.
-
-Brand image derivatives can be exported from the saved masters with `tools/assets/generate-brand-assets.py` and Pillow. Keep generated UI icons separate: install dependencies and run `npm run icons:sync`. Verify assets with `python tools/verification/verify-brand-assets.py .` and `node tools/verification/verify-brand.mjs .`.
-
-- content/posts/<post-id>/: Markdown articles with one file per locale.
-- content/pages/<page-id>/: page layouts and all page element content.
-- content/assets/: page images and other content media, copied to the output root with matching paths.
-- themes/default/, themes/atelier/, themes/signal/: shared HTML layouts, partials, and theme styles. Themes installed from npm or created as a blank scaffold live here too.
-- config.yml: site metadata, navigation, privacy settings, and consent-gated browser services.
-- edgepress.config.mjs: paths, permalink, locales, and trusted build-time plugins.
-- languages/base/ and languages/packs/: interface dictionaries.
-- src/: CLI, builder, Markdown renderer, element renderer, page auditor, and platform deployment helpers.
-- dist/: generated output. Never edit generated files by hand.
-
-## Commands
-
-Everyday use needs two commands: `edgepress generate` (`edgepress g`) generates `dist/`; `edgepress server` (`edgepress s`) previews the site and includes the Pages editor.
-
-- edgepress init: scaffold a new site in a project directory.
-- edgepress new post "Article title": create a Markdown post.
-- edgepress generate (edgepress g): generate static files in dist/ for Cloudflare Workers or static hosting.
-- edgepress server (edgepress s): start live local preview with the Pages editor and rebuild on source changes. Preview does not launch an audit browser, capture screenshots or generate PDF reports; run edgepress check explicitly when needed. The legacy build, dev, preview, edit and editor commands remain compatibility aliases.
-- edgepress check: build, audit page structure, agent-friendliness, and Markdown rendering, simulate device profiles, inspect the browser accessibility tree and sample keyboard navigation, capture screenshots temporarily, and write only the PDF report under tools/.
-- edgepress doctor: verify static publishing configuration; a pure static project requires no Worker entry or backend bindings.
-- edgepress theme list and edgepress theme use <name>: inspect or select an installed theme.
-- edgepress theme install <npm-package>[@version]: install a theme package from npm without running its install scripts.
-- edgepress theme create <name>: make an empty, accessible HTML theme skeleton with editable partials and a blank stylesheet.
-- edgepress deploy [cloudflare|vercel|netlify|edgeone|esa]: build and deploy static output using the chosen platform CLI.
-- edgepress d (or edgepress deploy vps): build and deploy dist/ to the configured VPS using SSH/SFTP; --dry-run builds and validates locally without connecting.
-- Connect a GitHub repository to Cloudflare Workers Builds to deploy on pushes to main. Set root directory `/`, build command `npm run build`, deploy command `npx wrangler deploy`, and leave build variables empty. See the [Cloudflare build troubleshooting guide](content/pages/quick-start/) if initialization stalls before commands run.
-- edgepress clean: remove generated site and report files.
-- edgepress iterate: create a report-only maintenance plan.
-- edgepress security: check dependency advisories.
-
-The only persisted page-audit report is the accessible PDF at tools/reports/page-check.pdf. Desktop and mobile screenshots are embedded in the PDF and removed from temporary storage afterward. Automated checks do not replace manual accessibility or legal review.
-
-`edgepress check` supports page-only sites, an absent `content/posts/` directory, and ordinary articles without a tutorial slug. Markdown self-checks render a built-in fixture in memory and never add articles to your site. Actual generated pages still receive structural and resource-link checks.
-
-When Edge, Chrome or Chromium is installed, the audit runs desktop (1440px), phone (390px) and tablet (820px) profiles in light and dark modes. It uses `EDGEPRESS_BROWSER` when configured, otherwise prefers the Chromium browser installed by Playwright before checking common system locations. In a development checkout, install the browser with `npx playwright install chromium`; otherwise install a supported system browser. Phone/tablet profiles emulate pixel density and touch capability. It checks main/heading semantics and accessible names through the [Chromium DevTools Protocol](https://chromedevtools.github.io/devtools-protocol/), and sends real Tab, Shift+Tab and Enter events to the isolated headless browser. Keyboard checks sample at most 12 focus stops, verify focus visibility and backward navigation, and activate the skip-to-main link. Browser failures affect the check result; missing browser support is reported as unavailable, never as a pass.
-
-The audit reuses one software-rendered browser with at most two isolated page workers. It caches fingerprinted local resources for the run, waits for document/font rendering rather than a fixed delay, and shares page loads for content and consent screenshots at the same size. The spare worker closes before PDF printing to reduce peak memory. All device and color profiles, screenshots and the PDF remain part of the check.
-
-Default optional-service choices are checked in fresh browser contexts against the configured service count and actual unchecked controls, independently of JavaScript minification. If the browser cannot verify those choices, the report marks the check incomplete and warns instead of claiming a pass.
-
-These are browser simulations, not physical-device or screen-reader tests. The tool launches no visible browser window, mutes its own browser audio and disables notifications, does not send keyboard input to your desktop, and never starts Narrator, NVDA, VoiceOver or TalkBack. Physical devices and actual assistive technology require a separate, authorized test environment. The PDF labels this limitation explicitly.
-
-The main navigation includes a Posts entry to the localized article archive. The header search page filters Markdown posts from the generated local search index; it does not send search queries to an external service. Long articles show a floating, scroll-aware table of contents, and code blocks have accessible copy buttons. Markdown verification runs independently of published content.
-
-Project guides are published from content/pages/: project introduction, quick start, theme development, plugin development, and privacy policy. The public project page and release notes are hosted at [js.gripe/edgepress/](https://js.gripe/edgepress/). This repository remains the framework and reusable demo source. The starter config uses the placeholder `https://example.org` and credits `toewpq`. Before production use, confirm that the configured operator name identifies the responsible person or organization and complete any applicable representative or data protection officer details.
-
-Version 2026.10.1 starts the October 2026 release series. Read the [October release notes](content/posts/2026-10-01-edgepress-release-2026-10-1/). The September updates are recorded in the [request 1 notes](content/posts/2026-09-24-edgepress-release-2026-9-1/), [request 2 notes](content/posts/2026-09-25-edgepress-release-2026-9-2/), [request 3 notes](content/posts/2026-09-25-edgepress-release-2026-9-3/), [request 4 notes](content/posts/2026-09-25-edgepress-release-2026-9-4/), [request 5 notes](content/posts/2026-09-25-edgepress-release-2026-9-5/), [request 6 notes](content/posts/2026-09-25-edgepress-release-2026-9-6/), [request 7 notes](content/posts/2026-09-26-edgepress-release-2026-9-7/), [request 8 notes](content/posts/2026-09-26-edgepress-release-2026-9-8/), [request 9 notes](content/posts/2026-09-26-edgepress-release-2026-9-9/), and [request 10 notes](content/posts/2026-09-27-edgepress-release-2026-9-10/).
-
-This release publishes page media from content/assets/ and updates Wrangler to 4.144.0. GitHub Actions runs dependency audits on schedule and relevant dependency/editor changes, and checks current compatible dependencies with Node 22, browser regressions and a static build. The browser regression job installs Playwright Chromium and Firefox; local `edgepress check` can use that Chromium cache or an installed Edge, Chrome or Chromium browser. Optional services remain disabled until a visitor makes an explicit choice.
-
-## Journal categories, navigation, and author profiles
-
-In article front matter, set `category: blog` or `category: edgepress`. Omitted categories default to `uncategorized`; the CLI creates that default. Keep `tags: [Markdown, EdgePress]` for labels displayed on the article itself. Article pages show the author, optional avatar, publication date, and estimated reading time (200 words or 300 CJK characters per minute, combined, rounded up).
-
-Configure the journal and default author in `config.yml`:
-
-```yaml
-site:
-  archive:
-    categories: [博客, 未分类]
-  author:
-    name: Your name
-    avatar: /images/authors/me.png
-  navigation:
-    - key: projects
-      url: /projects/
-      labels:
-        en: Projects
-      children:
-        - key: edgepress
-          url: /edgepress/
-          labels:
-            en: EdgePress
-```
-
-Place your avatar in `content/assets/images/authors/me.png`. Avatars accept site-root paths or HTTPS URLs. To override one article, use `author: {name: Guest, avatar: /images/authors/guest.png}` or an author string with `authorAvatar: /images/authors/guest.png`. Unspecified authors fall back to `site.author.name`, then `site.seo.author`; unspecified avatars use the site default. Use your own portrait or omit the optional avatar.
-
-Navigation `children` turns an item into a native select with localized options and accessible labels. A disabled display placeholder keeps the parent label visible; the parent page is the first selectable option, so selecting it always opens the overview. The placeholder resets on navigation, including from a child page. Without JavaScript, all options appear as links. Only one child level is supported, and child URLs use the same validation as normal navigation.
-
-Use `category: edgepress` or `categories: [blog, uncategorized]` on a `post-list` block. `latest-posts` without an explicit filter inherits `site.archive.categories`. Homepage pagination must use that same category set. To change only the number shown on a project page, edit its block's `count` (1–12); the full category archive remains paginated and available.
-
-## Optional external services
-
-The website has no comment backend or comment-specific browser code. Register external-api or external-widget under plugins.consent.services in config.yml. Each service declares its purpose, data, recipient, retention and privacy URL, and waits for explicit visitor consent. Address changes require a new choice. Service API credentials belong only to the separately deployed service.
-
-iask owns its complete interface, CSS, languages, identity and storage. Register its widget with backendUrl, moduleUrl and placement: posts; pages use a generic service block. See the [independent integration guide](https://github.com/jsw-teams/iask/blob/main/docs/edgepress.md).
-
-## Publication times and article changes
-
-Set `site.timeZone` in `config.yml`, default `Asia/Taipei`. The CLI writes complete publication timestamps with that zone’s offset and names the folder using its calendar date. Timestamps without an offset are interpreted in that configured zone; an explicit offset is respected. No build-host timezone is used. Readers see complete times in their current zone. Date-only articles retain their calendar date in displayed text, HTML, search and structured data, without a fabricated midnight. Ambiguous or nonexistent daylight-saving times need an explicit offset.
-
-An article shows its latest content update and an expandable comparison automatically from Git history. Title, body, cover changes and replacements of referenced local image bytes count; unrelated metadata edits do not. Set `showChanges: false` to opt out. No hand-written revision note is needed. Build from a full Git checkout (`fetch-depth: 0` in GitHub Actions); unavailable history produces no invented update. The latest 20 commits affecting the article and its current local pictures are inspected. Only images involved in the latest change are snapshotted, deduplicated by content hash and cached for a year; drafts are excluded. Missing historical bytes retain their caption without requesting a broken URL. Remote image origins are not contacted to reconstruct history.
-
-Visible oEmbed blocks load automatically after the visitor saves consent for the corresponding service. Previously authorized blocks load on return as they approach the viewport. Denied or unselected services make no browser requests; the local loading controls and status cards follow the website theme.
-
-Set `pinned: true` in the selected article translations to place them first in `post-list`. Category and locale selection happen before pinning and limiting. Feeds, archives and `latest-posts` remain chronological.
-
-Multiple post lists on the same page share a displayed-article set: an article already shown in a pinned list is omitted from the following recent list, which fills its remaining slots with other articles. Each new page starts a fresh set.
-
-
-## VPS deployment over SSH
-
-Run `edgepress d` to generate the static website and publish the contents of `dist/` to your own VPS over SSH/SFTP. Configure `deploy.vps` in your **private** site's root `config.yml`:
-
-```yaml
-deploy:
-  vps:
-    host: 203.0.113.10
-    port: 22
-    username: deploy
-    remotePath: /var/www/example.org
-    password: "your-private-password"
-    # Optional server identity verification:
-    # hostKeySha256: "SHA256:YOUR_VERIFIED_HOST_FINGERPRINT"
-```
-
-**Direct password configuration is supported.** No environment variable or key file is required. Choose exactly one authentication method: `password`, `passwordEnv`, or `privateKey`. Encrypted private keys also support `passphrase` or `passphraseEnv`. Keep passwords private: this example repository tracks its `config.yml`, and `.gitignore` does not protect changes to a file already tracked by Git. Do not commit a real password; use a private, uncommitted site config, or prefer `passwordEnv` or `privateKey` on version-controlled sites.
-
-`hostKeySha256` is **optional**. When omitted, EdgePress warns and connects without verifying the SSH server's identity. When set to a trusted SHA256 fingerprint, mismatches stop the connection. SSH traffic remains encrypted in both cases, but omitting the fingerprint weakens protection against server impersonation.
-
-```sh
-edgepress d --dry-run    # build and inspect output without connecting
-edgepress d              # build and publish to the configured VPS
-# equivalents: edgepress deploy vps / npm run deploy:vps
-```
-
-The SFTP user needs write and rename permission in the **parent** of `remotePath`. Deployment stages the new `dist/`, swaps the finished directory into place, removes obsolete content, and attempts to restore the original site if final publication fails. No server-side Node.js or remote shell command is required. Configure Nginx/OpenResty to serve `remotePath`.
-
-See the [Agent deployment playbook](agent.md) for setup, verification and recovery.
-
-## Static platform deployment
-
-Run npm run deploy:cloudflare, npm run deploy:vercel, npm run deploy:netlify, npm run deploy:edgeone -- -n my-site, or npm run deploy:esa -- --name my-site. Platform authentication is required. Deployments run locally; GitHub Actions is limited to dependency security audits.
-
-
-All platforms build dist/. CSS and JS are fingerprinted, with one-year immutable cache policies for Cloudflare, Vercel, Netlify and EdgeOne. ESA uses the same assets; set its browser and edge cache rules for hashed CSS/JS while leaving HTML short-lived. See the [deployment guide](content/pages/deployment/en.json) and [ESA build configuration](https://help.aliyun.com/en/edge-security-acceleration/esa/user-guide/build-pages).
-
-Optional API requests use one fixed endpoint: backendUrl itself when it has a path, otherwise /api on its origin. callService(id, action, options) puts the operation in X-Service-Action; context belongs in request headers and payloads in the body. The independent API must implement this contract and allow the required CORS request headers. Third-party vendor integrations retain their vendor-defined protocols.
-
-
-Articles use a standalone `!embed[youtube](https://www.youtube.com/watch?v=jNQXAC9IVRw)` line in their Markdown body. Pages use the same line in a `type: text` block’s `text` field. Register the service under `plugins.consent.services` with `provider: oembed`, privacy disclosures and permitted origins. Embeds remain inert until current consent; nearby authorized media then loads automatically. Public oEmbed metadata is cached at build time. See the [plugin guide](content/pages/plugin-development/en.json).
-
-Posts use standalone embed lines in their Markdown body. Specify the configured service ID:
-
-```md
-!embed[ishare](https://ishare.js.gripe/s/0123456789abcdef0123456789abcdef)
-```
-
-The builder reserves a themed placeholder. After the visitor grants consent, visible embeds load on demand. Pages use the same syntax in a text block; article front matter contains no embed list.
-
-```yaml
-- type: text
-  text: "!embed[youtube](https://www.youtube.com/watch?v=jNQXAC9IVRw)"
-```
-
-The integration must be an enabled oEmbed service in `config.yml`. Article update cards describe changed media by their captions, so they do not reload old or deleted image files.
-
-## See the publishing experience
-
-![Create An afternoon by the water, edit Markdown, run edgepress server and open the article from the homepage](content/assets/images/previews/edgepress-workflow-en.90f4650b21013786.gif)
-
-Real static website output demonstrates what the builder produces. Product recordings can use a poster with explicit Watch, Pause and Replay controls; see [the block configuration](content/guides/product-demos.md).
-
-Project recordings use manual play/pause and a seekable progress bar, with theme colors and keyboard support. The reproducible CLI/editor workbench lives in [tools/recordings/demo-workbench.mjs](tools/recordings/demo-workbench.mjs); see [the recording guide](content/guides/product-demos.md). Built-in navigation and page icons come from the pinned Lucide 1.52 library, bundled locally with its license.
-
-Development files: tests/ contains regression tests and fixtures; tools/assets/ maintains source assets; tools/recordings/ contains desktop capture workflows; tools/verification/ contains browser audits; tools/reports/ holds generated evidence. Run npm test and npm run check after changes.
-
-Dependency maintenance uses compatible release ranges without retained lockfiles. The media and document viewers follow Git semver release ranges; audits resolve fresh dependency snapshots outside the checkout and remove them after use. Dependabot checks weekly, including security updates; changed dependencies must pass the full browser suite before release.
-
-Weekly automatic dependency maintenance resolves compatible updates, audits and runs this project's regression suite with read-only access, then uses a separate job to commit verified manifest-only repairs. Failed checks or branch protection retain a repair PR; major upgrades are not forced. No lockfiles are retained. The existing package release process remains separate.
+---
 
 ## 中文说明
 
-EdgePress 的中文名称是写文建站。使用 Markdown 写文章、JSON Pages 排版页面，构建静态站点并发布到 Cloudflare、Vercel、Netlify、EdgeOne 或 ESA；不需要文章数据库。多媒体查看器使用本地打包的 Video.js 10，文档预览使用独立的 document-viewer。英文说明为默认内容，完整中文入门见 [中文指南](content/guides/zh-cn.md)。
+EdgePress（写文建站）把 Markdown 文章、JSON 页面和 HTML 主题直接生成静态网站。你把源文件放进 Git，再把生成的 `dist/` 目录发布到 Cloudflare Workers、Vercel、Netlify、腾讯 EdgeOne Pages、阿里云 ESA Pages 或自己的 VPS。
 
-安装依赖使用 `npm install`，日常只需 `edgepress generate`（`edgepress g`）生成、`edgepress s` 启动本地预览；预览内点击“编辑 Pages”即可编辑页面。发布使用 `npm run deploy:cloudflare` 或相应平台命令。平台账号仍需先完成认证。上方 GIF 是真实隔离虚拟机中的终端、编辑器及浏览器录制；演示媒体按需播放，不默认自动播放。
+### 核心特点
 
-欢迎 Vibe Coding、AI 辅助开发和 Agent 安全报告。先读 [AGENTS.md](AGENTS.md) 与 [贡献规范](CONTRIBUTING.md)，**运行相关测试后再上传代码**，说明命令、结果和未执行项。涉及公共运行时的修改应执行 `npm test`、`npm run build` 和 `npm run audit`，不得把生成的预期输出当作测试证据。敏感问题按 [安全政策](SECURITY.md) 私密报告，注明版本、前提、脱敏复现、预期与实际行为、影响和真实验证结果，明确区分已复现问题与推测；不要公开凭据、用户数据或攻击未获授权的生产环境。
+- **零运行时依赖**：只需要 Node.js 22.12+。YAML 解析、Markdown 渲染、HTML 清理、CSS/JS 压缩、图片尺寸读取、版本对比和本地预览服务器全部内置，云平台构建不需要下载臃肿依赖。
+- **加载更轻更快**：构建时自动按站点实际用到的字符裁剪本地 Noto 字体子集，压缩并指纹化 CSS/JS，按页面需要注入脚本，减少首屏阻塞。
+- **命令更简单**：`edgepress new "标题"` 新建文章，`edgepress s` 启动本地预览和可视化页面编辑器，`edgepress g` 生成 `dist/`，`edgepress d` 发布到 VPS。
+- **四套重写主题**：内置 `default`、`atelier`、`signal`、`folio` 四套精简主题，均支持浅色/深色模式和省流文本视图。
+
+### 快速开始
+
+```sh
+mkdir my-edgepress-site
+cd my-edgepress-site
+npm install edgepress
+npx edgepress init
+npx edgepress s
+```
+
+在浏览器打开 `http://127.0.0.1:8787/` 就能看到站点；点击 **编辑 Pages** 可以直接在本地拖拽调整页面布局。发布前请在 `config.yml` 里填好你自己的站点网址和联系人信息。
+
+更多中文文档见 [中文使用说明](content/guides/zh-cn.md) 和 [免费部署平台对比](content/guides/platforms.md)。
