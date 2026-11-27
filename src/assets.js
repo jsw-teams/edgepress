@@ -253,19 +253,20 @@ export async function collectAssets(config, { documentViewer = false, mediaViewe
   const [headerContents, items] = await Promise.all([
     mapLimit(headers, config.concurrency, async (item) => (await readFile(item.source)).toString('utf8')),
     mapLimit(assetSources, config.concurrency, async (item) => {
-      if (!isCodeAsset(item.path)) return { ...item, content: null };
+      if (!isCodeAsset(item.path)) return { ...item, content: null, rawContent: null };
       const source = item.content ?? await readFile(item.source);
       const rawText = source.toString('utf8');
       const code = item.path.endsWith('.css') ? minifyCss(rawText) : minifyJs(rawText);
-      return { ...item, content: Buffer.from(code, 'utf8') };
+      return { ...item, content: Buffer.from(code, 'utf8'), rawContent: Buffer.from(rawText, 'utf8') };
     })
   ]);
   const coreEntries = ['edgepress/plugins/consent/manager.js', 'edgepress/external-links.js'];
   const sourceByPath = new Map(items.map(item => [item.path, item]));
+  const rawSourceByPath = new Map(items.map(item => [item.path, { ...item, content: item.rawContent ?? item.content }]));
   const bundleControl = (entry) => {
     const item = sourceByPath.get(entry);
     if (!item) return;
-    item.content = Buffer.from(bundleLocalEsm(entry, sourceByPath), 'utf8');
+    item.content = Buffer.from(bundleLocalEsm(entry, rawSourceByPath), 'utf8');
   };
   for (const entry of coreEntries) bundleControl(entry);
   if (config.site.dataSaver?.enabled) {
@@ -276,8 +277,10 @@ export async function collectAssets(config, { documentViewer = false, mediaViewe
     });
     if (scripts.length) {
       const entry = 'edgepress/data-saver-controls.js';
-      const item = { path: entry, content: Buffer.from(scripts.map(path => 'import "/' + path + '";').join('\n')), sourceName: 'Data-saving core controls' };
+      const entryBuffer = Buffer.from(scripts.map(path => 'import "/' + path + '";').join('\n'));
+      const item = { path: entry, content: entryBuffer, rawContent: entryBuffer, sourceName: 'Data-saving core controls' };
       sourceByPath.set(entry, item);
+      rawSourceByPath.set(entry, item);
       items.push(item);
       bundleControl(entry);
       config.dataSaverCore = { path: '/' + entry, scripts: scripts.map(path => '/' + path) };

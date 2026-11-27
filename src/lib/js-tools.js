@@ -236,8 +236,8 @@ export function bundleLocalEsm(entryPath, sourceByPath) {
     if (!item?.content) return;
     const raw = item.content.toString('utf8');
     const imports = [];
-    // Parse static import statements at top level
-    const importRe = /(?:^|\n)[ \t]*import\s+(?:(?:\*\s+as\s+([A-Za-z_$][\w$]*)|\{([^}]*)\}|([A-Za-z_$][\w$]*))\s+from\s+)?(['"])([^'"]+)\4\s*;?/g;
+    // Parse static import statements at top level (tolerant of optional whitespace around braces/quotes)
+    const importRe = /(?:^|\n)[ \t]*import(?:\s*\*\s*as\s+([A-Za-z_$][\w$]*)\s*from|\s*\{([^}]*)\}\s*from|\s+([A-Za-z_$][\w$]*)\s+from)?\s*(['"])([^'"]+)\4\s*;?/g;
     let stripped = raw.replace(importRe, (full, nsName, namedList, defaultName, _q, specifier) => {
       const target = resolveTarget(specifier, modPath);
       if (!target) return full;
@@ -267,6 +267,10 @@ export function bundleLocalEsm(entryPath, sourceByPath) {
       // Collect exported identifiers so entry/sibling modules can import them from this IIFE
       const exportsList = [];
       code = code
+        .replace(/\bexport\s+default\s+/g, () => {
+          exportsList.push('default:__ep_default');
+          return 'const __ep_default=';
+        })
         .replace(/\bexport\s+(async\s+)?function\s+([A-Za-z_$][\w$]*)/g, (_m, asyncKw, name) => {
           exportsList.push(name);
           return (asyncKw || '') + 'function ' + name;

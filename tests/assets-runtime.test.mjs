@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,rm,writeFile,mkdir,readFile} from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
 import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -88,4 +89,25 @@ test('build minification preserves exports, licenses and fingerprinted CSS and m
 
 test('hashed recordings cache immutably while unversioned media stays refreshable',async()=>{
  const directory=await mkdtemp(resolve(tmpdir(),'edgepress-media-cache-'));try{const files=['demo.0123456789abcdef.mp4','demo.0123456789abcdef.webm','demo.mp4'];await writeAssets({existingHeaders:'',assets:files.map(path=>({path,content:Buffer.from('fixture')}))},directory);const headers=await readFile(resolve(directory,'_headers'),'utf8');for(const path of files.slice(0,2))assert.ok(headers.includes('/'+path+'\n  Cache-Control: public, max-age=31536000, immutable'));assert.ok(!headers.includes('/demo.mp4\n  Cache-Control: public, max-age=31536000, immutable'));assert.match(headers,/Content-Length: 7/);assert.match(headers,/Accept-Ranges: bytes/);}finally{await rm(directory,{recursive:true,force:true});}
+});
+
+test('bundled data-saver controls and all emitted scripts are syntactically valid without inner static imports', async () => {
+  const directory = await mkdtemp(resolve(tmpdir(), 'edgepress-controls-syntax-'));
+  try {
+    const config = await loadConfig(fileURLToPath(new URL('../', import.meta.url)));
+    config.site.dataSaver = { enabled: true, mode: 'auto', detectSlowConnection: true, respectBrowserPreference: false };
+    const bundle = await collectAssets(config);
+    await writeAssets(bundle, directory);
+    const controlsPath = bundle.urlMap['/edgepress/data-saver-controls.js'];
+    assert.ok(controlsPath, 'Expected bundled data-saver-controls.js');
+    const controlsCode = await readFile(resolve(directory, controlsPath.slice(1)), 'utf8');
+    assert.ok(!/=>\{\s*import\b/.test(controlsCode), 'Bundled IIFE must not contain static import statements');
+    assert.match(controlsCode, /data-language-select/);
+    assert.match(controlsCode, /edgepress-privacy-config/);
+    assert.match(controlsCode, /edgepress:privacy-open/);
+    for (const asset of bundle.assets) {
+      if (!asset.path.endsWith('.js') && !asset.path.endsWith('.mjs')) continue;
+      execFileSync(process.execPath, ['--check', resolve(directory, asset.path)], { stdio: 'pipe' });
+    }
+  } finally { await rm(directory, { recursive: true, force: true }); }
 });
