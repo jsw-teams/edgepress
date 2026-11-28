@@ -19,6 +19,12 @@
 
       {{slot:afterHero}}
 
+      {{#if page.html}}
+      <section class="ep-home-content ep-prose">
+        {{{page.html}}}
+      </section>
+      {{/if}}
+
       <section class="ep-kpi-grid" aria-label="站点概览">
         <div class="ep-kpi-card">
           <div class="ep-kpi-label">已发布文章</div>

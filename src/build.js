@@ -167,6 +167,7 @@ export async function buildSite(config, cwd = process.cwd()) {
       summary: parsed.excerpt,
       lang: parsed.data.lang || config.site.language,
       url: normalizeDocumentUrl(parsed.data.url || parsed.data.permalink, kind, slug),
+      homepage: Boolean(parsed.data.homepage),
       readMinutes: parsed.readMinutes,
       html: parsed.html,
       toc: parsed.toc,
@@ -180,6 +181,8 @@ export async function buildSite(config, cwd = process.cwd()) {
     .sort((a, b) => String(b.date).localeCompare(String(a.date)));
 
   const pages = (await mapPool(pageFiles, concurrency, (f) => parseDoc(f, "page"))).filter((p) => !p.draft);
+  const homePage = pages.find((page) => page.homepage);
+  const regularPages = pages.filter((page) => !page.homepage);
 
   // 5. 构建页面公共上下文
   const siteBase = {
@@ -187,7 +190,7 @@ export async function buildSite(config, cwd = process.cwd()) {
     themeName: theme.name,
     themeChain: theme.chain.join(" -> "),
     postCount: posts.length,
-    pageCount: pages.length,
+    pageCount: regularPages.length,
     stylesheetTags,
     scriptTags
   };
@@ -210,9 +213,12 @@ export async function buildSite(config, cwd = process.cwd()) {
   const tasks = [
     () =>
       emitPage("/", "home", {
-        title: `${config.site.title} · ${config.site.tagline}`,
-        description: config.site.description,
-        url: "/"
+        ...(homePage || {}),
+        title: homePage?.title || `${config.site.title} · ${config.site.tagline}`,
+        heading: homePage?.title || config.site.title,
+        description: homePage?.summary || config.site.description,
+        url: "/",
+        hasToc: Boolean(homePage?.toc?.length)
       }),
     () =>
       emitPage("/archives/", "archive", {
@@ -229,7 +235,7 @@ export async function buildSite(config, cwd = process.cwd()) {
         hasToc: post.toc.length > 0
       })
     ),
-    ...pages.map((page) => () =>
+    ...regularPages.map((page) => () =>
       emitPage(page.url, page.layout, {
         ...page,
         title: `${page.title} · ${config.site.title}`,
