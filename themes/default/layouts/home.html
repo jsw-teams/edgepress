@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="{{site.language}}">
+<head>
+  {{> head}}
+</head>
+<body>
+  {{> header}}
+  <main class="ep-main">
+    <div class="ep-container">
+      <section class="ep-page-header">
+        <div>
+          <h1>{{site.title}}</h1>
+          <p>{{site.tagline}}</p>
+        </div>
+        <div>
+          <a class="ep-btn ep-btn--primary" href="/archives/">浏览全部文章</a>
+        </div>
+      </section>
+
+      {{slot:afterHero}}
+
+      <section class="ep-kpi-grid" aria-label="站点概览">
+        <div class="ep-kpi-card">
+          <div class="ep-kpi-label">已发布文章</div>
+          <div class="ep-kpi-value">{{site.postCount}}</div>
+        </div>
+        <div class="ep-kpi-card">
+          <div class="ep-kpi-label">独立文档页</div>
+          <div class="ep-kpi-value">{{site.pageCount}}</div>
+        </div>
+        <div class="ep-kpi-card">
+          <div class="ep-kpi-label">当前激活主题</div>
+          <div class="ep-kpi-value" style="font-size:1.125rem">{{site.themeName}}</div>
+        </div>
+      </section>
+
+      <section aria-label="最新文章">
+        {{#if recentPosts}}
+        <div class="ep-post-list">
+          {{#each recentPosts}}
+          <article class="ep-card">
+            <div class="ep-card-head">
+              <h2 class="ep-card-title"><a href="{{url}}">{{title}}</a></h2>
+              <div class="ep-card-meta">
+                <time>{{date}}</time>
+                <span class="ep-num">{{readMinutes}} 分钟阅读</span>
+                <span class="ep-badge ep-badge--info">{{category}}</span>
+              </div>
+            </div>
+            <p class="ep-card-summary">{{summary}}</p>
+            <div class="ep-card-meta">{{{tagsHtml}}}</div>
+          </article>
+          {{/each}}
+        </div>
+        {{else}}
+        <div class="ep-empty">暂无已发布文章。运行 <code>npm run new -- "我的第一篇文章"</code> 开始写作。</div>
+        {{/if}}
+      </section>
+    </div>
+  </main>
+  {{> footer}}
+</body>
+</html>

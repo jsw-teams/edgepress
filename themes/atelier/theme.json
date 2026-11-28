@@ -1,7 +1,0 @@
-{
-  "name": "atelier",
-  "dataSaver": { "stylesheet": "data-saver-theme.css", "scripts": [], "layoutStyles": ["style.css"] },
-  "version": "1.1.0",
-  "renderer": "layouts/layout.html",
-  "templateEngine": "edgepress-partials-v1"
-}

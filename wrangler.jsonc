@@ -1,11 +1,7 @@
 {
-  "name": "edgepress",
-  "compatibility_date": "2026-10-03",
+  "name": "edgepress-site",
+  "compatibility_date": "2026-10-01",
   "assets": {
-    "directory": "./dist",
-    "html_handling": "auto-trailing-slash",
-    "not_found_handling": "404-page"
-  },
-  "workers_dev": false,
-  "preview_urls": false
+    "directory": "./dist"
+  }
 }

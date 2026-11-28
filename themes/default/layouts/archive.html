@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="{{site.language}}">
+<head>
+  {{> head}}
+</head>
+<body>
+  {{> header}}
+  <main class="ep-main">
+    <div class="ep-container">
+      <section class="ep-page-header">
+        <div>
+          <h1>全部文章</h1>
+          <p>按发布时间倒序排列，共 <span class="ep-num">{{site.postCount}}</span> 篇。</p>
+        </div>
+        <div>
+          <button type="button" class="ep-btn ep-btn--primary" data-open-search>快速检索</button>
+        </div>
+      </section>
+      <section class="ep-post-list">
+        {{#each posts}}
+        <article class="ep-card">
+          <div class="ep-card-head">
+            <h2 class="ep-card-title"><a href="{{url}}">{{title}}</a></h2>
+            <div class="ep-card-meta">
+              <time>{{date}}</time>
+              <span class="ep-num">{{readMinutes}} 分钟</span>
+              <span class="ep-badge ep-badge--info">{{category}}</span>
+            </div>
+          </div>
+          <p class="ep-card-summary">{{summary}}</p>
+        </article>
+        {{/each}}
+      </section>
+    </div>
+  </main>
+  {{> footer}}
+</body>
+</html>

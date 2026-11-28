@@ -1,7 +1,12 @@
 {
   "name": "default",
-  "dataSaver": { "stylesheet": "data-saver-theme.css", "scripts": [], "layoutStyles": ["style.css"] },
-  "version": "1.0.0",
-  "renderer": "layouts/layout.html",
-  "templateEngine": "edgepress-partials-v1"
+  "version": "2.0.0",
+  "designSystem": "b-end-design-system-v1",
+  "description": "Industrial minimalist theme inspired by Linear & Apple Notes, implementing 0.5px micro-borders, concentric radii, 4px grid, 6-state buttons, and Drawer/Modal decoupling.",
+  "slots": ["beforeHeader", "afterHero", "sidebar", "afterPost", "beforeFooter"],
+  "tokens": {
+    "--ep-accent": "#2563eb",
+    "--ep-accent-hover": "#1d4ed8",
+    "--ep-accent-soft": "#eff6ff"
+  }
 }

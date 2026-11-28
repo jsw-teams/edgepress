@@ -1,9 +1,0 @@
-{
-  "name": "edgepress",
-  "installCommand": "npm install --omit=dev --no-audit --no-fund",
-  "buildCommand": "npm run build",
-  "assets": {
-    "directory": "./dist",
-    "notFoundStrategy": "404Page"
-  }
-}

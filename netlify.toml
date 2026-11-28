@@ -1,7 +1,3 @@
 [build]
-  command = "npm run build"
-  publish = "dist"
-
-[build.environment]
-  NODE_VERSION = "22"
-  NPM_FLAGS = "--omit=dev --no-audit --no-fund"
+command = "npm run build"
+publish = "dist"

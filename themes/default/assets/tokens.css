@@ -1,0 +1,147 @@
+/* ==========================================================================
+   EdgePress Default Theme — Design Tokens (b-end-design-system-skill 规范)
+   遵循：
+   1. 4px 对称栅格 (--ep-space-1 .. --ep-space-12)
+   2. 0.5px 精细微边框 (--ep-border-subtle) 与页面默认纯平 (Zero Shadow on Cards)
+   3. 光学同心圆角几何法则：R_outer = R_inner + Padding
+   4. 中性暖灰 + 单一强调色 + 80% 浅底深字 Badge 语义映射
+   5. 字号严格收敛为 4 档 (--ep-text-xs / sm / base / xl)
+   ========================================================================== */
+
+:root {
+  color-scheme: light dark;
+
+  /* 1. 字体系统：零外部字体下载阻塞，兼容中文/英文/欧系/等宽数字 */
+  --ep-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --ep-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* 2. 严格 4 档字号阶梯 */
+  --ep-text-xs: 0.75rem;     /* 12px: Badge、元数据、辅助说明 */
+  --ep-text-sm: 0.875rem;    /* 14px: 导航、按钮、摘要、表格 */
+  --ep-text-base: 1rem;      /* 16px: 正文阅读基准 */
+  --ep-text-xl: 1.5rem;      /* 24px: 页面主标题与关键层级 */
+
+  /* 3. 4px 对称空间栅格 */
+  --ep-space-1: 4px;
+  --ep-space-2: 8px;
+  --ep-space-3: 12px;
+  --ep-space-4: 16px;
+  --ep-space-5: 20px;
+  --ep-space-6: 24px;
+  --ep-space-8: 32px;
+  --ep-space-12: 48px;
+
+  /* 4. 同心圆角几何系统：外层圆角 = 内层圆角 + 内边距 */
+  --ep-radius-inner: 6px;
+  --ep-card-pad: 16px;
+  --ep-radius-outer: calc(var(--ep-radius-inner) + var(--ep-space-2)); /* 14px */
+  --ep-radius-pill: 9999px;
+
+  /* 5. 色彩语义四层分级（中性暖灰 + 单一强调色） */
+  --ep-bg-canvas: #fafaf9;
+  --ep-bg-surface: #ffffff;
+  --ep-bg-subtle: #f5f5f4;
+  --ep-bg-hover: #f0f0ee;
+
+  --ep-ink-primary: #18181b;
+  --ep-ink-secondary: #52525b;
+  --ep-ink-muted: #71717a;
+
+  /* 0.5px 视觉微边框配方（禁止粗黑边框） */
+  --ep-border-subtle: rgba(226, 232, 240, 0.7);
+  --ep-border-strong: rgba(203, 213, 225, 0.95);
+
+  /* 单一强调色（支持 site.config.js 一键覆写） */
+  --ep-accent: #2563eb;
+  --ep-accent-hover: #1d4ed8;
+  --ep-accent-active: #1e40af;
+  --ep-accent-soft: #eff6ff;
+  --ep-on-accent: #ffffff;
+
+  /* Badge 80% 浅底深字黄金法则 */
+  --ep-badge-neutral-bg: #f4f4f5;
+  --ep-badge-neutral-ink: #3f3f46;
+  --ep-badge-info-bg: #eff6ff;
+  --ep-badge-info-ink: #1d4ed8;
+  --ep-badge-success-bg: #ecfdf5;
+  --ep-badge-success-ink: #047857;
+  --ep-badge-warning-bg: #fffbeb;
+  --ep-badge-warning-ink: #b45309;
+  --ep-badge-danger-bg: #fef2f2;
+  --ep-badge-danger-ink: #b91c1c;
+
+  /* 阴影只留给离屏真实浮层（Drawer / Modal），普通卡片严禁使用阴影 */
+  --ep-shadow-overlay: 0 16px 40px -8px rgba(15, 23, 42, 0.14), 0 4px 12px -2px rgba(15, 23, 42, 0.06);
+  --ep-backdrop: rgba(15, 23, 42, 0.36);
+
+  /* 布局尺寸 */
+  --ep-content-width: 1040px;
+  --ep-prose-width: 740px;
+  --ep-drawer-width: 420px;
+  --ep-code-bg: #18181b;
+  --ep-code-ink: #f4f4f5;
+}
+
+/* 暗色模式自适应 */
+:root[data-theme="dark"] {
+  --ep-bg-canvas: #0f1115;
+  --ep-bg-surface: #161920;
+  --ep-bg-subtle: #1e222b;
+  --ep-bg-hover: #252a36;
+
+  --ep-ink-primary: #f4f4f5;
+  --ep-ink-secondary: #a1a1aa;
+  --ep-ink-muted: #71717a;
+
+  --ep-border-subtle: rgba(51, 65, 85, 0.65);
+  --ep-border-strong: rgba(71, 85, 105, 0.85);
+
+  --ep-accent: #60a5fa;
+  --ep-accent-hover: #93c5fd;
+  --ep-accent-active: #3b82f6;
+  --ep-accent-soft: rgba(37, 99, 235, 0.16);
+  --ep-on-accent: #0f172a;
+
+  --ep-badge-neutral-bg: #27272a;
+  --ep-badge-neutral-ink: #d4d4d8;
+  --ep-badge-info-bg: rgba(37, 99, 235, 0.18);
+  --ep-badge-info-ink: #93c5fd;
+  --ep-badge-success-bg: rgba(16, 185, 129, 0.16);
+  --ep-badge-success-ink: #6ee7b7;
+  --ep-badge-warning-bg: rgba(245, 158, 11, 0.16);
+  --ep-badge-warning-ink: #fcd34d;
+  --ep-badge-danger-bg: rgba(239, 68, 68, 0.16);
+  --ep-badge-danger-ink: #fca5a5;
+
+  --ep-shadow-overlay: 0 20px 48px -8px rgba(0, 0, 0, 0.55);
+  --ep-backdrop: rgba(0, 0, 0, 0.62);
+  --ep-code-bg: #0b0d11;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ep-bg-canvas: #0f1115;
+    --ep-bg-surface: #161920;
+    --ep-bg-subtle: #1e222b;
+    --ep-bg-hover: #252a36;
+    --ep-ink-primary: #f4f4f5;
+    --ep-ink-secondary: #a1a1aa;
+    --ep-ink-muted: #71717a;
+    --ep-border-subtle: rgba(51, 65, 85, 0.65);
+    --ep-border-strong: rgba(71, 85, 105, 0.85);
+    --ep-accent: #60a5fa;
+    --ep-accent-hover: #93c5fd;
+    --ep-accent-soft: rgba(37, 99, 235, 0.16);
+    --ep-on-accent: #0f172a;
+    --ep-badge-neutral-bg: #27272a;
+    --ep-badge-neutral-ink: #d4d4d8;
+    --ep-badge-info-bg: rgba(37, 99, 235, 0.18);
+    --ep-badge-info-ink: #93c5fd;
+    --ep-badge-success-bg: rgba(16, 185, 129, 0.16);
+    --ep-badge-success-ink: #6ee7b7;
+    --ep-badge-warning-bg: rgba(245, 158, 11, 0.16);
+    --ep-badge-warning-ink: #fcd34d;
+    --ep-badge-danger-bg: rgba(239, 68, 68, 0.16);
+    --ep-badge-danger-ink: #fca5a5;
+  }
+}

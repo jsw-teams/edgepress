@@ -1,239 +1,262 @@
-import {parsePublicationDate,publicationCalendar} from './publication-time.js';
-import { readPostRevision } from './revisions.js';
-import { normalizeCategory, safeAvatar, readingMinutes } from './post-details.js';
-import { readdir, readFile } from 'node:fs/promises';
-import { basename, dirname, extname, relative, resolve, sep } from 'node:path';
-import { parse as parseYaml } from './lib/yaml.js';
-import { mapLimit } from './concurrency.js';
+/**
+ * 受控并发执行池 & 轻量内容解析工具（零依赖）
+ * - mapPool: 限制同时打开的文件描述符数量，防止 EMFILE 与内存峰值抖动
+ * - parseFrontmatter: 零依赖解析 YAML Frontmatter (title, date, tags, category, summary, draft, layout)
+ * - renderMarkdown: 零依赖高性能 Markdown -> HTML 渲染器（带自动 TOC 目录提取与安全转义）
+ */
 
-export function sortPostsNewest(posts) {
-  return [...posts].sort((left, right) => {
-    const dateOrder = right.date - left.date;
-    if (dateOrder) return dateOrder;
-    const leftPath = String(left.path);
-    const rightPath = String(right.path);
-    return rightPath.localeCompare(leftPath, undefined, { numeric: true, sensitivity: 'base' });
-  });
-}
+export async function mapPool(items, concurrency, worker) {
+  const limit = Math.max(1, Math.min(concurrency || 8, items.length || 1));
+  const results = new Array(items.length);
+  let cursor = 0;
 
-export function postsForLocale(posts, locale, defaultLocale) {
-  const byBundle = new Map();
-  for (const post of posts) {
-    const current = byBundle.get(post.bundlePath);
-    if (!current || post.locale === locale || (current.locale !== locale && post.locale === defaultLocale) ||
-        (current.locale !== locale && current.locale !== defaultLocale && post.locale !== defaultLocale && post.locale.localeCompare(current.locale) < 0)) {
-      byBundle.set(post.bundlePath, post);
+  async function run() {
+    while (true) {
+      const idx = cursor++;
+      if (idx >= items.length) break;
+      results[idx] = await worker(items[idx], idx);
     }
   }
-  return sortPostsNewest([...byBundle.values()]);
+
+  await Promise.all(Array.from({ length: limit }, run));
+  return results;
 }
 
-async function walkContent(directory, kind) {
-  let entries;
-  try {
-    entries = await readdir(directory, { withFileTypes: true });
-  } catch (error) {
-    if (error.code === 'ENOENT') return [];
-    throw error;
+export function escapeHtml(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+export function parseFrontmatter(raw) {
+  const text = String(raw || "").replace(/\r\n/g, "\n");
+  if (!text.startsWith("---\n")) {
+    return { data: {}, body: text };
   }
-  entries.sort((a, b) => a.name.localeCompare(b.name));
-  const found = [];
-  for (const entry of entries) {
-    const fullPath = resolve(directory, entry.name);
-    if (entry.isDirectory()) found.push(...await walkContent(fullPath, kind));
-    else if (entry.isFile() && (extname(entry.name).toLowerCase() === '.md' || (kind === 'pages' && extname(entry.name).toLowerCase() === '.json'))) found.push(fullPath);
+  const endIdx = text.indexOf("\n---\n", 4);
+  if (endIdx === -1) {
+    return { data: {}, body: text };
   }
-  return found;
-}
 
-function splitFrontmatter(source, file) {
-  const lines = source.replace(/^\uFEFF/, '').split(/\r?\n/);
-  if (lines[0] !== '---') return { metadata: {}, markdown: source };
-  const end = lines.findIndex((line, index) => index > 0 && (line === '---' || line === '...'));
-  if (end < 0) throw new Error('Unclosed YAML front matter in ' + file);
-  const metadata = parseYaml(lines.slice(1, end).join('\n')) ?? {};
-  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
-    throw new Error('Front matter must be a YAML object in ' + file);
-  }
-  return { metadata, markdown: lines.slice(end + 1).join('\n') };
-}
+  const yamlBlock = text.slice(4, endIdx);
+  const body = text.slice(endIdx + 5);
+  const data = {};
+  let currentListKey = null;
 
-export function parseDocumentSource(source, file) {
-  if (extname(file).toLowerCase() !== '.json') return splitFrontmatter(source, file);
-  let metadata;
-  try { metadata = JSON.parse(source.replace(/^\uFEFF/, '')); }
-  catch (error) { throw new Error('Invalid page JSON in ' + file + ': ' + error.message, {cause: error}); }
-  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) throw new Error('Page JSON must be an object in ' + file);
-  return {metadata, markdown: ''};
-}
+  for (const line of yamlBlock.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
 
-export function slugify(value) {
-  const slug = String(value)
-    .normalize('NFKC')
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}]+/gu, '-')
-    .replace(/^-+|-+$/g, '');
-  return slug || 'post';
-}
-
-function normalizeTags(value) {
-  if (value == null || value === '') return [];
-  return (Array.isArray(value) ? value : [value]).map(String).map((tag) => tag.trim()).filter(Boolean);
-}
-
-function normalizeAuthor(value, file) {
-  if (value && typeof value === 'object' && !Array.isArray(value)) {
-    if (Object.keys(value).some(key => !['name', 'avatar'].includes(key))) throw new Error('Unsupported author field in ' + file);
-    value = value.name;
-  }
-  if (value === undefined || value === null || value === '') return '';
-  if (typeof value !== 'string' || !value.trim() || value.length > 160) {
-    throw new Error('author must be a non-empty string of at most 160 characters in ' + file);
-  }
-  return value.trim();
-}
-
-function normalizeVideo(value, file) {
-  if (value === undefined) return null;
-  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('video must be an object in ' + file);
-  for (const key of Object.keys(value)) {
-    if (!['src', 'captions', 'captionLanguage', 'captionLabel', 'poster', 'alt', 'title', 'description'].includes(key)) {
-      throw new Error('Unsupported video field in ' + file + ': ' + key);
+    if (trimmed.startsWith("- ") && currentListKey) {
+      data[currentListKey].push(stripQuotes(trimmed.slice(2).trim()));
+      continue;
     }
-  }
-  const localAsset = /^\/edgepress\/media\/[a-z0-9-]+\.(?:mp4|vtt|jpe?g)$/i;
-  for (const field of ['src', 'captions', 'poster']) {
-    if (typeof value[field] !== 'string' || !localAsset.test(value[field])) {
-      throw new Error('video.' + field + ' must reference a local /edgepress/media asset in ' + file);
-    }
-  }
-  if (typeof value.captionLanguage !== 'string' || !/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(value.captionLanguage) ||
-      typeof value.captionLabel !== 'string' || !value.captionLabel.trim() || typeof value.alt !== 'string' || !value.alt.trim() ||
-      typeof value.title !== 'string' || !value.title.trim() || typeof value.description !== 'string' || !value.description.trim()) {
-    throw new Error('video needs a language, labels, accessible description, title, and summary in ' + file);
-  }
-  return value;
-}
 
-function normalizeDate(value, filename, kind, file, timeZone) {
-  const fallback = filename.match(/^(\d{4}-\d{2}-\d{2})-/)?.[1];
-  if (value == null && !fallback) {
-    if (kind === 'posts') throw new Error('Posts need a valid date in front matter or a YYYY-MM-DD filename: ' + file);
-    return new Date(0);
-  }
-  try { return parsePublicationDate(value ?? fallback, timeZone); }
-  catch (error) { throw new Error(error.message + ' in ' + file); }
-}
+    const colon = trimmed.indexOf(":");
+    if (colon === -1) continue;
+    const key = trimmed.slice(0, colon).trim();
+    const rawVal = trimmed.slice(colon + 1).trim();
 
-function normalizePagePath(value, file) {
-  if (typeof value !== 'string' || !value.trim()) throw new Error('Page folder or slug must be a non-empty path: ' + file);
-  const source = value.trim();
-  if (source.startsWith('/') || source.includes('\\') || /[%?#\0]/.test(source)) throw new Error('Page path contains unsafe URL characters: ' + file);
-  const segments = source.split('/');
-  if (segments.some((part) => !part || part === '.' || part === '..')) throw new Error('Page path contains an empty or traversal segment: ' + file);
-  const parts = segments.map((part) => slugify(part));
-  if (parts.some((part) => !part)) throw new Error('Page path contains an invalid segment: ' + file);
-  return parts.join('/');
-}
-
-export async function readDocuments(config) {
-  const root = config.resolvedPaths.content;
-  const groups = [['posts', resolve(root, 'posts')], ['pages', resolve(root, 'pages')]];
-  const files = [];
-  for (const [kind, directory] of groups) {
-    const identities = new Set();
-    for (const file of await walkContent(directory, kind)) {
-      const identity = resolve(dirname(file), basename(file, extname(file)).toLowerCase());
-      if (identities.has(identity)) throw new Error('Duplicate language document; keep only one .json or .md file per page locale: ' + file);
-      identities.add(identity);
-      files.push({ kind, file });
-    }
-  }
-  return await mapLimit(files, config.concurrency, async ({ kind, file }) => {
-    const source = await readFile(file, 'utf8');
-    const { metadata, markdown } = parseDocumentSource(source, file);
-    const contentRoot = resolve(root, kind);
-    const relativePath = relative(contentRoot, file).split(sep).join('/');
-    const bundleDirectory = dirname(file);
-    const bundlePath = relative(contentRoot, bundleDirectory).split(sep).join('/');
-    if (!bundlePath || bundlePath === '.' || bundlePath.startsWith('..')) {
-      throw new Error('Each content document must have its own folder with one file per language: ' + file);
-    }
-    const bundleName = basename(bundleDirectory);
-    const languageFileName = basename(file, extname(file));
-    const languageFile = languageFileName.toLowerCase();
-    const fileLocale = config.i18n.locales.find((locale) => locale.toLowerCase() === languageFile);
-    if (!fileLocale || languageFileName !== languageFile) {
-      throw new Error('Content language files must be named after a configured locale, such as en.json or zh-cn.md: ' + file);
-    }
-    const declaredLocale = metadata.lang === undefined ? fileLocale :
-      config.i18n.locales.find((locale) => locale.toLowerCase() === String(metadata.lang).toLowerCase());
-    if (!declaredLocale) throw new Error('Unsupported lang value in ' + file + '; use the language filename and configure its language pack');
-    if (declaredLocale !== fileLocale) throw new Error('Content lang must match the content filename locale in ' + file);
-    const locale = fileLocale;
-    const fallbackSlug = bundlePath.replace(/\\/g, '/');
-    const fallbackName = bundleName.replace(/^\d{4}-\d{2}-\d{2}-/, '');
-    const fallbackTitle = fallbackName.replace(/[-_]/g, ' ');
-    const title = String(metadata.title ?? fallbackTitle).trim();
-    if (!title) throw new Error('Document needs a non-empty title: ' + file);
-    if (metadata.homepage !== undefined && typeof metadata.homepage !== 'boolean') {
-      throw new Error('homepage must be a boolean in ' + file);
-    }
-    if (metadata.homepage === true && kind !== 'pages') throw new Error('Only pages can be marked as the homepage: ' + file);
-    if (metadata.blocks !== undefined && (kind !== 'pages' || !Array.isArray(metadata.blocks) || metadata.blocks.length > 100)) {
-      throw new Error('blocks must be an array of at most 100 items on a page: ' + file);
-    }
-    if (kind === 'pages' && (!Array.isArray(metadata.blocks) || metadata.blocks.length === 0)) {
-      throw new Error('Pages need an ordered blocks array; use Markdown only for posts: ' + file);
-    }
-    if (kind === 'pages' && markdown.trim()) {
-      throw new Error('Page body must be empty; move content into page blocks: ' + file);
-    }
-    if (metadata.pinned !== undefined && typeof metadata.pinned !== 'boolean') throw new Error('pinned must be a boolean in ' + file);
-    if (metadata.embeds !== undefined) throw new Error('Use !embed[service](URL) in the content instead of front-matter embeds: ' + file);
-    const rawSlug = metadata.slug ?? (kind === 'posts' ? fallbackName : fallbackSlug);
-    const normalizedPagePath = kind === 'pages' && metadata.homepage !== true ? normalizePagePath(rawSlug, file) : '';
-    const slug = slugify(String(rawSlug).split('/').pop());
-    const date = normalizeDate(metadata.date, bundleName, kind, file, config.site?.timeZone);
-    const calendar = metadata.date == null ? (bundleName.match(/^(\d{4}-\d{2}-\d{2})-/)?.[1] || '1970-01-01') : publicationCalendar(metadata.date,date,config.site?.timeZone);
-    if (metadata.showChanges !== undefined && typeof metadata.showChanges !== 'boolean') throw new Error('showChanges must be a boolean in ' + file);
-    const revision = kind === 'posts' ? await readPostRevision(file, source, metadata.showChanges !== false, resolve(root,'assets')) : {updated:null,changes:''};
-    let path;
-    if (kind === 'posts') {
-      path = config.permalink
-        .replace(/:year/g, calendar.slice(0,4))
-        .replace(/:month/g, calendar.slice(5,7))
-        .replace(/:day/g, calendar.slice(8,10))
-        .replace(/:slug/g, slug)
-        .replace(/:title/g, slug)
-        .replace(/^\/+|\/+$/g, '') + '/';
+    if (rawVal === "") {
+      data[key] = [];
+      currentListKey = key;
+    } else if (rawVal.startsWith("[") && rawVal.endsWith("]")) {
+      currentListKey = null;
+      data[key] = rawVal
+        .slice(1, -1)
+        .split(",")
+        .map((s) => stripQuotes(s.trim()))
+        .filter(Boolean);
+    } else if (rawVal === "true" || rawVal === "false") {
+      currentListKey = null;
+      data[key] = rawVal === "true";
     } else {
-      const localePrefix = locale === config.i18n.defaultLocale ? '' : locale + '/';
-      path = metadata.homepage === true ? localePrefix : normalizedPagePath + '/';
+      currentListKey = null;
+      data[key] = stripQuotes(rawVal);
     }
-    if (locale !== config.i18n.defaultLocale && metadata.homepage !== true) path = locale + '/' + path;
-    return {
-      kind, file, relativePath, bundlePath, title, slug, date, locale,
-      dateOnly: metadata.date == null || /^\d{4}-\d{2}-\d{2}$/.test(String(metadata.date)),
-      updated: revision.updated, changes: revision.changes, showChanges: metadata.showChanges !== false,
-      revisionImages: revision.revisionImages, revisionAssets: revision.revisionAssets??[],
-      author: kind === 'posts' ? normalizeAuthor(metadata.author, file) : '',
-      authorAvatar: safeAvatar(metadata.authorAvatar ?? (typeof metadata.author === 'object' && metadata.author !== null ? metadata.author.avatar : undefined), 'author avatar in ' + file),
-      category: normalizeCategory(metadata.category),
-      pinned: kind === 'posts' && metadata.pinned === true,
-      readingMinutes: kind === 'posts' ? readingMinutes(markdown) : 0,
-      videoId: (kind === 'posts' ? 'post-' : 'page-') + slugify(bundlePath + '-' + locale.toLowerCase()),
-      video: kind === 'posts' ? normalizeVideo(metadata.video, file) : null,
-      tags: normalizeTags(metadata.tags),
-      description: String(metadata.description ?? ''),
-      keywords: normalizeTags(metadata.keywords),
-      robots: typeof metadata.robots === 'string' ? metadata.robots : '',
-      image: typeof metadata.image === 'string' ? metadata.image : '',
-      homepage: metadata.homepage === true,
-      blocks: metadata.blocks ?? [],
-      draft: metadata.draft === true,
-      path,
-      markdown: markdown.trim()
-    };
+  }
+
+  return { data, body };
+}
+
+function stripQuotes(s) {
+  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+    return s.slice(1, -1);
+  }
+  return s;
+}
+
+function slugifyHeading(text) {
+  return String(text)
+    .toLowerCase()
+    .trim()
+    .replace(/<[^>]+>/g, "")
+    .replace(/[^\p{L}\p{N}\s-]/gu, "")
+    .replace(/\s+/g, "-")
+    .slice(0, 64) || "section";
+}
+
+function renderInline(text) {
+  // 1. 提取行内代码防二次解析
+  const codes = [];
+  let out = escapeHtml(text).replace(/`([^`]+)`/g, (_, code) => {
+    const id = codes.push(`<code>${code}</code>`) - 1;
+    return `\u0000CODE${id}\u0000`;
   });
+
+  // 2. 图片 ![alt](url)
+  out = out.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (_, alt, src) => {
+    const safeSrc = /^(?:https?:|\/|\.)/i.test(src) ? src : "#";
+    return `<img src="${safeSrc}" alt="${alt}" loading="lazy" decoding="async">`;
+  });
+
+  // 3. 链接 [label](url)
+  out = out.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_, label, href) => {
+    const safeHref = /^(?:https?:|\/|#|mailto:|\.)/i.test(href) ? href : "#";
+    const isExt = /^https?:\/\//i.test(safeHref);
+    return `<a href="${safeHref}"${isExt ? ' target="_blank" rel="noopener noreferrer"' : ""}>${label}</a>`;
+  });
+
+  // 4. 粗体 / 斜体 / 删除线
+  out = out.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  out = out.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+  out = out.replace(/~~([^~]+)~~/g, "<del>$1</del>");
+
+  // 5. 还原行内代码
+  out = out.replace(/\u0000CODE(\d+)\u0000/g, (_, id) => codes[Number(id)]);
+  return out;
+}
+
+export function renderMarkdown(markdown) {
+  const lines = String(markdown || "").replace(/\r\n/g, "\n").split("\n");
+  const html = [];
+  const toc = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // 空行
+    if (!line.trim()) {
+      i++;
+      continue;
+    }
+
+    // 代码块 ```lang
+    if (line.trim().startsWith("```")) {
+      const lang = line.trim().slice(3).trim();
+      const buf = [];
+      i++;
+      while (i < lines.length && !lines[i].trim().startsWith("```")) {
+        buf.push(lines[i]);
+        i++;
+      }
+      i++; // skip closing ```
+      const langAttr = lang ? ` class="language-${escapeHtml(lang)}" data-lang="${escapeHtml(lang)}"` : "";
+      html.push(
+        `<div class="ep-code-block"><div class="ep-code-bar"><span class="ep-code-lang">${escapeHtml(lang || "text")}</span><button type="button" class="ep-btn ep-btn--ghost ep-btn--sm" data-copy-code>复制</button></div><pre><code${langAttr}>${escapeHtml(buf.join("\n"))}</code></pre></div>`
+      );
+      continue;
+    }
+
+    // 标题 #..####
+    const headingMatch = line.match(/^(#{1,4})\s+(.+)$/);
+    if (headingMatch) {
+      const level = headingMatch[1].length;
+      const rawTitle = headingMatch[2].trim();
+      const id = slugifyHeading(rawTitle);
+      if (level >= 2 && level <= 3) {
+        toc.push({ level, id, text: rawTitle.replace(/[*`]/g, "") });
+      }
+      html.push(`<h${level} id="${id}">${renderInline(rawTitle)}</h${level}>`);
+      i++;
+      continue;
+    }
+
+    // 引用 >
+    if (line.trim().startsWith("> ")) {
+      const buf = [];
+      while (i < lines.length && lines[i].trim().startsWith("> ")) {
+        buf.push(lines[i].trim().slice(2));
+        i++;
+      }
+      html.push(`<blockquote><p>${renderInline(buf.join(" "))}</p></blockquote>`);
+      continue;
+    }
+
+    // Markdown 表格
+    if (line.includes("|") && i + 1 < lines.length && /^\s*\|?[\s:-]+\|[\s|:-]*$/.test(lines[i + 1])) {
+      const parseRow = (row) =>
+        row
+          .trim()
+          .replace(/^\||\|$/g, "")
+          .split("|")
+          .map((c) => c.trim());
+      const headers = parseRow(line);
+      i += 2; // skip header & separator
+      const rows = [];
+      while (i < lines.length && lines[i].includes("|") && lines[i].trim()) {
+        rows.push(parseRow(lines[i]));
+        i++;
+      }
+      const thead = `<thead><tr>${headers.map((h) => `<th>${renderInline(h)}</th>`).join("")}</tr></thead>`;
+      const tbody = `<tbody>${rows
+        .map((r) => `<tr>${r.map((c) => `<td>${renderInline(c)}</td>`).join("")}</tr>`)
+        .join("")}</tbody>`;
+      html.push(`<div class="ep-table-wrap"><table class="ep-table">${thead}${tbody}</table></div>`);
+      continue;
+    }
+
+    // 无序列表 - / *
+    if (/^\s*[-*]\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) {
+        items.push(`<li>${renderInline(lines[i].replace(/^\s*[-*]\s+/, ""))}</li>`);
+        i++;
+      }
+      html.push(`<ul>${items.join("")}</ul>`);
+      continue;
+    }
+
+    // 有序列表 1.
+    if (/^\s*\d+\.\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) {
+        items.push(`<li>${renderInline(lines[i].replace(/^\s*\d+\.\s+/, ""))}</li>`);
+        i++;
+      }
+      html.push(`<ol>${items.join("")}</ol>`);
+      continue;
+    }
+
+    // 普通段落
+    const para = [];
+    while (
+      i < lines.length &&
+      lines[i].trim() &&
+      !lines[i].trim().startsWith("```") &&
+      !/^(#{1,4})\s+/.test(lines[i]) &&
+      !lines[i].trim().startsWith("> ") &&
+      !/^\s*[-*]\s+/.test(lines[i]) &&
+      !/^\s*\d+\.\s+/.test(lines[i])
+    ) {
+      para.push(lines[i].trim());
+      i++;
+    }
+    html.push(`<p>${renderInline(para.join(" "))}</p>`);
+  }
+
+  return { html: html.join("\n"), toc };
+}
+
+export function minifyCss(css) {
+  return String(css || "")
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\s+/g, " ")
+    .replace(/\s*([{}:;,>~+])\s*/g, "$1")
+    .replace(/;}/g, "}")
+    .trim();
 }

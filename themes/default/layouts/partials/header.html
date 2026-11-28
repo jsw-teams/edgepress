@@ -1,7 +1,16 @@
-<header class="site-header {{site.headerClass}}">
-  <div class="header-inner">
-  <a class="brand {{site.brandClass}}" href="{{site.homePath}}"><img class="brand-mark" src="/edgepress/brand/avatar.png" alt="" aria-hidden="true" width="36" height="36">{{site.headerBrand}}</a>
-  <nav class="primary-navigation {{site.primaryNavigationClass}}" aria-label="{{site.mainNavigationLabel}}">{{{site.primaryNavigationHtml}}}</nav>
-  <div class="locale-nav {{site.languageNavigationClass}}" role="group" aria-label="{{site.languageLabel}}">{{{site.localeLinksHtml}}}</div>
+{{slot:beforeHeader}}
+<header class="ep-header">
+  <div class="ep-container ep-header-inner">
+    <a class="ep-brand" href="/">
+      <span class="ep-brand-mark" aria-hidden="true">E</span>
+      <span>{{site.title}}</span>
+    </a>
+    <nav class="ep-nav" aria-label="主导航">
+      {{{site.navHtml}}}
+    </nav>
+    <div class="ep-header-actions">
+      <button type="button" class="ep-btn ep-btn--ghost" data-open-search aria-label="打开站内搜索">搜索 ⌘K</button>
+      <button type="button" class="ep-btn" data-toggle-theme aria-label="切换浅色或暗色主题">明暗</button>
+    </div>
   </div>
 </header>

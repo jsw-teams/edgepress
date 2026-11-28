@@ -1,0 +1,12 @@
+{
+  "name": "starter-custom",
+  "version": "1.0.0",
+  "extends": "default",
+  "description": "演示如何基于 default 主题以高自由度二次开发：覆盖 Token、注入命名插槽与扩展自定义样式。",
+  "tokens": {
+    "--ep-accent": "#0f766e",
+    "--ep-accent-hover": "#115e59",
+    "--ep-accent-soft": "#f0fdfa",
+    "--ep-radius-inner": "8px"
+  }
+}

@@ -1,4 +1,18 @@
-<footer class="site-footer {{site.footerClass}}">
-  <p class="footer-copy {{site.footerCopyClass}}">{{site.footer}}</p>
-  <nav class="footer-navigation {{site.footerNavigationClass}}" aria-label="{{site.footerNavigationLabel}}">{{{site.footerNavigationHtml}}}</nav>
+{{slot:beforeFooter}}
+<footer class="ep-footer">
+  <div class="ep-container ep-footer-inner">
+    <span>{{site.footer}}</span>
+    <span>Theme: <strong>{{site.themeName}}</strong> · <a href="/rss.xml">RSS</a> · <a href="/sitemap.xml">Sitemap</a></span>
+  </div>
 </footer>
+<div class="ep-backdrop" data-ep-backdrop></div>
+<aside class="ep-drawer" data-search-drawer aria-hidden="true" aria-label="站内搜索抽屉">
+  <div class="ep-drawer-header">
+    <strong>站内检索</strong>
+    <button type="button" class="ep-btn ep-btn--ghost ep-btn--sm" data-close-drawer>关闭</button>
+  </div>
+  <div class="ep-drawer-body">
+    <input type="search" class="ep-input" data-search-input placeholder="输入标题、标签或关键词..." autocomplete="off">
+    <div data-search-results style="margin-top:16px"></div>
+  </div>
+</aside>

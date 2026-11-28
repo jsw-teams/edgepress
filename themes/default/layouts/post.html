@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="{{site.language}}">
+<head>
+  {{> head}}
+</head>
+<body>
+  {{> header}}
+  <main class="ep-main">
+    <div class="ep-container">
+      <section class="ep-page-header">
+        <div>
+          <h1>{{page.heading}}</h1>
+          <div class="ep-card-meta" style="margin-top:8px">
+            <time>{{page.date}}</time>
+            <span class="ep-num">{{page.readMinutes}} 分钟阅读</span>
+            <span class="ep-badge ep-badge--info">{{page.category}}</span>
+            {{{page.tagsHtml}}}
+          </div>
+        </div>
+        <div>
+          <a class="ep-btn" href="/archives/">返回文章列表</a>
+        </div>
+      </section>
+
+      <div class="ep-article-layout">
+        <article class="ep-prose">
+          {{{page.html}}}
+          {{slot:afterPost}}
+        </article>
+        <aside>
+          {{slot:sidebar}}
+          {{#if page.hasToc}}
+          <nav class="ep-toc" aria-label="文章目录">
+            <div class="ep-toc-title">本页目录</div>
+            <ul>
+              {{#each page.toc}}
+              <li class="level-{{level}}"><a href="#{{id}}">{{text}}</a></li>
+              {{/each}}
+            </ul>
+          </nav>
+          {{/if}}
+        </aside>
+      </div>
+    </div>
+  </main>
+  {{> footer}}
+</body>
+</html>

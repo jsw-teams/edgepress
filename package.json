@@ -1,82 +1,34 @@
 {
   "name": "edgepress",
+  "version": "2.0.0",
+  "description": "Zero-dependency, ultra-fast static site generator & high-freedom theme framework with B-End Design System default theme.",
   "license": "MIT",
-  "version": "2026.11.1",
-  "description": "Zero-dependency static website builder for Markdown articles, editable JSON pages, themes, and consent-controlled embeds.",
   "type": "module",
+  "engines": {
+    "node": ">=18.18.0"
+  },
   "bin": {
     "edgepress": "src/cli.js"
   },
-  "files": [
-    "content/pages",
-    "content/assets/edgepress/icons",
-    "content/assets/edgepress/brand/avatar.png",
-    "content/assets/edgepress/brand/home-hero-768.webp",
-    "content/assets/edgepress/brand/home-hero.webp",
-    "content/assets/edgepress/brand/home-hero.png",
-    "content/assets/edgepress/brand/og-image.png",
-    "content/assets/edgepress/favicon",
-    "languages",
-    "plugins",
-    "src",
-    "schemas",
-    "static",
-    "themes",
-    "config.yml",
-    "edgepress.config.mjs",
-    "project-compatibility.json",
-    "wrangler.jsonc",
-    "README.md",
-    "agent.md",
-    "vercel.json",
-    "edgeone.json",
-    "esa.jsonc",
-    "netlify.toml",
-    "tools/assets/format-pages.mjs",
-    "tools/verification"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/jsw-teams/edgepress.git"
+  "scripts": {
+    "dev": "node src/cli.js dev",
+    "build": "node src/cli.js build",
+    "serve": "node src/cli.js serve",
+    "new": "node src/cli.js new",
+    "theme": "node src/cli.js theme",
+    "clean": "node src/cli.js clean",
+    "doctor": "node src/cli.js doctor",
+    "bench": "node src/cli.js bench",
+    "test": "node --test tests/*.test.mjs"
   },
-  "homepage": "https://github.com/jsw-teams/edgepress#readme",
+  "dependencies": {},
+  "devDependencies": {},
   "keywords": [
     "static-site-generator",
     "zero-dependency",
-    "cloudflare-workers",
-    "markdown",
-    "website-builder",
-    "accessibility"
-  ],
-  "engines": {
-    "node": ">=22.12.0"
-  },
-  "scripts": {
-    "new": "node src/cli.js new",
-    "build": "node src/cli.js build",
-    "generate": "node src/cli.js generate",
-    "dev": "node src/cli.js server",
-    "preview": "node src/cli.js server",
-    "status": "node src/cli.js status",
-    "deploy": "node src/cli.js deploy",
-    "clean": "node src/cli.js clean",
-    "check": "node src/cli.js check",
-    "doctor": "node src/cli.js doctor",
-    "iterate": "node src/cli.js iterate",
-    "security:check": "node src/cli.js security",
-    "test": "node --test --test-concurrency=2 tests/*.test.mjs",
-    "icons:sync": "node tools/assets/sync-icons.mjs",
-    "deploy:cloudflare": "node src/cli.js deploy cloudflare",
-    "deploy:vercel": "node src/cli.js deploy vercel",
-    "deploy:edgeone": "node src/cli.js deploy edgeone",
-    "deploy:esa": "node src/cli.js deploy esa",
-    "deploy:netlify": "node src/cli.js deploy netlify",
-    "fonts:sync": "node tools/assets/sync-fonts.mjs",
-    "audit": "node tools/maintenance/audit-dependencies.mjs low",
-    "deploy:local": "node src/cli.js server",
-    "deploy:vps": "node src/cli.js d"
-  },
-  "dependencies": {},
-  "optionalDependencies": {},
-  "devDependencies": {}
+    "edgepress",
+    "design-system",
+    "themes",
+    "cloudflare-workers"
+  ]
 }

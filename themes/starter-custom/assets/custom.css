@@ -1,0 +1,14 @@
+/* starter-custom 自定义样式：自动在 default 主题的 tokens.css 与 theme.css 之后加载 */
+.ep-custom-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ep-space-4);
+  padding: var(--ep-space-3) var(--ep-space-4);
+  margin-bottom: var(--ep-space-6);
+  background: var(--ep-accent-soft);
+  border: 1px solid var(--ep-border-subtle);
+  border-radius: var(--ep-radius-outer);
+  font-size: var(--ep-text-sm);
+  color: var(--ep-ink-primary);
+}
