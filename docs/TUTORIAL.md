@@ -27,6 +27,10 @@ export default {
       // 10 秒换主色：把下面这行注释去掉即可换成青绿色
       // "--ep-accent": "#0f766e"
     }
+  },
+  build: {
+    staticDir: "static",
+    assetsDir: "content/assets"
   }
 };
 ```
@@ -47,6 +51,8 @@ npm run new -- "如何用 EdgePress 搭建极速博客"
 npm run new -- page "友链"
 ```
 生成的页面位于 `content/pages/友链.md`，访问路径为 `/pages/友链/`，将其加入 `site.config.js` 的 `navigation` 即可出现在顶栏。
+
+页面或文章的 front matter 可以设置 `url` 来保留自定义路径，也可以设置 `lang` 指定该页的 HTML 语言属性。`build.staticDir` 和 `build.assetsDir` 会把对应目录复制到站点输出目录。
 
 ## 第三步：免费部署到云平台
 

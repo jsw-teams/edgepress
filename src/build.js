@@ -25,6 +25,35 @@ async function listMarkdownFiles(dir) {
   }
 }
 
+async function copyDirectory(source, destination) {
+  let entries;
+  try {
+    entries = await readdir(source, { withFileTypes: true });
+  } catch (error) {
+    if (error.code === "ENOENT") return;
+    throw error;
+  }
+  await mkdir(destination, { recursive: true });
+  for (const entry of entries) {
+    const from = join(source, entry.name);
+    const to = join(destination, entry.name);
+    if (entry.isDirectory()) await copyDirectory(from, to);
+    else if (entry.isFile()) await writeFile(to, await readFile(from));
+  }
+}
+
+function normalizeDocumentUrl(value, kind, slug) {
+  if (value === undefined || value === null || value === "") {
+    return kind === "post" ? `/posts/${slug}/` : `/pages/${slug}/`;
+  }
+  const raw = String(value).trim();
+  if (!raw.startsWith("/") || raw.startsWith("//") || /[?#\\\\]/.test(raw) || raw.split("/").includes("..")) {
+    throw new Error(`Invalid document URL: ${raw}`);
+  }
+  const path = `/${raw.split("/").filter(Boolean).join("/")}`;
+  return path === "/" ? path : `${path}/`;
+}
+
 function estimateReadMinutes(text) {
   const cjk = (text.match(/[\u4e00-\u9fff]/g) || []).length;
   const words = (text.replace(/[\u4e00-\u9fff]/g, " ").match(/\S+/g) || []).length;
@@ -53,6 +82,8 @@ export async function buildSite(config, cwd = process.cwd()) {
 
   await mkdir(outputDir, { recursive: true });
   await mkdir(cacheDir, { recursive: true });
+  if (config.build?.staticDir) await copyDirectory(resolve(cwd, config.build.staticDir), outputDir);
+  if (config.build?.assetsDir) await copyDirectory(resolve(cwd, config.build.assetsDir), outputDir);
 
   // 1. 加载增量解析缓存
   const cacheFile = join(cacheDir, "render-cache.json");
@@ -134,6 +165,8 @@ export async function buildSite(config, cwd = process.cwd()) {
       tags,
       tagsHtml: tags.map((t) => `<span class="ep-badge ep-badge--neutral">${escapeHtml(t)}</span>`).join(""),
       summary: parsed.excerpt,
+      lang: parsed.data.lang || config.site.language,
+      url: normalizeDocumentUrl(parsed.data.url || parsed.data.permalink, kind, slug),
       readMinutes: parsed.readMinutes,
       html: parsed.html,
       toc: parsed.toc,
@@ -165,7 +198,7 @@ export async function buildSite(config, cwd = process.cwd()) {
     await mkdir(targetDir, { recursive: true });
 
     const html = await theme.render(layoutName, {
-      site: { ...siteBase, navHtml: buildNavHtml(config.navigation, relUrl) },
+      site: { ...siteBase, language: pageData.lang || siteBase.language, navHtml: buildNavHtml(config.navigation, relUrl) },
       page: pageData,
       posts,
       recentPosts: posts.slice(0, 6)
